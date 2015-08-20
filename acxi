@@ -5,7 +5,7 @@
 # Script Date: 26 July 2011
 #########################################################################
 # fork to acxi:
-# Copyright (c) 2010-11 - Harald Hope - smxi.org 
+# Copyright (c) 2010-15 - Harald Hope - smxi.org 
 # home page: http://code.google.com/p/acxi
 # forum support: http://techpatterns.com/forums/about1491.html
 # download url: http://smxi.org/acxi
@@ -43,6 +43,7 @@
 #
 # User config file at $HOME/.acxi.conf or global /etc/acxi.conf, set like this:
 # DEST_DIR_PREFIX=/home/me/music/flac
+#########################################################################
 
 ### NO USER CHANGES IN THIS SECTION ###
 #   Set use 
