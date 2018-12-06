@@ -77,7 +77,6 @@ my $LINE_SMALL = "--------------------------------------------------------------
 my $LINE_LARGE = "---------------------------------------------------------------------------\n";
 ### END GLOBALS/USE SECTION ###
 
-
 ### USER MODIFIABLE VALUES ###
 #
 # These can also be set in $HOME/.acxi.conf or $HOME/.config/acxi.conf 
