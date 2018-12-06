@@ -133,7 +133,7 @@ my @COPY_TYPES = qw(bmp doc docx gif jpg jpeg odt pdf png tif txt);
 my $LOG_LEVEL = 1;
 
 #########################################################################
-### END USER MODIFIABLE VARIABLES ###
+### END USER MODIFIABLE VALUES ###
 #########################################################################
 
 ### MAIN - FUNCTIONS ###
