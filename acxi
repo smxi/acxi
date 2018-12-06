@@ -41,13 +41,11 @@
 # $DIR_SOURCE and $DIR_DESTINATION variables or passed on the 
 # command line.  
 #
-# If you are piping the output to a log file it would also be good to 
-# modify line 92 so that the encoder command is silent (this is done 
-# using -Q or --quiet) - oggenc only.  
-#
-# User config file at $HOME/.acxi.conf or global /etc/acxi.conf, set 
-# like this:
-# DEST_DIR_PREFIX=/home/me/music/flac
+# User config file at $HOME/.acxi.conf or $HOME/.config/acxi.conf or
+# global /etc/acxi.conf, set values like this:
+# DIR_DESTINATION=/home/me/music/flac
+# It's highly recommended to create a config file so you don't have to
+# update the values below every time acxi updates.
 #########################################################################
 ### NO USER CHANGES IN THIS SECTION ###
 #########################################################################
