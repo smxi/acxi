@@ -50,6 +50,7 @@
 # DEST_DIR_PREFIX=/home/me/music/flac
 #########################################################################
 ### NO USER CHANGES IN THIS SECTION ###
+#########################################################################
 use strict;
 use warnings;
 # use diagnostics;
@@ -75,9 +76,10 @@ my $USER_TYPES;
 my $LINE_HEAVY = "===========================================================================\n";
 my $LINE_SMALL = "-----------------------------------------------------------------\n";
 my $LINE_LARGE = "---------------------------------------------------------------------------\n";
-### END GLOBALS/USE SECTION ###
 
+#########################################################################
 ### USER MODIFIABLE VALUES ###
+#########################################################################
 #
 # These can also be set in $HOME/.acxi.conf or $HOME/.config/acxi.conf 
 # or /etc/acxi.conf if you prefer
@@ -85,9 +87,9 @@ my $LINE_LARGE = "--------------------------------------------------------------
 # an option.
 # Do not use the $ or @ preceding the variable name, or the semicolon 
 # or " quote marks in the config file. Use this syntax for config files:
-# DIR_PREFIX_SOURCE=/home/fred/music/flac
-# DEST_DIR_PREFIX=/home/fred/music/ogg
-# Application Commands:
+# DIR_SOURCE=/home/fred/music/flac
+# DIR_DESTINATION=/home/fred/music/ogg
+## APPLICATION PATHS
 my $COMMAND_OGG = '/usr/bin/oggenc';
 my $COMMAND_FLAC = '/usr/bin/flac'; 
 my $COMMAND_LAME = '/usr/bin/lame';
@@ -103,6 +105,8 @@ my $COMMAND_METAFLAC = '/usr/bin/metaflac';
 my $DIR_SOURCE = '/path/to/source/directory';
 my $DIR_DESTINATION = '/path/to/your/output/directory';
 # Change if you want these to default to different things
+
+## INPUT/OUTPUT
 my $QUALITY = 7;
 # The following are NOT case sensitive,ie flac/FLAC, txt/TXT will be 
 # found
@@ -117,7 +121,7 @@ my $OUTPUT_TYPE = 'ogg';
 # @COPY_TYPES = ();
 # Or if you want to remove or add an extension, do (NO DOTS):
 my @COPY_TYPES = qw(bmp doc docx gif jpg jpeg odt pdf png tif txt);
-#
+##
 # You can turn these to always on either here or in config file by setting to 
 # desired verbosity level here directly. 
 # 0 = quiet/silent - no output at all; 
@@ -127,7 +131,10 @@ my @COPY_TYPES = qw(bmp doc docx gif jpg jpeg odt pdf png tif txt);
 # 3 = debug -  all available information.
 # or in config file (note no $, ;, and no quotes): LOG_LEVEL=2
 my $LOG_LEVEL = 1;
+
+#########################################################################
 ### END USER MODIFIABLE VARIABLES ###
+#########################################################################
 
 ### MAIN - FUNCTIONS ###
 sub error_handler {
