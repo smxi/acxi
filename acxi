@@ -399,9 +399,9 @@ sub sync_collection_files {
 		# Now stat the destinationFile, and see if it's date is more recent
 		# than that of the original file. If so, we re-encode.
 		# We also re-encode if the user supplied --force
-		$srcInfo = stat ("$DIR_SOURCE/$file");
+		$srcInfo = stat("$DIR_SOURCE/$file");
 		$srcModTime = $srcInfo->mtime;
-		$destInfo = stat ("$DIR_DESTINATION/$destinationFile");
+		$destInfo = stat("$DIR_DESTINATION/$destinationFile");
 		if ( $destInfo ) {
 			$destModTime = $destInfo->mtime;
 			# print "DEST_MOD: $destModTime :: SRC_MOD: $srcModTime :: FORCE: $force\n"; 
@@ -452,8 +452,8 @@ sub sync_collection_files {
 				$outFile =~ s/\0//g;
 				$result = qx(cp -f "$inFile" "$outFile");
 			}
-			$bFileCreated = 'true';
-			$B_DEST_CHANGED = 'true';
+			$bFileCreated = 1;
+			$B_DEST_CHANGED = 1;
 		} 
 	}
 	if ( ! $bFileCreated ){
