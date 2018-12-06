@@ -1,10 +1,4 @@
 #!/usr/bin/perl
-use strict;
-use warnings;
-# use diagnostics;
-use 5.008;
-use Getopt::Long qw(GetOptions);
-use File::stat;
 #########################################################################
 # acxi - audio conversion program
 #########################################################################
@@ -56,6 +50,12 @@ use File::stat;
 # DEST_DIR_PREFIX=/home/me/music/flac
 #########################################################################
 ### NO USER CHANGES IN THIS SECTION ###
+use strict;
+use warnings;
+# use diagnostics;
+use 5.008;
+use Getopt::Long qw(GetOptions);
+use File::stat;
 
 ## SELF INFO
 my $SELF_NAME = 'acxi';
