@@ -647,7 +647,7 @@ sub print_help {
 	$output .= "--verbose         Without full verbosity of debug, no flac/oggenc/lame for MP3\n";
 	$output .= "                  or OGG conversion process screen output, but more verbose than\n";
 	$output .= "                  default.\n";
-	$output .= "--test            Test copy and sync without actually doing the copy/sync. Also";
+	$output .= "--test            Test copy and sync without actually doing the copy/sync. Also\n";
 	$output .= "                  activates --debug for more complete path outputs.\n";
 	$output .= "--version -v      Show $SELF_NAME version.\n\n";
 	$output .= $LINE_SMALL;
