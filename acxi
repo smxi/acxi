@@ -69,7 +69,7 @@ my $SELF_VERSION = '3.0.0';
 my $SELF_DATE = '2018-12-06';
 
 ## GLOBALS
-my ($B_DEST_CHANGED,$B_FORCE,$B_QUIET);
+my ($B_DEST_CHANGED,$B_FORCE,$B_QUIET,$B_TEST);
 my ($PRINT_LINE_HEAVY,$PRINT_LINE_LARGE,$PRINT_LINE_SMALL);
 my ($SILENT_ARG_FO,$SILENT_ARG_LAME) = ('','');
 my ($EXTENSION,@EXTENSION_LIST,@FOUND_LIST,$LIST_TYPE);
@@ -413,7 +413,7 @@ sub sync_collection_directories {
 				print "\nCreating new directory: $dest_dir";
 			}
 			$dest_dir =~ s/\`/\'/g; # get rid of weird characters
-			$result = mkdir("$dest_dir");
+			$result = mkdir("$dest_dir") if !$B_TEST;
 			$b_created = 1;
 			$B_DEST_CHANGED = 1;
 			print "Create Directory result: $result\n" if $LOG_LEVEL > 1;
@@ -473,15 +473,19 @@ sub sync_collection_files {
 				}
 				if ( $OUTPUT_TYPE eq 'ogg' ){
 					$action = 'To ogg';
-					qx($COMMAND_OGG $SILENT_ARG_FO -q $QUALITY -o "$dest_file" "$src_file");
-					$result = $?;
+					if (!$B_TEST){
+						qx($COMMAND_OGG $SILENT_ARG_FO -q $QUALITY -o "$dest_file" "$src_file");
+						$result = $?;
+					}
 				}
 				elsif ( $OUTPUT_TYPE eq 'mp3' ){
 					$action = 'To mp3';
 					# Modified: Odd @2011-03-23 01:51:26 - Include ID3 copying
 					$cmd = flac2mp3_cmd("$src_file","$dest_file");
-					qx($cmd);
-					$result = $?;
+					if (!$B_TEST){
+						qx($cmd);
+						$result = $?;
+					}
 				}
 			} 
 			else {
@@ -493,8 +497,10 @@ sub sync_collection_files {
 				elsif ( $LOG_LEVEL > 0 ) {
 					print "\nCopying $file...";
 				}
-				$result = copy($src_file, $dest_file) or 
-				  error_handler('cp-file', "cp failure: $src_file =>\n$dest_file\nCode: $!");
+				if (!$B_TEST){
+					$result = copy($src_file, $dest_file) or 
+					  error_handler('cp-file', "cp failure: $src_file =>\n$dest_file\nCode: $!");
+				}
 			}
 			$b_created = 1;
 			$B_DEST_CHANGED = 1;
@@ -628,6 +634,8 @@ sub print_help {
 	$output .= "--verbose         Without full verbosity of debug, no flac/oggenc/lame for MP3\n";
 	$output .= "                  or OGG conversion process screen output, but more verbose than\n";
 	$output .= "                  default.\n";
+	$output .= "--test            Test copy and sync without actually doing the copy/sync. Also";
+	$output .= "                  activates --debug for more complete path outputs.\n";
 	$output .= "--version -v      Show $SELF_NAME version.\n\n";
 	$output .= $LINE_SMALL;
 	$output .= "User Configs (checked in this order):\n";
@@ -736,6 +744,9 @@ GetOptions (
 	"quiet|silent" => sub { 
 		$B_QUIET = 1; 
 		$LOG_LEVEL = 0 },
+	"test" => sub { 
+		$LOG_LEVEL = 3;
+		$B_TEST = 1 },
 	"verbose" => sub { 
 		$LOG_LEVEL = 2 },
 	"v|version" => sub { 
