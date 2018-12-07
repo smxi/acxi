@@ -15,7 +15,8 @@ By default, it will also copy over most common filetypes like gif, jpg, png,
 txt, pdf, doc, docx, and a few others. You can change the defaults using 
 a configuration file.
 
-The destination directory cannot be the same as the source directory.
+The destination directory cannot be the same as the source directory, but
+it can be inside of the source directory.
 
 .SH USING OPTIONS
 Options can be combined if they do not conflict. You can either group the letters
@@ -140,7 +141,7 @@ This the original, working, like flac, wav, etc.
 
 \fBDESTINATION_DIRECTORY\fR Sample: \fBDESTINATION_DIRECTORY=/home/fred/music/ogg\fR
 This is the processed compressed music files, ie, ogg, mp3. Destination cannot 
-be the same as Source directory.
+be the same as Source directory, although it can be inside of the source directory.
 
 .TP
 .B INPUT/OUTPUT
