@@ -56,7 +56,8 @@ Getopt::Long::Configure ('bundling', 'no_ignore_case',
 use File::stat;
 use File::Find;
 use File::Copy qw(copy);
-use Data::Dumper qw(Dumper);
+# only use for debugging, some distros do not ship with core modules.
+#use Data::Dumper qw(Dumper);
 
 #########################################################################
 ### PROGRAM GLOBALS - DO NOT TOUCH THESE! ###
@@ -112,7 +113,7 @@ my $COMMAND_METAFLAC = '/usr/bin/metaflac';
 ##  $SOURCE_DIRECTORY is the original, working, like flac, wav, etc
 ##  $DESTINATION_DIRECTORY is the processed, ie, ogg, mp3
 ##  CHANGE TO FIT YOUR SYSTEM - do not end in /
-## IMPORTANT: DESTINATION_DIRECTORY cannot be in SOURCE_DIRECTORY
+## IMPORTANT: DESTINATION_DIRECTORY cannot be equal to SOURCE_DIRECTORY
 my $SOURCE_DIRECTORY = '/path/to/source/directory';
 my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
 
