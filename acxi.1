@@ -1,0 +1,209 @@
+.TH ACXI 1 "2018\-12\-06" acxi "acxi manual"
+.SH NAME
+acxi  \- Command line audio conversion tool
+.SH SYNOPSIS
+\fBacxi\fR
+
+\fBacxi\fR [options]
+
+.SH DESCRIPTION
+\fBacxi\fR is a command line audio conversion program. It converts and syncs
+all desired files to a lossless directory location. Supports lossless formats
+flac/wav/raw. Output formats are ogg or mp3.
+
+The main utility is syncing your lossless music directory to a corresponding
+lossy format location.
+
+By default, will also copy over most common filetypes like gif, jpg, png, 
+txt, pdf, doc, docx, and a few others. You can change the defaults using 
+a configuration file.
+
+.SH USING OPTIONS
+Options can be combined if they do not conflict. You can either group the letters
+together or separate them.
+
+For example:
+.B acxi
+\fB\-o mp3\fR or \fBacxi \-o mp3\fR or \fBacxi \-d /home/you/music\fR
+
+Note that some short form options have long form equivalents, which are
+listed below. However, usually the short form is used in examples in order to
+keep things simple.
+
+.SH OPTIONS
+.TP
+.B \-c\fR,\fB \-\-copy\fR
+Comma separated list of extensions for file types you want to sync to your
+lossy music directory. Overrides default values. Use lowercase, but it's
+case insensitive internally. Do not include the period in the extension.
+
+Default values are: bmp doc docx gif jpg jpeg odt pdf png tif txt
+
+If you use no value, it will not copy anything.
+
+Sample: \fB\-c txt,pdf,png,jpg,jpeg,gif\fR
+
+.TP
+.B \-\-debug\fR
+Full screen output, including full verbosity of 
+flac/oggenc/lameconversion process for MP3 or OGG output.
+
+.TP
+.B \-\-default\fR
+Single line per operation screen output, default value for acxi.
+
+.TP
+.B \-d\fR,\fB \-\-destination\fR
+Full path to the directory where you want the processed lossy
+(eg, ogg) files to go.
+
+.TP
+.B \-f\fR,\fB \-\-force\fR
+Overwrites all the mp3/ogg/jpg/txt etc. files, even if they already exist.
+
+.TP
+.B \-h\fR,\fB \-\-help\fR
+This help menu.
+
+.TP
+.B \-i\fR,\fB \-\-input\fR
+Input type. Supported types: flac, wav, raw. mp3 only supports flac input.
+
+.TP
+.B \-o\fR,\fB \-\-output\fR
+Output type. Supported types: ogg, mp3
+
+.TP
+.B \-q [number]\fR,\fB \-\-quality [number]\fR
+For ogg: n can be 1\-10. 10 is the largest file/highest quality.
+For mp3: n can be 0\-9 (variable bit rate), 0 is largest file/
+highest quality.
+
+.TP
+.B \-\-quiet\fR,\fB \-\-silent\fR
+Turns off all screen output, except for error messages.
+
+.TP
+.B \-s\fR,\fB \-\-source\fR
+Path to the top-most directory containing your source files (eg, flac).
+                  
+.TP
+.B \-\-verbose\fR
+Without full verbosity of debug, no flac/oggenc/lame for MP3
+or OGG conversion process screen output, but more verbose than
+default.
+
+.TP
+.B \-v\fR,\fB \-\-version\fR
+Show acxi version.
+
+.SH CONFIGURATION FILE
+acxi will read its configuration/initialization files in the
+following order:
+
+\fB/etc/acxi.conf\fR contains the default configurations. These can be overridden
+by user configurations found in one of the following locations. If 
+\fB$XDG_CONFIG_HOME/acxi.conf\fR exists, it use it, else if
+\fB$HOME/.conf/acxi.conf\fR exists, it will use it, and as a last default,
+the legacy location \fB$HOME/.acxi.conf\fR is used, i.e.:
+
+\fB$XDG_CONFIG_HOME/acxi.conf\fR > \fB$HOME/.conf/acxi.conf\fR >
+\fB$HOME/.acxi.conf\fR
+
+.SH CONFIGURATION OPTIONS
+
+The following corresponds to the \fBBEGIN USER MODIFIABLE VALUES\fR section
+in the top comment header of acxi.
+
+.TP
+.B APPLICATION PATHS
+
+The following set your system path for the required applications:
+
+\fBCOMMAND_OGG\fR Sample: \fBCOMMAND_OGG=/usr/bin/oggenc\fR (default path)
+
+\fBCOMMAND_FLAC\fR Sample: \fBCOMMAND_FLAC=/usr/bin/flac\fR (default path)
+
+\fBCOMMAND_LAME\fR Sample: \fBCOMMAND_LAME=/usr/bin/lame\fR (default path)
+
+\fBCOMMAND_METAFLAC\fR Sample: \fBCOMMAND_METAFLAC=/usr/bin/metaflac\fR (default path)
+Metaflac is required ONLY for flac to mp3, to copy over the ID3 tags
+If you are not going to make MP3s, only OGG files for output, you do 
+not need this
+
+.TP
+.B SOURCE/DESTINATION DIRECTORIES
+
+NOTE: DESTINATION_DIRECTORY cannot be located inside of SOURCE_DIRECTORY
+
+\fBSOURCE_DIRECTORY\fR Sample: \fBSOURCE_DIRECTORY=/home/fred/music/main\fR 
+This the original, working, like flac, wav, etc.
+
+\fBDESTINATION_DIRECTORY\fR Sample: \fBDESTINATION_DIRECTORY=/home/fred/music/ogg\fR
+This is the processed compressed music files, ie, ogg, mp3.
+
+.TP
+.B INPUT/OUTPUT
+
+The following are NOT case sensitive,ie flac/FLAC, txt/TXT will be 
+found. INPUT_TYPE and OUTPUT_TYPE will be forced to lower case 
+internally.
+
+\fBINPUT_TYPE\fR Sample: \fBINPUT_TYPE=flac\fR 
+
+\fBOUTPUT_TYPE\fR Sample: \fBOUTPUT_TYPE=mp3\fR 
+
+\fBCOPY_TYPES\fR Sample: \fBCOPY_TYPES=doc,docx,bmp,jpg,jpeg\fR Use this
+to override the default file types acxi will sync. Set to 'none', 
+if you only want to sync the music files, not copy over images, text files,
+etc.
+
+.TP
+.B DEBUG OUTPUT
+\fBLOG_LEVEL\fR Sample: \fBLOG_LEVEL=3\fR You can turn these to always on either
+here or in config file by setting to desired verbosity level here directly,
+or in the configuration file. 
+
+0 \- quiet/silent \- no output at all.
+
+1 \- default \- single line per operation. This is the default, so you don't need 
+to change it.
+    
+2 \- verbose \- but without the actual conversion data from codecs
+
+3 \- debug \-  all available information.
+
+.SH BUGS
+Please report bugs using the following resources.
+
+.TP
+.B Issue Report
+File an issue report:
+.I https://github.com/smxi/acxi/issues
+.TP
+.B Forums
+Post on acxi forums:
+.I https://techpatterns.com/forums/about1491.html
+.TP
+.B IRC irc.oftc.net#smxi
+You can also visit
+.I irc.oftc.net
+\fRchannel:\fI #smxi\fR to post issues.
+
+.SH HOMEPAGE
+.I  https://github.com/smxi/acxi
+
+.SH  AUTHOR AND CONTRIBUTORS TO CODE
+
+.B acxi
+is a fork and full rewrite of flac2ogg.pl.
+
+Copyright (c) Harald Hope, 2010\-2018
+
+MP3 tagging: Odd Eivind Ebbesen \- \fIwww.oddware.net\fR \- 
+<oddebb at gmail dot com>
+
+Copyright (c) (flac2ogg.pl) 2004 \- Jason L. Buberel \- jason@buberel.org
+
+Copyright (c) (flac2ogg.pl) 2007 \- Evan Boggs \- etboggs@indiana.edu
+
