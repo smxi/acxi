@@ -55,6 +55,8 @@ use warnings;
 # use diagnostics;
 use 5.010;
 use Getopt::Long qw(GetOptions);
+Getopt::Long::Configure ('bundling', 'no_ignore_case', 
+'no_getopt_compat', 'no_auto_abbrev','pass_through');
 use File::stat;
 use File::Find;
 use File::Copy qw(copy);
@@ -138,15 +140,16 @@ my $LOG_LEVEL = 1;
 ### MAIN - FUNCTIONS ###
 sub error_handler {
 	my ($error,$message) = @_;
-	my ($error_no,$error_text) = (0,'');
+	my ($br,$error_no,$error_text) = ("\n",0,'');
 	if ($error eq 'unsupported-type'){$error_no = 2;}
 	elsif ($error eq 'dest-dir'){$error_no = 1;}
 	elsif ($error eq 'missing-app'){$error_no = 3;}
 	elsif ($error eq 'quality-invalid'){$error_no = 4;}
 	elsif ($error eq 'bad-level'){$error_no = 5;}
 	elsif ($error eq 'stat-infile'){$error_no = 6;}
-	elsif ($error eq 'missing-arg'){$error_no = 7;$message = "Option: $message\n"}
-	print "\nError $error_no - Exiting. $message";
+	elsif ($error eq 'missing-arg'){$error_no = 7;$message = "Option: $message";$br=''}
+	elsif ($error eq 'unsupported-option'){$error_no = 8;$br=''}
+	print "${br}Error $error_no: $message\n";
 	exit $error_no;
 }
 
@@ -182,6 +185,12 @@ sub set_display_output_data {
 }
 
 ### VALIDATIONS ###
+sub validate_start_text {
+	if ( $LOG_LEVEL > 0 ) {
+		eval $PRINT_LINE_HEAVY;
+		print "Running $SELF_NAME pretests...\n";
+	}
+}
 sub validate_in_out_types {
 	my ($b_type_unsupported, $error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
@@ -190,17 +199,17 @@ sub validate_in_out_types {
 	}
 	if ( $INPUT_TYPE !~ m/^(flac|wav|raw)$/ ){
 		$b_type_unsupported = 1;
-		$error_message .= "\n\tThe input type you entered is not supported: ";
-		$error_message .= "$INPUT_TYPE\n";
+		$error_message .= "\n  The input type you entered is not supported: ";
+		$error_message .= "$INPUT_TYPE";
 	}
 	if ( $OUTPUT_TYPE !~ m/^(ogg|mp3)$/ ){
 		$b_type_unsupported = 1;
-		$error_message .= "\n\tThe output type you entered is not supported: ";
-		$error_message .= "$OUTPUT_TYPE\n";
+		$error_message .= "\n  The output type you entered is not supported: ";
+		$error_message .= "$OUTPUT_TYPE";
 		if ( $OUTPUT_TYPE eq 'mp3' && $INPUT_TYPE ne 'flac' ){
 			$b_type_unsupported = 1;
-			$error_message .= "\n\tThe output type $OUTPUT_TYPE you entered ";
-			$error_message .= "currently only supports input type: flac\n";
+			$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
+			$error_message .= "currently only supports input type: flac";
 		}
 	}
 	if ( $b_type_unsupported ){
@@ -208,12 +217,6 @@ sub validate_in_out_types {
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
 		print "Valid: $INPUT_TYPE(in) $OUTPUT_TYPE(out)\n";
-	}
-}
-sub validate_start_text {
-	if ( $LOG_LEVEL > 0 ) {
-		eval $PRINT_LINE_HEAVY;
-		print "Running $SELF_NAME pretests...\n";
 	}
 }
 sub validate_src_dest_directories {
@@ -224,18 +227,17 @@ sub validate_src_dest_directories {
 	}
 	if ( ! -d "$SOURCE_DIRECTORY" ){
 		$b_missing_dir = 1;
-		$missing_dirs .= "\n\tSource Directory: $SOURCE_DIRECTORY";
+		$missing_dirs .= "\n  Source Directory: $SOURCE_DIRECTORY";
 	}
 	if ( ! -d "$DESTINATION_DIRECTORY" ){
 		$b_missing_dir = 1;
-		$missing_dirs .= "$missing_dirs\n\tDestination Directory: $DESTINATION_DIRECTORY";
+		$missing_dirs .= "\n  Destination Directory: $DESTINATION_DIRECTORY";
 	}
 	if ( $b_missing_dir ) {
-		my $error_message = "The paths for the following required directories ";
-		$error_message .= "do not exist on your system:";
+		my $error_message = "The paths for the following directories are missing:";
 		$error_message .= "$missing_dirs";
 		$error_message .= "\nUnable to continue. Please check the directory paths ";
-		$error_message .= "you provided.\n\n";
+		$error_message .= "you provided.";
 		error_handler('dest-dir',$error_message);
 	} 
 	elsif ( $LOG_LEVEL > 0 ) {
@@ -251,34 +253,34 @@ sub validate_application_paths {
 		$app_paths .= "$COMMAND_OGG ";
 		if ( ! -x "$COMMAND_OGG" ) {
 			$b_missing_app = 1;
-			$error_message .= "\n\tEncoding application not available: $COMMAND_OGG\n";
+			$error_message .= "\n  Encoding application not available: $COMMAND_OGG";
 		}
 	}
 	elsif ( $OUTPUT_TYPE eq 'mp3' ) {
 		$app_paths .= "$COMMAND_LAME ";
 		if ( ! -x "$COMMAND_LAME" ) {
 			$b_missing_app = 1;
-			$error_message .= "\n\tEncoding application not available: $COMMAND_LAME\n";
+			$error_message .= "\n  Encoding application not available: $COMMAND_LAME";
 		}
 		if ($INPUT_TYPE eq 'flac') {
 			$app_paths .= "$COMMAND_FLAC ";
 			if ( ! -x "$COMMAND_FLAC" ) {
 				$b_missing_app = 1;
-				$error_message .= "\n\tInput processor $COMMAND_FLAC needed by lame ";
-				$error_message .= "not available.\n";
+				$error_message .= "\n  Input processor $COMMAND_FLAC needed by lame ";
+				$error_message .= "not available.";
 			}
 			$app_paths .= "$COMMAND_METAFLAC ";
 			# Added: Odd @2011-03-23 01:55:28
 			if ( ! -x "$COMMAND_METAFLAC" ) {
 				$b_missing_app = 1;
-				$error_message .= "\n\t$COMMAND_METAFLAC not found. Required to copy ";
-				$error_message .= "ID3 tags from Flac to MP3.\n";
+				$error_message .= "\n  $COMMAND_METAFLAC not found. Required to copy ";
+				$error_message .= "ID3 tags from Flac to MP3.";
 			}
 		}
 		else {
 			$b_missing_app = 1;
-			$error_message .= "\n\t$COMMAND_LAME currently only supports ";
-			$error_message .= "flac as input.\n";
+			$error_message .= "\n  $COMMAND_LAME currently only supports ";
+			$error_message .= "flac as input.";
 		}
 	}
 	if ( $b_missing_app ) {
@@ -295,13 +297,13 @@ sub validate_quality{
 	}
 	if ( lc($OUTPUT_TYPE) eq 'ogg' && $QUALITY !~ m/^([1-9]|10)$/ ) {
 		$b_bad_quality = 1;
-		$error_message .= "\n\t$OUTPUT_TYPE only supports ";
-		$error_message .= "1-10 quality. You entered: $QUALITY\n";
+		$error_message .= "\n  $OUTPUT_TYPE only supports ";
+		$error_message .= "1-10 quality. You entered: $QUALITY";
 	}
 	elsif ( lc($OUTPUT_TYPE) eq 'mp3' && $QUALITY !~ m/^([0-9])$/ ) {
 		$b_bad_quality = 1;
-		$error_message .= "\n\t$OUTPUT_TYPE only supports 0-9 quality. ";
-		$error_message .= "You entered: $QUALITY\n";
+		$error_message .= "\n  $OUTPUT_TYPE only supports 0-9 quality. ";
+		$error_message .= "You entered: $QUALITY";
 	}
 	if ( $b_bad_quality ) {
 		error_handler('quality-invalid',$error_message);
@@ -317,8 +319,8 @@ sub validate_log_level {
 	}
 	if ( $LOG_LEVEL !~ m/^([0-3])$/ ) {
 		$b_bad_level = 1;
-		$error_message .= "\n\tLOG_LEVEL only supports 0-3. ";
-		$error_message .= "You used: $LOG_LEVEL\n";
+		$error_message .= "\n  LOG_LEVEL only supports 0-3. ";
+		$error_message .= "You used: $LOG_LEVEL";
 	}
 	if ( $b_bad_level ) {
 		error_handler('bad-level',$error_message);
@@ -389,7 +391,7 @@ sub sync_collection_directories {
 			# stat failed so create the directory
 			eval $PRINT_LINE_SMALL;
 			if ( $LOG_LEVEL > 1 ) {
-				print "CREATING NEW DIRECTORY:\n\t$dest_dir\n";
+				print "CREATING NEW DIRECTORY:\n  $dest_dir\n";
 			}
 			elsif ( $LOG_LEVEL > 0 ) {
 				print "\nCreating new directory: $dest_dir";
@@ -437,7 +439,7 @@ sub sync_collection_files {
 			# print "DEST_MOD: $dest_mod_time :: SRC_MOD: $src_mod_time :: FORCE: $force\n"; 
 # 		} else {
 # 			print "NOT EXISTS: $destinationFile \n"; 
-# 			print "P1: $file ==> \n\t$destinationFile\n"; 
+# 			print "P1: $file ==> \n  $destinationFile\n"; 
 		}
 		# If the destination file does not exist, or the user specified force,
 		# or the srcfile is more recent then the dest file, we encode/copy.
@@ -476,7 +478,7 @@ sub sync_collection_files {
 					print "\nCopying $file...";
 				}
 				$result = copy($src_file, $dest_file) or 
-				  error_handler('cp-file', "cp failure: $src_file =>\n$dest_file\nCode: $!\n");
+				  error_handler('cp-file', "cp failure: $src_file =>\n$dest_file\nCode: $!");
 			}
 			$b_created = 1;
 			$B_DEST_CHANGED = 1;
@@ -507,10 +509,12 @@ sub print_not_found {
 # Added: Odd @2011-03-23 01:52:31
 sub flac2mp3_cmd {
 	my ($flac, $i_file, $lame, $quality, $o_file) = @_;
-	my %tags = get_flac_tags("$i_file", ("ARTIST", "ALBUM", "TITLE", "GENRE", "DATE", "TRACKNUMBER"));
+	my %tags = get_flac_tags("$i_file", ("ARTIST", "ALBUM", "TITLE", 
+	"GENRE", "DATE", "TRACKNUMBER"));
 	# print Dumper \%tags;
-	my $lame_params = "--ta \"$tags{'ARTIST'}\" --tl \"$tags{'ALBUM'}\" --tt \"$tags{'TITLE'}\"";
-	$lame_params .= "  --tg \"$tags{'GENRE'}\" --ty \"$tags{'DATE'}\" --tn \"$tags{'TRACKNUMBER'}\" - \"$o_file\"";
+	my $lame_params = "--ta \"$tags{'ARTIST'}\" --tl \"$tags{'ALBUM'}\"";
+	$lame_params .= " --tt \"$tags{'TITLE'}\" --tg \"$tags{'GENRE'}\"";
+	$lame_params .= " --ty \"$tags{'DATE'}\" --tn \"$tags{'TRACKNUMBER'}\" - \"$o_file\"";
 	my $cmd = "$flac $SILENT_ARG_FO -d -c \"$i_file\" | ";
 	$cmd .= "$lame $SILENT_ARG_LAME -h -V $quality $lame_params";
 	return $cmd;
@@ -671,6 +675,7 @@ set_config_data();
 # Get Options and set values, this overrides defaults 
 # from top globals and config files
 GetOptions (
+	# accepts null value so users can not copy anything
 	"c|copy:s" => sub { 
 		my ($opt,$arg) = @_;
 		$COPY_TYPES = $arg;},
@@ -708,7 +713,10 @@ GetOptions (
 	"verbose" => sub { 
 		$LOG_LEVEL = 2 },
 	"v|version" => sub { 
-		print_version(); }
+		print_version(); },
+	'<>' => sub {
+		my ($opt) = @_;
+		error_handler('unsupported-option', "Unsupported option: $opt"); }
 );
 
 ### EXECUTE / PROCESS MUSIC ###
