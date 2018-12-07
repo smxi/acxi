@@ -504,24 +504,6 @@ sub sync_collection_files {
 	print_not_found('files') if ! $b_created;
 }
 
-sub print_not_found {
-	my ($message,$none);
-	if ( $_[0] eq 'files'){
-		$message = "No files to process of type: $EXTENSION\n";
-		$none = "None found.";
-	}
-	else {
-		$message = "No new directories required. Continuing...\n";
-		$none = "None required.";
-	}
-	if ( $LOG_LEVEL > 1 ) {
-		print $message;
-	}
-	elsif ( $LOG_LEVEL > 0 ) {
-		print $none;
-	}
-}
-
 # Added: Odd @2011-03-23 01:52:31
 sub flac2mp3_cmd {
 	my ($i_file, $o_file) = @_;
@@ -573,7 +555,25 @@ sub wanted {
 	push (@FOUND_LIST, $File::Find::name);
 	return;
 }
-sub completion_message {
+
+sub print_not_found {
+	my ($message,$none);
+	if ( $_[0] eq 'files'){
+		$message = "No files to process of type: $EXTENSION\n";
+		$none = "None found.";
+	}
+	else {
+		$message = "No new directories required. Continuing...\n";
+		$none = "None required.";
+	}
+	if ( $LOG_LEVEL > 1 ) {
+		print $message;
+	}
+	elsif ( $LOG_LEVEL > 0 ) {
+		print $none;
+	}
+}
+sub print_completion_message {
 	eval $PRINT_LINE_HEAVY;
 	if ( $B_DEST_CHANGED ) {
 		if ( $LOG_LEVEL > 1 ) {
@@ -754,6 +754,6 @@ validate_in_out_types();
 validate_quality();
 validate_application_paths();
 sync_music_collections();
-completion_message();
+print_completion_message();
 
 ###**EOF**###
