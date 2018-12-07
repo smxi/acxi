@@ -5,13 +5,14 @@
 
 # Copyright (c) 2010-2018 - Harald Hope - smxi.org 
 # Home page: https://github.com/smxi/acxi
-# Forum support: http://techpatterns.com/forums/about1491.html
-# Download url: http://smxi.org/acxi
+# Forum support: https://techpatterns.com/forums/about1491.html
+# Download url: https://smxi.org/acxi
 #
 # Based on flac2ogg.pl
 # Copyright (c) 2004 - Jason L. Buberel - jason@buberel.org
 # Copyright (c) 2007 - Evan Boggs - etboggs@indiana.edu
-# Home page: http://www.buberel.org/linux/batch-flac-to-ogg-converter.php
+# Previous Home page (gone now): 
+#   http://www.buberel.org/linux/batch-flac-to-ogg-converter.php
 #
 # Modified: 2018-12-05 - Cleaned up code, refactored
 # Modified: 2011-07-26 - Harald Hope - Added patch for $ in file names; 
@@ -91,7 +92,6 @@ my $LINE_LARGE = "--------------------------------------------------------------
 # config files:
 # SOURCE_DIRECTORY=/home/fred/music/flac
 # DESTINATION_DIRECTORY=/home/fred/music/ogg
-# DESTINATION_DIRECTORY=/home/me/music/flac
 #
 # It's highly recommended to create a config file so you don't have to
 # update the values below every time acxi updates.
@@ -112,6 +112,7 @@ my $COMMAND_METAFLAC = '/usr/bin/metaflac';
 ##  $SOURCE_DIRECTORY is the original, working, like flac, wav, etc
 ##  $DESTINATION_DIRECTORY is the processed, ie, ogg, mp3
 ##  CHANGE TO FIT YOUR SYSTEM - do not end in /
+## IMPORTANT: DESTINATION_DIRECTORY cannot be in SOURCE_DIRECTORY
 my $SOURCE_DIRECTORY = '/path/to/source/directory';
 my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
 
@@ -131,13 +132,12 @@ my $OUTPUT_TYPE = 'ogg';
 my $COPY_TYPES = 'bmp,doc,docx,gif,jpg,jpeg,odt,pdf,png,tif,txt';
 
 # You can turn these to always on either here or in config file by setting to 
-# desired verbosity level here directly. 
+# desired verbosity level here directly, or in config file. 
 # 0 = quiet/silent - no output at all; 
 # 1 = default - single line per operation. This is the default, so you don't need 
 #     to change it.
 # 2 = verbose - but without the actual conversion data from codecs
 # 3 = debug -  all available information.
-# or in config file
 my $LOG_LEVEL = 1;
 
 #########################################################################
@@ -150,6 +150,7 @@ sub error_handler {
 	my ($br,$error_no,$error_text) = ("\n",0,'');
 	if ($error eq 'unsupported-type'){$error_no = 2;}
 	elsif ($error eq 'dest-dir'){$error_no = 1;}
+	elsif ($error eq 'dest-in-src-dir'){$error_no = 9;}
 	elsif ($error eq 'missing-app'){$error_no = 3;}
 	elsif ($error eq 'quality-invalid'){$error_no = 4;}
 	elsif ($error eq 'bad-level'){$error_no = 5;}
@@ -251,6 +252,9 @@ sub validate_src_dest_directories {
 	} 
 	elsif ( $LOG_LEVEL > 0 ) {
 		print "Directories: exist\n";
+	}
+	if (!$b_missing_dir && $DESTINATION_DIRECTORY =~ /$SOURCE_DIRECTORY/){
+		error_handler('dest-in-src-dir',"Destination directory cannot be inside Source directory!");
 	}
 }
 sub validate_application_paths {
