@@ -1,3 +1,17 @@
+README for acxi - a comand line audio file conversion tool
+
+The 3.0 release (2018-12-07, long delayed) features improved error
+handling, extra --test option to test your configurations before
+actually running the sync live, improved output formatting, the 
+ability to have your target (compressed, lossy) directory inside 
+your source directory, and modernized Perl 5. The Perl runs with
+warnings/strict mode enabled as well. For the first time ever, a 
+man page is included. Some tagging bugs were also fixed for mp3
+generation. 
+
+========================================================================
+ABOUT
+------------------------------------------------------------------------
 acxi is a simple tool that syncs/converts lossless (flac, wav, raw) 
 music libraries to compressed (ogg,mp3) versions of the lossless 
 library.
@@ -18,6 +32,23 @@ and source directories, and and so on. You can add or remove these
 file types using either top configuration, configuration file, or 
 program option (-c).
 
+========================================================================
+DEPENDENCIES
+------------------------------------------------------------------------
+For backward compatibility, acxi requires only Perl 5.010 (or newer), 
+so it should run on anything. Several features (copy, make directory, 
+find files) were moved from *nix commands to Perl native commands.
+
+Ogg encoding requires oggenc (Debian/Ubuntu package: vorbis-tools).
+MP3 encoding requires: lame and flac (if source file is a flac).
+
+In theory, acxi 3.x should run on Windows and Macs, but I have not
+tested that, but as long as the source/destination directory paths and
+the application paths are correct, it should 'just work'.
+
+========================================================================
+CONFIGURATION
+------------------------------------------------------------------------
 acxi supports configuration files at either /etc/acxi.conf, or user
 override files $XDG_CONFIG_HOME/acxi.conf, $HOME/.acxi.conf, or 
 $HOME/.config/acxi.conf. The user configuration values override any
@@ -27,4 +58,10 @@ See the top of acxi, or the man page, for instructions on how to
 create the configuration items.
 
 You must at a minimum set your source and destination directories the
-first time you run acxi.
+first time you run acxi, either using the -o and -s options, or in 
+the USER VARIABLES section on the top of the file, or in a 
+configuration file.
+
+acxi defaults to using ogg level 7 for output, and flac for input,
+and copies most common file types (which can be changed with -c or
+configuration values).

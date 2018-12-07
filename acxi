@@ -66,7 +66,7 @@ use File::Copy qw(copy);
 ## SELF INFO
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.0.0';
-my $SELF_DATE = '2018-12-06';
+my $SELF_DATE = '2018-12-07';
 
 ## GLOBALS
 my ($B_DEST_CHANGED,$B_FORCE,$B_QUIET,$B_TEST);
@@ -199,14 +199,14 @@ sub set_display_output_data {
 sub validate_start_text {
 	if ( $LOG_LEVEL > 0 ) {
 		eval $PRINT_LINE_HEAVY;
-		print "Running $SELF_NAME pretests...\n";
+		print "Running $SELF_NAME pretests.\n";
 	}
 }
 sub validate_in_out_types {
 	my ($b_type_unsupported, $error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		eval $PRINT_LINE_LARGE;
-		print "Checking input and output types... ";
+		print dotify("Checking input and output types");
 	}
 	if ( $INPUT_TYPE !~ m/^(flac|wav|raw)$/i ){
 		$b_type_unsupported = 1;
@@ -234,7 +234,7 @@ sub validate_src_dest_directories {
 	my ($b_missing_dir, $missing_dirs) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		eval $PRINT_LINE_LARGE;
-		print "Checking source / destination directories... ";
+		print dotify("Checking source / destination directories");
 	}
 	if ( ! -d "$SOURCE_DIRECTORY" ){
 		$b_missing_dir = 1;
@@ -261,17 +261,17 @@ sub validate_src_dest_directories {
 sub validate_application_paths {
 	my ($b_missing_app, $error_message, $app_paths) = (0,'',''); 
 	if ( $LOG_LEVEL > 0 ) {
-		print "Checking audio conversion tool path... ";
+		print dotify("Checking audio conversion tool path");
 	}
 	if ( $OUTPUT_TYPE eq 'ogg' ) {
-		$app_paths .= "$COMMAND_OGG ";
+		$app_paths .= "\n $COMMAND_OGG";
 		if ( ! -x "$COMMAND_OGG" ) {
 			$b_missing_app = 1;
 			$error_message .= "\n  Encoding application not available: $COMMAND_OGG";
 		}
 	}
 	elsif ( $OUTPUT_TYPE eq 'mp3' ) {
-		$app_paths .= "$COMMAND_LAME ";
+		$app_paths .= "\n $COMMAND_LAME ";
 		if ( ! -x "$COMMAND_LAME" ) {
 			$b_missing_app = 1;
 			$error_message .= "\n  Encoding application not available: $COMMAND_LAME";
@@ -307,7 +307,7 @@ sub validate_application_paths {
 sub validate_quality{
 	my ($b_bad_quality, $error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
-		print "Checking quality support for $OUTPUT_TYPE... ";
+		print dotify("Checking quality support for $OUTPUT_TYPE");
 	}
 	if ( lc($OUTPUT_TYPE) eq 'ogg' && $QUALITY !~ m/^([1-9]|10)$/ ) {
 		$b_bad_quality = 1;
@@ -329,7 +329,7 @@ sub validate_quality{
 sub validate_log_level {
 	my ($b_bad_level, $error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
-		print "Checking log/screen output level... ";
+		print dotify("Checking log/screen output level");
 	}
 	if ( $LOG_LEVEL !~ m/^([0-3])$/ ) {
 		$b_bad_level = 1;
@@ -356,7 +356,7 @@ sub sync_music_collections {
 		print "        $SOURCE_DIRECTORY (source)...\n";
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
-		print "Starting sync of $SOURCE_DIRECTORY to $DESTINATION_DIRECTORY...\n";
+		print "Starting sync of $SOURCE_DIRECTORY\n to $DESTINATION_DIRECTORY\n";
 	}
 	sync_collection_directories();
 	$LIST_TYPE = 'file';
@@ -370,13 +370,13 @@ sub sync_music_collections {
 			print "PROCESSING DATA TYPE: $EXTENSION\n";
 		}
 		elsif ( $LOG_LEVEL > 0 ) {
-			print "\nProcessing $EXTENSION data type... ";
+			print "\n" . dotify("Processing $EXTENSION data type");
 		}
 		if (@FOUND_LIST){
 			sync_collection_files();
 		}
 		else {
-			print_not_found('files');
+			print_not_found('extension');
 		}
 	}
 }
@@ -391,7 +391,7 @@ sub sync_collection_directories {
 		print "Checking if $SELF_NAME needs to create destination directories...\n";
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
-		print "Updating destination directories... ";
+		print dotify("Updating destination directories");
 	}
 	foreach $dir (@FOUND_LIST) {
 		#print "\nd1:$dir\n";
@@ -469,7 +469,7 @@ sub sync_collection_files {
 				}
 				elsif ( $LOG_LEVEL > 0 ) {
 					# add line break only when file exists
-					print "\nEncoding $src_file to $OUTPUT_TYPE...";
+					print dotify("\nEncoding $src_file to $OUTPUT_TYPE");
 				}
 				if ( $OUTPUT_TYPE eq 'ogg' ){
 					$action = 'To ogg';
@@ -546,6 +546,8 @@ sub get_flac_tags {
 	# print Dumper \%tag_list;
 	return %tag_list;
 }
+
+### UTILITIES ###
 # NOTE: File::Find will not follow symbolic links
 sub wanted {
 	return if -l; # skip symbolic links
@@ -561,16 +563,27 @@ sub wanted {
 	push (@FOUND_LIST, $File::Find::name);
 	return;
 }
-
+sub dotify {
+	my $string = $_[0];
+	while (length($string) < 53){
+		$string .= '.';
+	}
+	$string .= ' ';
+	return $string;
+}
 sub print_not_found {
 	my ($message,$none);
 	if ( $_[0] eq 'files'){
-		$message = "No files to process of type: $EXTENSION\n";
-		$none = "None found.";
+		$message = "No files to update of type: $EXTENSION\n";
+		$none = "None to update";
+	}
+	elsif ( $_[0] eq 'extension'){
+		$message = "No files found of type: $EXTENSION\n";
+		$none = "None found";
 	}
 	else {
 		$message = "No new directories required. Continuing...\n";
-		$none = "None required.";
+		$none = "None required";
 	}
 	if ( $LOG_LEVEL > 1 ) {
 		print $message;
