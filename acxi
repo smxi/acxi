@@ -479,7 +479,7 @@ sub sync_collection_files {
 				elsif ( $OUTPUT_TYPE eq 'mp3' ){
 					$action = 'To mp3';
 					# Modified: Odd @2011-03-23 01:51:26 - Include ID3 copying
-					$cmd = flac2mp3_cmd( $COMMAND_FLAC, "$src_file", $COMMAND_LAME, $QUALITY, "$dest_file" );
+					$cmd = flac2mp3_cmd("$src_file","$dest_file");
 					qx($cmd);
 					$result = $?;
 				}
@@ -524,15 +524,15 @@ sub print_not_found {
 
 # Added: Odd @2011-03-23 01:52:31
 sub flac2mp3_cmd {
-	my ($flac, $i_file, $lame, $quality, $o_file) = @_;
+	my ($i_file, $o_file) = @_;
 	my %tags = get_flac_tags("$i_file", ("ARTIST", "ALBUM", "TITLE", 
 	"GENRE", "DATE", "TRACKNUMBER"));
 	# print Dumper \%tags;
 	my $lame_params = "--ta \"$tags{'ARTIST'}\" --tl \"$tags{'ALBUM'}\"";
 	$lame_params .= " --tt \"$tags{'TITLE'}\" --tg \"$tags{'GENRE'}\"";
 	$lame_params .= " --ty \"$tags{'DATE'}\" --tn \"$tags{'TRACKNUMBER'}\" - \"$o_file\"";
-	my $cmd = "$flac $SILENT_ARG_FO -d -c \"$i_file\" | ";
-	$cmd .= "$lame $SILENT_ARG_LAME -h -V $quality $lame_params";
+	my $cmd = "$COMMAND_FLAC $SILENT_ARG_FO -d -c \"$i_file\" | ";
+	$cmd .= "$COMMAND_LAME $SILENT_ARG_LAME -h -V $QUALITY $lame_params";
 	return $cmd;
 }
 
