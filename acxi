@@ -2,18 +2,18 @@
 #########################################################################
 # acxi - audio conversion program
 #########################################################################
-# fork to acxi:
+
 # Copyright (c) 2010-2018 - Harald Hope - smxi.org 
-# home page: https://github.com/smxi/acxi
-# forum support: http://techpatterns.com/forums/about1491.html
-# download url: http://smxi.org/acxi
+# Home page: https://github.com/smxi/acxi
+# Forum support: http://techpatterns.com/forums/about1491.html
+# Download url: http://smxi.org/acxi
 #
 # Based on flac2ogg.pl
 # Copyright (c) 2004 - Jason L. Buberel - jason@buberel.org
 # Copyright (c) 2007 - Evan Boggs - etboggs@indiana.edu
-# home page: http://www.buberel.org/linux/batch-flac-to-ogg-converter.php
+# Home page: http://www.buberel.org/linux/batch-flac-to-ogg-converter.php
 #
-# Modified: 2018-12-05 - Cleaned up code, added use version
+# Modified: 2018-12-05 - Cleaned up code, refactored
 # Modified: 2011-07-26 - Harald Hope - Added patch for $ in file names; 
 #   changed verbosity levels to fit future 3 release, got rid of 
 #   $B_SILENT and $B_QUIET
@@ -33,42 +33,47 @@
 #
 # Get the full text of the GPL here: http://www.gnu.org/licenses/gpl.txt
 #########################################################################
-#########################################################################
-# Given a source directory tree of original data files (flac, wav, etc), 
-# this program will recreate (or add to) a new directory tree of Ogg 
-# files by recursively encoding only new source files to destination types.
+# Given a source directory tree of original lossless music files 
+# (flac, wav, etc), this program will recreate (or add to) a new 
+# directory tree of ogg/mp3 files by recursively encoding only new 
+# source files to destination types.
 # The source and destination directories can be hard-coded using the 
-# $DIR_SOURCE and $DIR_DESTINATION variables or passed on the 
-# command line.  
+# $SOURCE_DIRECTORY and $DESTINATION_DIRECTORY variables, or passed on 
+# the command line, or can be set in the configuration file (recommended).  
 #
 # User config file at $HOME/.acxi.conf or $HOME/.config/acxi.conf or
 # global /etc/acxi.conf, set values like this:
-# DIR_DESTINATION=/home/me/music/flac
+# DESTINATION_DIRECTORY=/home/me/music/flac
 # It's highly recommended to create a config file so you don't have to
 # update the values below every time acxi updates.
+
 #########################################################################
 ### NO USER CHANGES IN THIS SECTION ###
 #########################################################################
 use strict;
 use warnings;
 # use diagnostics;
-use 5.008;
+use 5.010;
 use Getopt::Long qw(GetOptions);
 use File::stat;
+use File::Find;
+use File::Copy qw(copy);
+use Data::Dumper qw(Dumper);
+
+#########################################################################
+### PROGRAM GLOBALS - DO NOT TOUCH THESE! ###
+#########################################################################
 
 ## SELF INFO
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.0.0';
-my $SELF_DATE = '2018-12-05';
+my $SELF_DATE = '2018-12-06';
 
 ## GLOBALS
 my ($B_DEST_CHANGED,$B_FORCE,$B_QUIET);
-my $PRINT_LINE_HEAVY;
-my $PRINT_LINE_LARGE;
-my $PRINT_LINE_SMALL;
-my $SILENT_ARG_FO;
-my $SILENT_ARG_LAME;
-my $USER_TYPES;
+my ($PRINT_LINE_HEAVY,$PRINT_LINE_LARGE,$PRINT_LINE_SMALL);
+my ($SILENT_ARG_FO,$SILENT_ARG_LAME) = ('','');
+my ($EXTENSION,@EXTENSION_LIST,@FOUND_LIST,$LIST_TYPE);
 
 ## CONSTANTS
 my $LINE_HEAVY = "===========================================================================\n";
@@ -76,17 +81,16 @@ my $LINE_SMALL = "--------------------------------------------------------------
 my $LINE_LARGE = "---------------------------------------------------------------------------\n";
 
 #########################################################################
-### USER MODIFIABLE VALUES ###
+### BEGIN USER MODIFIABLE VALUES ###
 #########################################################################
-#
 # These can also be set in $HOME/.acxi.conf or $HOME/.config/acxi.conf 
 # or /etc/acxi.conf if you prefer
 # Anything in configs or in this section will be overridden if you use
 # an option.
 # Do not use the $ or @ preceding the variable name, or the semicolon 
 # or " quote marks in the config file. Use this syntax for config files:
-# DIR_SOURCE=/home/fred/music/flac
-# DIR_DESTINATION=/home/fred/music/ogg
+# SOURCE_DIRECTORY=/home/fred/music/flac
+# DESTINATION_DIRECTORY=/home/fred/music/ogg
 ## APPLICATION PATHS
 my $COMMAND_OGG = '/usr/bin/oggenc';
 my $COMMAND_FLAC = '/usr/bin/flac'; 
@@ -97,12 +101,11 @@ my $COMMAND_LAME = '/usr/bin/lame';
 my $COMMAND_METAFLAC = '/usr/bin/metaflac';
 
 ## ASSIGN MUSIC SOURCE/DESTINATION DIRECTORY PATHS
-##  $DIR_SOURCE is the original, working, like flac, wav, etc
-##  $DIR_DESTINATION is the processed, ie, ogg, mp3
+##  $SOURCE_DIRECTORY is the original, working, like flac, wav, etc
+##  $DESTINATION_DIRECTORY is the processed, ie, ogg, mp3
 ##  CHANGE TO FIT YOUR SYSTEM - do not end in /
-my $DIR_SOURCE = '/path/to/source/directory';
-my $DIR_DESTINATION = '/path/to/your/output/directory';
-# Change if you want these to default to different things
+my $SOURCE_DIRECTORY = '/path/to/source/directory';
+my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
 
 ## INPUT/OUTPUT
 my $QUALITY = 7;
@@ -110,16 +113,14 @@ my $QUALITY = 7;
 # found
 my $INPUT_TYPE = 'flac';
 my $OUTPUT_TYPE = 'ogg';
-## NOTE: if you want to override @COPY_TYPES in your config files, you
-# must use this syntax in your config file:
-# USER_TYPES=doc,docx,bmp,jpg,jpeg
+## NOTE: if you want to override $COPY_TYPES in your config files, you
+# must use this syntax:
+# COPY_TYPES=doc,docx,bmp,jpg,jpeg
 # Add or remove types to copy over to ogg directories, do not include
-# the input/output types, only extra data types like txt.
-# If you want no copying done, simply change this to:
-# @COPY_TYPES = ();
-# Or if you want to remove or add an extension, do (NO DOTS):
-my @COPY_TYPES = qw(bmp doc docx gif jpg jpeg odt pdf png tif txt);
-##
+# the input/output audio file types, only extra data types like txt.
+# If you want no copying done, simply change to: $COPY_TYPES = 'none';
+my $COPY_TYPES = 'bmp,doc,docx,gif,jpg,jpeg,odt,pdf,png,tif,txt';
+
 # You can turn these to always on either here or in config file by setting to 
 # desired verbosity level here directly. 
 # 0 = quiet/silent - no output at all; 
@@ -127,7 +128,7 @@ my @COPY_TYPES = qw(bmp doc docx gif jpg jpeg odt pdf png tif txt);
 #     to change it.
 # 2 = verbose - but without the actual conversion data from codecs
 # 3 = debug -  all available information.
-# or in config file (note no $, ;, and no quotes): LOG_LEVEL=2
+# or in config file
 my $LOG_LEVEL = 1;
 
 #########################################################################
@@ -137,22 +138,26 @@ my $LOG_LEVEL = 1;
 ### MAIN - FUNCTIONS ###
 sub error_handler {
 	my ($error,$message) = @_;
-	my ($errorNo,$errorText) = (0,'');
-	if ($error eq 'unsupported-type'){$errorNo = 2;}
-	elsif ($error eq 'dest-dir'){$errorNo = 1;}
-	elsif ($error eq 'missing-app'){$errorNo = 3;}
-	elsif ($error eq 'quality-invalid'){$errorNo = 4;}
-	elsif ($error eq 'bad-level'){$errorNo = 5;}
-	print "\nError $errorNo - Exiting.$message";
-	exit $errorNo;
+	my ($error_no,$error_text) = (0,'');
+	if ($error eq 'unsupported-type'){$error_no = 2;}
+	elsif ($error eq 'dest-dir'){$error_no = 1;}
+	elsif ($error eq 'missing-app'){$error_no = 3;}
+	elsif ($error eq 'quality-invalid'){$error_no = 4;}
+	elsif ($error eq 'bad-level'){$error_no = 5;}
+	elsif ($error eq 'stat-infile'){$error_no = 6;}
+	elsif ($error eq 'missing-arg'){$error_no = 7;$message = "Option: $message\n"}
+	print "\nError $error_no - Exiting. $message";
+	exit $error_no;
 }
 
 ### SET DATA ###
-sub set_user_types {
+sub set_basic_data {
 	# if --copy/-c is set, then use that data instead of default copy types
-	if ( $USER_TYPES ){
-		@COPY_TYPES = split( /,\s*/, $USER_TYPES );
+	if ( defined $COPY_TYPES ){
+		@EXTENSION_LIST = split( /,\s*/, $COPY_TYPES );
 	}
+	$DESTINATION_DIRECTORY =~ s|/$||;
+	$SOURCE_DIRECTORY =~ s|/$||;
 }
 sub set_display_output_data {
 	if ( $LOG_LEVEL < 3 ) {
@@ -178,25 +183,28 @@ sub set_display_output_data {
 
 ### VALIDATIONS ###
 sub validate_in_out_types {
-	my ($bTypeUnsupported, $errorMessage) = (0,'');
+	my ($b_type_unsupported, $error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		eval $PRINT_LINE_LARGE;
 		print "Checking input and output types... ";
 	}
 	if ( $INPUT_TYPE !~ m/^(flac|wav|raw)$/ ){
-		$bTypeUnsupported = 1;
-		$errorMessage .= "\n\tThe input type you entered is not supported: $INPUT_TYPE\n";
+		$b_type_unsupported = 1;
+		$error_message .= "\n\tThe input type you entered is not supported: ";
+		$error_message .= "$INPUT_TYPE\n";
 	}
 	if ( $OUTPUT_TYPE !~ m/^(ogg|mp3)$/ ){
-		$bTypeUnsupported = 1;
-		$errorMessage .= "\n\tThe output type you entered is not supported: $OUTPUT_TYPE\n";
+		$b_type_unsupported = 1;
+		$error_message .= "\n\tThe output type you entered is not supported: ";
+		$error_message .= "$OUTPUT_TYPE\n";
 		if ( $OUTPUT_TYPE eq 'mp3' && $INPUT_TYPE ne 'flac' ){
-			$bTypeUnsupported = 1;
-			$errorMessage .= "\n\tThe output type $OUTPUT_TYPE you entered currently only supports input type: flac\n";
+			$b_type_unsupported = 1;
+			$error_message .= "\n\tThe output type $OUTPUT_TYPE you entered ";
+			$error_message .= "currently only supports input type: flac\n";
 		}
 	}
-	if ( $bTypeUnsupported ){
-		error_handler('unsupported-type',$errorMessage);
+	if ( $b_type_unsupported ){
+		error_handler('unsupported-type',$error_message);
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
 		print "Valid: $INPUT_TYPE(in) $OUTPUT_TYPE(out)\n";
@@ -205,107 +213,115 @@ sub validate_in_out_types {
 sub validate_start_text {
 	if ( $LOG_LEVEL > 0 ) {
 		eval $PRINT_LINE_HEAVY;
-		print "Checking script data for errors...\n";
+		print "Running $SELF_NAME pretests...\n";
 	}
 }
 sub validate_src_dest_directories {
-	my ($bMissingDir, $missingDirs);
+	my ($b_missing_dir, $missing_dirs) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		eval $PRINT_LINE_LARGE;
 		print "Checking source / destination directories... ";
 	}
-	if ( ! -d "$DIR_SOURCE" ){
-		$bMissingDir = 1;
-		$missingDirs = "\n\tSource Directory: $DIR_SOURCE";
+	if ( ! -d "$SOURCE_DIRECTORY" ){
+		$b_missing_dir = 1;
+		$missing_dirs .= "\n\tSource Directory: $SOURCE_DIRECTORY";
 	}
-	if ( ! -d "$DIR_DESTINATION" ){
-		$bMissingDir = 1;
-		$missingDirs = "$missingDirs\n\tDestination Directory: $DIR_DESTINATION";
+	if ( ! -d "$DESTINATION_DIRECTORY" ){
+		$b_missing_dir = 1;
+		$missing_dirs .= "$missing_dirs\n\tDestination Directory: $DESTINATION_DIRECTORY";
 	}
-	if ( $bMissingDir ) {
-		my $errorMessage = "The paths for the following required directories do not exist on your system:";
-		$errorMessage .= "$missingDirs";
-		$errorMessage .= "\nUnable to continue. Please check the directory paths you provided.\n\n";
-		error_handler('dest-dir',$errorMessage);
+	if ( $b_missing_dir ) {
+		my $error_message = "The paths for the following required directories ";
+		$error_message .= "do not exist on your system:";
+		$error_message .= "$missing_dirs";
+		$error_message .= "\nUnable to continue. Please check the directory paths ";
+		$error_message .= "you provided.\n\n";
+		error_handler('dest-dir',$error_message);
 	} 
 	elsif ( $LOG_LEVEL > 0 ) {
 		print "Directories: exist\n";
 	}
 }
 sub validate_application_paths {
-	my ($bMissingApp, $errorMessage, $appPaths) = (0,'',''); 
+	my ($b_missing_app, $error_message, $app_paths) = (0,'',''); 
 	if ( $LOG_LEVEL > 0 ) {
 		print "Checking audio conversion tool path... ";
 	}
 	if ( $OUTPUT_TYPE eq 'ogg' ) {
-		$appPaths .= "$COMMAND_OGG ";
+		$app_paths .= "$COMMAND_OGG ";
 		if ( ! -x "$COMMAND_OGG" ) {
-			$bMissingApp = 1;
-			$errorMessage = "\n\tEncoding application not available: $COMMAND_OGG\n";
+			$b_missing_app = 1;
+			$error_message .= "\n\tEncoding application not available: $COMMAND_OGG\n";
 		}
 	}
-	if ( $OUTPUT_TYPE eq 'mp3' ) {
-		$appPaths .= "$COMMAND_LAME ";
+	elsif ( $OUTPUT_TYPE eq 'mp3' ) {
+		$app_paths .= "$COMMAND_LAME ";
 		if ( ! -x "$COMMAND_LAME" ) {
-			$bMissingApp = 1;
-			$errorMessage .= "\n\tEncoding application not available: $COMMAND_LAME\n";
+			$b_missing_app = 1;
+			$error_message .= "\n\tEncoding application not available: $COMMAND_LAME\n";
+		}
+		if ($INPUT_TYPE eq 'flac') {
+			$app_paths .= "$COMMAND_FLAC ";
+			if ( ! -x "$COMMAND_FLAC" ) {
+				$b_missing_app = 1;
+				$error_message .= "\n\tInput processor $COMMAND_FLAC needed by lame ";
+				$error_message .= "not available.\n";
+			}
+			$app_paths .= "$COMMAND_METAFLAC ";
+			# Added: Odd @2011-03-23 01:55:28
+			if ( ! -x "$COMMAND_METAFLAC" ) {
+				$b_missing_app = 1;
+				$error_message .= "\n\t$COMMAND_METAFLAC not found. Required to copy ";
+				$error_message .= "ID3 tags from Flac to MP3.\n";
+			}
+		}
+		else {
+			$b_missing_app = 1;
+			$error_message .= "\n\t$COMMAND_LAME currently only supports ";
+			$error_message .= "flac as input.\n";
 		}
 	}
-	if ( $OUTPUT_TYPE eq 'mp3' && $INPUT_TYPE eq 'flac' ) {
-		$appPaths .= "$COMMAND_FLAC ";
-		if ( ! -x "$COMMAND_FLAC" ) {
-			$bMissingApp = 1;
-			$errorMessage .= "\n\tInput processor $COMMAND_FLAC needed by lame not available.\n";
-		}
-		$appPaths .= "$COMMAND_METAFLAC ";
-		# Added: Odd @2011-03-23 01:55:28
-		if ( ! -x "$COMMAND_METAFLAC" ) {
-			$bMissingApp = 1;
-			$errorMessage .= "\n\t$COMMAND_METAFLAC not found. Required to copy ID3 tags from Flac to MP3.\n";
-		}
-	}
-	elsif ( $OUTPUT_TYPE eq 'mp3' && $INPUT_TYPE ne 'flac' ) {
-		$bMissingApp = 1;
-		$errorMessage .= "\n\t$COMMAND_LAME currently only supports flac as input.\n";
-	}
-	if ( $bMissingApp ) {
-		error_handler('missing-app',$errorMessage);
+	if ( $b_missing_app ) {
+		error_handler('missing-app',$error_message);
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
-		print "Available: $appPaths\n";
+		print "Available: $app_paths\n";
 	}
 }
 sub validate_quality{
-	my ($bBadQuality, $errorMessage);
+	my ($b_bad_quality, $error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		print "Checking quality support for $OUTPUT_TYPE... ";
 	}
-	if ( $OUTPUT_TYPE eq 'ogg' && $QUALITY !~ m/^([1-9]|10)$/ ) {
-		$bBadQuality = 1;
-		$errorMessage = "$errorMessage\n\t$OUTPUT_TYPE only supports 1-10 quality. You entered: $QUALITY\n";
+	if ( lc($OUTPUT_TYPE) eq 'ogg' && $QUALITY !~ m/^([1-9]|10)$/ ) {
+		$b_bad_quality = 1;
+		$error_message .= "\n\t$OUTPUT_TYPE only supports ";
+		$error_message .= "1-10 quality. You entered: $QUALITY\n";
 	}
-	elsif ( $OUTPUT_TYPE eq 'mp3' && $QUALITY !~ m/^([0-9])$/ ) {
-		$bBadQuality = 1;
-		$errorMessage = "$errorMessage\n\t$OUTPUT_TYPE only supports 0-9 quality. You entered: $QUALITY\n";
+	elsif ( lc($OUTPUT_TYPE) eq 'mp3' && $QUALITY !~ m/^([0-9])$/ ) {
+		$b_bad_quality = 1;
+		$error_message .= "\n\t$OUTPUT_TYPE only supports 0-9 quality. ";
+		$error_message .= "You entered: $QUALITY\n";
 	}
-	if ( $bBadQuality ) {
-		error_handler('quality-invalid',$errorMessage);
+	if ( $b_bad_quality ) {
+		error_handler('quality-invalid',$error_message);
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
 		print "Supported: $QUALITY\n";
 	}
 }
 sub validate_log_level {
-	my ($bBadLevel, $errorMessage);
+	my ($b_bad_level, $error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		print "Checking log/screen output level... ";
 	}
 	if ( $LOG_LEVEL !~ m/^([0-3])$/ ) {
-		$bBadLevel = 1;
-		$errorMessage = "$errorMessage\n\tLOG_LEVEL only supports 0-3. You used: $LOG_LEVEL\n";
+		$b_bad_level = 1;
+		$error_message .= "\n\tLOG_LEVEL only supports 0-3. ";
+		$error_message .= "You used: $LOG_LEVEL\n";
 	}
-	if ( $bBadLevel ) {
-		error_handler('bad-level',$errorMessage);
+	if ( $b_bad_level ) {
+		error_handler('bad-level',$error_message);
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
 		print "Supported: $LOG_LEVEL\n";
@@ -314,181 +330,227 @@ sub validate_log_level {
 
 ### SYNC MUSIC DIRECTORIES ###
 sub sync_music_collections {
-	my ($extension,@extensions,@extensionFiles);
-	# set the @COPY_TYPES if required by -c/--copy override
-	set_user_types();
-	@extensions = (@COPY_TYPES,$INPUT_TYPE);
+	my (@extension_files);
+	# set the @EXTENSION_LIST if required by -c/--copy override
+	set_basic_data();
+	@EXTENSION_LIST = (@EXTENSION_LIST,$INPUT_TYPE);
 	eval $PRINT_LINE_HEAVY;
 	if ( $LOG_LEVEL > 1 ) {
-		print "Syncing $DIR_DESTINATION (destination) with\n";
-		print "        $DIR_SOURCE (source)...\n";
+		print "Syncing $DESTINATION_DIRECTORY (destination) with\n";
+		print "        $SOURCE_DIRECTORY (source)...\n";
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
-		print "Starting sync of $DIR_DESTINATION with $DIR_SOURCE...\n";
+		print "Starting sync of $SOURCE_DIRECTORY to $DESTINATION_DIRECTORY...\n";
 	}
 	sync_collection_directories();
-	foreach $extension (@extensions) {
-		@extensionFiles = qx(cd "$DIR_SOURCE" && find . -type f -iname "*.$extension" -print);
+	$LIST_TYPE = 'file';
+	foreach (@EXTENSION_LIST) {
 		eval $PRINT_LINE_LARGE;
+		$EXTENSION = $_;
+		@FOUND_LIST = ();
+		File::Find::find( \&wanted, $SOURCE_DIRECTORY);
 		if ( $LOG_LEVEL > 1 ) {
-			print "PROCESSING DATA TYPE: $extension\n";
+			print "PROCESSING DATA TYPE: $EXTENSION\n";
 		}
 		elsif ( $LOG_LEVEL > 0 ) {
-			print "\nProcessing $extension data type...  ";
+			print "\nProcessing $EXTENSION data type... ";
 		}
-		sync_collection_files($extension,@extensionFiles);
+		if (@FOUND_LIST){
+			sync_collection_files();
+		}
+		else {
+			print_not_found('files');
+		}
 	}
 }
 # Recreate the directory hierarchy.
 sub sync_collection_directories {
-	my ($bDirCreated,$dir,$result );
-	my @dirs = qx(cd "$DIR_SOURCE" && find . -type d -print);
-	
+	my ($b_created,$dest_dir,$dir,$result);
+	$LIST_TYPE = 'dir';
+	File::Find::find( \&wanted, "$SOURCE_DIRECTORY");
 	eval $PRINT_LINE_LARGE;
 	if ( $LOG_LEVEL > 1 ) {
-		print "Checking to see if script needs to create new destination directories...\n";
+		print "Checking if $SELF_NAME needs to create destination directories...\n";
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
-		print "Update destination directories... ";
+		print "Updating destination directories... ";
 	}
-	foreach $dir (@dirs) {
-		$dir =~ s/\n$//;
-		$dir =~ s/^\.\///;
+	foreach $dir (@FOUND_LIST) {
+		#print "\nd1:$dir\n";
+		$result = 'UNSET';
+		next if $dir eq $SOURCE_DIRECTORY;
+		$dir =~ s/^\.\///; # delete any dot file directories
+		$dir =~ s|^$SOURCE_DIRECTORY/||; # strip out source path
+		next if !$dir;
+		$dest_dir = "$DESTINATION_DIRECTORY/$dir";
+		#print "d2:$dir\n";
 		# check to see if the destination dir already exists
-		if ( !(stat ("$DIR_DESTINATION/$dir")) ) {
+		if ( ! stat("$dest_dir") ) {
 			# stat failed so create the directory
 			eval $PRINT_LINE_SMALL;
 			if ( $LOG_LEVEL > 1 ) {
-				print "CREATING NEW DIRECTORY:\n\t$DIR_DESTINATION/$dir\n";
+				print "CREATING NEW DIRECTORY:\n\t$dest_dir\n";
 			}
 			elsif ( $LOG_LEVEL > 0 ) {
-				print "\nCreating new directory: $dir";
+				print "\nCreating new directory: $dest_dir";
 			}
-			$dir =~ s/\`/\'/g;
-			$result = qx(cd "$DIR_DESTINATION" && mkdir -p "$dir");
-			$bDirCreated = 1;
+			$dest_dir =~ s/\`/\'/g; # get rid of weird characters
+			$result = mkdir("$dest_dir");
+			$b_created = 1;
 			$B_DEST_CHANGED = 1;
+			print "Create Directory result: $result\n" if $LOG_LEVEL > 1;
 		}
 	}
-	if ( ! $bDirCreated ){
-		if ( $LOG_LEVEL > 1 ) {
-			print "No new directories required. Continuing...\n";
-		}
-		elsif ( $LOG_LEVEL > 0 ) {
-			print "None Required.";
-		}
-	}
+	print_not_found('dirs') if ! $b_created;
 }
 sub sync_collection_files {
-	my ($extension,@files) = @_;
-	my ($bFileCreated,$cmd,$result);
-	my ($file, $destinationFile,$inFile, $outFile) = ('','','','');
-	my ($srcInfo, $srcModTime, $destInfo, $destModTime ) = ('','','','');
-	foreach $file (@files) {
-		$file =~ s/\n$//;
-		$file =~ s/^\.\///;
-		#print "F: $DIR_DESTINATION/$file\n";
+	my ($b_created,$cmd,$result);
+	my ($action,$dest_file,$file,$src_file) = ('','','','');
+	my ($dest_info,$dest_mod_time,$src_info, $src_mod_time) = ('',0,'',0);
+	foreach $file (@FOUND_LIST) {
+		# $file =~ s/\n$//;
+		$file =~ s/^\.\///; # get rid of hidden files
+		next if ! $file;
+		$dest_file = $src_file = $file;
+		#print "\nIF: $src_file\n";
+		$dest_file =~ s|^$SOURCE_DIRECTORY|$DESTINATION_DIRECTORY|;
+		$dest_file =~ s/\`/\'/g;
+		# $dest_file =~ s/\$/\\\$/g;
+		# get rid of escape sequences in case someone used them: \40
+		# $src_file =~ s/\0//g; 
+		$dest_file =~ s/\0//g;
 		# Figure out what the destination file would be...
-		$destinationFile = $file;
-		if ( $extension eq $INPUT_TYPE ){
-			$destinationFile =~ s/\.$INPUT_TYPE$/\.$OUTPUT_TYPE/i;
+		if ( lc($EXTENSION) eq lc($INPUT_TYPE) ){
+			$dest_file =~ s/\.$INPUT_TYPE$/\.$OUTPUT_TYPE/i;
 		}
-		#print "D: $destinationFile\n";
+		#print "OF: $dest_file\n";
+		($result,$dest_mod_time,$src_mod_time ) = ('UNSET',0,0);
 		# Now stat the destinationFile, and see if it's date is more recent
 		# than that of the original file. If so, we re-encode.
 		# We also re-encode if the user supplied --force
-		$srcInfo = stat("$DIR_SOURCE/$file");
-		$srcModTime = $srcInfo->mtime;
-		$destInfo = stat("$DIR_DESTINATION/$destinationFile");
-		if ( $destInfo ) {
-			$destModTime = $destInfo->mtime;
-			# print "DEST_MOD: $destModTime :: SRC_MOD: $srcModTime :: FORCE: $force\n"; 
+		$src_info = stat("$src_file") or 
+		  error_handler('stat-infile', "No $src_file: $!");
+		$src_mod_time = $src_info->mtime if $src_info;
+		$dest_info = stat("$dest_file");
+		if ( $dest_info ) {
+			$dest_mod_time = $dest_info->mtime;
+			# print "DEST_MOD: $dest_mod_time :: SRC_MOD: $src_mod_time :: FORCE: $force\n"; 
 # 		} else {
 # 			print "NOT EXISTS: $destinationFile \n"; 
 # 			print "P1: $file ==> \n\t$destinationFile\n"; 
 		}
 		# If the destination file does not exist, or the user specified force,
-		# or the srcfile is more recent then the dest file, we encode.
-		if ( !$destInfo || $B_FORCE || ( $srcModTime > $destModTime) ) {
-			$file =~ s/\`/\'/g;
-			$file =~ s/\$/\\\$/g;
-			$destinationFile =~ s/\$/\\\$/g; 
-			$inFile = "$DIR_SOURCE/$file" . "c";
-			chop ($inFile);
-			$outFile = "$DIR_DESTINATION/$destinationFile" . "g";
-			chop ($outFile);
+		# or the srcfile is more recent then the dest file, we encode/copy.
+		# print "src-mt: $src_mod_time dest-mt:$dest_mod_time\n";
+		if ( !$dest_info || $B_FORCE || ( $src_mod_time > $dest_mod_time) ) {
 			eval $PRINT_LINE_SMALL;
-			if ( $extension eq $INPUT_TYPE ){
+			if ( lc($EXTENSION) eq lc($INPUT_TYPE) ){
 				if ( $LOG_LEVEL > 1 ) {
-					print "ENCODE: $file ==> \n";
-					print "        $destinationFile\n"; 
+					print "ENCODE: $src_file ==> \n";
+					print "        $dest_file\n"; 
 				}
 				elsif ( $LOG_LEVEL > 0 ) {
 					# add line break only when file exists
-					print "\nEncoding $file to $OUTPUT_TYPE...";
+					print "\nEncoding $src_file to $OUTPUT_TYPE...";
 				}
-				$inFile =~ s/\0//g; 
-				$outFile =~ s/\0//g;
 				if ( $OUTPUT_TYPE eq 'ogg' ){
-					$result = qx($COMMAND_OGG $SILENT_ARG_FO -q $QUALITY -o "$outFile" "$inFile");
+					$action = 'To ogg';
+					qx($COMMAND_OGG $SILENT_ARG_FO -q $QUALITY -o "$dest_file" "$src_file");
+					$result = $?;
 				}
 				elsif ( $OUTPUT_TYPE eq 'mp3' ){
+					$action = 'To mp3';
 					# Modified: Odd @2011-03-23 01:51:26 - Include ID3 copying
-					$cmd = flac2mp3_cmd( $COMMAND_FLAC, "$inFile", $COMMAND_LAME, $QUALITY, "$outFile" );
-					$result = qx($cmd);
+					$cmd = flac2mp3_cmd( $COMMAND_FLAC, "$src_file", $COMMAND_LAME, $QUALITY, "$dest_file" );
+					qx($cmd);
+					$result = $?;
 				}
 			} 
 			else {
+				$action = 'Copy';
 				if ( $LOG_LEVEL > 1 ) {
 					print "COPY: $file ==> \n";
-					print "      $outFile\n"; 
+					print "      $dest_file\n"; 
 				}
 				elsif ( $LOG_LEVEL > 0 ) {
 					print "\nCopying $file...";
 				}
-				$inFile =~ s/\0//g; 
-				$outFile =~ s/\0//g;
-				$result = qx(cp -f "$inFile" "$outFile");
+				$result = copy($src_file, $dest_file) or 
+				  error_handler('cp-file', "cp failure: $src_file =>\n$dest_file\nCode: $!\n");
 			}
-			$bFileCreated = 1;
+			$b_created = 1;
 			$B_DEST_CHANGED = 1;
+			print "$action result: $result\n" if $LOG_LEVEL > 1;
 		} 
 	}
-	if ( ! $bFileCreated ){
-		if ( $LOG_LEVEL > 1 ) {
-			print "No files to process of type: $extension\n";
-		}
-		elsif ( $LOG_LEVEL > 0 ) {
-			print "none found.";
-		}
+	print_not_found('files') if ! $b_created;
+}
+
+sub print_not_found {
+	my ($message,$none);
+	if ( $_[0] eq 'files'){
+		$message = "No files to process of type: $EXTENSION\n";
+		$none = "None found.";
 	}
+	else {
+		$message = "No new directories required. Continuing...\n";
+		$none = "None required.";
+	}
+	if ( $LOG_LEVEL > 1 ) {
+		print $message;
+	}
+	elsif ( $LOG_LEVEL > 0 ) {
+		print $none;
+	}
+}
+
+# Added: Odd @2011-03-23 01:52:31
+sub flac2mp3_cmd {
+	my ($flac, $i_file, $lame, $quality, $o_file) = @_;
+	my %tags = get_flac_tags("$i_file", ("ARTIST", "ALBUM", "TITLE", "GENRE", "DATE", "TRACKNUMBER"));
+	# print Dumper \%tags;
+	my $lame_params = "--ta \"$tags{'ARTIST'}\" --tl \"$tags{'ALBUM'}\" --tt \"$tags{'TITLE'}\"";
+	$lame_params .= "  --tg \"$tags{'GENRE'}\" --ty \"$tags{'DATE'}\" --tn \"$tags{'TRACKNUMBER'}\" - \"$o_file\"";
+	my $cmd = "$flac $SILENT_ARG_FO -d -c \"$i_file\" | ";
+	$cmd .= "$lame $SILENT_ARG_LAME -h -V $quality $lame_params";
+	return $cmd;
 }
 
 # Added: Odd @2011-03-23 01:52:17
 # For this function to work reliably, it should be passed tag queries in the order of:
 # artist, album, title, genre, date, tracknumber
 sub get_flac_tags {
-	my ($ifile, @tags) = @_;
-	my $cmd = "$COMMAND_METAFLAC \"$ifile\" --show-tag=\"$tags[0]\"";
+	my ($i_file, @tags) = @_;
+	my (%tag_list,@working);
+	my $cmd = "$COMMAND_METAFLAC \"$i_file\" --show-tag=\"$tags[0]\"";
 	$cmd .= " --show-tag=\"$tags[1]\" --show-tag=\"$tags[2]\" --show-tag=\"$tags[3]\"";
 	$cmd .= " --show-tag=\"$tags[4]\" --show-tag=\"$tags[5]\"";
-	my @origtags = qx($cmd);
-	foreach (@origtags) {
-		$_ =~ s/.*=//g;
+	my @orig_tags = qx($cmd);
+	chomp @orig_tags;
+	foreach (@orig_tags) {
+		@working = split /=/,$_;
+		$tag_list{$working[0]} = $working[1];
 	}
-	return @origtags;
+	# create missing hash keys
+	foreach (@tags){
+		$tag_list{$_} = '' if ! defined $tag_list{$_};
+	}
+	# print Dumper \%tag_list;
+	return %tag_list;
 }
-
-# Added: Odd @2011-03-23 01:52:31
-sub flac2mp3_cmd {
-	my ($flac, $ifile, $lame, $qual, $ofile) = @_;
-	my @tags = get_flac_tags("$ifile", "ARTIST", "ALBUM", "TITLE", "GENRE", "DATE", "TRACKNUMBER");
-	chomp(@tags);
-	my $lame_params = "--ta \"$tags[0]\" --tl \"$tags[1]\" --tt \"$tags[2]\" --tg";
-	$lame_params .= " \"$tags[3]\" --ty \"$tags[4]\" --tn \"$tags[5]\" - \"$ofile\"";
-	my $cmd = "$flac $SILENT_ARG_FO -d -c \"$ifile\" | ";
-	$cmd .= "$lame $SILENT_ARG_LAME -h -V $qual $lame_params";
-	return $cmd;
+# NOTE: File::Find will not follow symbolic links
+sub wanted {
+	return if -l; # skip symbolic links
+	if ($LIST_TYPE eq 'dir'){
+		return if ! -d; # only directories
+	}
+	else {
+		return if -d; # skip directories
+		return if $File::Find::name !~ /\.$EXTENSION$/i;
+	}
+	# print $File::Find::name . "\n";
+	push (@FOUND_LIST, $File::Find::name);
+	return;
 }
 sub completion_message {
 	eval $PRINT_LINE_HEAVY;
@@ -511,7 +573,7 @@ sub print_help {
 	# so it shows the user config data if present
 	set_config_data(); 
 	# but this should override the config data so follows
-	set_user_types();
+	set_basic_data();
 	my $output = "$SELF_NAME v: $SELF_VERSION :: Supported Options:\n";
 	$output .= "Examples: $SELF_NAME -q 8 --destination /music/main/ogg\n";
 	$output .= "$SELF_NAME --input wav --output ogg\n";
@@ -520,14 +582,14 @@ sub print_help {
 	$output .= "--copy -c         List of alternate data types to copy to Output type\n";
 	$output .= "                  directories. Must be comma separated, no spaces, \n";
 	$output .= "                  see sample above. Your current copy types are:\n";
-	$output .= "                  @COPY_TYPES\n";
+	$output .= "                  @EXTENSION_LIST\n";
 	$output .= "--debug           Full screen output, including full verbosity of \n";
 	$output .= "                  flac/oggenc/lameconversion process for MP3 or OGG output.\n";
 	$output .= "--default         Single line per operation screen output, default value for \n";
 	$output .= "                  $SELF_NAME.\n";
 	$output .= "--destination -d  Path to the directory where you want the processed\n";
 	$output .= "                  (eg, ogg) files to go.\n";
-	$output .= "                  Your current default is: $DIR_DESTINATION\n";
+	$output .= "                  Your current default is: $DESTINATION_DIRECTORY\n";
 	$output .= "--force -f        Overwrite the ogg/jpg/txt files, even if they already exist.\n";
 	$output .= "--help -h         This help menu.\n";
 	$output .= "--input -i        Input type: supported - flac, wav, raw. mp3 only supports\n";
@@ -541,7 +603,7 @@ sub print_help {
 	$output .= "                  Your current default is: $QUALITY\n";
 	$output .= "--quiet --silent  Turns off all screen output, except for error messages.\n";
 	$output .= "--source -s       Path to the top-most directory containing your source files\n";
-	$output .= "                  (eg, flac). Your current default is: $DIR_SOURCE\n";
+	$output .= "                  (eg, flac). Your current default is: $SOURCE_DIRECTORY\n";
 	$output .= "--verbose         Without full verbosity of debug, no flac/oggenc/lame for MP3\n";
 	$output .= "                  or OGG conversion process screen output, but more verbose than\n";
 	$output .= "                  default.\n";
@@ -567,17 +629,18 @@ sub print_version {
 
 ### SET PROGRAM DATA ###
 sub set_config_data {
-	my (@configFiles, $file);
+	my (@config_files, $file);
 	# set list of supported config files
-	@configFiles = ("/etc/$SELF_NAME.conf","$ENV{HOME}/.$SELF_NAME.conf",
+	@config_files = ("/etc/$SELF_NAME.conf","$ENV{HOME}/.$SELF_NAME.conf",
 	"$ENV{HOME}/.config/$SELF_NAME.conf");
-	foreach $file (@configFiles) {
+	foreach $file (@config_files) {
 		next unless -r $file && open (my $fh,'<',$file);
 		while (<$fh>) {
 			chomp;                  # no newline
 			s/#.*//;                # no comments
 			s/^\s+//;               # no leading white
 			s/\s+$//;               # no trailing white
+			s/('|"|\$|\s)//g;       # get rid of all non valid characters
 			next unless length;     # anything left?
 			my ($var, $value) = split(/\s*=\s*/, $_, 2);
 			if (defined $var && defined $value){
@@ -592,13 +655,16 @@ sub assign_config_value {
 	elsif ($var eq 'COMMAND_FLAC'){$COMMAND_FLAC = $value;}
 	elsif ($var eq 'COMMAND_LAME'){$COMMAND_LAME = $value;}
 	elsif ($var eq 'COMMAND_METAFLAC'){$COMMAND_METAFLAC = $value;}
-	elsif ($var eq 'DIR_SOURCE' || $var eq 'DIR_PREFIX_SOURCE'){$DIR_SOURCE = $value;}
-	elsif ($var eq 'DIR_DESTINATION' || $var eq 'DIR_PREFIX_DEST'){$DIR_DESTINATION = $value;}
+	elsif ($var eq 'SOURCE_DIRECTORY' || $var eq 'DIR_PREFIX_SOURCE'){
+		$SOURCE_DIRECTORY = $value;}
+	elsif ($var eq 'DESTINATION_DIRECTORY' || $var eq 'DIR_PREFIX_DEST'){
+		$DESTINATION_DIRECTORY = $value;}
 	elsif ($var eq 'INPUT_TYPE'){$INPUT_TYPE = $value;}
 	elsif ($var eq 'LOG_LEVEL'){$LOG_LEVEL = $value;}
 	elsif ($var eq 'OUTPUT_TYPE'){$OUTPUT_TYPE = $value;}
 	elsif ($var eq 'QUALITY'){$QUALITY = $value;}
-	elsif ($var eq 'USER_TYPES'){$USER_TYPES = $value;}
+	elsif ($var eq 'COPY_TYPES' || $var eq 'USER_TYPES'){
+		$COPY_TYPES = $value;}
 }
 # get defaults from user config files if present
 set_config_data();
@@ -607,30 +673,35 @@ set_config_data();
 GetOptions (
 	"c|copy:s" => sub { 
 		my ($opt,$arg) = @_;
-		$USER_TYPES = $arg;},
+		$COPY_TYPES = $arg;},
 	"debug" => sub { 
 		$LOG_LEVEL = 3 },
 	"default" => sub { 
 		$LOG_LEVEL = 1 },
 	"d|destination:s" => sub { 
 		my ($opt,$arg) = @_;
-		$DIR_DESTINATION = $arg },
+		error_handler('missing-arg',"$opt requires path.") if ! $arg;
+		$DESTINATION_DIRECTORY = $arg },
 	"f|force" => sub { 
 		$B_FORCE = 1 },
 	"h|help|?" => sub { 
 		print_help();},
 	"i|input:s" => sub { 
 		my ($opt,$arg) = @_;
+		error_handler('missing-arg',"$opt requires type.") if ! $arg;
 		$INPUT_TYPE = $arg },
 	"o|output:s" => sub {
 		my ($opt,$arg) = @_;
+		error_handler('missing-arg',"$opt requires type.") if ! $arg;
 		$OUTPUT_TYPE = $arg;},
 	"q|quality:s" => sub { 
 		my ($opt,$arg) = @_;
+		error_handler('missing-arg',"$opt requires number.") if ! defined $arg || $arg !~ /^[09-]+$/;
 		$QUALITY = $arg }, # validate later
 	"s|source:s" => sub { 
 		my ($opt,$arg) = @_;
-		$DIR_SOURCE = $arg;},
+		error_handler('missing-arg',"$opt requires path.") if ! $arg;
+		$SOURCE_DIRECTORY = $arg;},
 	"quiet|silent" => sub { 
 		$B_QUIET = 1; 
 		$LOG_LEVEL = 0 },
