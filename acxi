@@ -150,7 +150,7 @@ sub error_handler {
 	my ($br,$error_no,$error_text) = ("\n",0,'');
 	if ($error eq 'unsupported-type'){$error_no = 2;}
 	elsif ($error eq 'dest-dir'){$error_no = 1;}
-	elsif ($error eq 'dest-in-src-dir'){$error_no = 9;}
+	elsif ($error eq 'dest-eq-src-dir'){$error_no = 9;}
 	elsif ($error eq 'missing-app'){$error_no = 3;}
 	elsif ($error eq 'quality-invalid'){$error_no = 4;}
 	elsif ($error eq 'bad-level'){$error_no = 5;}
@@ -253,8 +253,8 @@ sub validate_src_dest_directories {
 	elsif ( $LOG_LEVEL > 0 ) {
 		print "Directories: exist\n";
 	}
-	if (!$b_missing_dir && $DESTINATION_DIRECTORY =~ /$SOURCE_DIRECTORY/){
-		error_handler('dest-in-src-dir',"Destination directory cannot be inside Source directory!");
+	if (!$b_missing_dir && $DESTINATION_DIRECTORY eq $SOURCE_DIRECTORY){
+		error_handler('dest-eq-src-dir',"Destination directory cannot be same as Source directory!");
 	}
 }
 sub validate_application_paths {
@@ -364,6 +364,7 @@ sub sync_music_collections {
 		$EXTENSION = $_;
 		@FOUND_LIST = ();
 		File::Find::find( \&wanted, $SOURCE_DIRECTORY);
+		# print Dumper \@FOUND_LIST;
 		if ( $LOG_LEVEL > 1 ) {
 			print "PROCESSING DATA TYPE: $EXTENSION\n";
 		}
@@ -384,6 +385,7 @@ sub sync_collection_directories {
 	$LIST_TYPE = 'dir';
 	File::Find::find( \&wanted, "$SOURCE_DIRECTORY");
 	eval $PRINT_LINE_LARGE;
+	# print Dumper \@FOUND_LIST;
 	if ( $LOG_LEVEL > 1 ) {
 		print "Checking if $SELF_NAME needs to create destination directories...\n";
 	}
@@ -393,7 +395,7 @@ sub sync_collection_directories {
 	foreach $dir (@FOUND_LIST) {
 		#print "\nd1:$dir\n";
 		$result = 'UNSET';
-		next if $dir eq $SOURCE_DIRECTORY;
+		next if $dir eq $SOURCE_DIRECTORY || $dir eq $DESTINATION_DIRECTORY;
 		$dir =~ s/^\.\///; # delete any dot file directories
 		$dir =~ s|^$SOURCE_DIRECTORY/||; # strip out source path
 		next if !$dir;
@@ -558,6 +560,7 @@ sub get_flac_tags {
 # NOTE: File::Find will not follow symbolic links
 sub wanted {
 	return if -l; # skip symbolic links
+	return if $File::Find::name =~ /^$DESTINATION_DIRECTORY/;
 	if ($LIST_TYPE eq 'dir'){
 		return if ! -d; # only directories
 	}
