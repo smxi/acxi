@@ -41,12 +41,7 @@
 # $SOURCE_DIRECTORY and $DESTINATION_DIRECTORY variables, or passed on 
 # the command line, or can be set in the configuration file (recommended).  
 #
-# User config file at $HOME/.acxi.conf or $HOME/.config/acxi.conf or
-# global /etc/acxi.conf, set values like this:
-# DESTINATION_DIRECTORY=/home/me/music/flac
-# It's highly recommended to create a config file so you don't have to
-# update the values below every time acxi updates.
-
+# See BEGIN USER MODIFIABLE VALUES for config file information.
 #########################################################################
 ### NO USER CHANGES IN THIS SECTION ###
 #########################################################################
@@ -85,14 +80,25 @@ my $LINE_LARGE = "--------------------------------------------------------------
 #########################################################################
 ### BEGIN USER MODIFIABLE VALUES ###
 #########################################################################
-# These can also be set in $HOME/.acxi.conf or $HOME/.config/acxi.conf 
-# or /etc/acxi.conf if you prefer
-# Anything in configs or in this section will be overridden if you use
-# an option.
+# User config file at:
+# Global: /etc/acxi.conf
+# User override files checked in the following order (first found used):
+# $XDG_CONFIG_HOME/acxi.conf, $HOME/.config/acxi.conf, $HOME/.acxi.conf
+#
+# Set values like this:
 # Do not use the $ or @ preceding the variable name, or the semicolon 
-# or " quote marks in the config file. Use this syntax for config files:
+# or single/double quote marks in the config file. Use this syntax for 
+# config files:
 # SOURCE_DIRECTORY=/home/fred/music/flac
 # DESTINATION_DIRECTORY=/home/fred/music/ogg
+# DESTINATION_DIRECTORY=/home/me/music/flac
+#
+# It's highly recommended to create a config file so you don't have to
+# update the values below every time acxi updates.
+#
+# Anything in configs or in this section will be overridden if you use
+# a startup argument.
+
 ## APPLICATION PATHS
 my $COMMAND_OGG = '/usr/bin/oggenc';
 my $COMMAND_FLAC = '/usr/bin/flac'; 
@@ -112,7 +118,8 @@ my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
 ## INPUT/OUTPUT
 my $QUALITY = 7;
 # The following are NOT case sensitive,ie flac/FLAC, txt/TXT will be 
-# found
+# found. INPUT_TYPE and OUTPUT_TYPE will be forced to lower case 
+# internally.
 my $INPUT_TYPE = 'flac';
 my $OUTPUT_TYPE = 'ogg';
 ## NOTE: if you want to override $COPY_TYPES in your config files, you
@@ -161,6 +168,8 @@ sub set_basic_data {
 	}
 	$DESTINATION_DIRECTORY =~ s|/$||;
 	$SOURCE_DIRECTORY =~ s|/$||;
+	$INPUT_TYPE = lc($INPUT_TYPE) if $INPUT_TYPE;
+	$OUTPUT_TYPE = lc($OUTPUT_TYPE) if $OUTPUT_TYPE;
 }
 sub set_display_output_data {
 	if ( $LOG_LEVEL < 3 ) {
@@ -197,12 +206,12 @@ sub validate_in_out_types {
 		eval $PRINT_LINE_LARGE;
 		print "Checking input and output types... ";
 	}
-	if ( $INPUT_TYPE !~ m/^(flac|wav|raw)$/ ){
+	if ( $INPUT_TYPE !~ m/^(flac|wav|raw)$/i ){
 		$b_type_unsupported = 1;
 		$error_message .= "\n  The input type you entered is not supported: ";
 		$error_message .= "$INPUT_TYPE";
 	}
-	if ( $OUTPUT_TYPE !~ m/^(ogg|mp3)$/ ){
+	if ( $OUTPUT_TYPE !~ m/^(ogg|mp3)$/i ){
 		$b_type_unsupported = 1;
 		$error_message .= "\n  The output type you entered is not supported: ";
 		$error_message .= "$OUTPUT_TYPE";
@@ -422,7 +431,7 @@ sub sync_collection_files {
 		# $src_file =~ s/\0//g; 
 		$dest_file =~ s/\0//g;
 		# Figure out what the destination file would be...
-		if ( lc($EXTENSION) eq lc($INPUT_TYPE) ){
+		if ( lc($EXTENSION) eq $INPUT_TYPE ){
 			$dest_file =~ s/\.$INPUT_TYPE$/\.$OUTPUT_TYPE/i;
 		}
 		#print "OF: $dest_file\n";
@@ -446,7 +455,7 @@ sub sync_collection_files {
 		# print "src-mt: $src_mod_time dest-mt:$dest_mod_time\n";
 		if ( !$dest_info || $B_FORCE || ( $src_mod_time > $dest_mod_time) ) {
 			eval $PRINT_LINE_SMALL;
-			if ( lc($EXTENSION) eq lc($INPUT_TYPE) ){
+			if ( lc($EXTENSION) eq $INPUT_TYPE ){
 				if ( $LOG_LEVEL > 1 ) {
 					print "ENCODE: $src_file ==> \n";
 					print "        $dest_file\n"; 
@@ -633,10 +642,19 @@ sub print_version {
 
 ### SET PROGRAM DATA ###
 sub set_config_data {
-	my (@config_files, $file);
+	my (@config_files,$file,$user_config);
 	# set list of supported config files
-	@config_files = ("/etc/$SELF_NAME.conf","$ENV{HOME}/.$SELF_NAME.conf",
-	"$ENV{HOME}/.config/$SELF_NAME.conf");
+	@config_files = ("/etc/$SELF_NAME.conf");
+	if ($ENV{'XDG_CONFIG_HOME'} && -r "$ENV{XDG_CONFIG_HOME}/$SELF_NAME.conf"){
+		$user_config = "$ENV{'XDG_CONFIG_HOME'}/$SELF_NAME.conf";
+	}
+	elsif ( -r "$ENV{HOME}/.config/$SELF_NAME.conf"){
+		$user_config = "$ENV{HOME}/.config/$SELF_NAME.conf";
+	}
+	elsif (-r "$ENV{HOME}/.$SELF_NAME.conf"){
+		$user_config = "$ENV{HOME}/.$SELF_NAME.conf";
+	}
+	@config_files = (@config_files,$user_config) if $user_config;
 	foreach $file (@config_files) {
 		next unless -r $file && open (my $fh,'<',$file);
 		while (<$fh>) {
