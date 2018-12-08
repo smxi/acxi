@@ -328,7 +328,7 @@ sub validate_quality{
 		}
 	}
 	elsif ( lc($OUTPUT_TYPE) eq 'mp3') {
-		if ( $QUALITY_MP3 !~ m/^([0-9])$/ ) {
+		if ( $QUALITY_MP3 !~ m/^[0-9]$/ ) {
 			$b_bad_quality = 1;
 			$error_message .= "\n  $OUTPUT_TYPE only supports 0-9 quality levels. ";
 			$error_message .= "You entered: $QUALITY_MP3";
