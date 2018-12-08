@@ -54,6 +54,12 @@ override files $XDG_CONFIG_HOME/acxi.conf, $HOME/.acxi.conf, or
 $HOME/.config/acxi.conf. The user configuration values override any
 /etc/acxi.conf values.
 
+If your system does not have the $HOME or $XDG_CONFIG_HOME environmental
+variables (Windows, for example), you can use the manual config file
+path option
+$CONFIGURATION_DIRECTORY='';
+to create a path to your acxi.conf configuration file.
+
 See the top of acxi, or the man page, for instructions on how to 
 create the configuration items.
 

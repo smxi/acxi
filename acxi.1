@@ -137,7 +137,7 @@ If you are not going to make MP3s, only OGG files for output, you do
 not need this
 
 .TP
-.B SOURCE/DESTINATION DIRECTORIES
+.B SOURCE/DESTINATION/CONFIGURATION DIRECTORIES
 
 NOTE: DESTINATION_DIRECTORY cannot be the same as SOURCE_DIRECTORY.
 
@@ -147,6 +147,12 @@ This the original, working, like flac, wav, etc.
 \fBDESTINATION_DIRECTORY\fR Sample: \fBDESTINATION_DIRECTORY=/home/fred/music/ogg\fR
 This is the processed compressed music files, ie, ogg, mp3. Destination cannot 
 be the same as Source directory, although it can be inside of the source directory.
+
+NOTE: only use this if you are running Windows, or any OS without $HOME
+or $XDG_CONFIG_HOME environmental variables. acxi will look for file:
+acxi.conf inside that directory. You can see by running \fB\-h\fR
+which will show paths being used to locate configuration files. 
+CONFIG_DIRECTORY=/path/to/configuration/directory
 
 .TP
 .B INPUT/OUTPUT

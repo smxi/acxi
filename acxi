@@ -109,13 +109,17 @@ my $COMMAND_LAME = '/usr/bin/lame';
 # not need this.
 my $COMMAND_METAFLAC = '/usr/bin/metaflac';
 
-## ASSIGN MUSIC SOURCE/DESTINATION DIRECTORY PATHS
+## ASSIGN DIRECTORY PATHS
 ##  $SOURCE_DIRECTORY is the original, working, like flac, wav, etc
 ##  $DESTINATION_DIRECTORY is the processed, ie, ogg, mp3
 ##  CHANGE TO FIT YOUR SYSTEM - do not end in /
 ## IMPORTANT: DESTINATION_DIRECTORY cannot be equal to SOURCE_DIRECTORY
 my $SOURCE_DIRECTORY = '/path/to/source/directory';
 my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
+# NOTE: only use this if you are running Windows, or any OS without $HOME
+# or $XDG_CONFIG_HOME environmental varialbes. acxi will look for file:
+# acxi.conf inside that directory. 
+my $CONFIG_DIRECTORY='';
 
 ## INPUT/OUTPUT
 my $QUALITY = 7;
@@ -170,6 +174,7 @@ sub set_basic_data {
 	}
 	$DESTINATION_DIRECTORY =~ s|/$||;
 	$SOURCE_DIRECTORY =~ s|/$||;
+	$CONFIG_DIRECTORY =~ s|/$|| if $CONFIG_DIRECTORY;
 	$INPUT_TYPE = lc($INPUT_TYPE) if $INPUT_TYPE;
 	$OUTPUT_TYPE = lc($OUTPUT_TYPE) if $OUTPUT_TYPE;
 }
@@ -651,11 +656,16 @@ sub print_help {
 	$output .= "                  activates --debug for more complete path outputs.\n";
 	$output .= "--version -v      Show $SELF_NAME version.\n\n";
 	$output .= $LINE_SMALL;
-	$output .= "User Configs (checked in this order):\n";
-	$output .= "/etc/$SELF_NAME.conf\n";
-	$output .= "\$XDG_CONFIG_HOME/$SELF_NAME.conf\n";
-	$output .= "\$HOME/.config/$SELF_NAME.conf\n";
-	$output .= "\$HOME/.$SELF_NAME.conf\n";
+	$output .= "User Configs ";
+	if (!$CONFIG_DIRECTORY){
+		$output .= "(checked in this order):\n/etc/$SELF_NAME.conf\n";
+		$output .= "\$XDG_CONFIG_HOME/$SELF_NAME.conf\n";
+		$output .= "\$HOME/.config/$SELF_NAME.conf\n";
+		$output .= "\$HOME/.$SELF_NAME.conf\n";
+	}
+	else {
+		$output .= "(manually set):\n$CONFIG_DIRECTORY/$SELF_NAME.conf\n";
+	}
 	$output .= "Requires this syntax (any user modifiable variable can be used)\n";
 	$output .= "DIR_PREFIX_SOURCE=/home/me/music/flac\n";
 	$output .= "Do not use \$, \", or \' in config options or values.\n";
@@ -681,6 +691,9 @@ sub set_config_data {
 	}
 	elsif (-r "$ENV{HOME}/.$SELF_NAME.conf"){
 		$user_config = "$ENV{HOME}/.$SELF_NAME.conf";
+	}
+	elsif (-r "$CONFIG_DIRECTORY/$SELF_NAME.conf"){
+		$user_config = "$CONFIG_DIRECTORY/$SELF_NAME.conf";
 	}
 	@config_files = (@config_files,$user_config) if $user_config;
 	foreach $file (@config_files) {
