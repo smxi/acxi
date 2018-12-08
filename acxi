@@ -88,8 +88,8 @@ my $LINE_LARGE = "--------------------------------------------------------------
 # $XDG_CONFIG_HOME/acxi.conf, $HOME/.config/acxi.conf, $HOME/.acxi.conf
 #
 # Set values like this:
-# Do not use the $ or @ preceding the variable name, or the semicolon 
-# or single/double quote marks in the config file. Use this syntax for 
+# Do not use the $ preceding the variable name, or the semicolon or 
+# single/double quote marks in the config file. Use this syntax for 
 # config files:
 # SOURCE_DIRECTORY=/home/fred/music/flac
 # DESTINATION_DIRECTORY=/home/fred/music/ogg
@@ -122,15 +122,17 @@ my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
 my $CONFIG_DIRECTORY='';
 
 ## INPUT/OUTPUT
-# For ogg: n can be 1-10. 10 is the largest file size / highest quality.
-# For mp3: n can be 0-9 (variable bit rate), 0 is largest file / highest quality
-my $QUALITY_OGG = 7;
-my $QUALITY_MP3 = 3;
 # The following are NOT case sensitive,ie flac/FLAC, txt/TXT will be 
 # found. INPUT_TYPE and OUTPUT_TYPE will be forced to lower case 
 # internally.
 my $INPUT_TYPE = 'flac';
 my $OUTPUT_TYPE = 'ogg';
+
+# For ogg: n can be 1-10. 10 is the largest file size / highest quality.
+# For mp3: n can be 0-9 (variable bit rate), 0 is largest file / highest quality
+my $QUALITY_OGG = 7;
+my $QUALITY_MP3 = 3;
+
 ## NOTE: if you want to override $COPY_TYPES in your config files, you
 # must use this syntax:
 # COPY_TYPES=doc,docx,bmp,jpg,jpeg
