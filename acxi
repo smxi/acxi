@@ -66,12 +66,12 @@ use File::Copy qw(copy);
 ## SELF INFO
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.0.0';
-my $SELF_DATE = '2018-12-07';
+my $SELF_DATE = '2018-12-08';
 
 ## GLOBALS
 my ($B_DEST_CHANGED,$B_FORCE,$B_QUIET,$B_TEST);
 my ($PRINT_LINE_HEAVY,$PRINT_LINE_LARGE,$PRINT_LINE_SMALL);
-my ($SILENT_ARG_FO,$SILENT_ARG_LAME) = ('','');
+my ($QUALITY,$SILENT_ARG_FO,$SILENT_ARG_LAME) = (7,'','');
 my ($EXTENSION,@EXTENSION_LIST,@FOUND_LIST,$LIST_TYPE);
 
 ## CONSTANTS
@@ -122,7 +122,10 @@ my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
 my $CONFIG_DIRECTORY='';
 
 ## INPUT/OUTPUT
-my $QUALITY = 7;
+# For ogg: n can be 1-10. 10 is the largest file size / highest quality.
+# For mp3: n can be 0-9 (variable bit rate), 0 is largest file / highest quality
+my $QUALITY_OGG = 7;
+my $QUALITY_MP3 = 3;
 # The following are NOT case sensitive,ie flac/FLAC, txt/TXT will be 
 # found. INPUT_TYPE and OUTPUT_TYPE will be forced to lower case 
 # internally.
@@ -314,21 +317,31 @@ sub validate_quality{
 	if ( $LOG_LEVEL > 0 ) {
 		print dotify("Checking quality support for $OUTPUT_TYPE");
 	}
-	if ( lc($OUTPUT_TYPE) eq 'ogg' && $QUALITY !~ m/^([1-9]|10)$/ ) {
-		$b_bad_quality = 1;
-		$error_message .= "\n  $OUTPUT_TYPE only supports ";
-		$error_message .= "1-10 quality. You entered: $QUALITY";
+	if ( lc($OUTPUT_TYPE) eq 'ogg') {
+		if ($QUALITY_OGG !~ m/^([1-9]|10)$/ ) {
+			$b_bad_quality = 1;
+			$error_message .= "\n  $OUTPUT_TYPE only supports ";
+			$error_message .= "1-10 quality levels. You entered: $QUALITY_OGG";
+		}
+		else {
+			$QUALITY = $QUALITY_OGG;
+		}
 	}
-	elsif ( lc($OUTPUT_TYPE) eq 'mp3' && $QUALITY !~ m/^([0-9])$/ ) {
-		$b_bad_quality = 1;
-		$error_message .= "\n  $OUTPUT_TYPE only supports 0-9 quality. ";
-		$error_message .= "You entered: $QUALITY";
+	elsif ( lc($OUTPUT_TYPE) eq 'mp3') {
+		if ( $QUALITY_MP3 !~ m/^([0-9])$/ ) {
+			$b_bad_quality = 1;
+			$error_message .= "\n  $OUTPUT_TYPE only supports 0-9 quality levels. ";
+			$error_message .= "You entered: $QUALITY_MP3";
+		}
+		else {
+			$QUALITY = $QUALITY_MP3;
+		}
 	}
 	if ( $b_bad_quality ) {
 		error_handler('quality-invalid',$error_message);
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
-		print "Supported: $QUALITY\n";
+		print "Supported: $QUALITY ($OUTPUT_TYPE)\n";
 	}
 }
 sub validate_log_level {
@@ -645,7 +658,7 @@ sub print_help {
 	$output .= "                  highest quality.\n";                
 	$output .= "                  For mp3: n can be 0-9 (variable bit rate), 0 is largest file/\n";
 	$output .= "                  highest quality. \n";
-	$output .= "                  Your current default is: $QUALITY\n";
+	$output .= "                  Current defaults: $QUALITY_MP3 (mp3); $QUALITY_OGG (ogg)\n";
 	$output .= "--quiet --silent  Turns off all screen output, except for error messages.\n";
 	$output .= "--source -s       Path to the top-most directory containing your source files\n";
 	$output .= "                  (eg, flac). Your current default is: $SOURCE_DIRECTORY\n";
@@ -725,7 +738,10 @@ sub assign_config_value {
 	elsif ($var eq 'INPUT_TYPE'){$INPUT_TYPE = $value;}
 	elsif ($var eq 'LOG_LEVEL'){$LOG_LEVEL = $value;}
 	elsif ($var eq 'OUTPUT_TYPE'){$OUTPUT_TYPE = $value;}
-	elsif ($var eq 'QUALITY'){$QUALITY = $value;}
+	# legacy configs, sets both
+	elsif ($var eq 'QUALITY'){$QUALITY_OGG = $value;$QUALITY_MP3 = $value}
+	elsif ($var eq 'QUALITY_MP3'){$QUALITY_MP3 = $value}
+	elsif ($var eq 'QUALITY_OGG'){$QUALITY_OGG = $value;}
 	elsif ($var eq 'COPY_TYPES' || $var eq 'USER_TYPES'){
 		$COPY_TYPES = $value;}
 }
@@ -758,10 +774,12 @@ GetOptions (
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires type.") if ! $arg;
 		$OUTPUT_TYPE = $arg;},
-	"q|quality:s" => sub { 
+	"q|quality:i" => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires number.") if ! defined $arg || $arg !~ /^[09-]+$/;
-		$QUALITY = $arg }, # validate later
+		error_handler('missing-arg',"$opt requires number.") if ! defined $arg || $arg !~ /^[0-9]+$/;
+		# validate these later
+		$QUALITY_MP3 = $arg;
+		$QUALITY_OGG = $arg; }, 
 	"s|source:s" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires path.") if ! $arg;

@@ -1,4 +1,4 @@
-.TH ACXI 1 "2018\-12\-07" acxi "acxi manual"
+.TH ACXI 1 "2018\-12\-08" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -78,6 +78,11 @@ Output type. Supported types: ogg, mp3
 For ogg: n can be 1\-10. 10 is the largest file/highest quality.
 For mp3: n can be 0\-9 (variable bit rate), 0 is largest file/
 highest quality.
+
+Note that using a higher or lower quality than you used to create
+the compressed files will not result in redoing those files, you'll
+have to delete those and then redo the directories if you want to
+check compression levels.
 
 .TP
 .B \-\-quiet\fR,\fB \-\-silent\fR
@@ -161,6 +166,8 @@ The following are NOT case sensitive,ie flac/FLAC, txt/TXT will be
 found. INPUT_TYPE and OUTPUT_TYPE will be forced to lower case 
 internally.
 
+Changing quality levels will not redo existing files.
+
 \fBINPUT_TYPE\fR Sample: \fBINPUT_TYPE=flac\fR 
 
 \fBOUTPUT_TYPE\fR Sample: \fBOUTPUT_TYPE=mp3\fR 
@@ -169,6 +176,12 @@ internally.
 to override the default file types acxi will sync. Set to 'none', 
 if you only want to sync the music files, not copy over images, text files,
 etc.
+
+\fBQUALITY_MP3\fR Sample: \fBINPUT_MP3=2\fR Supported values: 0-9. 0 is 
+the largest file size / highest quality.
+
+\fBQUALITY_OGG\fR Sample: \fBINPUT_OGG=8\fR Supported values: 1-10. 10 is 
+the largest file size / highest quality.
 
 .TP
 .B DEBUG OUTPUT
