@@ -663,8 +663,7 @@ sub print_help {
 	exit 0;
 }
 sub print_version {
-	my $output = "$SELF_NAME version: $SELF_VERSION ($SELF_DATE)\n";
-	print $output;
+	print "$SELF_NAME version: $SELF_VERSION ($SELF_DATE)\n";
 	exit 0;
 }
 
