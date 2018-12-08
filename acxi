@@ -653,11 +653,12 @@ sub print_help {
 	$output .= $LINE_SMALL;
 	$output .= "User Configs (checked in this order):\n";
 	$output .= "/etc/$SELF_NAME.conf\n";
-	$output .= "\$HOME/.$SELF_NAME.conf\n";
+	$output .= "\$XDG_CONFIG_HOME/$SELF_NAME.conf\n";
 	$output .= "\$HOME/.config/$SELF_NAME.conf\n";
+	$output .= "\$HOME/.$SELF_NAME.conf\n";
 	$output .= "Requires this syntax (any user modifiable variable can be used)\n";
 	$output .= "DIR_PREFIX_SOURCE=/home/me/music/flac\n";
-	$output .= "Do not use the \$ or \", \' in the config data\n";
+	$output .= "Do not use \$, \", or \' in config options or values.\n";
 	$output .= "\n";
 	print $output;
 	exit 0;
