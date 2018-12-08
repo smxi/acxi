@@ -42,7 +42,7 @@
 # $SOURCE_DIRECTORY and $DESTINATION_DIRECTORY variables, or passed on 
 # the command line, or can be set in the configuration file (recommended).  
 #
-# See BEGIN USER MODIFIABLE VALUES for config file information.
+# See BEGIN USER MODIFIABLE VALUES for configuration information.
 #########################################################################
 ### NO USER CHANGES IN THIS SECTION ###
 #########################################################################
