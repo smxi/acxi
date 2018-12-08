@@ -36,12 +36,17 @@ For instance, say you have:
 /home/fred/media/main
 which contains your flac music directories, and you want to sync up
 your ogg versions in:
-/home/fred/media/ogg or /home/fred/media/main/ogg 
+/home/fred/media/ogg
 You would run: acxi -i /home/fred/media/main -o /home/fred/media/ogg
 and acxi would mirror the directory structure, copy over all the jpg, 
-png, txt, etc, type files, and then and encode your flacs to ogg. 
+png, txt, etc, type files, and then encode your flacs to ogg. 
 
-If you run it routinely, it will just copy/sync over changed or new 
+If your ogg directory (or mp3) is located at: 
+/home/fred/media/main/ogg
+that is, in your 'main' directory, acxi will handle that, and ignore
+that directory when syncing.
+
+If you run acxi routinely, it will just copy/sync over changed or new 
 files.
 
 ========================================================================
