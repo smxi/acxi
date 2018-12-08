@@ -32,6 +32,18 @@ and source directories, and and so on. You can add or remove these
 file types using either top configuration, configuration file, or 
 program option (-c).
 
+For instance, say you have:
+/home/fred/media/main
+which contains your flac music directories, and you want to sync up
+your ogg versions in:
+/home/fred/media/ogg or /home/fred/media/main/ogg 
+You would run: acxi -i /home/fred/media/main -o /home/fred/media/ogg
+and acxi would copy over all the jpg, png, txt, etc, type files, and 
+then mirror the directory structure and encode your flacs to ogg. 
+
+If you run it routinely, it will just copy/sync over changed or new 
+files.
+
 ========================================================================
 DEPENDENCIES
 ------------------------------------------------------------------------
