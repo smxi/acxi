@@ -90,3 +90,9 @@ USER VARIABLES section on the top of the file, or in a configuration file.
 acxi defaults to using ogg level 7/mp3 level 3 for output, and flac for 
 input, and copies most common file types (which can be changed with -c 
 or configuration values).
+
+Once you set your input/output directory paths (using either -i / -o 
+options, or creating a configuration file), you can use the --test
+option to see what acxi would have done, then, once you have confirmed
+everything is working as expected, you can start syncing your music
+files.
