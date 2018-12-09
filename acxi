@@ -104,6 +104,7 @@ my $LINE_LARGE = "--------------------------------------------------------------
 my $COMMAND_OGG = '/usr/bin/oggenc';
 my $COMMAND_FLAC = '/usr/bin/flac'; 
 my $COMMAND_LAME = '/usr/bin/lame';
+
 # metaflac is required ONLY for flac to mp3, to copy over the ID3 tags
 # If you are not going to make MP3s, only OGG files for output, you do 
 # not need this.
@@ -116,6 +117,7 @@ my $COMMAND_METAFLAC = '/usr/bin/metaflac';
 ## IMPORTANT: DESTINATION_DIRECTORY cannot be equal to SOURCE_DIRECTORY
 my $SOURCE_DIRECTORY = '/path/to/source/directory';
 my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
+
 # NOTE: only use this if you are running Windows, or any OS without $HOME
 # or $XDG_CONFIG_HOME environmental varialbes. acxi will look for file:
 # acxi.conf inside that directory. 
