@@ -1,4 +1,4 @@
-.TH ACXI 1 "2018\-12\-08" acxi "acxi manual"
+.TH ACXI 1 "2018\-12\-09" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -59,7 +59,9 @@ Full path to the directory where you want the processed lossy
 
 .TP
 .B \-f\fR,\fB \-\-force\fR
-Overwrites all the mp3/ogg/jpg/txt etc. files, even if they already exist.
+Overwrites all the mp3/ogg/jpg/txt etc. files, even if they already 
+exist. This is useful if you for example want to change compression
+quality on existing files.
 
 .TP
 .B \-h\fR,\fB \-\-help\fR
@@ -80,9 +82,9 @@ For mp3: n can be 0\-9 (variable bit rate), 0 is largest file/
 highest quality.
 
 Note that using a higher or lower quality than you used to create
-the compressed files will not result in redoing those files, you'll
-have to delete those and then redo the directories if you want to
-check compression levels.
+the compressed files will not result in redoing those files unless 
+you use the \fB\-f\fR / \fB\-\-force\fR option to force the overwrite 
+of the existing files.
 
 .TP
 .B \-\-quiet\fR,\fB \-\-silent\fR

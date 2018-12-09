@@ -66,7 +66,7 @@ use File::Copy qw(copy);
 ## SELF INFO
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.0.0';
-my $SELF_DATE = '2018-12-08';
+my $SELF_DATE = '2018-12-09';
 
 ## GLOBALS
 my ($B_DEST_CHANGED,$B_FORCE,$B_QUIET,$B_TEST);
@@ -652,7 +652,8 @@ sub print_help {
 	$output .= "--destination -d  Path to the directory where you want the processed\n";
 	$output .= "                  (eg, ogg) files to go.\n";
 	$output .= "                  Your current default is: $DESTINATION_DIRECTORY\n";
-	$output .= "--force -f        Overwrite the ogg/jpg/txt files, even if they already exist.\n";
+	$output .= "--force -f        Force overwrite the mp3/ogg/jpg/txt files, even if they"; 
+	$output .= "                  already exist.\n";
 	$output .= "--help -h         This help menu.\n";
 	$output .= "--input -i        Input type: supported - flac, wav, raw. mp3 only supports\n";
 	$output .= "                  flac input. Your current default is: $INPUT_TYPE\n";

@@ -47,8 +47,7 @@ that directory when syncing.
 If you run acxi routinely, it will just copy/sync over changed or new 
 files. Note that acxi will not change to a different compression level
 already compressed versions, so if you want to change your compression
-levels, you have to remove the audio files or directories from your 
-compressed collection and redo them.
+levels, you have to use the -f/--force option.
 
 ========================================================================
 DEPENDENCIES
