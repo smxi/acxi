@@ -80,14 +80,13 @@ path option
 $CONFIGURATION_DIRECTORY='';
 to create a path to your acxi.conf configuration file.
 
-See the top of acxi, or the man page, for instructions on how to 
-create the configuration items.
+See the top of acxi, or the man page, for instructions on how to create 
+the configuration items.
 
 You must at a minimum set your source and destination directories the
-first time you run acxi, either using the -o and -s options, or in 
-the USER VARIABLES section on the top of the file, or in a 
-configuration file.
+first time you run acxi, either using the -o and -s options, or in the 
+USER VARIABLES section on the top of the file, or in a configuration file.
 
-acxi defaults to using ogg level 7/mp3 level 3 for output, and flac 
-for input, and copies most common file types (which can be changed 
-with -c or configuration values).
+acxi defaults to using ogg level 7/mp3 level 3 for output, and flac for 
+input, and copies most common file types (which can be changed with -c 
+or configuration values).
