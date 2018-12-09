@@ -14,8 +14,8 @@ ABOUT
 ------------------------------------------------------------------------
 acxi is a simple tool that syncs/converts lossless (flac, wav, raw) 
 music libraries to compressed (ogg,mp3) versions of the lossless 
-library. It's mission is to do one thing (sync to compressed formats
-your music collection), and to do it well, in the classic Unix way.
+library. Its mission is to do one thing (sync to compressed formats
+your music collection), and to do it well, in the classic Unix manner.
 
 acxi doesn't change very often, and in general will 'just work' for 
 as long as it's installed, though it is a good idea to check for 
