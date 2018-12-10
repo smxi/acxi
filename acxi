@@ -647,12 +647,12 @@ sub print_help {
 	$output .= "                  @EXTENSION_LIST\n";
 	$output .= "--debug           Full screen output, including full verbosity of \n";
 	$output .= "                  flac/oggenc/lameconversion process for MP3 or OGG output.\n";
-	$output .= "--default         Single line per operation screen output, default value for \n";
+	$output .= "--default         Single line per operation screen output, default value for\n";
 	$output .= "                  $SELF_NAME.\n";
 	$output .= "--destination -d  Path to the directory where you want the processed\n";
 	$output .= "                  (eg, ogg) files to go.\n";
 	$output .= "                  Your current default is: $DESTINATION_DIRECTORY\n";
-	$output .= "--force -f        Force overwrite the mp3/ogg/jpg/txt files, even if they"; 
+	$output .= "--force -f        Force overwrite the mp3/ogg/jpg/txt files, even if they\n"; 
 	$output .= "                  already exist.\n";
 	$output .= "--help -h         This help menu.\n";
 	$output .= "--input -i        Input type: supported - flac, wav, raw. mp3 only supports\n";
