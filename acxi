@@ -410,11 +410,12 @@ sub confirm_clean {
 	print $LINE_SMALL;
 	print "The preceding $type items will be deleted. Deletions cannot\n";
 	print "be restored! BE AWARE!!\n";
-	print "Please type 'delete' to remove them, or hit enter to skip.\n";
+	print "Please type 'delete' + 'enter' to remove them, or hit 'enter' to skip.\n";
+	print "If you are unsure, hit 'enter' to see the file list.\n" if $type eq 'directory';
 	chomp($response = <STDIN>);
 	if (lc($response) eq 'delete'){
 		print "Are you SURE you want to delete these items?\n";
-		print "Type 'yes' to confirm, or hit enter to skip.\n";
+		print "Type 'yes' + 'enter' to confirm, or hit 'enter' to skip.\n";
 		chomp($response = <STDIN>);
 		return 1 if lc($response) eq 'yes';
 	}
