@@ -56,6 +56,7 @@ Getopt::Long::Configure ('bundling', 'no_ignore_case',
 use File::stat;
 use File::Find;
 use File::Copy qw(copy);
+use File::Path qw(rmtree);
 # only use for debugging, some distros do not ship with core modules.
 #use Data::Dumper qw(Dumper);
 
@@ -69,7 +70,7 @@ my $SELF_VERSION = '3.0.0';
 my $SELF_DATE = '2018-12-11';
 
 ## GLOBALS
-my ($B_DEST_CHANGED,$B_FORCE,$B_QUIET,$B_TEST);
+my ($B_DEST_CHANGED,$B_CLEAN,$B_FORCE,$B_QUIET,$B_TEST);
 my ($PRINT_LINE_HEAVY,$PRINT_LINE_LARGE,$PRINT_LINE_SMALL);
 my ($QUALITY,$SILENT_ARG_FO,$SILENT_ARG_LAME) = (7,'','');
 my ($EXTENSION,@EXTENSION_LIST,@FOUND_LIST,$LIST_TYPE);
@@ -184,6 +185,7 @@ sub set_basic_data {
 	$CONFIG_DIRECTORY =~ s|/$|| if $CONFIG_DIRECTORY;
 	$INPUT_TYPE = lc($INPUT_TYPE) if $INPUT_TYPE;
 	$OUTPUT_TYPE = lc($OUTPUT_TYPE) if $OUTPUT_TYPE;
+	@EXTENSION_LIST = (@EXTENSION_LIST,$INPUT_TYPE);
 }
 sub set_display_output_data {
 	if ( $LOG_LEVEL < 3 ) {
@@ -366,12 +368,39 @@ sub validate_log_level {
 	}
 }
 
-### SYNC MUSIC DIRECTORIES ###
+### CLEAN/SYNC MUSIC DIRECTORIES ###
+sub clean_destination {
+	my (@extension_files);
+	eval $PRINT_LINE_HEAVY;
+	if ( $LOG_LEVEL > 1 ) {
+		print "Cleaning $DESTINATION_DIRECTORY (destination)...\n";
+	}
+	elsif ( $LOG_LEVEL > 0 ) {
+		print "Starting cleanup of $DESTINATION_DIRECTORY...\n";
+	}
+	clean_destination_items('directory');
+	clean_destination_items('file');
+}
+sub clean_destination_items {
+	my ($type) = @_;
+	my ($b_deleted,$item,$result);
+	$LIST_TYPE = ($type eq 'directory') ? 'dir-clean': 'file-clean';
+	@FOUND_LIST = ();
+	eval $PRINT_LINE_SMALL;
+	print "Checking $type removal...\n";
+	File::Find::find( \&wanted, $DESTINATION_DIRECTORY);
+	foreach $item (@FOUND_LIST) {
+		$result = 'UNSET';
+		print "Deleting $type: $item\n";
+		$result = rmtree("$item") if !$B_TEST;
+		$b_deleted = 1;
+		$B_DEST_CHANGED = 1;
+		print "Delete $type result: $result\n" if $LOG_LEVEL > 1;
+	}
+	print_not_found("$type-cleaned") if ! $b_deleted;
+}
 sub sync_music_collections {
 	my (@extension_files);
-	# set the @EXTENSION_LIST if required by -c/--copy override
-	set_basic_data();
-	@EXTENSION_LIST = (@EXTENSION_LIST,$INPUT_TYPE);
 	eval $PRINT_LINE_HEAVY;
 	if ( $LOG_LEVEL > 1 ) {
 		print "Syncing $DESTINATION_DIRECTORY (destination) with\n";
@@ -406,6 +435,7 @@ sub sync_music_collections {
 sub sync_collection_directories {
 	my ($b_created,$dest_dir,$dir,$result);
 	$LIST_TYPE = 'dir';
+	@FOUND_LIST = ();
 	File::Find::find( \&wanted, "$SOURCE_DIRECTORY");
 	eval $PRINT_LINE_LARGE;
 	# print Dumper \@FOUND_LIST;
@@ -428,7 +458,7 @@ sub sync_collection_directories {
 			# stat failed so create the directory
 			eval $PRINT_LINE_SMALL;
 			if ( $LOG_LEVEL > 1 ) {
-				print "CREATING NEW DIRECTORY:\n  $dest_dir\n";
+				print "CREATING NEW DIRECTORY:\n $dest_dir\n";
 			}
 			elsif ( $LOG_LEVEL > 0 ) {
 				print "\nCreating new directory: $dest_dir";
@@ -571,14 +601,30 @@ sub get_flac_tags {
 # NOTE: File::Find will not follow symbolic links
 sub wanted {
 	return if -l; # skip symbolic links
-	return if $File::Find::name =~ m/^$DESTINATION_DIRECTORY/;
+	if ($LIST_TYPE eq 'dir' || $LIST_TYPE eq 'file'){
+		return if $File::Find::name =~ m/^$DESTINATION_DIRECTORY/;
+	}
 	return if $File::Find::name =~ m/\/\./; # skip any dot files/directories
 	if ($LIST_TYPE eq 'dir'){
 		return if ! -d; # only directories
 	}
-	else {
+	elsif ($LIST_TYPE eq 'file') {
 		return if -d; # skip directories
 		return if $File::Find::name !~ /\.$EXTENSION$/i;
+	}
+	elsif ($LIST_TYPE eq 'dir-clean' || $LIST_TYPE eq 'file-clean'){
+		if ($LIST_TYPE eq 'dir-clean') {
+			return if ! -d; # skip non directories
+		}
+		else {
+			return if -d; # skip non directories
+		}
+		my $working = $File::Find::name;
+		$working =~ s|^$DESTINATION_DIRECTORY|$SOURCE_DIRECTORY|;
+		$working =~ s/$OUTPUT_TYPE$/$INPUT_TYPE/ if $LIST_TYPE eq 'file-clean';
+		#print '1: ', "$File::Find::name\n$working\n";
+		return unless ! -e $working && -e $File::Find::name;
+		# print '2: ', "$File::Find::name\n";
 	}
 	# print $File::Find::name . "\n";
 	push (@FOUND_LIST, $File::Find::name);
@@ -602,9 +648,17 @@ sub print_not_found {
 		$message = "No files found of type: $EXTENSION\n";
 		$none = "None found";
 	}
-	else {
+	elsif ($_[0] eq 'dirs') {
 		$message = "No new directories required. Continuing...\n";
 		$none = "None required";
+	}
+	elsif ($_[0] eq 'directory-cleaned') {
+		$message = "No directories to remove. Continuing...\n";
+		$none = "None to remove";
+	}
+	elsif ($_[0] eq 'file-cleaned') {
+		$message = "No files to remove. Continuing...\n";
+		$none = "None to remove";
 	}
 	if ( $LOG_LEVEL > 1 ) {
 		print $message;
@@ -640,6 +694,9 @@ sub print_help {
 	$output .= "$SELF_NAME --input wav --output ogg\n";
 	$output .= "$SELF_NAME --copy doc,docx,bmp\n";
 	$output .= $LINE_SMALL;
+	$output .= "--clean           Clean directories and files from destination not found in\n";
+	$output .= "                  source music directory. Use with --test first to make sure\n";
+	$output .= "                  nothing unexpected happens!\n";
 	$output .= "--copy -c         List of alternate data types to copy to Output type\n";
 	$output .= "                  directories. Must be comma separated, no spaces, \n";
 	$output .= "                  see sample above. Your current copy types are:\n";
@@ -735,6 +792,10 @@ sub assign_config_value {
 	elsif ($var eq 'COMMAND_FLAC'){$COMMAND_FLAC = $value;}
 	elsif ($var eq 'COMMAND_LAME'){$COMMAND_LAME = $value;}
 	elsif ($var eq 'COMMAND_METAFLAC'){$COMMAND_METAFLAC = $value;}
+	elsif ($var eq 'CLEAN'){
+		$value =~ s/^(yes|1|true|enable)$/1/;
+		$value =~ s/^(no|0|false|disable)$/0/;
+		$B_CLEAN = $value;}
 	elsif ($var eq 'SOURCE_DIRECTORY' || $var eq 'DIR_PREFIX_SOURCE'){
 		$SOURCE_DIRECTORY = $value;}
 	elsif ($var eq 'DESTINATION_DIRECTORY' || $var eq 'DIR_PREFIX_DEST'){
@@ -754,6 +815,8 @@ set_config_data();
 # Get Options and set values, this overrides defaults 
 # from top globals and config files
 GetOptions (
+	"clean" => sub { 
+		$B_CLEAN = 3 },
 	# accepts null value so users can not copy anything
 	"c|copy:s" => sub { 
 		my ($opt,$arg) = @_;
@@ -811,6 +874,8 @@ validate_src_dest_directories();
 validate_in_out_types();
 validate_quality();
 validate_application_paths();
+set_basic_data();
+clean_destination() if $B_CLEAN;
 sync_music_collections();
 print_completion_message();
 
