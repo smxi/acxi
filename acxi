@@ -66,7 +66,7 @@ use File::Copy qw(copy);
 ## SELF INFO
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.0.0';
-my $SELF_DATE = '2018-12-09';
+my $SELF_DATE = '2018-12-11';
 
 ## GLOBALS
 my ($B_DEST_CHANGED,$B_FORCE,$B_QUIET,$B_TEST);
@@ -386,8 +386,8 @@ sub sync_music_collections {
 		eval $PRINT_LINE_LARGE;
 		$EXTENSION = $_;
 		@FOUND_LIST = ();
-		File::Find::find( \&wanted, $SOURCE_DIRECTORY);
-		# print Dumper \@FOUND_LIST;
+		#File::Find::find( \&wanted, $SOURCE_DIRECTORY);
+		 print Dumper \@FOUND_LIST;
 		if ( $LOG_LEVEL > 1 ) {
 			print "PROCESSING DATA TYPE: $EXTENSION\n";
 		}
@@ -419,7 +419,6 @@ sub sync_collection_directories {
 		#print "\nd1:$dir\n";
 		$result = 'UNSET';
 		next if $dir eq $SOURCE_DIRECTORY || $dir eq $DESTINATION_DIRECTORY;
-		$dir =~ s/^\.\///; # delete any dot file directories
 		$dir =~ s|^$SOURCE_DIRECTORY/||; # strip out source path
 		next if !$dir;
 		$dest_dir = "$DESTINATION_DIRECTORY/$dir";
@@ -449,7 +448,6 @@ sub sync_collection_files {
 	my ($dest_info,$dest_mod_time,$src_info, $src_mod_time) = ('',0,'',0);
 	foreach $file (@FOUND_LIST) {
 		# $file =~ s/\n$//;
-		$file =~ s/^\.\///; # get rid of hidden files
 		next if ! $file;
 		$dest_file = $src_file = $file;
 		#print "\nIF: $src_file\n";
@@ -573,7 +571,8 @@ sub get_flac_tags {
 # NOTE: File::Find will not follow symbolic links
 sub wanted {
 	return if -l; # skip symbolic links
-	return if $File::Find::name =~ /^$DESTINATION_DIRECTORY/;
+	return if $File::Find::name =~ m/^$DESTINATION_DIRECTORY/;
+	return if $File::Find::name =~ m/\/\./; # skip any dot files/directories
 	if ($LIST_TYPE eq 'dir'){
 		return if ! -d; # only directories
 	}
