@@ -411,7 +411,6 @@ sub confirm_clean {
 	print "The preceding $type items will be deleted. Deletions cannot\n";
 	print "be restored! BE AWARE!!\n";
 	print "Please type 'delete' to remove them, or hit enter to skip.\n";
-	print "this group.\n";
 	chomp($response = <STDIN>);
 	if (lc($response) eq 'delete'){
 		print "Are you SURE you want to delete these items?\n";
