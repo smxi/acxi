@@ -371,13 +371,8 @@ sub validate_log_level {
 ### CLEAN/SYNC MUSIC DIRECTORIES ###
 sub clean_destination {
 	my (@extension_files);
-	eval $PRINT_LINE_HEAVY;
-	if ( $LOG_LEVEL > 1 ) {
-		print "Cleaning $DESTINATION_DIRECTORY (destination)...\n";
-	}
-	elsif ( $LOG_LEVEL > 0 ) {
-		print "Starting cleanup of $DESTINATION_DIRECTORY...\n";
-	}
+	print $LINE_HEAVY;
+	print "Starting cleanup of $DESTINATION_DIRECTORY...\n";
 	clean_destination_items('directory');
 	clean_destination_items('file');
 	print $LINE_SMALL;
