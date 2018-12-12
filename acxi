@@ -621,7 +621,7 @@ sub wanted {
 		}
 		my $working = $File::Find::name;
 		$working =~ s|^$DESTINATION_DIRECTORY|$SOURCE_DIRECTORY|;
-		$working =~ s/$OUTPUT_TYPE$/$INPUT_TYPE/ if $LIST_TYPE eq 'file-clean';
+		$working =~ s/\.(m4a|mp3|ogg|wma)$/\.$INPUT_TYPE/i if $LIST_TYPE eq 'file-clean';
 		#print '1: ', "$File::Find::name\n$working\n";
 		return unless ! -e $working && -e $File::Find::name;
 		# print '2: ', "$File::Find::name\n";
