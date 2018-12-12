@@ -375,6 +375,8 @@ sub clean_destination {
 	print "Starting cleanup of $DESTINATION_DIRECTORY...\n";
 	clean_destination_items('directory');
 	clean_destination_items('file');
+	print $LINE_SMALL;
+	print "Completed cleanup.\n";
 	print $LINE_LARGE;
 }
 sub clean_destination_items {
