@@ -386,8 +386,8 @@ sub sync_music_collections {
 		eval $PRINT_LINE_LARGE;
 		$EXTENSION = $_;
 		@FOUND_LIST = ();
-		#File::Find::find( \&wanted, $SOURCE_DIRECTORY);
-		 print Dumper \@FOUND_LIST;
+		File::Find::find( \&wanted, $SOURCE_DIRECTORY);
+		# print Dumper \@FOUND_LIST;
 		if ( $LOG_LEVEL > 1 ) {
 			print "PROCESSING DATA TYPE: $EXTENSION\n";
 		}
