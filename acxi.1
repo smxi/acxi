@@ -1,4 +1,4 @@
-.TH ACXI 1 "2018\-12\-09" acxi "acxi manual"
+.TH ACXI 1 "2018\-12\-12" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -31,6 +31,29 @@ listed below. However, usually the short form is used in examples in order to
 keep things simple.
 
 .SH OPTIONS
+
+.TP
+.B \-\-clean\fR
+Clean directories and files from destination (compressed) directories 
+which are not present in the source music directories. Will show you the
+directories or files to be removed before deleting them, and you have to
+confirm the deletion of each set two times before it will actually delete
+it. Runs before the syncing starts.
+
+Take care with this one, if you have other compressed formats in your
+compressed directory than your default $OUTPUT_TYPE format, it will 
+want to delete all those, so do not use this option unless your compressed
+directories are literal true copies of your source directories.
+
+To confirm deletion of each group, you must first type 'delete' then
+hit enter, then type 'yes' to confirm the deletion. This should avoid
+errors and unintended deletions.
+
+Note that this feature does not run in silent/quiet mode because it should
+never be used automatically, or without explicit confirmation by the user.
+It can be enabled using the CLEAN configuration option below so that 
+acxi always cleans up before it starts syncing.
+
 .TP
 .B \-c\fR,\fB \-\-copy\fR
 Comma separated list of extensions for file types you want to sync to your
@@ -147,6 +170,11 @@ do not need this
 .B SOURCE/DESTINATION/CONFIGURATION DIRECTORIES
 
 NOTE: DESTINATION_DIRECTORY cannot be the same as SOURCE_DIRECTORY.
+
+\fBCLEAN\fR Sample: \fBCLEAN=true\fR Switches on/off \fB\-\-clean\fR to 
+apply cleaning action to your destination directories. Accepted
+values: \fB[enable|on|true|yes]\fR or \fB[disable|off|false|no]\fR. Default
+is false.
 
 \fBSOURCE_DIRECTORY\fR Sample: \fBSOURCE_DIRECTORY=/home/fred/music\fR 
 This the original, working, like flac, wav, etc.

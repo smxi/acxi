@@ -380,24 +380,47 @@ sub clean_destination {
 	}
 	clean_destination_items('directory');
 	clean_destination_items('file');
+	print $LINE_SMALL;
 }
 sub clean_destination_items {
 	my ($type) = @_;
 	my ($b_deleted,$item,$result);
 	$LIST_TYPE = ($type eq 'directory') ? 'dir-clean': 'file-clean';
 	@FOUND_LIST = ();
-	eval $PRINT_LINE_SMALL;
+	print $LINE_SMALL;
 	print "Checking $type removal...\n";
 	File::Find::find( \&wanted, $DESTINATION_DIRECTORY);
-	foreach $item (@FOUND_LIST) {
-		$result = 'UNSET';
-		print "Deleting $type: $item\n";
-		$result = rmtree("$item") if !$B_TEST;
-		$b_deleted = 1;
-		$B_DEST_CHANGED = 1;
-		print "Delete $type result: $result\n" if $LOG_LEVEL > 1;
+	if (@FOUND_LIST && confirm_clean($type)){
+		foreach $item (@FOUND_LIST) {
+			$result = 'UNSET';
+			print "Deleting $type: $item\n";
+			$result = rmtree("$item") if !$B_TEST;
+			$b_deleted = 1;
+			$B_DEST_CHANGED = 1;
+			print "Delete $type result: $result\n" if $LOG_LEVEL > 1;
+		}
 	}
 	print_not_found("$type-cleaned") if ! $b_deleted;
+}
+sub confirm_clean {
+	my ($type) = @_;
+	my ($b_confirm,$response) = (0,'');
+	print $LINE_SMALL;
+	print join("\n", @FOUND_LIST),"\n";
+	print $LINE_SMALL;
+	print "The preceding $type items will be deleted. Deletions cannot\n";
+	print "be restored! BE AWARE!!\n";
+	print "Please type 'delete' to remove them, or hit enter to skip.\n";
+	print "this group.\n";
+	chomp($response = <STDIN>);
+	if (lc($response) eq 'delete'){
+		print "Are you SURE you want to delete these items?\n";
+		print "Type 'yes' to confirm, or hit enter to skip.\n";
+		chomp($response = <STDIN>);
+		return 1 if lc($response) eq 'yes';
+	}
+	print "Skipping deletion for this $type group.\n";
+	return 0;
 }
 sub sync_music_collections {
 	my (@extension_files);
@@ -603,8 +626,8 @@ sub wanted {
 	return if -l; # skip symbolic links
 	if ($LIST_TYPE eq 'dir' || $LIST_TYPE eq 'file'){
 		return if $File::Find::name =~ m/^$DESTINATION_DIRECTORY/;
+		return if $File::Find::name =~ m/\/\./; # skip any dot files/directories
 	}
-	return if $File::Find::name =~ m/\/\./; # skip any dot files/directories
 	if ($LIST_TYPE eq 'dir'){
 		return if ! -d; # only directories
 	}
@@ -654,11 +677,11 @@ sub print_not_found {
 	}
 	elsif ($_[0] eq 'directory-cleaned') {
 		$message = "No directories to remove. Continuing...\n";
-		$none = "None to remove";
+		$none = "None to remove\n";
 	}
 	elsif ($_[0] eq 'file-cleaned') {
 		$message = "No files to remove. Continuing...\n";
-		$none = "None to remove";
+		$none = "None to remove\n";
 	}
 	if ( $LOG_LEVEL > 1 ) {
 		print $message;
@@ -695,8 +718,9 @@ sub print_help {
 	$output .= "$SELF_NAME --copy doc,docx,bmp\n";
 	$output .= $LINE_SMALL;
 	$output .= "--clean           Clean directories and files from destination not found in\n";
-	$output .= "                  source music directory. Use with --test first to make sure\n";
-	$output .= "                  nothing unexpected happens!\n";
+	$output .= "                  source music directory. Will show you directories/files to\n";
+	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
+	$output .= "                  remove that set of files or directories.\n";
 	$output .= "--copy -c         List of alternate data types to copy to Output type\n";
 	$output .= "                  directories. Must be comma separated, no spaces, \n";
 	$output .= "                  see sample above. Your current copy types are:\n";
@@ -793,9 +817,9 @@ sub assign_config_value {
 	elsif ($var eq 'COMMAND_LAME'){$COMMAND_LAME = $value;}
 	elsif ($var eq 'COMMAND_METAFLAC'){$COMMAND_METAFLAC = $value;}
 	elsif ($var eq 'CLEAN'){
-		$value =~ s/^(yes|1|true|enable)$/1/;
-		$value =~ s/^(no|0|false|disable)$/0/;
-		$B_CLEAN = $value;}
+		$value =~ s/^(yes|1|true|enable|on)$/1/;
+		$value =~ s/^(no|0|false|disable|off)$/0/;
+		$B_CLEAN = $value if $value =~ /^[10]$/;}
 	elsif ($var eq 'SOURCE_DIRECTORY' || $var eq 'DIR_PREFIX_SOURCE'){
 		$SOURCE_DIRECTORY = $value;}
 	elsif ($var eq 'DESTINATION_DIRECTORY' || $var eq 'DIR_PREFIX_DEST'){
