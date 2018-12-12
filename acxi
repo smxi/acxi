@@ -371,11 +371,11 @@ sub validate_log_level {
 ### CLEAN/SYNC MUSIC DIRECTORIES ###
 sub clean_destination {
 	my (@extension_files);
-	print $LINE_HEAVY;
+	print $LINE_LARGE;
 	print "Starting cleanup of $DESTINATION_DIRECTORY...\n";
 	clean_destination_items('directory');
 	clean_destination_items('file');
-	print $LINE_SMALL;
+	print $LINE_LARGE;
 }
 sub clean_destination_items {
 	my ($type) = @_;
