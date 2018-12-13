@@ -120,7 +120,7 @@ my $SOURCE_DIRECTORY = '/path/to/source/directory';
 my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
 
 # NOTE: only use this if you are running Windows, or any OS without $HOME
-# or $XDG_CONFIG_HOME environmental varialbes. acxi will look for file:
+# or $XDG_CONFIG_HOME environmental variables. acxi will look for file:
 # acxi.conf inside that directory. 
 my $CONFIG_DIRECTORY='';
 
