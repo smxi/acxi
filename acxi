@@ -66,13 +66,13 @@ use File::Path qw(rmtree);
 
 ## SELF INFO
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.0.0';
-my $SELF_DATE = '2018-12-11';
+my $SELF_VERSION = '3.1.0';
+my $SELF_DATE = '2018-12-18';
 
 ## GLOBALS
 my ($B_DEST_CHANGED,$B_CLEAN,$B_FORCE,$B_QUIET,$B_TEST);
 my ($PRINT_LINE_HEAVY,$PRINT_LINE_LARGE,$PRINT_LINE_SMALL);
-my ($QUALITY,$SILENT_ARG_FLAC,$SILENT_ARG_LAME,$SILENT_ARG_OPUS) = (7,'','','');
+my ($QUALITY,$SILENT_FLAC,$SILENT_LAME,$SILENT_OPUS) = (7,'','','');
 my ($EXTENSION,@EXTENSION_LIST,@FOUND_LIST,$LIST_TYPE);
 
 ## CONSTANTS
@@ -132,11 +132,15 @@ my $CONFIG_DIRECTORY='';
 my $INPUT_TYPE = 'flac';
 my $OUTPUT_TYPE = 'ogg';
 
-# For ogg: n can be 1-10. 10 is the largest file size / highest quality.
 # For mp3: n can be 0-9 (variable bit rate), 0 is largest file / highest quality
+# For ogg: n can be between -1 and 10. Fractions allowed. 10 is the largest file 
+# size / highest quality. 
+# For opus: n can be 6-256. 256 is the largest file size / highest quality / 
+# maximum bitrate.
+
 my $QUALITY_MP3 = 3;
 my $QUALITY_OGG = 7;
-my $QUALITY_OPUS = 8;
+my $QUALITY_OPUS = 160;
 ## NOTE: if you want to override $COPY_TYPES in your config files, you
 # must use this syntax:
 # COPY_TYPES=doc,docx,bmp,jpg,jpeg
@@ -191,14 +195,14 @@ sub set_basic_data {
 sub set_display_output_data {
 	if ( $LOG_LEVEL < 3 ) {
 		if ( $OUTPUT_TYPE eq 'mp3' ) {
-			$SILENT_ARG_FLAC = '--silent'; # flac output 
-			$SILENT_ARG_LAME = '--silent'; # lame output
+			$SILENT_FLAC = '--silent'; # flac output 
+			$SILENT_LAME = '--silent'; # lame output
 		}
 		elsif ( $OUTPUT_TYPE eq 'ogg' ) {
-			$SILENT_ARG_FLAC = '--quiet'; # for oggenc output
+			$SILENT_FLAC = '--quiet'; # for oggenc output
 		}
 		elsif ( $OUTPUT_TYPE eq 'opus' ) {
-			$SILENT_ARG_OPUS = '--quiet'; # for oggenc output
+			$SILENT_OPUS = '--quiet'; # for oggenc output
 		}
 	}
 	if ( $LOG_LEVEL < 2 ) {
@@ -567,14 +571,14 @@ sub sync_collection_files {
 				if ( $OUTPUT_TYPE eq 'ogg' ){
 					$action = 'To ogg';
 					if (!$B_TEST){
-						qx($COMMAND_OGG $SILENT_ARG_FLAC -q $QUALITY -o "$dest_file" "$src_file");
+						qx($COMMAND_OGG $SILENT_FLAC -q $QUALITY -o "$dest_file" "$src_file");
 						$result = $?;
 					}
 				}
 				elsif ( $OUTPUT_TYPE eq 'opus' ){
 					$action = 'To opus';
 					if (!$B_TEST){
-						qx($COMMAND_OPUS $SILENT_ARG_OPUS --bitrate $QUALITY "$src_file" "$dest_file");
+						qx($COMMAND_OPUS $SILENT_OPUS --bitrate $QUALITY "$src_file" "$dest_file");
 						$result = $?;
 					}
 				}
@@ -622,8 +626,8 @@ sub flac2mp3_cmd {
 	$lame_params .= " --tt \"$tags{'TITLE'}\" --tg \"$tags{'GENRE'}\"";
 	$lame_params .= " --ty \"$tags{'DATE'}\" --tn \"$tags{'TRACKNUMBER'}\" - \"$o_file\"";
 	# $lame_params .= " --tt \"$tags{'TRACKTOTAL'}\" --tg \"$tags{'DISKNUMBER'}\"";
-	my $cmd = "$COMMAND_FLAC $SILENT_ARG_FLAC -d -c \"$i_file\" | ";
-	$cmd .= "$COMMAND_LAME $SILENT_ARG_LAME -h -V $QUALITY $lame_params";
+	my $cmd = "$COMMAND_FLAC $SILENT_FLAC -d -c \"$i_file\" | ";
+	$cmd .= "$COMMAND_LAME $SILENT_LAME -h -V $QUALITY $lame_params";
 	return $cmd;
 }
 
@@ -754,38 +758,38 @@ sub print_help {
 	$output .= "                  source music directory. Will show you directories/files to\n";
 	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
 	$output .= "                  remove that set of files or directories.\n";
-	$output .= "--copy -c         List of alternate data types to copy to Output type\n";
+	$output .= "--copy, -c        List of alternate data types to copy to Output type\n";
 	$output .= "                  directories. Must be comma separated, no spaces, \n";
 	$output .= "                  see sample above. Your current copy types are:\n";
 	$output .= "                  @EXTENSION_LIST\n";
 	$output .= "--debug           Full screen output, including full verbosity of \n";
-	$output .= "                  flac/oggenc/lameconversion process for MP3 or OGG output.\n";
+	$output .= "                  flac/lame/oggenc/opusenc conversion process for mp3, ogg,\n";
+	$output .= "                  or opus output.\n";
 	$output .= "--default         Single line per operation screen output, default value for\n";
 	$output .= "                  $SELF_NAME.\n";
-	$output .= "--destination -d  Path to the directory where you want the processed\n";
+	$output .= "--destination, -d Path to the directory where you want the processed\n";
 	$output .= "                  (eg, ogg) files to go.\n";
 	$output .= "                  Your current default is: $DESTINATION_DIRECTORY\n";
-	$output .= "--force -f        Force overwrite the mp3/ogg/jpg/txt files, even if they\n"; 
-	$output .= "                  already exist.\n";
-	$output .= "--help -h         This help menu.\n";
-	$output .= "--input -i        Input type: supported - flac, wav, raw. mp3 only supports\n";
+	$output .= "--force, -f       Force overwrite the mp3/ogg/opus/jpg/txt/etc. files, even\n"; 
+	$output .= "                  if they already exist.\n";
+	$output .= "--help, -h        This help menu.\n";
+	$output .= "--input, -i       Input type: supported - flac, wav, raw. mp3 only supports\n";
 	$output .= "                  flac input. Your current default is: $INPUT_TYPE\n";
-	$output .= "--output -o       Output type: supported - ogg, mp3\n";
+	$output .= "--output, -o      Output type: supported - mp3, ogg, opus\n";
 	$output .= "                  Your current default is: $OUTPUT_TYPE\n";
-	$output .= "--quality n -q n  For ogg: n can be 1-10. 10 is the largest file/\n";
-	$output .= "                  highest quality.\n";                
-	$output .= "                  For mp3: n can be 0-9 (variable bit rate), 0 is largest file/\n";
-	$output .= "                  highest quality. \n";
-	$output .= "                  Current defaults: $QUALITY_MP3 (mp3); $QUALITY_OGG (ogg)\n";
-	$output .= "--quiet --silent  Turns off all screen output, except for error messages.\n";
-	$output .= "--source -s       Path to the top-most directory containing your source files\n";
+	$output .= "--quality n, -q n For ogg: n between -1 and 10. Fractions ok. 10 is highest quality.\n";   
+	$output .= "                  For opus: n is (variable) bitrate, between 6-256 (256 highest quality).\n";
+	$output .= "                  For mp3: n between 0-9 (variable bit rate), 0 is highest quality.\n";
+	$output .= "                  Current defaults: $QUALITY_MP3 (mp3); $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
+	$output .= "--quiet, --silent Turns off all screen output, except for error messages.\n";
+	$output .= "--source, -s      Path to the top-most directory containing your source files\n";
 	$output .= "                  (eg, flac). Your current default is: $SOURCE_DIRECTORY\n";
-	$output .= "--verbose         Without full verbosity of debug, no flac/oggenc/lame for MP3\n";
-	$output .= "                  or OGG conversion process screen output, but more verbose than\n";
-	$output .= "                  default.\n";
+	$output .= "--verbose, -V     Without full verbosity of debug, no flac/lame/oggenc/opusenc\n";
+	$output .= "                  for mp3, ogg or opus conversion process screen output, but more \n";
+	$output .= "                  verbose than default.\n";
 	$output .= "--test            Test copy and sync without actually doing the copy/sync. Also\n";
 	$output .= "                  activates --debug for more complete path outputs.\n";
-	$output .= "--version -v      Show $SELF_NAME version.\n\n";
+	$output .= "--version, -v     Show $SELF_NAME version.\n\n";
 	$output .= $LINE_SMALL;
 	$output .= "User Configs ";
 	if (!$CONFIG_DIRECTORY){
@@ -845,10 +849,11 @@ sub set_config_data {
 }
 sub assign_config_value {
 	my ($var,$value) = @_;
-	if ($var eq 'COMMAND_OGG'){$COMMAND_OGG = $value;}
-	elsif ($var eq 'COMMAND_FLAC'){$COMMAND_FLAC = $value;}
+	if ($var eq 'COMMAND_FLAC'){$COMMAND_FLAC = $value;}
 	elsif ($var eq 'COMMAND_LAME'){$COMMAND_LAME = $value;}
 	elsif ($var eq 'COMMAND_METAFLAC'){$COMMAND_METAFLAC = $value;}
+	elsif ($var eq 'COMMAND_OGG'){$COMMAND_OGG = $value;}
+	elsif ($var eq 'COMMAND_OPUS'){$COMMAND_OPUS = $value;}
 	elsif ($var eq 'CLEAN'){
 		$value =~ s/^(yes|1|true|enable|on)$/1/;
 		$value =~ s/^(no|0|false|disable|off)$/0/;
@@ -864,6 +869,7 @@ sub assign_config_value {
 	elsif ($var eq 'QUALITY'){$QUALITY_OGG = $value;$QUALITY_MP3 = $value}
 	elsif ($var eq 'QUALITY_MP3'){$QUALITY_MP3 = $value}
 	elsif ($var eq 'QUALITY_OGG'){$QUALITY_OGG = $value;}
+	elsif ($var eq 'QUALITY_OPUS'){$QUALITY_OPUS = $value;}
 	elsif ($var eq 'COPY_TYPES' || $var eq 'USER_TYPES'){
 		$COPY_TYPES = $value;}
 }
@@ -898,9 +904,9 @@ GetOptions (
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires type.") if ! $arg;
 		$OUTPUT_TYPE = $arg;},
-	"q|quality:i" => sub { 
+	"q|quality:f" => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires number.") if ! defined $arg || $arg !~ /^[0-9]+$/;
+		error_handler('missing-arg',"$opt requires number.") if ! defined $arg || $arg !~ /^-?[0-9\.]+$/;
 		# validate these later
 		$QUALITY_MP3 = $arg;
 		$QUALITY_OGG = $arg; }, 
@@ -914,7 +920,7 @@ GetOptions (
 	"test" => sub { 
 		$LOG_LEVEL = 3;
 		$B_TEST = 1 },
-	"verbose" => sub { 
+	"V|verbose" => sub { 
 		$LOG_LEVEL = 2 },
 	"v|version" => sub { 
 		print_version(); },

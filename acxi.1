@@ -1,15 +1,17 @@
-.TH ACXI 1 "2018\-12\-12" acxi "acxi manual"
+.TH ACXI 1 "2018\-12\-18" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
-\fBacxi\fR
-
-\fBacxi\fR [options]
+\fBacxi\fR [\fB\-\-clean\fR] [\fB\-c\fR extensions] [\fB\-\-debug\fR] 
+[\fB\-\-default\fR] [\fB\-d\fR destination-path] [\fB\-f\fR] [\fB\-h\fR] 
+[\fB\-i\fR input-type] [\fB\-o\fR output-type] [\fB\-q\fR number] 
+[\fB\-\-quiet\fR] [\fB\-s\fR source-path] [\fB\-V\fR] [\fB\-\-test\fR] 
+[\fB\-v\fR]
 
 .SH DESCRIPTION
 \fBacxi\fR is a command line audio conversion program. It converts and syncs
 all desired source lossless files to a lossy directory location. Supports 
-lossless formats flac/wav/raw. Output formats are ogg or mp3.
+lossless formats flac/wav/raw. Output formats are ogg, opus, or mp3.
 
 By default, it will also copy over most common filetypes like gif, jpg, png, 
 txt, pdf, doc, docx, and a few others. You can change the defaults using 
@@ -19,12 +21,10 @@ The destination directory cannot be the same as the source directory, but
 it can be inside of the source directory.
 
 .SH USING OPTIONS
-Options can be combined if they do not conflict. You can either group the letters
-together or separate them.
 
 For example:
 .B acxi
-\fB\-o mp3\fR or \fBacxi \-o mp3\fR or \fBacxi \-d /home/you/music\fR
+\fB\-o mp3\fR or \fBacxi \-fo opus\fR or \fBacxi \-d /home/you/music\fR
 
 Note that some short form options have long form equivalents, which are
 listed below. However, usually the short form is used in examples in order to
@@ -55,7 +55,7 @@ It can be enabled using the CLEAN configuration option below so that
 acxi always cleans up before it starts syncing.
 
 .TP
-.B \-c\fR,\fB \-\-copy\fR
+.B \-c [extensions]\fR,\fB \-\-copy [extensions]\fR
 Comma separated list of extensions for file types you want to sync to your
 lossy music directory. Overrides default values. Use lowercase, but it's
 case insensitive internally. Do not include the period in the extension.
@@ -69,40 +69,46 @@ Sample: \fB\-c txt,pdf,png,jpg,jpeg,gif\fR
 .TP
 .B \-\-debug\fR
 Full screen output, including full verbosity of 
-flac/oggenc/lameconversion process for MP3 or OGG output.
+flac / oggenc / opusenc / lame conversion process for mp3, ogg, or 
+opus output.
 
 .TP
 .B \-\-default\fR
 Single line per operation screen output, default value for acxi.
 
 .TP
-.B \-d\fR,\fB \-\-destination\fR
+.B \-d [path]\fR, \fB\-\-destination [path]\fR
 Full path to the directory where you want the processed lossy
 (eg, ogg) files to go.
 
 .TP
-.B \-f\fR,\fB \-\-force\fR
-Overwrites all the mp3/ogg/jpg/txt etc. files, even if they already 
+.B \-f\fR, \fB\-\-force\fR
+Overwrites all the mp3/ogg/opus/jpg/txt etc. files, even if they already 
 exist. This is useful if you for example want to change compression
 quality on existing files.
 
 .TP
-.B \-h\fR,\fB \-\-help\fR
+.B \-h\fR, \fB\-\-help\fR
 This help menu.
 
 .TP
-.B \-i\fR,\fB \-\-input\fR
+.B \-i [flac|raw|wav]\fR, \fB\-\-input [flac|raw|wav]\fR
 Input type. Supported types: flac, wav, raw. mp3 only supports flac input.
 
 .TP
-.B \-o\fR,\fB \-\-output\fR
-Output type. Supported types: ogg, mp3
+.B \-o [mp3|ogg|opus]\fR, \fB\-\-output [mp3|ogg|opus]\fR
+Output type. Supported types: ogg, opus, mp3
 
 .TP
-.B \-q [number]\fR,\fB \-\-quality [number]\fR
-For ogg: n can be 1\-10. 10 is the largest file/highest quality.
-For mp3: n can be 0\-9 (variable bit rate), 0 is largest file/
-highest quality.
+.B \-q [number]\fR, \fB\-\-quality [number]\fR
+For mp3: n can be an integer between 0\-9 (variable bit rate), 0 is 
+largest file / highest quality.
+
+For ogg: n can be between \-1 and 10. 10 is the largest file/highest quality. 
+Fractions are allowed, e.g. \fB\-o ogg \-q 7.54\fR
+
+For opus: n can be an integer between 6\-256 (bitrate). 256 is largest file/highest
+quality.
 
 Note that using a higher or lower quality than you used to create
 the compressed files will not result in redoing those files unless 
@@ -110,11 +116,11 @@ you use the \fB\-f\fR / \fB\-\-force\fR option to force the overwrite
 of the existing files.
 
 .TP
-.B \-\-quiet\fR,\fB \-\-silent\fR
+.B \-\-quiet\fR, \fB\-\-silent\fR
 Turns off all screen output, except for error messages.
 
 .TP
-.B \-s\fR,\fB \-\-source\fR
+.B \-s [path]\fR, \fB\-\-source [path]\fR
 Path to the top-most directory containing your source files (eg, flac).
 
 .TP
@@ -123,13 +129,13 @@ Test your configurations without actually doing the copy and sync
 operations. Activates \fB \-\-debug\fR as well for more complete output.
                   
 .TP
-.B \-\-verbose\fR
-Without full verbosity of debug, no flac/oggenc/lame for MP3
-or OGG conversion process screen output, but more verbose than
+.B  \-V\fR, \fB\-\-verbose\fR
+Without full verbosity of debug, no flac/oggenc/opusenc/lame for mp3,
+ogg, or opus conversion process screen output, but more verbose than
 default.
 
 .TP
-.B \-v\fR,\fB \-\-version\fR
+.B \-v\fR, \fB\-\-version\fR
 Show acxi version.
 
 .SH CONFIGURATION FILE
@@ -155,16 +161,18 @@ in the top comment header of acxi.
 
 The following set your system path for the required applications:
 
-\fBCOMMAND_OGG\fR Sample: \fBCOMMAND_OGG=/usr/bin/oggenc\fR (default path)
-
 \fBCOMMAND_FLAC\fR Sample: \fBCOMMAND_FLAC=/usr/bin/flac\fR (default path)
 
 \fBCOMMAND_LAME\fR Sample: \fBCOMMAND_LAME=/usr/bin/lame\fR (default path)
 
 \fBCOMMAND_METAFLAC\fR Sample: \fBCOMMAND_METAFLAC=/usr/bin/metaflac\fR 
 (default path) Metaflac is required ONLY for flac to mp3, to copy over the 
-ID3 tags If you are not going to make MP3s, only OGG files for output, you 
-do not need this
+ID3 tags If you are not going to make mp3s, only ogg or opus files for output, 
+you do not need this
+
+\fBCOMMAND_OGG\fR Sample: \fBCOMMAND_OGG=/usr/bin/oggenc\fR (default path)
+
+\fBCOMMAND_OPUS\fR Sample: \fBCOMMAND_OPUS=/usr/bin/opusenc\fR (default path)
 
 .TP
 .B SOURCE/DESTINATION/CONFIGURATION DIRECTORIES
@@ -176,12 +184,19 @@ apply cleaning action to your destination directories. Accepted
 values: \fB[enable|on|true|yes]\fR or \fB[disable|off|false|no]\fR. Default
 is false.
 
-\fBSOURCE_DIRECTORY\fR Sample: \fBSOURCE_DIRECTORY=/home/fred/music\fR 
+\fBSOURCE_DIRECTORY\fR Sample: 
+
+\fBSOURCE_DIRECTORY=/home/fred/music\fR 
+
 This the original, working, like flac, wav, etc.
 
-\fBDESTINATION_DIRECTORY\fR Sample: \fBDESTINATION_DIRECTORY=/home/fred/music/ogg\fR
-This is the processed compressed music files, ie, ogg, mp3. Destination cannot 
-be the same as Source directory, although it can be inside of the source directory.
+\fBDESTINATION_DIRECTORY\fR Sample: 
+
+\fBDESTINATION_DIRECTORY=/home/fred/music/ogg\fR
+
+This is the processed compressed music files, ie, ogg, opus, or mp3. Destination 
+cannot be the same as Source directory, although it can be inside of the source 
+directory.
 
 NOTE: only use this if you are running Windows, or any OS without $HOME
 or $XDG_CONFIG_HOME environmental variables. acxi will look for file:
@@ -207,11 +222,14 @@ to override the default file types acxi will sync. Set to 'none',
 if you only want to sync the music files, not copy over images, text files,
 etc.
 
-\fBQUALITY_MP3\fR Sample: \fBINPUT_MP3=2\fR Supported values: 0\-9. 0 is 
+\fBQUALITY_MP3\fR Sample: \fBQUALITY_MP3=2\fR Supported values: 0\-9. 0 is 
 the largest file size / highest quality.
 
-\fBQUALITY_OGG\fR Sample: \fBINPUT_OGG=8\fR Supported values: 1\-10. 10 is 
-the largest file size / highest quality.
+\fBQUALITY_OGG\fR Sample: \fBQUALITY_OGG=8.25q\fR Supported values: \-1 to 10. 
+10 is the largest file size / highest quality. Supports fractions.
+
+\fBQUALITY_OPUS\fR Sample: \fBQUALITY_OPUS=256\fR Supported values: 6\-256. 
+256 is the largest file size / highest quality / best bitrate.
 
 .TP
 .B DEBUG OUTPUT
