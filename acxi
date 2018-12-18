@@ -72,7 +72,7 @@ my $SELF_DATE = '2018-12-11';
 ## GLOBALS
 my ($B_DEST_CHANGED,$B_CLEAN,$B_FORCE,$B_QUIET,$B_TEST);
 my ($PRINT_LINE_HEAVY,$PRINT_LINE_LARGE,$PRINT_LINE_SMALL);
-my ($QUALITY,$SILENT_ARG_FO,$SILENT_ARG_LAME) = (7,'','');
+my ($QUALITY,$SILENT_ARG_FLAC,$SILENT_ARG_LAME,$SILENT_ARG_OPUS) = (7,'','','');
 my ($EXTENSION,@EXTENSION_LIST,@FOUND_LIST,$LIST_TYPE);
 
 ## CONSTANTS
@@ -102,10 +102,11 @@ my $LINE_LARGE = "--------------------------------------------------------------
 # a startup argument.
 
 ## APPLICATION PATHS
-my $COMMAND_OGG = '/usr/bin/oggenc';
+
 my $COMMAND_FLAC = '/usr/bin/flac'; 
 my $COMMAND_LAME = '/usr/bin/lame';
-
+my $COMMAND_OGG = '/usr/bin/oggenc';
+my $COMMAND_OPUS = '/usr/bin/opusenc';
 # metaflac is required ONLY for flac to mp3, to copy over the ID3 tags
 # If you are not going to make MP3s, only OGG files for output, you do 
 # not need this.
@@ -133,9 +134,9 @@ my $OUTPUT_TYPE = 'ogg';
 
 # For ogg: n can be 1-10. 10 is the largest file size / highest quality.
 # For mp3: n can be 0-9 (variable bit rate), 0 is largest file / highest quality
-my $QUALITY_OGG = 7;
 my $QUALITY_MP3 = 3;
-
+my $QUALITY_OGG = 7;
+my $QUALITY_OPUS = 8;
 ## NOTE: if you want to override $COPY_TYPES in your config files, you
 # must use this syntax:
 # COPY_TYPES=doc,docx,bmp,jpg,jpeg
@@ -190,11 +191,14 @@ sub set_basic_data {
 sub set_display_output_data {
 	if ( $LOG_LEVEL < 3 ) {
 		if ( $OUTPUT_TYPE eq 'mp3' ) {
-			$SILENT_ARG_FO = '--silent'; # flac output 
+			$SILENT_ARG_FLAC = '--silent'; # flac output 
 			$SILENT_ARG_LAME = '--silent'; # lame output
 		}
 		elsif ( $OUTPUT_TYPE eq 'ogg' ) {
-			$SILENT_ARG_FO = '--quiet'; # for oggenc output
+			$SILENT_ARG_FLAC = '--quiet'; # for oggenc output
+		}
+		elsif ( $OUTPUT_TYPE eq 'opus' ) {
+			$SILENT_ARG_OPUS = '--quiet'; # for oggenc output
 		}
 	}
 	if ( $LOG_LEVEL < 2 ) {
@@ -227,7 +231,7 @@ sub validate_in_out_types {
 		$error_message .= "\n  The input type you entered is not supported: ";
 		$error_message .= "$INPUT_TYPE";
 	}
-	if ( $OUTPUT_TYPE !~ m/^(ogg|mp3)$/i ){
+	if ( $OUTPUT_TYPE !~ m/^(ogg|mp3|opus)$/i ){
 		$b_type_unsupported = 1;
 		$error_message .= "\n  The output type you entered is not supported: ";
 		$error_message .= "$OUTPUT_TYPE";
@@ -284,6 +288,13 @@ sub validate_application_paths {
 			$error_message .= "\n  Encoding application not available: $COMMAND_OGG";
 		}
 	}
+	elsif ( $OUTPUT_TYPE eq 'opus' ) {
+		$app_paths .= "\n $COMMAND_OPUS";
+		if ( ! -x "$COMMAND_OPUS" ) {
+			$b_missing_app = 1;
+			$error_message .= "\n  Encoding application not available: $COMMAND_OPUS";
+		}
+	}
 	elsif ( $OUTPUT_TYPE eq 'mp3' ) {
 		$app_paths .= "\n $COMMAND_LAME ";
 		if ( ! -x "$COMMAND_LAME" ) {
@@ -324,10 +335,22 @@ sub validate_quality{
 		print dotify("Checking quality support for $OUTPUT_TYPE");
 	}
 	if ( lc($OUTPUT_TYPE) eq 'ogg') {
-		if ($QUALITY_OGG !~ m/^([1-9]|10)$/ ) {
+		if ($QUALITY_OGG !~ m/^-?[0-9]+(\.[0-9]+)?$/ || 
+		 $QUALITY_OGG < -1 || $QUALITY_OGG > 10 ) {
 			$b_bad_quality = 1;
 			$error_message .= "\n  $OUTPUT_TYPE only supports ";
-			$error_message .= "1-10 quality levels. You entered: $QUALITY_OGG";
+			$error_message .= "-1 to 10 quality levels. You entered: $QUALITY_OGG";
+		}
+		else {
+			$QUALITY = $QUALITY_OGG;
+		}
+	}
+	# supports fractional quality levels
+	elsif ( lc($OUTPUT_TYPE) eq 'opus') {
+		if ($QUALITY_OPUS !~ m/^[0-9]+$/ || $QUALITY_OPUS < 6|| $QUALITY_OPUS > 256 ){
+			$b_bad_quality = 1;
+			$error_message .= "\n  $OUTPUT_TYPE only supports ";
+			$error_message .= "6 to 256 bitrate quality levels. You entered: $QUALITY_OPUS";
 		}
 		else {
 			$QUALITY = $QUALITY_OGG;
@@ -544,7 +567,14 @@ sub sync_collection_files {
 				if ( $OUTPUT_TYPE eq 'ogg' ){
 					$action = 'To ogg';
 					if (!$B_TEST){
-						qx($COMMAND_OGG $SILENT_ARG_FO -q $QUALITY -o "$dest_file" "$src_file");
+						qx($COMMAND_OGG $SILENT_ARG_FLAC -q $QUALITY -o "$dest_file" "$src_file");
+						$result = $?;
+					}
+				}
+				elsif ( $OUTPUT_TYPE eq 'opus' ){
+					$action = 'To opus';
+					if (!$B_TEST){
+						qx($COMMAND_OPUS $SILENT_ARG_OPUS --bitrate $QUALITY "$src_file" "$dest_file");
 						$result = $?;
 					}
 				}
@@ -583,13 +613,16 @@ sub sync_collection_files {
 # Added: Odd @2011-03-23 01:52:31
 sub flac2mp3_cmd {
 	my ($i_file, $o_file) = @_;
-	my %tags = get_flac_tags("$i_file", ("ARTIST", "ALBUM", "TITLE", 
-	"GENRE", "DATE", "TRACKNUMBER"));
+	my %tags = get_flac_tags("$i_file");
 	# print Dumper \%tags;
+	if ($tags{'TRACKNUMBER'} && $tags{'TRACKTOTAL'}){
+		$tags{'TRACKNUMBER'} .= "/$tags{'TRACKTOTAL'}";
+	}
 	my $lame_params = "--ta \"$tags{'ARTIST'}\" --tl \"$tags{'ALBUM'}\"";
 	$lame_params .= " --tt \"$tags{'TITLE'}\" --tg \"$tags{'GENRE'}\"";
 	$lame_params .= " --ty \"$tags{'DATE'}\" --tn \"$tags{'TRACKNUMBER'}\" - \"$o_file\"";
-	my $cmd = "$COMMAND_FLAC $SILENT_ARG_FO -d -c \"$i_file\" | ";
+	# $lame_params .= " --tt \"$tags{'TRACKTOTAL'}\" --tg \"$tags{'DISKNUMBER'}\"";
+	my $cmd = "$COMMAND_FLAC $SILENT_ARG_FLAC -d -c \"$i_file\" | ";
 	$cmd .= "$COMMAND_LAME $SILENT_ARG_LAME -h -V $QUALITY $lame_params";
 	return $cmd;
 }
@@ -598,11 +631,14 @@ sub flac2mp3_cmd {
 # For this function to work reliably, it should be passed tag queries in the order of:
 # artist, album, title, genre, date, tracknumber
 sub get_flac_tags {
-	my ($i_file, @tags) = @_;
+	my ($i_file) = @_;
 	my (%tag_list,@working);
+	my @tags = ("ARTIST", "ALBUM", "TITLE","GENRE", "DATE", "TRACKNUMBER", 
+	"TRACKTOTAL","DISKNUMBER","LYRICS");
 	my $cmd = "$COMMAND_METAFLAC \"$i_file\" --show-tag=\"$tags[0]\"";
 	$cmd .= " --show-tag=\"$tags[1]\" --show-tag=\"$tags[2]\" --show-tag=\"$tags[3]\"";
 	$cmd .= " --show-tag=\"$tags[4]\" --show-tag=\"$tags[5]\"";
+	$cmd .= " --show-tag=\"$tags[6]\" --show-tag=\"$tags[7]\"";
 	my @orig_tags = qx($cmd);
 	chomp @orig_tags;
 	foreach (@orig_tags) {
