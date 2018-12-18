@@ -1,13 +1,19 @@
 README for acxi - a comand line audio file conversion tool
 
-The 3.0 release (2018-12-07, long delayed) features improved error
-handling, extra --test option to test your configurations before
-actually running the syncs live, improved output formatting, the 
-ability to have your target (compressed, lossy) directory inside 
-your source directory, and modernized Perl 5. The Perl runs with
-warnings/strict mode enabled as well. For the first time ever, a 
-man page is included. Some tagging bugs were also fixed for mp3
-generation. 
+The 3.0 release (2018-12-07, long delayed) features:
+* Improved error handling. More protections in place against
+user configuration and option use errors.
+* New --test option to test your configurations before
+actually running the syncs live.
+* New --clean option to remove files/directories not found in your 
+source directory. Includes protections against accidental use.
+* Improved output formatting, should usually fit in 80 column display.
+* The ability to have your target (compressed, lossy) directory 
+inside your source directory.
+* Modernized Perl 5. The Perl runs with warnings/strict mode 
+enabled as well.
+* A man page is now available. 
+* Some tagging bugs were also fixed for flac->mp3 generation. 
 
 ========================================================================
 ABOUT
