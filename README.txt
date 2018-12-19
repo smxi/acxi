@@ -1,5 +1,11 @@
 README for acxi - a comand line audio file conversion tool
 
+The 3.1.0 release (2018-12-18):
+* Adds support for Opus output type.
+* Adds Ogg quality fractional levels, and the -1 value.
+* Fixes a few miscellaneous man page and comment/documentation
+glitches.
+
 The 3.0 release (2018-12-07, long delayed) features:
 * Improved error handling. More protections in place against
 user configuration and option use errors.
