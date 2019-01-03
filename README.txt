@@ -1,24 +1,6 @@
 README for acxi - a comand line audio file conversion tool
 
-The 3.1.0 release (2018-12-18) features:
-* Adds support for Opus output type.
-* Adds Ogg quality fractional levels, and the -1 value.
-* Corrects man/comments/help inconsistencies.
-
-The 3.0 release (2018-12-07, long delayed) features:
-* Improved error handling. More protections in place against
-user configuration and option use errors.
-* New --test option to test your configurations before
-actually running the syncs live.
-* New --clean option to remove files/directories not found in your 
-source directory. Includes protections against accidental use.
-* Improved output formatting, should usually fit in 80 column display.
-* The ability to have your target (compressed, lossy) directory 
-inside your source directory.
-* Modernized Perl 5. The Perl runs with warnings/strict mode 
-enabled as well.
-* A man page is now available. 
-* Some tagging bugs were also fixed for flac->mp3 generation. 
+See acxi.changelog for changes.
 
 ========================================================================
 ABOUT
