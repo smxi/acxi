@@ -3,7 +3,7 @@
 # acxi - audio conversion program
 #########################################################################
 
-# Copyright (c) 2010-2018 - Harald Hope - smxi.org 
+# Copyright (c) 2010-2019 - Harald Hope - smxi.org 
 # Home page: https://github.com/smxi/acxi
 # Forum support: https://techpatterns.com/forums/about1491.html
 # Download url: https://smxi.org/acxi
@@ -66,8 +66,8 @@ use File::Path qw(rmtree);
 
 ## SELF INFO
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.1.0';
-my $SELF_DATE = '2018-12-18';
+my $SELF_VERSION = '3.1.1';
+my $SELF_DATE = '2019-01-03';
 
 ## GLOBALS
 my ($B_DEST_CHANGED,$B_CLEAN,$B_FORCE,$B_QUIET,$B_TEST);
@@ -357,7 +357,7 @@ sub validate_quality{
 			$error_message .= "6 to 256 bitrate quality levels. You entered: $QUALITY_OPUS";
 		}
 		else {
-			$QUALITY = $QUALITY_OGG;
+			$QUALITY = $QUALITY_OPUS;
 		}
 	}
 	elsif ( lc($OUTPUT_TYPE) eq 'mp3') {
@@ -524,7 +524,6 @@ sub sync_collection_files {
 	my ($action,$dest_file,$file,$src_file) = ('','','','');
 	my ($dest_info,$dest_mod_time,$src_info, $src_mod_time) = ('',0,'',0);
 	foreach $file (@FOUND_LIST) {
-		# $file =~ s/\n$//;
 		next if ! $file;
 		$dest_file = $src_file = $file;
 		#print "\nIF: $src_file\n";
@@ -568,6 +567,10 @@ sub sync_collection_files {
 					# add line break only when file exists
 					print dotify("\nEncoding $src_file to $OUTPUT_TYPE");
 				}
+				$src_file =~ s/"/\\"/g;
+				$dest_file =~ s/"/\\"/g;
+				$src_file =~ s/\$/\\\$/g;
+				$dest_file =~ s/\$/\\\$/g;
 				if ( $OUTPUT_TYPE eq 'ogg' ){
 					$action = 'To ogg';
 					if (!$B_TEST){
@@ -664,13 +667,13 @@ sub wanted {
 	if ($LIST_TYPE eq 'dir' || $LIST_TYPE eq 'file'){
 		return if $File::Find::name =~ m/^$DESTINATION_DIRECTORY/;
 		return if $File::Find::name =~ m/\/\./; # skip any dot files/directories
-	}
-	if ($LIST_TYPE eq 'dir'){
-		return if ! -d; # only directories
-	}
-	elsif ($LIST_TYPE eq 'file') {
-		return if -d; # skip directories
-		return if $File::Find::name !~ /\.$EXTENSION$/i;
+		if ($LIST_TYPE eq 'dir'){
+			return if ! -d; # only directories
+		}
+		elsif ($LIST_TYPE eq 'file') {
+			return if -d; # skip directories
+			return if $File::Find::name !~ /\.$EXTENSION$/i;
+		}
 	}
 	elsif ($LIST_TYPE eq 'dir-clean' || $LIST_TYPE eq 'file-clean'){
 		if ($LIST_TYPE eq 'dir-clean') {
