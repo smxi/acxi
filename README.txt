@@ -79,12 +79,14 @@ You must at a minimum set your source and destination directories the
 first time you run acxi, either using the -o and -s options, or in the 
 USER VARIABLES section on the top of the file, or in a configuration file.
 
-acxi defaults to using the following quality levels:
+acxi defaults to flac for input, and defaults to the following quality 
+levels for output:
 ogg: 7
 mp3: 3
 opus: 160 
-for output, and flac for input, and copies most common file types 
-(which can be changed with -c or configuration values).
+acxi also copies most common file types from source to destination 
+directories. The file types to copy over can be changed with -c or 
+configuration file values.
 
 Once you set your input/output directory paths (using either -i / -o 
 options, or creating a configuration file), you can use the --test
