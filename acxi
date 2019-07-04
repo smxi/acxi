@@ -171,7 +171,7 @@ sub error_handler {
 	state $error_no = 0;
 	if ($error eq 'unsupported-type'){$error_no = 2;$b_exit=0;$b_valid=0;}
 	elsif ($error eq 'dest-dir'){$error_no = 1;$b_exit=0;$b_valid=0;}
-	elsif ($error eq 'dest-eq-src-dir'){$error_no = 9;$b_exit=0;$b_valid=0;}
+	elsif ($error eq 'dest-eq-src-dir'){$error_no = 9;$b_exit=0;$b_valid=0;;$br=''}
 	elsif ($error eq 'missing-app'){$error_no = 3;$b_exit=0;$b_valid=0;}
 	elsif ($error eq 'quality-invalid'){$error_no = 4;$b_exit=0;$b_valid=0;}
 	elsif ($error eq 'bad-level'){$error_no = 5;$b_exit=0;$b_valid=0;}
