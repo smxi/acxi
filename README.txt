@@ -86,8 +86,11 @@ ogg: 7
 mp3: 3
 opus: 160 
 acxi also copies most common file types from source to destination 
-directories. The file types to copy over can be changed with -c/--copy
-or configuration file values.
+directories. 
+
+Output type can be set with -o/--output, input type with -i/--input,
+and quality level with -q/--quality options. The file types to copy over 
+can be changed with -c/--copy or configuration file values.
 
 Once you set your input/output directory paths (using either -s / -d 
 options, or creating a configuration file), you can use the --test
