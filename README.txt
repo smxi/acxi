@@ -88,7 +88,7 @@ acxi also copies most common file types from source to destination
 directories. The file types to copy over can be changed with -c or 
 configuration file values.
 
-Once you set your input/output directory paths (using either -i / -o 
+Once you set your input/output directory paths (using either -s / -d 
 options, or creating a configuration file), you can use the --test
 option to see what acxi would have done, then, once you have confirmed
 everything is working as expected, you can start syncing your music
