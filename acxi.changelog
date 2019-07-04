@@ -1,4 +1,15 @@
 ===================================================================
+Date: 2019-07-04
+Version: 3.1.2
+-------------------------------------------------------------------
+* Fixed 1 bug, when -q used, failed to assign quality level to opus.
+* Improved error handling, now prints out all pretest errors before
+exiting. This should make it easier for new users to figure out how
+to setup acxi. Also made tests more granular, now does not run 
+quality or application present tests if invalid input/output type.
+Note that acxi will exit with the last error return number found
+in that case.
+===================================================================
 Date: 2019-01-03
 Version: 3.1.1
 -------------------------------------------------------------------
