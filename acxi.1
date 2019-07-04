@@ -1,4 +1,4 @@
-.TH ACXI 1 "20198\-01\-03" acxi "acxi manual"
+.TH ACXI 1 "2019\-07\-04" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -19,6 +19,10 @@ a configuration file.
 
 The destination directory cannot be the same as the source directory, but
 it can be inside of the source directory.
+
+\fBacxi\fR runs pretests on each start to make sure input and output
+directories exist, conversion programs for input and output formats 
+exist on system, and conversion quality values are valid.
 
 .SH USING OPTIONS
 
