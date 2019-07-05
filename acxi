@@ -821,6 +821,7 @@ sub print_help {
 	$output .= "--input, -i       Input type: supported - flac, wav, raw. mp3 only supports\n";
 	$output .= "                  flac input. Your current default is: $INPUT_TYPE\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Only use if you know why.\n";
+	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default]. Only use if you know why.\n";
 	$output .= "--output, -o      Output type: supported - mp3, ogg, opus\n";
 	$output .= "                  Your current default is: $OUTPUT_TYPE\n";
 	$output .= "--quality n, -q n For ogg: n between -1 and 10. Fractions ok. 10 is highest quality.\n";   
@@ -953,6 +954,8 @@ GetOptions (
 		$OUTPUT_TYPE = $arg;},
 	"nlink" => sub { 
 		$DONT_USE_NLINK = 0 },
+	"no-nlink" => sub { 
+		$DONT_USE_NLINK = 1 },
 	"q|quality:f" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires number.") if ! defined $arg || $arg !~ /^-?[0-9\.]+$/;

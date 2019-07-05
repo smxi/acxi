@@ -7,7 +7,6 @@ or directories in a cifs mounted smb file system. Added default
 $File::Find::dont_use_nlink = 1 with override --nlink which sets it
 to 0, plus configuration item which allows for override as well via
 DONT_USE_NLINK item. Values 0 or 1. 1 is default.
-
 ===================================================================
 Date: 2019-07-04
 Version: 3.1.2
