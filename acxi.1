@@ -100,6 +100,15 @@ This help menu.
 Input type. Supported types: flac, wav, raw. mp3 only supports flac input.
 
 .TP
+.B \-\-nlink\fR
+Set \fB$File::Find::dont_use_nlink = 0\fR. Default is \fB1\fR. Only change this if you have
+a reason to do so. See this thread for an explanation:
+\fIhttps://www.perlmonks.org/?node_id=1180606\fR
+Setting value to \fB0\fR may make \fBcifs\fR type file system reads fail, 
+on \fBsamba\fR for example. If you encounter issues with the default value,
+please post an issue on the acxi github page.
+
+.TP
 .B \-o [mp3|ogg|opus]\fR, \fB\-\-output [mp3|ogg|opus]\fR
 Output type. Supported types: ogg, opus, mp3
 
@@ -234,6 +243,17 @@ the largest file size / highest quality.
 
 \fBQUALITY_OPUS\fR Sample: \fBQUALITY_OPUS=256\fR Supported values: 6\-256. 
 256 is the largest file size / highest quality / best bitrate.
+
+.TP
+.B ADVANCED
+
+The following are advanced options which should only be used if you know
+what you are doing:
+
+\fBDONT_USE_NLINK\fR Sample: \fBDONT_USE_NLINK=0\fR This sets 
+\fBFile::Find::dont_use_nlink to \fB0\fR or \fB1\fR. \fB1\fR is default. Generally
+you should be using \fB1\fR, but in certain cases \fB0\fR may be faster in some 
+situation. Test using the \fB\-\-nlink\fR option to disable nlink.
 
 .TP
 .B DEBUG OUTPUT
