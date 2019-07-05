@@ -247,27 +247,27 @@ sub validate_start_text {
 	}
 }
 sub validate_in_out_types {
-	my ($b_type_unsupported, $error_message) = (0,'');
+	my ($b_unsupported, $error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		eval $print_line_large;
 		print dotify("Checking input and output types");
 	}
 	if ( $INPUT_TYPE !~ m/^(flac|wav|raw)$/i ){
-		$b_type_unsupported = 1;
+		$b_unsupported = 1;
 		$error_message .= "\n  The input type you entered is not supported: ";
 		$error_message .= "$INPUT_TYPE";
 	}
 	if ( $OUTPUT_TYPE !~ m/^(ogg|mp3|opus)$/i ){
-		$b_type_unsupported = 1;
+		$b_unsupported = 1;
 		$error_message .= "\n  The output type you entered is not supported: ";
 		$error_message .= "$OUTPUT_TYPE";
 		if ( $OUTPUT_TYPE eq 'mp3' && $INPUT_TYPE ne 'flac' ){
-			$b_type_unsupported = 1;
+			$b_unsupported = 1;
 			$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
 			$error_message .= "currently only supports input type: flac";
 		}
 	}
-	if ( $b_type_unsupported ){
+	if ( $b_unsupported ){
 		error_handler('unsupported-type',$error_message);
 	}
 	else {
@@ -279,20 +279,20 @@ sub validate_in_out_types {
 	}
 }
 sub validate_src_dest_directories {
-	my ($b_missing_dir, $missing_dirs) = (0,'');
+	my ($b_missing, $missing_dirs) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		eval $print_line_large;
 		print dotify("Checking source / destination directories");
 	}
 	if ( ! -d "$SOURCE_DIRECTORY" ){
-		$b_missing_dir = 1;
+		$b_missing = 1;
 		$missing_dirs .= "\n  Source Directory: $SOURCE_DIRECTORY";
 	}
 	if ( ! -d "$DESTINATION_DIRECTORY" ){
-		$b_missing_dir = 1;
+		$b_missing = 1;
 		$missing_dirs .= "\n  Destination Directory: $DESTINATION_DIRECTORY";
 	}
-	if ( $b_missing_dir ) {
+	if ( $b_missing ) {
 		my $error_message = "The paths for the following directories are missing:";
 		$error_message .= "$missing_dirs";
 		$error_message .= "\nPlease check the directory paths you provided.";
@@ -301,57 +301,57 @@ sub validate_src_dest_directories {
 	elsif ( $LOG_LEVEL > 0 ) {
 		print "Directories: exist\n";
 	}
-	if (!$b_missing_dir && $DESTINATION_DIRECTORY eq $SOURCE_DIRECTORY){
+	if (!$b_missing && $DESTINATION_DIRECTORY eq $SOURCE_DIRECTORY){
 		error_handler('dest-eq-src-dir',"Destination directory cannot be same as Source directory!");
 	}
 }
 sub validate_application_paths {
-	my ($b_missing_app, $error_message, $app_paths) = (0,'',''); 
+	my ($b_missing, $error_message, $app_paths) = (0,'',''); 
 	if ( $LOG_LEVEL > 0 ) {
 		print dotify("Checking audio conversion tool path");
 	}
 	if ( $OUTPUT_TYPE eq 'ogg' ) {
 		$app_paths .= "\n $COMMAND_OGG";
 		if ( ! -x "$COMMAND_OGG" ) {
-			$b_missing_app = 1;
+			$b_missing = 1;
 			$error_message .= "\n  Encoding application not available: $COMMAND_OGG";
 		}
 	}
 	elsif ( $OUTPUT_TYPE eq 'opus' ) {
 		$app_paths .= "\n $COMMAND_OPUS";
 		if ( ! -x "$COMMAND_OPUS" ) {
-			$b_missing_app = 1;
+			$b_missing = 1;
 			$error_message .= "\n  Encoding application not available: $COMMAND_OPUS";
 		}
 	}
 	elsif ( $OUTPUT_TYPE eq 'mp3' ) {
 		$app_paths .= "\n $COMMAND_LAME ";
 		if ( ! -x "$COMMAND_LAME" ) {
-			$b_missing_app = 1;
+			$b_missing = 1;
 			$error_message .= "\n  Encoding application not available: $COMMAND_LAME";
 		}
 		if ($INPUT_TYPE eq 'flac') {
 			$app_paths .= "$COMMAND_FLAC ";
 			if ( ! -x "$COMMAND_FLAC" ) {
-				$b_missing_app = 1;
+				$b_missing = 1;
 				$error_message .= "\n  Input processor $COMMAND_FLAC needed by lame ";
 				$error_message .= "not available.";
 			}
 			$app_paths .= "$COMMAND_METAFLAC ";
 			# Added: Odd @2011-03-23 01:55:28
 			if ( ! -x "$COMMAND_METAFLAC" ) {
-				$b_missing_app = 1;
+				$b_missing = 1;
 				$error_message .= "\n  $COMMAND_METAFLAC not found. Required to copy ";
 				$error_message .= "ID3 tags from Flac to MP3.";
 			}
 		}
 		else {
-			$b_missing_app = 1;
+			$b_missing = 1;
 			$error_message .= "\n  $COMMAND_LAME currently only supports ";
 			$error_message .= "flac as input.";
 		}
 	}
-	if ( $b_missing_app ) {
+	if ( $b_missing ) {
 		error_handler('missing-app',$error_message);
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
@@ -359,14 +359,14 @@ sub validate_application_paths {
 	}
 }
 sub validate_quality{
-	my ($b_bad_quality, $error_message) = (0,'');
+	my ($b_bad, $error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		print dotify("Checking quality support for $OUTPUT_TYPE");
 	}
 	if ( lc($OUTPUT_TYPE) eq 'ogg') {
 		if ($QUALITY_OGG !~ m/^-?[0-9]+(\.[0-9]+)?$/ || 
 		 $QUALITY_OGG < -1 || $QUALITY_OGG > 10 ) {
-			$b_bad_quality = 1;
+			$b_bad = 1;
 			$error_message .= "\n  $OUTPUT_TYPE only supports ";
 			$error_message .= "-1 to 10 quality levels. You entered: $QUALITY_OGG";
 		}
@@ -377,7 +377,7 @@ sub validate_quality{
 	# supports fractional quality levels
 	elsif ( lc($OUTPUT_TYPE) eq 'opus') {
 		if ($QUALITY_OPUS !~ m/^[0-9]+$/ || $QUALITY_OPUS < 6|| $QUALITY_OPUS > 256 ){
-			$b_bad_quality = 1;
+			$b_bad = 1;
 			$error_message .= "\n  $OUTPUT_TYPE only supports ";
 			$error_message .= "6 to 256 bitrate quality levels. You entered: $QUALITY_OPUS";
 		}
@@ -387,7 +387,7 @@ sub validate_quality{
 	}
 	elsif ( lc($OUTPUT_TYPE) eq 'mp3') {
 		if ( $QUALITY_MP3 !~ m/^[0-9]$/ ) {
-			$b_bad_quality = 1;
+			$b_bad = 1;
 			$error_message .= "\n  $OUTPUT_TYPE only supports 0-9 quality levels. ";
 			$error_message .= "You entered: $QUALITY_MP3";
 		}
@@ -395,7 +395,7 @@ sub validate_quality{
 			$quality = $QUALITY_MP3;
 		}
 	}
-	if ( $b_bad_quality ) {
+	if ( $b_bad ) {
 		error_handler('quality-invalid',$error_message);
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
@@ -403,16 +403,16 @@ sub validate_quality{
 	}
 }
 sub validate_log_level {
-	my ($b_bad_level, $error_message) = (0,'');
+	my ($b_bad, $error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		print dotify("Checking log/screen output level");
 	}
 	if ( $LOG_LEVEL !~ m/^([0-3])$/ ) {
-		$b_bad_level = 1;
+		$b_bad = 1;
 		$error_message .= "\n  LOG_LEVEL only supports 0-3. ";
 		$error_message .= "You used: $LOG_LEVEL";
 	}
-	if ( $b_bad_level ) {
+	if ( $b_bad ) {
 		error_handler('bad-level',$error_message);
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
