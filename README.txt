@@ -28,7 +28,7 @@ For instance, say you have:
 which contains your flac music directories, and you want to sync up
 your ogg versions in:
 /home/fred/media/ogg
-You would run: acxi -i /home/fred/media/main -o /home/fred/media/ogg
+You would run: acxi -s /home/fred/media/main -d /home/fred/media/ogg
 and acxi would mirror the directory structure, copy over all the jpg, 
 png, txt, etc, type files, and then encode your flacs to ogg. 
 
