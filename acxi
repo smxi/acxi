@@ -68,7 +68,7 @@ use File::Path qw(rmtree);
 ## SELF INFO
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.1.3';
-my $SELF_DATE = '2019-07-05';
+my $SELF_DATE = '2019-07-07';
 
 ## GLOBALS
 my ($b_dest_changed,$b_clean,$b_force,$b_quiet,$b_test);
@@ -137,8 +137,9 @@ my $OUTPUT_TYPE = 'ogg';
 # For ogg: n can be between -1 and 10. Fractions allowed. 10 is the largest file 
 # size / highest quality. 
 # For opus: n can be 6-256. 256 is the largest file size / highest quality / 
-# maximum bitrate.
+# maximum bitrate. For flac 0-8 [0 biggest size, fastest]
 
+my $QUALITY_FLAC = 4;
 my $QUALITY_MP3 = 3;
 my $QUALITY_OGG = 7;
 my $QUALITY_OPUS = 160;
@@ -914,6 +915,7 @@ sub assign_config_value {
 	elsif ($var eq 'OUTPUT_TYPE'){$OUTPUT_TYPE = $value;}
 	# legacy configs, sets both
 	elsif ($var eq 'QUALITY'){$QUALITY_OGG = $value;$QUALITY_MP3 = $value}
+	elsif ($var eq 'QUALITY_FLAC'){$QUALITY_FLAC = $value}
 	elsif ($var eq 'QUALITY_MP3'){$QUALITY_MP3 = $value}
 	elsif ($var eq 'QUALITY_OGG'){$QUALITY_OGG = $value;}
 	elsif ($var eq 'QUALITY_OPUS'){$QUALITY_OPUS = $value;}
@@ -960,6 +962,7 @@ GetOptions (
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires number.") if ! defined $arg || $arg !~ /^-?[0-9\.]+$/;
 		# validate these later
+		$QUALITY_FLAC = $arg;
 		$QUALITY_MP3 = $arg;
 		$QUALITY_OGG = $arg;
 		$QUALITY_OPUS = $arg;}, 
