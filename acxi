@@ -597,9 +597,16 @@ sub sync_collection_directories {
 	print_not_found('dirs') if ! $b_created;
 }
 sub convert_file { 
-	my ($result,$cmd,$action) = (1000,'','unset'); 
 	my ($src_file, $dest_file) = @_;
-	if ( $OUTPUT_TYPE eq 'ogg' ){
+	my ($result,$cmd,$action) = (1000,'','unset'); 
+	if ( $OUTPUT_TYPE eq 'flac' ){
+		$action = 'To flac';
+		if (!$b_test){
+			qx($COMMAND_FLAC $silent_flac -q $quality -o "$dest_file" "$src_file");
+			$result = $?;
+		}
+	}
+	elsif ( $OUTPUT_TYPE eq 'ogg' ){
 		$action = 'To ogg';
 		if (!$b_test){
 			qx($COMMAND_OGG $silent_flac -q $quality -o "$dest_file" "$src_file");
@@ -615,9 +622,9 @@ sub convert_file {
 	}
 	elsif ( $OUTPUT_TYPE eq 'mp3' ){
 		$action = 'To mp3';
-		# Modified: Odd @2011-03-23 01:51:26 - Include ID3 copying
-		$cmd = flac2mp3_cmd("$src_file","$dest_file");
 		if (!$b_test){
+			# Modified: Odd @2011-03-23 01:51:26 - Include ID3 copying
+			$cmd = flac2mp3_cmd("$src_file","$dest_file");
 			qx($cmd);
 			$result = $?;
 		}
@@ -875,7 +882,7 @@ sub print_help {
 	$output .= "                  Your current default is: $DESTINATION_DIRECTORY\n";
 	$output .= "--force, -f       Force overwrite the mp3/ogg/opus/jpg/txt/etc. files, even\n"; 
 	$output .= "                  if they already exist.\n";
-	$output .= "--fork            [1-x] - Number of forks/threads to use.\n";
+	$output .= "-F, --fork        [1-x] - Number of forks/threads to use.\n";
 	$output .= "                  Requires Perl module: Parallel::ForkManager. Current: $FORK\n";
 	$output .= "--help, -h        This help menu.\n";
 	$output .= "--input, -i       Input type: supported - flac, wav, raw. mp3 only supports\n";
@@ -1007,7 +1014,7 @@ GetOptions (
 		$DESTINATION_DIRECTORY = $arg },
 	"f|force" => sub { 
 		$b_force = 1 },
-	"fork:i" => sub { 
+	"F|fork:i" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires number of forks.") if ! $arg;
 		$FORK = $arg; },
