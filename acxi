@@ -598,7 +598,6 @@ sub sync_collection_directories {
 }
 sub convert_file { 
 	my ($result,$cmd,$action) = (1000,'','unset'); 
-	my ($action) = ('');
 	my ($src_file, $dest_file) = @_;
 	if ( $OUTPUT_TYPE eq 'ogg' ){
 		$action = 'To ogg';

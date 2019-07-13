@@ -263,6 +263,11 @@ default. Generally you should be using \fB1\fR, but in certain cases \fB0\fR
 may be faster. Test using the \fB\-\-nlink\fR option to disable nlink, and 
 see that option for more information.
 
+\fBFORK\fR Sample: \fBFORK=4\fR 
+
+This uses Perl's \fBParallel::ForkManager\fR and accepts values of 1 or more.
+Note that 1 will not create a fork, of course. 
+
 .TP
 .B DEBUG OUTPUT
 You can change \fBLOG_LEVEL\fR either at the top of the \fBacxi\fR file itself, 
