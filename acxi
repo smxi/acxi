@@ -875,8 +875,8 @@ sub print_help {
 	$output .= "                  Your current default is: $DESTINATION_DIRECTORY\n";
 	$output .= "--force, -f       Force overwrite the mp3/ogg/opus/jpg/txt/etc. files, even\n"; 
 	$output .= "                  if they already exist.\n";
-	$output .= "--fork            [2-x] - Number of forks/threads to use.\n";
-	$output .= "                  Requires Perl module: Parallel::ForkManager\n";
+	$output .= "--fork            [1-x] - Number of forks/threads to use.\n";
+	$output .= "                  Requires Perl module: Parallel::ForkManager. Current: $FORK\n";
 	$output .= "--help, -h        This help menu.\n";
 	$output .= "--input, -i       Input type: supported - flac, wav, raw. mp3 only supports\n";
 	$output .= "                  flac input. Your current default is: $INPUT_TYPE\n";

@@ -1,11 +1,12 @@
-.TH ACXI 1 "2019\-07\-07" acxi "acxi manual"
+.TH ACXI 1 "2019\-07\-13" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
 \fBacxi\fR [\fB\-\-clean\fR] [\fB\-c\fR extensions] [\fB\-\-debug\fR] 
-[\fB\-\-default\fR] [\fB\-d\fR destination-path] [\fB\-f\fR] [\fB\-h\fR] 
-[\fB\-i\fR input-type] [\fB\-\-nlink\fR] [\fB\-\-no\-nlink\fR] 
-[\fB\-o\fR output-type] [\fB\-q\fR number] [\fB\-\-quiet\fR] 
+[\fB\-\-default\fR] [\fB\-d\fR destination-path] [\fB\-f\fR] 
+[\fB\-\-fork\fR 2-xx] [\fB\-h\fR] 
+[\fB\-i\fR flac|wave] [\fB\-\-nlink\fR] [\fB\-\-no\-nlink\fR] 
+[\fB\-o\fR mp3|ogg|opus] [\fB\-q\fR 0-xxx] [\fB\-\-quiet\fR] 
 [\fB\-s\fR source-path] [\fB\-V\fR] [\fB\-\-test\fR] [\fB\-v\fR]
 
 .SH DESCRIPTION
@@ -89,6 +90,16 @@ Full path to the directory where you want the processed lossy
 Overwrites all the mp3/ogg/opus/jpg/txt etc. files, even if they already 
 exist. This is useful if you for example want to change compression
 quality on existing files.
+
+.TP
+.B \-\-fork [1-xx]\fR
+Uses Perl module \fBParallel::ForkManager\fR to allow for forking of audio
+file conversions actions. This can speed up your syncing a lot depending on how 
+many threads your CPU can support and how many you assign with this option.
+
+Supports integer values greater than \fB0\fR.
+
+See also configuration file option \fBFORK\fR if you want to set this permanently.
 
 .TP
 .B \-h\fR, \fB\-\-help\fR
@@ -266,7 +277,8 @@ see that option for more information.
 \fBFORK\fR Sample: \fBFORK=4\fR 
 
 This uses Perl's \fBParallel::ForkManager\fR and accepts values of 1 or more.
-Note that 1 will not create a fork, of course. 
+Note that 1 will not create a fork. See \fB\-\-fork\fR for details.
+Using this will speed up your syncing a lot if you have more than a 1 core CPU.
 
 .TP
 .B DEBUG OUTPUT
