@@ -110,8 +110,20 @@ See also configuration file option \fBFORK\fR if you want to set this permanentl
 This help menu.
 
 .TP
-.B \-i [flac|raw|wav]\fR, \fB\-\-input [flac|raw|wav]\fR
-Input type. Supported types: flac, wav, raw. mp3 only supports flac input.
+.B \-i [flac|raw|shn|wav]\fR, \fB\-\-input [flac|raw|shn|wav]\fR
+Input type. Supported types: flac, wav, raw, shn. 
+
+\- mp3 only supports flac input.
+
+\- shn only supports flac output and requires the shorten codec, which
+you usually have to build yourself unless you can find a package for it.
+Use \fB\-\-log 3\fR to test the first time to make sure you have shorten
+codec installed.
+
+.TP
+.B \-\-log [0-3]\fR
+Dynamically set LOG_LEVEL. Helps for debugging certain types of issues
+where you might want to see the full level 3 debugging information.
 
 .TP
 .B \-\-nlink\fR
@@ -130,8 +142,12 @@ Set \fB$File::Find::dont_use_nlink = 1\fR. This is the default value.
 See \fB\-\-nlink\fR for details.
 
 .TP
-.B \-o [mp3|ogg|opus]\fR, \fB\-\-output [mp3|ogg|opus]\fR
+.B \-o [flac|mp3|ogg|opus]\fR, \fB\-\-output [flac|mp3|ogg|opus]\fR
 Output type. Supported types: ogg, opus, mp3
+
+\- mp3 only supports flac input type
+
+\- flac only supports shn, raw, or wav input types.
 
 .TP
 .B \-q [number]\fR, \fB\-\-quality [number]\fR

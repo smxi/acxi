@@ -67,13 +67,13 @@ use File::Path qw(rmtree);
 
 ## SELF INFO
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.1.4';
+my $SELF_VERSION = '3.2.0';
 my $SELF_DATE = '2019-07-13';
 
 ## GLOBALS
 my ($b_dest_changed,$b_clean,$b_force,$b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
-my ($quality,$silent_flac,$silent_lame,$silent_opus) = (7,'','','');
+my ($quality,$silent_flac,$silent_flac_out,$silent_lame,$silent_opus) = (7,'','','','');
 my ($extension,@extension_list,@found_list,$list_type);
 
 ## CONSTANTS
@@ -105,6 +105,7 @@ my $line_large = "--------------------------------------------------------------
 ## APPLICATION PATHS
 
 my $COMMAND_FLAC = '/usr/bin/flac'; 
+my $COMMAND_FLAC_OUT = '/usr/bin/ffmpeg';
 my $COMMAND_LAME = '/usr/bin/lame';
 my $COMMAND_OGG = '/usr/bin/oggenc';
 my $COMMAND_OPUS = '/usr/bin/opusenc';
@@ -243,8 +244,13 @@ sub set_display_output_data {
 			$silent_flac = '--silent'; # flac output 
 			$silent_lame = '--silent'; # lame output
 		}
-		elsif ( $OUTPUT_TYPE eq 'ogg' || $OUTPUT_TYPE eq 'flac' ) {
+		elsif ( $OUTPUT_TYPE eq 'ogg' ) {
 			$silent_flac = '--quiet'; # for oggenc output
+		}
+		elsif ( $OUTPUT_TYPE eq 'flac' ) {
+			# -nostats -loglevel 0
+			# -v quiet
+			$silent_flac_out = '-nostats -loglevel error'; # 
 		}
 		elsif ( $OUTPUT_TYPE eq 'opus' ) {
 			$silent_opus = '--quiet'; # for oggenc output
@@ -289,7 +295,7 @@ sub validate_in_out_types {
 			$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
 			$error_message .= "currently only supports input type: flac";
 		}
-		elsif ($INPUT_TYPE eq lc('shn') && $OUTPUT_TYPE ne lc('flac')){
+		elsif ($INPUT_TYPE =~ m/^(shn)$/ && $OUTPUT_TYPE ne lc('flac')){
 			$b_error = 1;
 			$error_message .= "\n  The input type $INPUT_TYPE you entered ";
 			$error_message .= "currently only supports output type: flac";
@@ -339,10 +345,10 @@ sub validate_application_paths {
 		print dotify("Checking audio conversion tool path");
 	}
 	if ($OUTPUT_TYPE eq 'flac') {
-		$app_paths .= "$COMMAND_FLAC ";
-		if ( ! -x "$COMMAND_FLAC" ) {
+		$app_paths .= "$COMMAND_FLAC_OUT";
+		if ( ! -x "$COMMAND_FLAC_OUT" ) {
 			$b_error = 1;
-			$error_message .= "\n  Encoding application not available: $COMMAND_FLAC";
+			$error_message .= "\n  Encoding application not available: $COMMAND_FLAC_OUT";
 		}
 	}
 	elsif ( $OUTPUT_TYPE eq 'ogg' ) {
@@ -648,7 +654,7 @@ sub convert_file {
 	if ( $OUTPUT_TYPE eq 'flac' ){
 		$action = 'To flac';
 		if (!$b_test){
-			qx($COMMAND_FLAC $silent_flac -q $quality -o "$dest_file" "$src_file");
+			qx($COMMAND_FLAC_OUT $silent_flac_out -i "$src_file" "$dest_file" );
 			$result = $?;
 		}
 	}
@@ -687,7 +693,7 @@ sub convert_file {
 			print dotify("\nEncoded $src_print to $OUTPUT_TYPE");
 		}
 	}
-	#print "$action result: $result\n" if $b_fork && $LOG_LEVEL > 1;
+	# this return only works with non forking
 	return ($result,$action); 
 }
 sub sync_collection_files {
@@ -729,6 +735,7 @@ sub sync_collection_files {
 		# or the srcfile is more recent then the dest file, we encode/copy.
 		# print "src-mt: $src_mod_time dest-mt:$dest_mod_time\n";
 		if ( !$dest_info || $b_force || ( $src_mod_time > $dest_mod_time) ) {
+			# these have to be set before the forking
 			$b_created = 1;
 			$b_dest_changed = 1;
 			if ( lc($extension) eq $INPUT_TYPE ){
@@ -912,6 +919,7 @@ sub print_help {
 	$output .= "$SELF_NAME --input wav --output ogg\n";
 	$output .= "$SELF_NAME --copy doc,docx,bmp\n";
 	$output .= $line_small;
+	$output .= "--append, -a      Add extenssion type(s) to existing list.\n";
 	$output .= "--clean           Clean directories and files from destination not found in\n";
 	$output .= "                  source music directory. Will show you directories/files to\n";
 	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
@@ -933,8 +941,10 @@ sub print_help {
 	$output .= "-F, --fork        [0-x] - Number of forks/threads to use. 0 default, disables.\n";
 	$output .= "                  Requires Perl module: Parallel::ForkManager. Current: $FORK\n";
 	$output .= "--help, -h        This help menu.\n";
-	$output .= "--input, -i       Input type: supported - flac, wav, raw. mp3 only supports\n";
-	$output .= "                  flac input. Your current default is: $INPUT_TYPE\n";
+	$output .= "--input, -i       Input type: supported - flac, wav, raw, shn. mp3 only supports\n";
+	$output .= "                  flac input. shn requires codec shorten and only outputs to flac.\n";
+	$output .= "                  Your current default is: $INPUT_TYPE\n";
+	$output .= "--log             [0-3] Dynamically set LOG_LEVEL.\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Only use if you know why.\n";
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Only use if you know why.\n";
@@ -1046,6 +1056,9 @@ set_config_data();
 # Get Options and set values, this overrides defaults 
 # from top globals and config files
 GetOptions (
+	"a|append:s" => sub { 
+		my ($opt,$arg) = @_;
+		$COPY_TYPES .= ',' . $arg if $arg;},
 	"clean" => sub { 
 		$b_clean = 3 },
 	# accepts null value so users can not copy anything
