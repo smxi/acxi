@@ -919,6 +919,7 @@ sub print_help {
 	$output .= "$SELF_NAME --input wav --output ogg\n";
 	$output .= "$SELF_NAME --copy doc,docx,bmp\n";
 	$output .= $line_small;
+	$output .= "Syncing options:\n";
 	$output .= "--append, -a      Add extenssion type(s) to existing extension copy list.\n";
 	$output .= "--clean           Clean directories and files from destination not found in\n";
 	$output .= "                  source music directory. Will show you directories/files to\n";
@@ -928,11 +929,6 @@ sub print_help {
 	$output .= "                  directories. Comma separated, no spaces. See sample above.\n";
 	$output .= "                  Current copy types:\n";
 	$output .= "                  @extension_list\n";
-	$output .= "--debug           Full screen output, including full verbosity of \n";
-	$output .= "                  flac/lame/oggenc/opusenc conversion process for mp3, ogg,\n";
-	$output .= "                  or opus output. Same as --log 3\n";
-	$output .= "--default         Single line per operation screen output, default value for\n";
-	$output .= "                  $SELF_NAME.\n";
 	$output .= "--destination, -d Path to the directory where you want the processed\n";
 	$output .= "                  (eg, ogg) files to go.\n";
 	$output .= "                  Current value: $DESTINATION_DIRECTORY\n";
@@ -940,11 +936,9 @@ sub print_help {
 	$output .= "                  if they already exist.\n";
 	$output .= "-F, --fork        [0-x] - Number of forks/threads to use. 0 default, disables.\n";
 	$output .= "                  Requires Perl module: Parallel::ForkManager. Current: $FORK\n";
-	$output .= "--help, -h        This help menu.\n";
 	$output .= "--input, -i       Input type: flac, wav, raw, shn. mp3 only supports flac input.\n";
 	$output .= "                  shn requires codec shorten and only outputs to flac.\n";
 	$output .= "                  Current value: $INPUT_TYPE\n";
-	$output .= "--log             [0-3] Dynamically set LOG_LEVEL. Current value: $LOG_LEVEL\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
@@ -955,14 +949,24 @@ sub print_help {
 	$output .= "                  (256 highest quality).\n";
 	$output .= "                  For mp3: n between 0-9 (variable bit rate), 0 highest quality.\n";
 	$output .= "                  Current values: $QUALITY_MP3 (mp3); $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
-	$output .= "--quiet, --silent Turns off all screen output, except for error messages.\n";
 	$output .= "--source, -s      Path to the top-most directory containing your source files.\n";
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
+	$output .= "--test            Test copy and sync without actually doing the copy/sync. Also\n";
+	$output .= "                  activates --debug for more complete path outputs.\n";
+	$output .= $line_small;
+	$output .= "Display output and debugging options:\n";
+	$output .= "--debug           Full screen output, including full verbosity of \n";
+	$output .= "                  flac/lame/oggenc/opusenc conversion process for mp3, ogg,\n";
+	$output .= "                  or opus output. Same as --log 3\n";
+	$output .= "--default         Single line per operation screen output, default value for\n";
+	$output .= "                  $SELF_NAME. Same as --log 1\n";
+	$output .= "--help, -h        This help menu.\n";
+	$output .= "--log             [0-3] Dynamically set LOG_LEVEL. Current value: $LOG_LEVEL\n";
+	$output .= "--quiet, --silent Turns off all screen output, except for error messages.\n";
+	$output .= "                  Same as --log 0\n";
 	$output .= "--verbose, -V     Without full verbosity of debug, no flac/lame/oggenc/opusenc\n";
 	$output .= "                  for mp3, ogg or opus conversion process screen output,\n";
 	$output .= "                  but more verbose than default. Same as --log 2\n";
-	$output .= "--test            Test copy and sync without actually doing the copy/sync. Also\n";
-	$output .= "                  activates --debug for more complete path outputs.\n";
 	$output .= "--version, -v     Show $SELF_NAME version.\n\n";
 	$output .= $line_small;
 	$output .= "User Configs ";
@@ -977,7 +981,7 @@ sub print_help {
 	}
 	$output .= "Requires this syntax (any user modifiable variable can be used)\n";
 	$output .= "DIR_PREFIX_SOURCE=/home/me/music/flac\n";
-	$output .= "Do not use \$, \", or \' in config options or values.\n";
+	$output .= "Do not use \$, \", or \' in config options or values (except in path names).\n";
 	$output .= "\n";
 	print $output;
 	exit 0;
