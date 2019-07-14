@@ -927,8 +927,9 @@ sub print_help {
 	$output .= "                  remove that set of files or directories.\n";
 	$output .= "--copy, -c        List of alternate data types to copy to Output type\n";
 	$output .= "                  directories. Comma separated, no spaces. See sample above.\n";
-	$output .= "                  Current copy types:\n";
-	$output .= "                  @extension_list\n";
+	$output .= "                  Current copy types: ";
+	$output .= (length(join(' ',@extension_list))>40) ? "\n                  " : '';
+	$output .= "@extension_list\n";
 	$output .= "--destination, -d Path to the directory where you want the processed\n";
 	$output .= "                  (eg, ogg) files to go.\n";
 	$output .= "                  Current value: $DESTINATION_DIRECTORY\n";
