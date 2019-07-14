@@ -4,7 +4,7 @@ acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
 \fBacxi\fR [\fB\-\-clean\fR] [\fB\-c\fR extensions] [\fB\-\-debug\fR] 
 [\fB\-\-default\fR] [\fB\-d\fR destination-path] [\fB\-f\fR] 
-[\fB\-\-fork\fR 2-xx] [\fB\-h\fR] 
+[\fB\-\-fork\fR 0-xx] [\fB\-h\fR] 
 [\fB\-i\fR flac|wave] [\fB\-\-nlink\fR] [\fB\-\-no\-nlink\fR] 
 [\fB\-o\fR mp3|ogg|opus] [\fB\-q\fR 0-xxx] [\fB\-\-quiet\fR] 
 [\fB\-s\fR source-path] [\fB\-V\fR] [\fB\-\-test\fR] [\fB\-v\fR]
@@ -97,7 +97,11 @@ Uses Perl module \fBParallel::ForkManager\fR to allow for forking of audio
 file conversions actions. This can speed up your syncing a lot depending on how 
 many threads your CPU can support and how many you assign with this option.
 
-Supports integer values greater than \fB0\fR.
+Supports integer values \fB0\fR or greater, but tests show 1 is slower than 
+not using forking at all. \fB0\fR is default, and disables forking.
+
+Some debugging features will be slightly distorted if fork is used,
+but it is only cosmetic.
 
 See also configuration file option \fBFORK\fR if you want to set this permanently.
 
@@ -276,8 +280,8 @@ see that option for more information.
 
 \fBFORK\fR Sample: \fBFORK=4\fR 
 
-This uses Perl's \fBParallel::ForkManager\fR and accepts values of 1 or more.
-Note that 1 will not create a fork. See \fB\-\-fork\fR for details.
+This uses Perl's \fBParallel::ForkManager\fR and accepts values of 0 or more.
+Note that 0 will not create a fork. See \fB\-\-fork\fR for details.
 Using this will speed up your syncing a lot if you have more than a 1 core CPU.
 
 .TP

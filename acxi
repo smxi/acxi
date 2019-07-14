@@ -133,12 +133,13 @@ my $CONFIG_DIRECTORY='';
 my $INPUT_TYPE = 'flac';
 my $OUTPUT_TYPE = 'ogg';
 
+# for flac: n can be 0-8. 0 produces largest file, is fastest, anything over 4
+# is probably pointless since compression gain is very little vs time required.
 # For mp3: n can be 0-9 (variable bit rate), 0 is largest file / highest quality
 # For ogg: n can be between -1 and 10. Fractions allowed. 10 is the largest file 
 # size / highest quality. 
 # For opus: n can be 6-256. 256 is the largest file size / highest quality / 
 # maximum bitrate. For flac 0-8 [0 biggest size, fastest]
-
 my $QUALITY_FLAC = 4;
 my $QUALITY_MP3 = 3;
 my $QUALITY_OGG = 7;
@@ -158,7 +159,8 @@ my $COPY_TYPES = 'bmp,doc,docx,gif,jpg,jpeg,odt,pdf,png,tif,txt';
 #     to change it.
 # 2 = verbose - but without the actual conversion data from codecs
 # 3 = debug -  all available information.
-my $LOG_LEVEL = 1;
+# NOTE: when 2, with FORK > 1, conversion debugging doesn't fully work.
+my $LOG_LEVEL = 2;
 
 ## ADVANCED
 # Only change to 0 if you encounter file tree failures. This is for File::Find
@@ -166,8 +168,10 @@ my $LOG_LEVEL = 1;
 # why.
 my $DONT_USE_NLINK = 1;
 
-## number of forks/threads to use. 1 is default, and will not use forking
-my $FORK = 1;
+## number of forks/threads to use. 0 is default, and will not use forking
+# note that debugging output gets strange with forking, so debug with fork = 0
+# FORK = 1 results in slower times than using no forking so avoid that. 
+my $FORK = 0;
 
 #########################################################################
 ### END USER MODIFIABLE VALUES ###
@@ -222,7 +226,8 @@ sub set_basic_data {
 	$OUTPUT_TYPE = lc($OUTPUT_TYPE) if $OUTPUT_TYPE;
 	@extension_list = (@extension_list,$INPUT_TYPE);
 	$File::Find::dont_use_nlink = $DONT_USE_NLINK;
-	if ( $FORK > 1 ){
+	# note: tests show fork == 1 slower than no forking!!
+	if ( $FORK > 0 ){
 		if (!check_module('Parallel::ForkManager')){
 			error_handler('missing-perl-module', 'Parallel::ForkManager');
 		}
@@ -238,7 +243,7 @@ sub set_display_output_data {
 			$silent_flac = '--silent'; # flac output 
 			$silent_lame = '--silent'; # lame output
 		}
-		elsif ( $OUTPUT_TYPE eq 'ogg' ) {
+		elsif ( $OUTPUT_TYPE eq 'ogg' || $OUTPUT_TYPE eq 'flac' ) {
 			$silent_flac = '--quiet'; # for oggenc output
 		}
 		elsif ( $OUTPUT_TYPE eq 'opus' ) {
@@ -270,19 +275,24 @@ sub validate_in_out_types {
 		eval $print_line_large;
 		print dotify("Checking input and output types");
 	}
-	if ( $INPUT_TYPE !~ m/^(flac|wav|raw)$/i ){
+	if ( $INPUT_TYPE !~ m/^(flac|raw|shn|wav)$/i ){
 		$b_error = 1;
 		$error_message .= "\n  The input type you entered is not supported: ";
 		$error_message .= "$INPUT_TYPE";
 	}
-	if ( $OUTPUT_TYPE !~ m/^(ogg|mp3|opus)$/i ){
+	if ( $OUTPUT_TYPE !~ m/^(flac|mp3|ogg|opus)$/i ){
 		$b_error = 1;
 		$error_message .= "\n  The output type you entered is not supported: ";
 		$error_message .= "$OUTPUT_TYPE";
-		if ( $OUTPUT_TYPE eq 'mp3' && $INPUT_TYPE ne 'flac' ){
+		if ( $OUTPUT_TYPE eq lc('mp3') && $INPUT_TYPE ne lc('flac') ){
 			$b_error = 1;
 			$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
 			$error_message .= "currently only supports input type: flac";
+		}
+		elsif ($INPUT_TYPE eq lc('shn') && $OUTPUT_TYPE ne lc('flac')){
+			$b_error = 1;
+			$error_message .= "\n  The input type $INPUT_TYPE you entered ";
+			$error_message .= "currently only supports output type: flac";
 		}
 	}
 	if ( $b_error ){
@@ -328,7 +338,14 @@ sub validate_application_paths {
 	if ( $LOG_LEVEL > 0 ) {
 		print dotify("Checking audio conversion tool path");
 	}
-	if ( $OUTPUT_TYPE eq 'ogg' ) {
+	if ($OUTPUT_TYPE eq 'flac') {
+		$app_paths .= "$COMMAND_FLAC ";
+		if ( ! -x "$COMMAND_FLAC" ) {
+			$b_error = 1;
+			$error_message .= "\n  Encoding application not available: $COMMAND_FLAC";
+		}
+	}
+	elsif ( $OUTPUT_TYPE eq 'ogg' ) {
 		$app_paths .= "\n $COMMAND_OGG";
 		if ( ! -x "$COMMAND_OGG" ) {
 			$b_error = 1;
@@ -380,6 +397,16 @@ sub validate_quality{
 	my ($b_error, $error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		print dotify("Checking quality support for $OUTPUT_TYPE");
+	}
+	if ( lc($OUTPUT_TYPE) eq 'flac') {
+		if ($QUALITY_FLAC !~ m/^[0-8]$/ ) {
+			$b_error = 1;
+			$error_message .= "\n  $OUTPUT_TYPE only supports ";
+			$error_message .= "0 to 8 quality levels. You entered: $QUALITY_FLAC";
+		}
+		else {
+			$quality = $QUALITY_FLAC;
+		}
 	}
 	if ( lc($OUTPUT_TYPE) eq 'ogg') {
 		if ($QUALITY_OGG !~ m/^-?[0-9]+(\.[0-9]+)?$/ || 
@@ -459,9 +486,9 @@ sub validate_fork {
 	if ( $LOG_LEVEL > 0 ) {
 		print dotify("Checking FORK value");
 	}
-	if ( $FORK !~ m/^[0-9]+$/ || $FORK == 0) {
+	if ( $FORK !~ m/^[0-9]+$/) {
 		$b_error = 1;
-		$error_message .= "\n  FORK requires value: 2 or more. ";
+		$error_message .= "\n  FORK requires value: 0 or more. ";
 		$error_message .= "You used: $FORK";
 	}
 	if ( $b_error ) {
@@ -598,7 +625,26 @@ sub sync_collection_directories {
 }
 sub convert_file { 
 	my ($src_file, $dest_file) = @_;
+	my ($src_print,$dest_print) = ($src_file, $dest_file);
 	my ($result,$cmd,$action) = (1000,'','unset'); 
+	# escape characters for conversion processing
+	$src_file =~ s/"/\\"/g;
+	$dest_file =~ s/"/\\"/g;
+	$src_file =~ s/\$/\\\$/g;
+	$dest_file =~ s/\$/\\\$/g;
+	# with forking, the printing gets messed up unless it's done 
+	# just like this.
+	if (!$b_fork){
+		eval $print_line_small;
+		if ( $LOG_LEVEL > 1 ) {
+			print "ENCODE: $src_print ==> \n";
+			print "        $dest_print\n"; 
+		}
+		elsif ( $LOG_LEVEL > 0 ) {
+			# add line break only when file exists
+			print dotify("\nEncoding $src_print to $OUTPUT_TYPE");
+		}
+	}
 	if ( $OUTPUT_TYPE eq 'flac' ){
 		$action = 'To flac';
 		if (!$b_test){
@@ -629,11 +675,24 @@ sub convert_file {
 			$result = $?;
 		}
 	}
+	if ($b_fork){
+		eval $print_line_small;
+		if ( $LOG_LEVEL > 1 ) {
+			print "ENCODED: $src_print ==> \n";
+			print "        $dest_print\n"; 
+			print "$action result: $result\n";
+		}
+		elsif ( $LOG_LEVEL > 0 ) {
+			# add line break only when file exists
+			print dotify("\nEncoded $src_print to $OUTPUT_TYPE");
+		}
+	}
+	#print "$action result: $result\n" if $b_fork && $LOG_LEVEL > 1;
 	return ($result,$action); 
 }
 sub sync_collection_files {
-	my ($b_created,$result);
-	my ($action,$dest_file,$file,$src_file) = ('','','','');
+	my ($b_created);
+	my ($dest_file,$file,$result,$action,$src_file) = ('','','','','');
 	my ($dest_info,$dest_mod_time,$src_info, $src_mod_time) = ('',0,'',0);
 	my $pm = new Parallel::ForkManager($FORK) if $b_fork;
 	foreach $file (@found_list) {
@@ -651,7 +710,7 @@ sub sync_collection_files {
 			$dest_file =~ s/\.$INPUT_TYPE$/\.$OUTPUT_TYPE/i;
 		}
 		#print "OF: $dest_file\n";
-		($result,$dest_mod_time,$src_mod_time ) = ('UNSET',0,0);
+		($action,$result,$dest_mod_time,$src_mod_time ) = ('UNSET','UNSET',0,0);
 		# Now stat the destinationFile, and see if it's date is more recent
 		# than that of the original file. If so, we re-encode.
 		# We also re-encode if the user supplied --force
@@ -670,20 +729,9 @@ sub sync_collection_files {
 		# or the srcfile is more recent then the dest file, we encode/copy.
 		# print "src-mt: $src_mod_time dest-mt:$dest_mod_time\n";
 		if ( !$dest_info || $b_force || ( $src_mod_time > $dest_mod_time) ) {
-			eval $print_line_small;
+			$b_created = 1;
+			$b_dest_changed = 1;
 			if ( lc($extension) eq $INPUT_TYPE ){
-				if ( $LOG_LEVEL > 1 ) {
-					print "ENCODE: $src_file ==> \n";
-					print "        $dest_file\n"; 
-				}
-				elsif ( $LOG_LEVEL > 0 ) {
-					# add line break only when file exists
-					print dotify("\nEncoding $src_file to $OUTPUT_TYPE");
-				}
-				$src_file =~ s/"/\\"/g;
-				$dest_file =~ s/"/\\"/g;
-				$src_file =~ s/\$/\\\$/g;
-				$dest_file =~ s/\$/\\\$/g;
 				$pm->start and next if $b_fork; # do the fork 
 				my @returns = convert_file($src_file, $dest_file);
 				$result = $returns[0];
@@ -692,6 +740,7 @@ sub sync_collection_files {
 			} 
 			else {
 				$action = 'Copy';
+				eval $print_line_small;
 				if ( $LOG_LEVEL > 1 ) {
 					print "COPY: $file ==> \n";
 					print "      $dest_file\n"; 
@@ -704,8 +753,7 @@ sub sync_collection_files {
 					  error_handler('cp-file', "cp failure: $src_file =>\n$dest_file\nCode: $!");
 				}
 			}
-			$b_created = 1;
-			$b_dest_changed = 1;
+			# NOTE: for forking > 1, this will not print out for the output/input conversion files 
 			print "$action result: $result\n" if $LOG_LEVEL > 1;
 		} 
 	}
@@ -882,7 +930,7 @@ sub print_help {
 	$output .= "                  Your current default is: $DESTINATION_DIRECTORY\n";
 	$output .= "--force, -f       Force overwrite the mp3/ogg/opus/jpg/txt/etc. files, even\n"; 
 	$output .= "                  if they already exist.\n";
-	$output .= "-F, --fork        [1-x] - Number of forks/threads to use.\n";
+	$output .= "-F, --fork        [0-x] - Number of forks/threads to use. 0 default, disables.\n";
 	$output .= "                  Requires Perl module: Parallel::ForkManager. Current: $FORK\n";
 	$output .= "--help, -h        This help menu.\n";
 	$output .= "--input, -i       Input type: supported - flac, wav, raw. mp3 only supports\n";
@@ -1016,7 +1064,7 @@ GetOptions (
 		$b_force = 1 },
 	"F|fork:i" => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires number of forks.") if ! $arg;
+		error_handler('missing-arg',"$opt requires fork count integer.") if not defined $arg;
 		$FORK = $arg; },
 	"h|help|?" => sub { 
 		print_help();},
@@ -1024,6 +1072,10 @@ GetOptions (
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires type.") if ! $arg;
 		$INPUT_TYPE = $arg },
+	"log:i" => sub { 
+		my ($opt,$arg) = @_;
+		error_handler('missing-arg',"$opt log level integer.") if not defined $arg;
+		$LOG_LEVEL = $arg; },
 	"o|output:s" => sub {
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires type.") if ! $arg;
