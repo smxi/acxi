@@ -68,7 +68,7 @@ use File::Path qw(rmtree);
 ## SELF INFO
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.2.0';
-my $SELF_DATE = '2019-07-13';
+my $SELF_DATE = '2019-07-14';
 
 ## GLOBALS
 my ($b_dest_changed,$b_clean,$b_force,$b_fork,$b_quiet,$b_test);
@@ -160,8 +160,8 @@ my $COPY_TYPES = 'bmp,doc,docx,gif,jpg,jpeg,odt,pdf,png,tif,txt';
 #     to change it.
 # 2 = verbose - but without the actual conversion data from codecs
 # 3 = debug -  all available information.
-# NOTE: when 2, with FORK > 1, conversion debugging doesn't fully work.
-my $LOG_LEVEL = 2;
+# NOTE: with FORK > 1, conversion debugging output can be out of order.
+my $LOG_LEVEL = 1;
 
 ## ADVANCED
 # Only change to 0 if you encounter file tree failures. This is for File::Find
@@ -919,49 +919,48 @@ sub print_help {
 	$output .= "$SELF_NAME --input wav --output ogg\n";
 	$output .= "$SELF_NAME --copy doc,docx,bmp\n";
 	$output .= $line_small;
-	$output .= "--append, -a      Add extenssion type(s) to existing list.\n";
+	$output .= "--append, -a      Add extenssion type(s) to existing extension copy list.\n";
 	$output .= "--clean           Clean directories and files from destination not found in\n";
 	$output .= "                  source music directory. Will show you directories/files to\n";
 	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
 	$output .= "                  remove that set of files or directories.\n";
 	$output .= "--copy, -c        List of alternate data types to copy to Output type\n";
-	$output .= "                  directories. Must be comma separated, no spaces, \n";
-	$output .= "                  see sample above. Your current copy types are:\n";
+	$output .= "                  directories. Comma separated, no spaces. See sample above.\n";
+	$output .= "                  Current copy types:\n";
 	$output .= "                  @extension_list\n";
 	$output .= "--debug           Full screen output, including full verbosity of \n";
 	$output .= "                  flac/lame/oggenc/opusenc conversion process for mp3, ogg,\n";
-	$output .= "                  or opus output.\n";
+	$output .= "                  or opus output. Same as --log 3\n";
 	$output .= "--default         Single line per operation screen output, default value for\n";
 	$output .= "                  $SELF_NAME.\n";
 	$output .= "--destination, -d Path to the directory where you want the processed\n";
 	$output .= "                  (eg, ogg) files to go.\n";
-	$output .= "                  Your current default is: $DESTINATION_DIRECTORY\n";
+	$output .= "                  Current value: $DESTINATION_DIRECTORY\n";
 	$output .= "--force, -f       Force overwrite the mp3/ogg/opus/jpg/txt/etc. files, even\n"; 
 	$output .= "                  if they already exist.\n";
 	$output .= "-F, --fork        [0-x] - Number of forks/threads to use. 0 default, disables.\n";
 	$output .= "                  Requires Perl module: Parallel::ForkManager. Current: $FORK\n";
 	$output .= "--help, -h        This help menu.\n";
-	$output .= "--input, -i       Input type: supported - flac, wav, raw, shn. mp3 only supports\n";
-	$output .= "                  flac input. shn requires codec shorten and only outputs to flac.\n";
-	$output .= "                  Your current default is: $INPUT_TYPE\n";
-	$output .= "--log             [0-3] Dynamically set LOG_LEVEL.\n";
-	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Only use if you know why.\n";
+	$output .= "--input, -i       Input type: flac, wav, raw, shn. mp3 only supports flac input.\n";
+	$output .= "                  shn requires codec shorten and only outputs to flac.\n";
+	$output .= "                  Current value: $INPUT_TYPE\n";
+	$output .= "--log             [0-3] Dynamically set LOG_LEVEL. Current value: $LOG_LEVEL\n";
+	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
-	$output .= "                  Only use if you know why.\n";
-	$output .= "--output, -o      Output type: supported - mp3, ogg, opus\n";
-	$output .= "                  Your current default is: $OUTPUT_TYPE\n";
+	$output .= "                  Expert use only.\n";
+	$output .= "--output, -o      Output type: mp3, ogg, opus. Current value: $OUTPUT_TYPE\n";
 	$output .= "--quality n, -q n For ogg: n between -1 and 10. Fractions ok.\n";
 	$output .= "                  10 highest quality.\n";   
 	$output .= "                  For opus: n is (variable) bitrate, between 6-256.\n";
 	$output .= "                  (256 highest quality).\n";
 	$output .= "                  For mp3: n between 0-9 (variable bit rate), 0 highest quality.\n";
-	$output .= "                  Current defaults: $QUALITY_MP3 (mp3); $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
+	$output .= "                  Current values: $QUALITY_MP3 (mp3); $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
 	$output .= "--quiet, --silent Turns off all screen output, except for error messages.\n";
-	$output .= "--source, -s      Path to the top-most directory containing your source files\n";
-	$output .= "                  (eg, flac). Your current default is: $SOURCE_DIRECTORY\n";
+	$output .= "--source, -s      Path to the top-most directory containing your source files.\n";
+	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
 	$output .= "--verbose, -V     Without full verbosity of debug, no flac/lame/oggenc/opusenc\n";
 	$output .= "                  for mp3, ogg or opus conversion process screen output,\n";
-	$output .= "                  but more verbose than default.\n";
+	$output .= "                  but more verbose than default. Same as --log 2\n";
 	$output .= "--test            Test copy and sync without actually doing the copy/sync. Also\n";
 	$output .= "                  activates --debug for more complete path outputs.\n";
 	$output .= "--version, -v     Show $SELF_NAME version.\n\n";
@@ -1025,8 +1024,9 @@ sub set_config_data {
 sub assign_config_value {
 	my ($var,$value) = @_;
 	if ($var eq 'COMMAND_FLAC'){$COMMAND_FLAC = $value;}
+	elsif ($var eq 'COMMAND_FLAC_OUT'){$COMMAND_FLAC_OUT = $value;}
 	elsif ($var eq 'COMMAND_LAME'){$COMMAND_LAME = $value;}
-	elsif ($var eq 'COMMAND_METAFLAC'){$COMMAND_METAFLAC = $value;}
+	elsif ($var eq 'COMMAND_METAFAC'){$COMMAND_METAFLAC = $value;}
 	elsif ($var eq 'COMMAND_OGG'){$COMMAND_OGG = $value;}
 	elsif ($var eq 'COMMAND_OPUS'){$COMMAND_OPUS = $value;}
 	elsif ($var eq 'CLEAN'){

@@ -1,11 +1,11 @@
-.TH ACXI 1 "2019\-07\-13" acxi "acxi manual"
+.TH ACXI 1 "2019\-07\-14" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
-\fBacxi\fR [\fB\-\-clean\fR] [\fB\-c\fR extensions] [\fB\-\-debug\fR] 
-[\fB\-\-default\fR] [\fB\-d\fR destination-path] [\fB\-f\fR] 
-[\fB\-\-fork\fR 0-xx] [\fB\-h\fR] 
-[\fB\-i\fR flac|wave] [\fB\-\-nlink\fR] [\fB\-\-no\-nlink\fR] 
+\fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-clean\fR] [\fB\-c\fR extensions] 
+[\fB\-\-debug\fR] [\fB\-\-default\fR] [\fB\-d\fR destination-path] 
+[\fB\-f\fR] [\fB\-\-fork\fR 0-xx] [\fB\-h\fR] [\fB\-i\fR flac|wave] 
+[\fB\-\-log\fR 0-3] [\fB\-\-nlink\fR] [\fB\-\-no\-nlink\fR] 
 [\fB\-o\fR mp3|ogg|opus] [\fB\-q\fR 0-xxx] [\fB\-\-quiet\fR] 
 [\fB\-s\fR source-path] [\fB\-V\fR] [\fB\-\-test\fR] [\fB\-v\fR]
 
@@ -35,6 +35,16 @@ Note that some options have long and short forms. The short form is used
 when available in examples in order to keep things simple.
 
 .SH OPTIONS
+
+.TP
+.B \-a [extension[s]]\fR, \fB\-\-append [extension[]s]\fR
+Takes one or more comma separated extensions. Do not use whitespaces
+in this list. These will be appended on to the current list being 
+used on a one time basis. This can be useful if you want to copy 
+over a specific file type for one sync action without
+having to make a full list with \fB\-c\fR.
+
+Sample: \fBacxi \-a md5\fR will add md5 file type to copy list.
 
 .TP
 .B \-\-clean\fR
@@ -74,7 +84,7 @@ Sample: \fB\-c txt,pdf,png,jpg,jpeg,gif\fR
 .B \-\-debug\fR
 Full screen output, including full verbosity of 
 flac / oggenc / opusenc / lame conversion process for mp3, ogg, or 
-opus output.
+opus output. Same as \fB\-\-log 3\fR
 
 .TP
 .B \-\-default\fR
@@ -105,6 +115,10 @@ but it is only cosmetic.
 
 See also configuration file option \fBFORK\fR if you want to set this permanently.
 
+Please note that this can have strange consequences if you run it on a huge
+job, even if you use only half your threads, the system can still act strange
+as a result of running it with multiple forks.
+
 .TP
 .B \-h\fR, \fB\-\-help\fR
 This help menu.
@@ -123,7 +137,9 @@ codec installed.
 .TP
 .B \-\-log [0-3]\fR
 Dynamically set LOG_LEVEL. Helps for debugging certain types of issues
-where you might want to see the full level 3 debugging information.
+where you might want to see the full level 3 debugging information from
+audio codec conversions for example. 0 shuts off all output except 
+errors.
 
 .TP
 .B \-\-nlink\fR
@@ -145,9 +161,9 @@ See \fB\-\-nlink\fR for details.
 .B \-o [flac|mp3|ogg|opus]\fR, \fB\-\-output [flac|mp3|ogg|opus]\fR
 Output type. Supported types: ogg, opus, mp3
 
-\- mp3 only supports flac input type
+\- mp3 output type only supports flac input type
 
-\- flac only supports shn, raw, or wav input types.
+\- flac output type only supports shn, raw, or wav input types.
 
 .TP
 .B \-q [number]\fR, \fB\-\-quality [number]\fR
@@ -182,7 +198,7 @@ operations. Activates \fB \-\-debug\fR as well for more complete output.
 .B  \-V\fR, \fB\-\-verbose\fR
 Without full verbosity of debug, no flac/oggenc/opusenc/lame for mp3,
 ogg, or opus conversion process screen output, but more verbose than
-default.
+default. Same as \fB\-\-log 2\fR
 
 .TP
 .B \-v\fR, \fB\-\-version\fR
@@ -212,6 +228,8 @@ in the top comment header of acxi.
 The following set your system path for the required applications:
 
 \fBCOMMAND_FLAC\fR Sample: \fBCOMMAND_FLAC=/usr/bin/flac\fR (default path)
+
+\fBCOMMAND_FLAC_OUT\fR Sample: \fBCOMMAND_FLAC_OUT=/usr/bin/ffmpeg\fR (default path)
 
 \fBCOMMAND_LAME\fR Sample: \fBCOMMAND_LAME=/usr/bin/lame\fR (default path)
 
@@ -272,6 +290,9 @@ to override the default file types acxi will sync. Set to 'none',
 if you only want to sync the music files, not copy over images, text files,
 etc.
 
+\fBQUALITY_FLAC\fR Sample: \fBQUALITY_FLAC=5\fR Supported values: 0\-8. 0 is 
+the largest file size / fastest to run. NOTE: this is not currently used.
+
 \fBQUALITY_MP3\fR Sample: \fBQUALITY_MP3=2\fR Supported values: 0\-9. 0 is 
 the largest file size / highest quality.
 
@@ -315,7 +336,9 @@ to change it.
     
 2 \- verbose \- but without the actual conversion data from codecs
 
-3 \- debug \-  all available information.
+3 \- debug \-  all available information. Note: with \fBF\-\-fork\fR conversion
+output may be ordered somewhat randomly since it shows each thread's results 
+as it completes as well as when it started.
 
 .SH BUGS
 Please report bugs using the following resources.
