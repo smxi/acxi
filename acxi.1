@@ -4,9 +4,9 @@ acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
 \fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-clean\fR] [\fB\-c\fR extensions] 
 [\fB\-\-debug\fR] [\fB\-\-default\fR] [\fB\-d\fR destination-path] 
-[\fB\-f\fR] [\fB\-\-fork\fR 0-xx] [\fB\-h\fR] [\fB\-i\fR flac|wave] 
+[\fB\-f\fR] [\fB\-\-fork\fR 0-xx] [\fB\-h\fR] [\fB\-i\fR flac|raw|shn|wave] 
 [\fB\-\-log\fR 0-3] [\fB\-\-nlink\fR] [\fB\-\-no\-nlink\fR] 
-[\fB\-o\fR mp3|ogg|opus] [\fB\-q\fR 0-xxx] [\fB\-\-quiet\fR] 
+[\fB\-o\fR flac|mp3|ogg|opus] [\fB\-q\fR 0-xxx] [\fB\-\-quiet\fR] 
 [\fB\-s\fR source-path] [\fB\-V\fR] [\fB\-\-test\fR] [\fB\-v\fR]
 
 .SH DESCRIPTION
@@ -37,7 +37,7 @@ when available in examples in order to keep things simple.
 .SH OPTIONS
 
 .TP
-.B \-a [extension[s]]\fR, \fB\-\-append [extension[]s]\fR
+.B \-a [extensions]\fR, \fB\-\-append [extensions]\fR
 Takes one or more comma separated extensions. Do not use whitespaces
 in this list. These will be appended on to the current list being 
 used on a one time basis. This can be useful if you want to copy 
