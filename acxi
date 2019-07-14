@@ -968,7 +968,7 @@ sub print_help {
 	$output .= "--verbose, -V     Without full verbosity of debug, no flac/lame/oggenc/opusenc\n";
 	$output .= "                  for mp3, ogg or opus conversion process screen output,\n";
 	$output .= "                  but more verbose than default. Same as --log 2\n";
-	$output .= "--version, -v     Show $SELF_NAME version.\n\n";
+	$output .= "--version, -v     Show $SELF_NAME version.\n";
 	$output .= $line_small;
 	$output .= "User Configs ";
 	if (!$CONFIG_DIRECTORY){
