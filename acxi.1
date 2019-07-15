@@ -217,8 +217,11 @@ default. Same as \fB\-\-log 2\fR
 Show acxi version.
 
 .SH CONFIGURATION FILE
+You can see by running \fB\-h\fR if your configuration file locations
+exist. This will show paths being used to locate configuration files.
+
 acxi will read its configuration/initialization files in the
-following order:
+following order.
 
 \fB/etc/acxi.conf\fR contains the default configurations. These can be 
 overridden by user configurations found in one of the following locations.
@@ -228,6 +231,17 @@ the legacy location \fB$HOME/.acxi.conf\fR is used, i.e.:
 
 \fB$XDG_CONFIG_HOME/acxi.conf\fR > \fB$HOME/.conf/acxi.conf\fR >
 \fB$HOME/.acxi.conf\fR
+
+\fB$CONFIG_DIRECTORY\fR \- Sample: 
+\fB$CONFIG_DIRECTORY='/path/to/configuration/directory'\fR
+
+NOTE: only use this if you are running Windows, or any OS without 
+\fB$HOME\fR or \fB$XDG_CONFIG_HOME\fR environmental variables, or
+if you want the configuration file to be located somewhere else. 
+
+This value must be set on top of acxi in the \fBUSER MODIFIABLE VALUES\fR
+section because that is what it will use to locate the configuration file. 
+acxi will look for acxi.conf inside that directory. 
 
 .SH CONFIGURATION OPTIONS
 
@@ -257,32 +271,24 @@ you do not need this
 .TP
 .B SOURCE/DESTINATION/CONFIGURATION DIRECTORIES
 
-NOTE: DESTINATION_DIRECTORY cannot be the same as SOURCE_DIRECTORY.
+NOTE: \fBDESTINATION_DIRECTORY\fR cannot be the same as \fBSOURCE_DIRECTORY\fR.
 
-\fBCLEAN\fR Sample: \fBCLEAN=true\fR Switches on/off \fB\-\-clean\fR to 
+\fBCLEAN\fR \- Sample: \fBCLEAN=true\fR Switches on/off \fB\-\-clean\fR to 
 apply cleaning action to your destination directories. Accepted
 values: \fB[enable|on|true|yes]\fR or \fB[disable|off|false|no]\fR. Default
 is false.
 
 \fBSOURCE_DIRECTORY\fR \- Sample: 
-
 \fBSOURCE_DIRECTORY=/home/fred/music\fR 
 
 This the original, working, like flac, wav, etc.
 
 \fBDESTINATION_DIRECTORY\fR \- Sample: 
-
 \fBDESTINATION_DIRECTORY=/home/fred/music/ogg\fR
 
 This is the processed compressed music files, ie, ogg, opus, or mp3. Destination 
 cannot be the same as Source directory, although it can be inside of the source 
 directory.
-
-NOTE: only use this if you are running Windows, or any OS without $HOME
-or $XDG_CONFIG_HOME environmental variables. acxi will look for file:
-acxi.conf inside that directory. You can see by running \fB\-h\fR
-which will show paths being used to locate configuration files. 
-CONFIG_DIRECTORY=/path/to/configuration/directory
 
 .TP
 .B INPUT/OUTPUT
