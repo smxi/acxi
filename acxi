@@ -906,7 +906,7 @@ sub print_help {
 	$output .= "--fork, -F        [0-x] - Number of forks/threads to use. 0 default, disables.\n";
 	$output .= "                  Requires Perl module: Parallel::ForkManager. Current: $FORK\n";
 	$output .= "--input, -i       Input type: flac, wav, raw, shn. shn requires codec shorten. \n";
-	$output .= "                  raw, shn, wav only output to flac.\n";
+	$output .= "                  raw, shn only output to flac.\n";
 	$output .= "                  Current value: $INPUT_TYPE\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
