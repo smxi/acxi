@@ -159,6 +159,9 @@ Windows, you'll want to find the shorten.exe.
 Arch, Ubuntu, etc, have the shorten package available.
 deb-multimedia.org has the shorten codec package for Debian.
 
+For a collection of plugins and other shorten items:
+http://shnutils.freeshell.org/shorten/
+
 http://shnutils.freeshell.org/shorten/dist/src/ has the shorten 
 tar.gz files if you want to compile the codec yourself.
 
