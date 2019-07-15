@@ -43,6 +43,7 @@
 # the command line, or can be set in the configuration file (recommended).  
 #
 # See BEGIN USER MODIFIABLE VALUES for configuration information.
+
 #########################################################################
 ### NO USER CHANGES IN THIS SECTION ###
 #########################################################################
@@ -178,7 +179,9 @@ my $FORK = 0;
 ### END USER MODIFIABLE VALUES ###
 #########################################################################
 
+#########################################################################
 ### CLEAN/SYNC MUSIC DIRECTORIES ###
+#########################################################################
 sub clean_destination {
 	my (@extension_files);
 	print $line_large;
@@ -486,6 +489,9 @@ sub get_flac_tags {
 	# print Dumper \%tag_list;
 	return %tag_list;
 }
+#########################################################################
+### PROGRAM TOOLS ###
+#########################################################################
 
 ### UTILITIES ###
 # NOTE: File::Find will not follow symbolic links
@@ -1151,7 +1157,10 @@ sub get_options{
 	);
 }
 
+#########################################################################
 ### EXECUTE / PROCESS MUSIC ###
+#########################################################################
+
 UserConfigs::set();
 get_options();
 set_display_output_data();
