@@ -657,16 +657,16 @@ sub check_in_out_types {
 		$b_error = 1;
 		$error_message .= "\n  The output type you entered is not supported: ";
 		$error_message .= "$OUTPUT_TYPE";
-		if ( $OUTPUT_TYPE eq lc('mp3') && $INPUT_TYPE ne lc('flac') ){
-			$b_error = 1;
-			$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
-			$error_message .= "currently only supports input type: flac";
-		}
-		elsif ($INPUT_TYPE =~ m/^(shn)$/ && $OUTPUT_TYPE ne lc('flac')){
-			$b_error = 1;
-			$error_message .= "\n  The input type $INPUT_TYPE you entered ";
-			$error_message .= "currently only supports output type: flac";
-		}
+	}
+	if ( $OUTPUT_TYPE eq lc('mp3') && $INPUT_TYPE ne lc('flac') ){
+		$b_error = 1;
+		$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
+		$error_message .= "currently only supports input type: flac";
+	}
+	if ($INPUT_TYPE =~ m/^(shn)$/ && $OUTPUT_TYPE ne lc('flac')){
+		$b_error = 1;
+		$error_message .= "\n  The input type $INPUT_TYPE you entered ";
+		$error_message .= "currently only supports output type: flac";
 	}
 	if ( $b_error ){
 		main::error_handler('unsupported-type',$error_message,0);
@@ -739,25 +739,18 @@ sub check_application_paths {
 			$b_error = 1;
 			$error_message .= "\n  Encoding application not available: $COMMAND_LAME";
 		}
-		if ($INPUT_TYPE eq 'flac') {
-			$app_paths .= "$COMMAND_FLAC ";
-			if ( ! -x "$COMMAND_FLAC" ) {
-				$b_error = 1;
-				$error_message .= "\n  Input processor $COMMAND_FLAC needed by lame ";
-				$error_message .= "not available.";
-			}
-			$app_paths .= "$COMMAND_METAFLAC ";
-			# Added: Odd @2011-03-23 01:55:28
-			if ( ! -x "$COMMAND_METAFLAC" ) {
-				$b_error = 1;
-				$error_message .= "\n  $COMMAND_METAFLAC not found. Required to copy ";
-				$error_message .= "ID3 tags from Flac to MP3.";
-			}
-		}
-		else {
+		$app_paths .= "$COMMAND_FLAC ";
+		if ( ! -x "$COMMAND_FLAC" ) {
 			$b_error = 1;
-			$error_message .= "\n  $COMMAND_LAME currently only supports ";
-			$error_message .= "flac as input.";
+			$error_message .= "\n  Input processor $COMMAND_FLAC needed by lame ";
+			$error_message .= "not available.";
+		}
+		$app_paths .= "$COMMAND_METAFLAC ";
+		# Added: Odd @2011-03-23 01:55:28
+		if ( ! -x "$COMMAND_METAFLAC" ) {
+			$b_error = 1;
+			$error_message .= "\n  $COMMAND_METAFLAC not found. Required to copy ";
+			$error_message .= "ID3 tags from Flac to MP3.";
 		}
 	}
 	if ( $b_error ) {
@@ -772,6 +765,7 @@ sub check_quality{
 	if ( $LOG_LEVEL > 0 ) {
 		print main::dotify("Checking quality support for $OUTPUT_TYPE");
 	}
+	## NOTE: this is not used
 	if ( lc($OUTPUT_TYPE) eq 'flac') {
 		if ($QUALITY_FLAC !~ m/^[0-8]$/ ) {
 			$b_error = 1;
@@ -1012,6 +1006,7 @@ sub set_display_output_data {
 		$print_line_small = 'print $line_small';
 	}
 }
+# get defaults from user config files if present
 ## Package UserConfigs
 {
 package UserConfigs;
@@ -1157,7 +1152,6 @@ sub get_options{
 }
 
 ### EXECUTE / PROCESS MUSIC ###
-# get defaults from user config files if present
 UserConfigs::set();
 get_options();
 set_display_output_data();
