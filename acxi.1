@@ -11,12 +11,15 @@ acxi  \- Command line audio conversion tool
 
 .SH DESCRIPTION
 \fBacxi\fR is a command line audio conversion program. It converts and syncs
-all desired source lossless files to a lossy directory location. Supports 
-lossless formats flac/wav/raw. Output formats are ogg, opus, or mp3.
+all desired source lossless files to a lossy directory location. 
+
+Supports lossless input formats flac/raw/shn/wav. Output formats are flac, 
+ogg, opus, or mp3. raw/shn/wav can only output to flac. mp3 can only have 
+flac as input format.
 
 By default, it will also copy over most common filetypes like gif, jpg, png, 
 txt, pdf, doc, docx, and a few others. You can change the defaults using 
-a configuration file.
+a configuration file, or the \fB\-c\fR or \fB\-a\fR options..
 
 The destination directory cannot be the same as the source directory, but
 it can be inside of the source directory.
@@ -74,7 +77,7 @@ It can be enabled using the CLEAN configuration option below so that
 acxi always cleans up before it starts syncing.
 
 .TP
-.B \-c [extensions]\fR,\fB \-\-copy [extensions]\fR
+.B \-c [extensions]\fR, \fB\-\-copy [extensions]\fR
 Comma separated list of extensions for file types you want to sync to your
 lossy music directory. Overrides default values. Use lowercase, but it's
 case insensitive internally. Do not include the period in the extension.
@@ -127,20 +130,25 @@ This help menu.
 .B \-i [flac|raw|shn|wav]\fR, \fB\-\-input [flac|raw|shn|wav]\fR
 Input type. Supported types: flac, wav, raw, shn. 
 
-\- mp3 only supports flac input.
+raw/shn/wav \- only support flac output. 
 
-\- shn only supports flac output and requires the shorten codec, which
-you usually have to build yourself unless you can find a package for it.
-Use \fB\-\-log 3\fR to test the first time to make sure you have shorten
-codec installed.
+shn \- requires the shorten codec, which you usually have to build yourself 
+unless you can find a package for it. Use \fB\-\-log 3\fR to test the 
+first time to make sure you have shorten codec installed.
 
 .TP
 .B \-\-log [0-3]\fR
 Dynamically set LOG_LEVEL. Helps for debugging certain types of issues
 where you might want to see the full level 3 debugging information from
-audio codec conversions for example. 0 shuts off all output except 
-errors. See \fB\-\-basic\fR, \fB\-\-full\fR, \fB\-\-quiet\fR, 
-\fB\-\-verbose\fR.
+audio codec conversions for example. 
+
+0 \- shuts off all output except errors. Same as \fB\-\-quiet\fR.
+
+1 \- basic single line output. Same as \fB\-\-basic\fR.
+
+2 \- more verbose output. Same as \fB\-\-verbose\fR.
+
+3 \- full output, incuding all conversion tool output. Same as \fB\-\-full\fR.
 
 .TP
 .B \-\-nlink\fR
@@ -162,19 +170,21 @@ See \fB\-\-nlink\fR for details.
 .B \-o [flac|mp3|ogg|opus]\fR, \fB\-\-output [flac|mp3|ogg|opus]\fR
 Output type. Supported types: ogg, opus, mp3
 
-\- mp3 output type only supports flac input type
+mp3 \- only supports flac input type
 
-\- flac output type only supports shn, raw, or wav input types.
+flac \- only supports shn, raw, or wav input types.
 
 .TP
 .B \-q [number]\fR, \fB\-\-quality [number]\fR
-For mp3: n can be an integer between 0\-9 (variable bit rate), 0 is 
+Set compression quality level.
+
+mp3 \- n can be an integer between 0\-9 (variable bit rate), 0 is 
 largest file / highest quality.
 
-For ogg: n can be between \-1 and 10. 10 is the largest file/highest quality. 
+ogg \- n can be between \-1 and 10. 10 is the largest file/highest quality. 
 Fractions are allowed, e.g. \fB\-o ogg \-q 7.54\fR
 
-For opus: n can be an integer between 6\-256 (bitrate). 256 is largest file/highest
+opus \-  n can be an integer between 6\-256 (bitrate). 256 is largest file/highest
 quality.
 
 Note that using a higher or lower quality than you used to create
@@ -324,7 +334,7 @@ Note that 0 will not create a fork. See \fB\-\-fork\fR for details.
 Using this will speed up your syncing a lot if you have more than a 1 core CPU.
 
 .TP
-.B DEBUG OUTPUT
+.B SCREEN OUTPUT
 You can change \fBLOG_LEVEL\fR either at the top of the \fBacxi\fR file itself, 
 or in the configuration file, by setting the verbosity/debugging level to what 
 you want. 

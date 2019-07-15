@@ -622,7 +622,7 @@ sub error_handler {
 ## package Validation 
 {
 package Validation;
-my ($b_error, $b_valid_in_out,$error_message) = (0,0,'');
+my ($b_valid_in_out) = (0);
 sub check_user_values {
 	start_text();
 	check_log_level();
@@ -643,7 +643,7 @@ sub start_text {
 	}
 }
 sub check_in_out_types {
-	$error_message = '';
+	my ($b_error,$error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		eval $print_line_large;
 		print main::dotify("Checking input and output types");
@@ -663,7 +663,7 @@ sub check_in_out_types {
 		$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
 		$error_message .= "currently only supports input type: flac";
 	}
-	if ($INPUT_TYPE =~ m/^(shn)$/ && $OUTPUT_TYPE ne lc('flac')){
+	if ($INPUT_TYPE =~ m/^(raw|shn|wav)$/ && $OUTPUT_TYPE ne lc('flac')){
 		$b_error = 1;
 		$error_message .= "\n  The input type $INPUT_TYPE you entered ";
 		$error_message .= "currently only supports output type: flac";
@@ -680,7 +680,7 @@ sub check_in_out_types {
 }
 sub check_src_dest_directories {
 	my $missing_dirs = '';
-	$error_message = '';
+	my ($b_error,$error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		eval $print_line_large;
 		print main::dotify("Checking source / destination directories");
@@ -707,7 +707,7 @@ sub check_src_dest_directories {
 	}
 }
 sub check_application_paths {
-	$error_message = '';
+	my ($b_error,$error_message) = (0,'');
 	my $app_paths = ''; 
 	if ( $LOG_LEVEL > 0 ) {
 		print main::dotify("Checking audio conversion tool path");
@@ -761,7 +761,7 @@ sub check_application_paths {
 	}
 }
 sub check_quality{
-	$error_message = '';
+	my ($b_error,$error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		print main::dotify("Checking quality support for $OUTPUT_TYPE");
 	}
@@ -816,7 +816,7 @@ sub check_quality{
 	}
 }
 sub check_log_level {
-	$error_message = '';
+	my ($b_error,$error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		print main::dotify("Checking log/screen output level");
 	}
@@ -833,7 +833,7 @@ sub check_log_level {
 	}
 }
 sub check_nlink {
-	$error_message = '';
+	my ($b_error,$error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		print main::dotify("Checking DONT_USE_NLINK value");
 	}
@@ -850,7 +850,7 @@ sub check_nlink {
 	}
 }
 sub check_fork {
-	$error_message = '';
+	my ($b_error,$error_message) = (0,'');
 	if ( $LOG_LEVEL > 0 ) {
 		print main::dotify("Checking FORK value");
 	}
