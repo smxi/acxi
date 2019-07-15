@@ -667,12 +667,12 @@ sub check_in_out_types {
 	if ( $OUTPUT_TYPE eq lc('mp3') && $INPUT_TYPE ne lc('flac') ){
 		$b_error = 1;
 		$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
-		$error_message .= "currently only supports input type: flac";
+		$error_message .= "only supports input type: flac";
 	}
 	if ($INPUT_TYPE =~ m/^(raw|shn)$/ && $OUTPUT_TYPE ne lc('flac')){
 		$b_error = 1;
 		$error_message .= "\n  The input type $INPUT_TYPE you entered ";
-		$error_message .= "currently only supports output type: flac";
+		$error_message .= "only supports output type: flac";
 	}
 	if ( $b_error ){
 		main::error_handler('unsupported-type',$error_message,0);
