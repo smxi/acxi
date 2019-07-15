@@ -68,7 +68,7 @@ use File::Path qw(rmtree);
 ## SELF INFO
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.2.0';
-my $SELF_DATE = '2019-07-14';
+my $SELF_DATE = '2019-07-15';
 
 ## GLOBALS
 my ($b_dest_changed,$b_clean,$b_force,$b_fork,$b_quiet,$b_test);

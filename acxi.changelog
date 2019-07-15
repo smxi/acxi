@@ -1,4 +1,52 @@
 ===================================================================
+Date: 2019-07-15
+Version: 3.2.0
+-------------------------------------------------------------------
+Big update.
+
+New features:
+1. now supports forking, using either --fork/-F [0-xxx], or config
+value: FORK=[0-xx]. This lets you use multithreading to run big 
+conversions more quickly. Note that with really big jobs, in some
+cases, the OS will act a bit odd after a while if you assigned too
+many forks, but in general is very fast and works well. Thanks 
+prupert for this suggestion on techpattern.com/forums.
+
+Requires Perl module Parallel::ForkManager, will exit if FORK 
+is greater than 1 and module not present.
+
+2. Finally, option to convert shn to flac. Requires shorten codec 
+library and ffmpeg. 
+
+See README.txt for where to find the shorten codec if you don't 
+have it (hint: if you can play shn files, you probably have it).
+
+3. New option: -a/--append, which lets you append more copy types
+on a one time basis to your existing list. This can be useful if
+for example you are doing a one time conversion of a mixed flac/shn
+directory to all flac: 
+acxi -i shn -o flac -s /my/shn-flacs -d /my/flacs -a flac 
+will copy over your flacs to the flac, if any found, and convert
+the shn to flac.
+
+4. Got rid of some confusing terms for screen output:
+--debug becomes --full
+--default becomes --basic
+And all can now be triggered by the new --log [0-3] if you prefer
+that way to trigger verbosity levels. --debug will keep working 
+but may be used for something else in future versions.
+
+4. Redo of man and help. Help reorganized into  two sections, one
+for syncing options, like -c, -a, -d, -s, -i, -o, --fork, etc. The
+other is for screen output options, like -h, --version, --log, 
+--basic, --full, --verbose.
+
+5. Internal refactor to use packages/classes in some areas like
+Validation and configuration file processing. This makes the code
+easier to work on since you can fold those packages away in your
+code editor.
+
+===================================================================
 Date: 2019-07-05
 Version: 3.1.3
 -------------------------------------------------------------------

@@ -7,8 +7,9 @@ ABOUT
 ------------------------------------------------------------------------
 acxi is a simple tool that syncs/converts lossless (flac, wav, raw) 
 music libraries to compressed (ogg,mp3) versions of the lossless 
-library. Its mission is to do one thing (sync to compressed formats
-your music collection), and to do it well, in the classic Unix manner.
+library. It also can convert shn to flac. Its mission is to do one thing 
+(sync to compressed formats your music collection), and to do it well, 
+in the classic Unix manner.
 
 acxi doesn't change very often, and in general will 'just work' for 
 as long as it's installed, though it is a good idea to check for 
@@ -20,8 +21,9 @@ It also copies over all associated data, like .txt, .jpg, .tiff, and
 so on, files, so you have a full copy of your originals in compressed 
 format. It allows setting all variables, like compression rates, target 
 and source directories, and and so on. You can add or remove these
-file types using either top configuration, configuration file, or 
-program option (-c).
+file types using either top configuration, configuration file, -a [one
+or more comma separated extensions] to add/apppend a file type temporarily, 
+or -c [comma separated extension list] to supply a new list.
 
 For instance, say you have:
 /home/fred/media/main
@@ -50,9 +52,12 @@ so it should run on anything. Several features (copy, make directory,
 find files) were moved from *nix commands to Perl native commands in
 version 3, which should make acxi fully platform agnostic.
 
-Ogg encoding requires oggenc (Debian/Ubuntu package: vorbis-tools).
-MP3 encoding requires: lame and flac (if source file is a flac, MP3
-encoding does not support wav or raw formats).
+* Ogg encoding requires oggenc (Debian/Ubuntu package: vorbis-tools).
+
+* MP3 encoding requires: lame and flac (if source file is a flac, MP3
+  encoding does not support wav or raw formats).
+  
+* SHN -> FLAC conversion requires the codec 'shorten' and ffmpeg.
 
 In theory, acxi 3.x should run on Windows and Macs, but I have not
 tested that, but as long as the source/destination directory paths and
@@ -66,6 +71,8 @@ override files $XDG_CONFIG_HOME/acxi.conf, $HOME/.acxi.conf, or
 $HOME/.config/acxi.conf. The user configuration values override any
 /etc/acxi.conf values.
 
+See the man page for complete explanations.
+
 If your system does not have the $HOME or $XDG_CONFIG_HOME environmental
 variables (Windows, for example), you can use the manual config file
 path option
@@ -73,7 +80,10 @@ $CONFIGURATION_DIRECTORY='';
 to create a path to your acxi.conf configuration file.
 
 See the top of acxi, or the man page, for instructions on how to create 
-the configuration items.
+the configuration items. Note that user values in configuration files
+do not use the $ you see in the top user configuration section, for 
+example, $SOURCE_DIRECTORY would be used as: SOURCE_DIRECTORY=path
+in your configuration file.
 
 You must at a minimum set your source and destination directories the
 first time you run acxi, either using the -s/--source and -d/--destination
@@ -90,10 +100,41 @@ directories.
 
 Output type can be set with -o/--output, input type with -i/--input,
 and quality level with -q/--quality options. The file types to copy over 
-can be changed with -c/--copy or configuration file values.
+can be changed with -c/--copy, -a/--append, or configuration file values.
 
 Once you set your input/output directory paths (using either -s / -d 
 options, or creating a configuration file), you can use the --test
 option to see what acxi would have done, then, once you have confirmed
 everything is working as expected, you can start syncing your music
 files.
+
+You can change the screen output from none (--quiet, --log 0), single
+line (--basic, --log 1), verbose (--verbose, --log 2), or full, with
+all conversion tool outputs (--full, --log 3). These values can also be
+set in configuration files using LOG_LEVEL=[0-3].
+
+========================================================================
+SHN SHORTEN
+------------------------------------------------------------------------
+Finding the shorten codec can be a pain, here's a few sources that
+may help. You probably already have the codec if you have shn files 
+and have been playing them.
+
+http://wiki.etree.org/index.php?page=SoftwareYouNeed
+See section: Uncompress 
+http://adventuresinswitching.blogspot.com/2008/04/convert-shn-shorten-to-mp3-or-flac-in.html
+has a good selection of methods for Linux, including compiling directions.
+
+Check for a package/port called 'shorten' in *nix systems, and for
+Windows, you'll want to find the shorten.exe. 
+
+Arch, Ubuntu, etc, have the shorten package available.
+deb-multimedia.org has the shorten codec package for Debian.
+
+http://shnutils.freeshell.org/shorten/dist/src/ has the shorten 
+tar.gz files if you want to compile the codec yourself.
+
+$ ./configure
+$ make
+$ make check
+$ sudo make install
