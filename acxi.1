@@ -2,8 +2,8 @@
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
-\fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-clean\fR] [\fB\-c\fR extensions] 
-[\fB\-\-debug\fR] [\fB\-\-default\fR] [\fB\-d\fR destination-path] 
+\fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-basic\fR] [\fB\-\-clean\fR] 
+[\fB\-c\fR extensions] [\fB\-\-full\fR]  [\fB\-d\fR destination-path] 
 [\fB\-f\fR] [\fB\-\-fork\fR 0-xx] [\fB\-h\fR] [\fB\-i\fR flac|raw|shn|wave] 
 [\fB\-\-log\fR 0-3] [\fB\-\-nlink\fR] [\fB\-\-no\-nlink\fR] 
 [\fB\-o\fR flac|mp3|ogg|opus] [\fB\-q\fR 0-xxx] [\fB\-\-quiet\fR] 
@@ -47,6 +47,11 @@ having to make a full list with \fB\-c\fR.
 Sample: \fBacxi \-a md5\fR will add md5 file type to copy list.
 
 .TP
+.B \-\-basic\fR
+Single line per operation screen output, default value for acxi.
+Same as \fB\-\-log 1\fR
+
+.TP
 .B \-\-clean\fR
 Clean directories and files from destination (compressed) directories 
 which are not present in the source music directories. Will show you the
@@ -81,17 +86,6 @@ If you use no value, it will not copy anything.
 Sample: \fB\-c txt,pdf,png,jpg,jpeg,gif\fR
 
 .TP
-.B \-\-debug\fR
-Full screen output, including full verbosity of 
-flac / oggenc / opusenc / lame conversion process for mp3, ogg, or 
-opus output. Same as \fB\-\-log 3\fR
-
-.TP
-.B \-\-default\fR
-Single line per operation screen output, default value for acxi.
-Same as \fB\-\-log 1\fR
-
-.TP
 .B \-d [path]\fR, \fB\-\-destination [path]\fR
 Full path to the directory where you want the processed lossy
 (eg, ogg) files to go.
@@ -121,6 +115,11 @@ job, even if you use only half your threads, the system can still act strange
 as a result of running it with multiple forks.
 
 .TP
+.B \-\-full\fR
+Full screen output, including full verbosity of flac / oggenc / opusenc / lame 
+conversion tools for flac, mp3, ogg, or opus output. Same as \fB\-\-log 3\fR
+
+.TP
 .B \-h\fR, \fB\-\-help\fR
 This help menu.
 
@@ -140,7 +139,8 @@ codec installed.
 Dynamically set LOG_LEVEL. Helps for debugging certain types of issues
 where you might want to see the full level 3 debugging information from
 audio codec conversions for example. 0 shuts off all output except 
-errors.
+errors. See \fB\-\-basic\fR, \fB\-\-full\fR, \fB\-\-quiet\fR, 
+\fB\-\-verbose\fR.
 
 .TP
 .B \-\-nlink\fR
@@ -194,7 +194,7 @@ Path to the top-most directory containing your source files (eg, flac).
 .TP
 .B \-\-test\fR
 Test your configurations without actually doing the copy and sync 
-operations. Activates \fB \-\-debug\fR as well for more complete output.
+operations. Activates \fB \-\-full\fR as well for more complete output.
                   
 .TP
 .B  \-V\fR, \fB\-\-verbose\fR

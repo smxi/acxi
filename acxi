@@ -179,19 +179,20 @@ my $FORK = 0;
 #########################################################################
 
 ### MAIN - FUNCTIONS ###
+## Args: 1: error id; 2: error message; 3: extt 0/1 [f/t]
 sub error_handler {
-	my ($error,$message) = @_;
-	my ($br,$error_text,$b_exit) = ("\n",'',1);
+	my ($error,$message,$b_exit) = @_;
+	my ($br,$error_text) = ("\n",'');
 	state $b_valid = 1;
 	state $error_no = 0;
-	if ($error eq 'unsupported-type'){$error_no = 2;$b_exit=0;$b_valid=0;}
-	elsif ($error eq 'dest-dir'){$error_no = 1;$b_exit=0;$b_valid=0;}
-	elsif ($error eq 'dest-eq-src-dir'){$error_no = 9;$b_exit=0;$b_valid=0;$br=''}
-	elsif ($error eq 'missing-app'){$error_no = 3;$b_exit=0;$b_valid=0;}
-	elsif ($error eq 'quality-invalid'){$error_no = 4;$b_exit=0;$b_valid=0;}
-	elsif ($error eq 'bad-level'){$error_no = 5;$b_exit=0;$b_valid=0;}
-	elsif ($error eq 'bad-fork'){$error_no = 9;$b_exit=0;$b_valid=0;}
-	elsif ($error eq 'bad-nlink'){$error_no = 9;$b_exit=0;$b_valid=0;}
+	if ($error eq 'unsupported-type'){$error_no = 2;$b_valid=0;}
+	elsif ($error eq 'dest-dir'){$error_no = 1;$b_valid=0;}
+	elsif ($error eq 'dest-eq-src-dir'){$error_no = 9;$b_valid=0;$br=''}
+	elsif ($error eq 'missing-app'){$error_no = 3;$b_valid=0;}
+	elsif ($error eq 'quality-invalid'){$error_no = 4;$b_valid=0;}
+	elsif ($error eq 'bad-level'){$error_no = 5;$b_valid=0;}
+	elsif ($error eq 'bad-fork'){$error_no = 9;$b_valid=0;}
+	elsif ($error eq 'bad-nlink'){$error_no = 9;$b_valid=0;}
 	elsif ($error eq 'stat-infile'){$error_no = 6;}
 	elsif ($error eq 'missing-arg'){$error_no = 7;
 		$message = "Option: $message";$br=''}
@@ -230,7 +231,7 @@ sub set_basic_data {
 	# note: tests show fork == 1 slower than no forking!!
 	if ( $FORK > 0 ){
 		if (!check_module('Parallel::ForkManager')){
-			error_handler('missing-perl-module', 'Parallel::ForkManager');
+			error_handler('missing-perl-module', 'Parallel::ForkManager',1);
 		}
 		else {
 			import Parallel::ForkManager;
@@ -265,243 +266,6 @@ sub set_display_output_data {
 		$print_line_heavy = 'print $line_heavy';
 		$print_line_large = 'print $line_large';
 		$print_line_small = 'print $line_small';
-	}
-}
-
-### VALIDATIONS ###
-sub validate_start_text {
-	if ( $LOG_LEVEL > 0 ) {
-		eval $print_line_heavy;
-		print "Running $SELF_NAME pretests.\n";
-	}
-}
-sub validate_in_out_types {
-	my ($b_error, $error_message) = (0,'');
-	if ( $LOG_LEVEL > 0 ) {
-		eval $print_line_large;
-		print dotify("Checking input and output types");
-	}
-	if ( $INPUT_TYPE !~ m/^(flac|raw|shn|wav)$/i ){
-		$b_error = 1;
-		$error_message .= "\n  The input type you entered is not supported: ";
-		$error_message .= "$INPUT_TYPE";
-	}
-	if ( $OUTPUT_TYPE !~ m/^(flac|mp3|ogg|opus)$/i ){
-		$b_error = 1;
-		$error_message .= "\n  The output type you entered is not supported: ";
-		$error_message .= "$OUTPUT_TYPE";
-		if ( $OUTPUT_TYPE eq lc('mp3') && $INPUT_TYPE ne lc('flac') ){
-			$b_error = 1;
-			$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
-			$error_message .= "currently only supports input type: flac";
-		}
-		elsif ($INPUT_TYPE =~ m/^(shn)$/ && $OUTPUT_TYPE ne lc('flac')){
-			$b_error = 1;
-			$error_message .= "\n  The input type $INPUT_TYPE you entered ";
-			$error_message .= "currently only supports output type: flac";
-		}
-	}
-	if ( $b_error ){
-		error_handler('unsupported-type',$error_message);
-	}
-	else {
-		if ( $LOG_LEVEL > 0 ) {
-			print "Valid: $INPUT_TYPE(in) $OUTPUT_TYPE(out)\n";
-		}
-		validate_quality();
-		validate_application_paths();
-	}
-}
-sub validate_src_dest_directories {
-	my ($b_error, $missing_dirs) = (0,'');
-	if ( $LOG_LEVEL > 0 ) {
-		eval $print_line_large;
-		print dotify("Checking source / destination directories");
-	}
-	if ( ! -d "$SOURCE_DIRECTORY" ){
-		$b_error = 1;
-		$missing_dirs .= "\n  Source Directory: $SOURCE_DIRECTORY";
-	}
-	if ( ! -d "$DESTINATION_DIRECTORY" ){
-		$b_error = 1;
-		$missing_dirs .= "\n  Destination Directory: $DESTINATION_DIRECTORY";
-	}
-	if ( $b_error ) {
-		my $error_message = "The paths for the following directories are missing:";
-		$error_message .= "$missing_dirs";
-		$error_message .= "\nPlease check the directory paths you provided.";
-		error_handler('dest-dir',$error_message);
-	} 
-	elsif ( $LOG_LEVEL > 0 ) {
-		print "Directories: exist\n";
-	}
-	if (!$b_error && $DESTINATION_DIRECTORY eq $SOURCE_DIRECTORY){
-		error_handler('dest-eq-src-dir',"Destination directory cannot be same as Source directory!");
-	}
-}
-sub validate_application_paths {
-	my ($b_error, $error_message, $app_paths) = (0,'',''); 
-	if ( $LOG_LEVEL > 0 ) {
-		print dotify("Checking audio conversion tool path");
-	}
-	if ($OUTPUT_TYPE eq 'flac') {
-		$app_paths .= "$COMMAND_FLAC_OUT";
-		if ( ! -x "$COMMAND_FLAC_OUT" ) {
-			$b_error = 1;
-			$error_message .= "\n  Encoding application not available: $COMMAND_FLAC_OUT";
-		}
-	}
-	elsif ( $OUTPUT_TYPE eq 'ogg' ) {
-		$app_paths .= "\n $COMMAND_OGG";
-		if ( ! -x "$COMMAND_OGG" ) {
-			$b_error = 1;
-			$error_message .= "\n  Encoding application not available: $COMMAND_OGG";
-		}
-	}
-	elsif ( $OUTPUT_TYPE eq 'opus' ) {
-		$app_paths .= "\n $COMMAND_OPUS";
-		if ( ! -x "$COMMAND_OPUS" ) {
-			$b_error = 1;
-			$error_message .= "\n  Encoding application not available: $COMMAND_OPUS";
-		}
-	}
-	elsif ( $OUTPUT_TYPE eq 'mp3' ) {
-		$app_paths .= "\n $COMMAND_LAME ";
-		if ( ! -x "$COMMAND_LAME" ) {
-			$b_error = 1;
-			$error_message .= "\n  Encoding application not available: $COMMAND_LAME";
-		}
-		if ($INPUT_TYPE eq 'flac') {
-			$app_paths .= "$COMMAND_FLAC ";
-			if ( ! -x "$COMMAND_FLAC" ) {
-				$b_error = 1;
-				$error_message .= "\n  Input processor $COMMAND_FLAC needed by lame ";
-				$error_message .= "not available.";
-			}
-			$app_paths .= "$COMMAND_METAFLAC ";
-			# Added: Odd @2011-03-23 01:55:28
-			if ( ! -x "$COMMAND_METAFLAC" ) {
-				$b_error = 1;
-				$error_message .= "\n  $COMMAND_METAFLAC not found. Required to copy ";
-				$error_message .= "ID3 tags from Flac to MP3.";
-			}
-		}
-		else {
-			$b_error = 1;
-			$error_message .= "\n  $COMMAND_LAME currently only supports ";
-			$error_message .= "flac as input.";
-		}
-	}
-	if ( $b_error ) {
-		error_handler('missing-app',$error_message);
-	}
-	elsif ( $LOG_LEVEL > 0 ) {
-		print "Available: $app_paths\n";
-	}
-}
-sub validate_quality{
-	my ($b_error, $error_message) = (0,'');
-	if ( $LOG_LEVEL > 0 ) {
-		print dotify("Checking quality support for $OUTPUT_TYPE");
-	}
-	if ( lc($OUTPUT_TYPE) eq 'flac') {
-		if ($QUALITY_FLAC !~ m/^[0-8]$/ ) {
-			$b_error = 1;
-			$error_message .= "\n  $OUTPUT_TYPE only supports ";
-			$error_message .= "0 to 8 quality levels. You entered: $QUALITY_FLAC";
-		}
-		else {
-			$quality = $QUALITY_FLAC;
-		}
-	}
-	if ( lc($OUTPUT_TYPE) eq 'ogg') {
-		if ($QUALITY_OGG !~ m/^-?[0-9]+(\.[0-9]+)?$/ || 
-		 $QUALITY_OGG < -1 || $QUALITY_OGG > 10 ) {
-			$b_error = 1;
-			$error_message .= "\n  $OUTPUT_TYPE only supports ";
-			$error_message .= "-1 to 10 quality levels. You entered: $QUALITY_OGG";
-		}
-		else {
-			$quality = $QUALITY_OGG;
-		}
-	}
-	# supports fractional quality levels
-	elsif ( lc($OUTPUT_TYPE) eq 'opus') {
-		if ($QUALITY_OPUS !~ m/^[0-9]+$/ || $QUALITY_OPUS < 6|| $QUALITY_OPUS > 256 ){
-			$b_error = 1;
-			$error_message .= "\n  $OUTPUT_TYPE only supports ";
-			$error_message .= "6 to 256 bitrate quality levels. You entered: $QUALITY_OPUS";
-		}
-		else {
-			$quality = $QUALITY_OPUS;
-		}
-	}
-	elsif ( lc($OUTPUT_TYPE) eq 'mp3') {
-		if ( $QUALITY_MP3 !~ m/^[0-9]$/ ) {
-			$b_error = 1;
-			$error_message .= "\n  $OUTPUT_TYPE only supports 0-9 quality levels. ";
-			$error_message .= "You entered: $QUALITY_MP3";
-		}
-		else {
-			$quality = $QUALITY_MP3;
-		}
-	}
-	if ( $b_error ) {
-		error_handler('quality-invalid',$error_message);
-	}
-	elsif ( $LOG_LEVEL > 0 ) {
-		print "Supported: $quality ($OUTPUT_TYPE)\n";
-	}
-}
-sub validate_log_level {
-	my ($b_error, $error_message) = (0,'');
-	if ( $LOG_LEVEL > 0 ) {
-		print dotify("Checking log/screen output level");
-	}
-	if ( $LOG_LEVEL !~ m/^([0-3])$/ ) {
-		$b_error = 1;
-		$error_message .= "\n  LOG_LEVEL only supports 0-3. ";
-		$error_message .= "You used: $LOG_LEVEL";
-	}
-	if ( $b_error ) {
-		error_handler('bad-level',$error_message);
-	}
-	elsif ( $LOG_LEVEL > 0 ) {
-		print "Supported: $LOG_LEVEL\n";
-	}
-}
-sub validate_nlink {
-	my ($b_error, $error_message) = (0,'');
-	if ( $LOG_LEVEL > 0 ) {
-		print dotify("Checking DONT_USE_NLINK value");
-	}
-	if ( $DONT_USE_NLINK !~ m/^[01]$/ ) {
-		$b_error = 1;
-		$error_message .= "\n  DONT_USE_NLINK only supports 0-1. ";
-		$error_message .= "You used: $DONT_USE_NLINK";
-	}
-	if ( $b_error ) {
-		error_handler('bad-nlink',$error_message);
-	}
-	elsif ( $LOG_LEVEL > 0 ) {
-		print "Supported: $DONT_USE_NLINK\n";
-	}
-}
-sub validate_fork {
-	my ($b_error, $error_message) = (0,'');
-	if ( $LOG_LEVEL > 0 ) {
-		print dotify("Checking FORK value");
-	}
-	if ( $FORK !~ m/^[0-9]+$/) {
-		$b_error = 1;
-		$error_message .= "\n  FORK requires value: 0 or more. ";
-		$error_message .= "You used: $FORK";
-	}
-	if ( $b_error ) {
-		error_handler('bad-fork',$error_message);
-	}
-	elsif ( $LOG_LEVEL > 0 ) {
-		print "Supported: $FORK\n";
 	}
 }
 
@@ -721,7 +485,7 @@ sub sync_collection_files {
 		# than that of the original file. If so, we re-encode.
 		# We also re-encode if the user supplied --force
 		$src_info = stat("$src_file") or 
-		  error_handler('stat-infile', "No $src_file: $!");
+		  error_handler('stat-infile', "No $src_file: $!",1);
 		$src_mod_time = $src_info->mtime if $src_info;
 		$dest_info = stat("$dest_file");
 		if ( $dest_info ) {
@@ -757,7 +521,7 @@ sub sync_collection_files {
 				}
 				if (!$b_test){
 					$result = copy($src_file, $dest_file) or 
-					  error_handler('cp-file', "cp failure: $src_file =>\n$dest_file\nCode: $!");
+					  error_handler('cp-file', "cp failure: $src_file =>\n$dest_file\nCode: $!",1);
 				}
 			}
 			# NOTE: for forking > 1, this will not print out for the output/input conversion files 
@@ -908,10 +672,269 @@ sub print_completion_message {
 	exit 0;
 }
 
+
+### VALIDATIONS ###
+
+## package Validation 
+{
+package Validation;
+my ($b_error, $b_valid_in_out,$error_message) = (0,0,'');
+sub check_user_values {
+	start_text();
+	check_log_level();
+	check_nlink();
+	check_fork();
+	check_src_dest_directories();
+	check_in_out_types();
+	if ($b_valid_in_out){
+		check_quality();
+		check_application_paths();
+	}
+	main::error_handler('validation-errors', '',1);
+}
+sub start_text {
+	if ( $LOG_LEVEL > 0 ) {
+		eval $print_line_heavy;
+		print "Running $SELF_NAME pretests.\n";
+	}
+}
+sub check_in_out_types {
+	$error_message = '';
+	if ( $LOG_LEVEL > 0 ) {
+		eval $print_line_large;
+		print main::dotify("Checking input and output types");
+	}
+	if ( $INPUT_TYPE !~ m/^(flac|raw|shn|wav)$/i ){
+		$b_error = 1;
+		$error_message .= "\n  The input type you entered is not supported: ";
+		$error_message .= "$INPUT_TYPE";
+	}
+	if ( $OUTPUT_TYPE !~ m/^(flac|mp3|ogg|opus)$/i ){
+		$b_error = 1;
+		$error_message .= "\n  The output type you entered is not supported: ";
+		$error_message .= "$OUTPUT_TYPE";
+		if ( $OUTPUT_TYPE eq lc('mp3') && $INPUT_TYPE ne lc('flac') ){
+			$b_error = 1;
+			$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
+			$error_message .= "currently only supports input type: flac";
+		}
+		elsif ($INPUT_TYPE =~ m/^(shn)$/ && $OUTPUT_TYPE ne lc('flac')){
+			$b_error = 1;
+			$error_message .= "\n  The input type $INPUT_TYPE you entered ";
+			$error_message .= "currently only supports output type: flac";
+		}
+	}
+	if ( $b_error ){
+		main::error_handler('unsupported-type',$error_message,0);
+	}
+	else {
+		$b_valid_in_out = 1;
+		if ( $LOG_LEVEL > 0 ) {
+			print "Valid: $INPUT_TYPE(in) $OUTPUT_TYPE(out)\n";
+		}
+	}
+}
+sub check_src_dest_directories {
+	my $missing_dirs = '';
+	$error_message = '';
+	if ( $LOG_LEVEL > 0 ) {
+		eval $print_line_large;
+		print main::dotify("Checking source / destination directories");
+	}
+	if ( ! -d "$SOURCE_DIRECTORY" ){
+		$b_error = 1;
+		$missing_dirs .= "\n  Source Directory: $SOURCE_DIRECTORY";
+	}
+	if ( ! -d "$DESTINATION_DIRECTORY" ){
+		$b_error = 1;
+		$missing_dirs .= "\n  Destination Directory: $DESTINATION_DIRECTORY";
+	}
+	if ( $b_error ) {
+		my $error_message = "The paths for the following directories are missing:";
+		$error_message .= "$missing_dirs";
+		$error_message .= "\nPlease check the directory paths you provided.";
+		main::error_handler('dest-dir',$error_message,0);
+	} 
+	elsif ( $LOG_LEVEL > 0 ) {
+		print "Directories: exist\n";
+	}
+	if (!$b_error && $DESTINATION_DIRECTORY eq $SOURCE_DIRECTORY){
+		main::error_handler('dest-eq-src-dir',"Destination directory cannot be same as Source directory!",0);
+	}
+}
+sub check_application_paths {
+	$error_message = '';
+	my $app_paths = ''; 
+	if ( $LOG_LEVEL > 0 ) {
+		print main::dotify("Checking audio conversion tool path");
+	}
+	if ($OUTPUT_TYPE eq 'flac') {
+		$app_paths .= "$COMMAND_FLAC_OUT";
+		if ( ! -x "$COMMAND_FLAC_OUT" ) {
+			$b_error = 1;
+			$error_message .= "\n  Encoding application not available: $COMMAND_FLAC_OUT";
+		}
+	}
+	elsif ( $OUTPUT_TYPE eq 'ogg' ) {
+		$app_paths .= "\n $COMMAND_OGG";
+		if ( ! -x "$COMMAND_OGG" ) {
+			$b_error = 1;
+			$error_message .= "\n  Encoding application not available: $COMMAND_OGG";
+		}
+	}
+	elsif ( $OUTPUT_TYPE eq 'opus' ) {
+		$app_paths .= "\n $COMMAND_OPUS";
+		if ( ! -x "$COMMAND_OPUS" ) {
+			$b_error = 1;
+			$error_message .= "\n  Encoding application not available: $COMMAND_OPUS";
+		}
+	}
+	elsif ( $OUTPUT_TYPE eq 'mp3' ) {
+		$app_paths .= "\n $COMMAND_LAME ";
+		if ( ! -x "$COMMAND_LAME" ) {
+			$b_error = 1;
+			$error_message .= "\n  Encoding application not available: $COMMAND_LAME";
+		}
+		if ($INPUT_TYPE eq 'flac') {
+			$app_paths .= "$COMMAND_FLAC ";
+			if ( ! -x "$COMMAND_FLAC" ) {
+				$b_error = 1;
+				$error_message .= "\n  Input processor $COMMAND_FLAC needed by lame ";
+				$error_message .= "not available.";
+			}
+			$app_paths .= "$COMMAND_METAFLAC ";
+			# Added: Odd @2011-03-23 01:55:28
+			if ( ! -x "$COMMAND_METAFLAC" ) {
+				$b_error = 1;
+				$error_message .= "\n  $COMMAND_METAFLAC not found. Required to copy ";
+				$error_message .= "ID3 tags from Flac to MP3.";
+			}
+		}
+		else {
+			$b_error = 1;
+			$error_message .= "\n  $COMMAND_LAME currently only supports ";
+			$error_message .= "flac as input.";
+		}
+	}
+	if ( $b_error ) {
+		main::error_handler('missing-app',$error_message,0);
+	}
+	elsif ( $LOG_LEVEL > 0 ) {
+		print "Available: $app_paths\n";
+	}
+}
+sub check_quality{
+	$error_message = '';
+	if ( $LOG_LEVEL > 0 ) {
+		print main::dotify("Checking quality support for $OUTPUT_TYPE");
+	}
+	if ( lc($OUTPUT_TYPE) eq 'flac') {
+		if ($QUALITY_FLAC !~ m/^[0-8]$/ ) {
+			$b_error = 1;
+			$error_message .= "\n  $OUTPUT_TYPE only supports ";
+			$error_message .= "0 to 8 quality levels. You entered: $QUALITY_FLAC";
+		}
+		else {
+			$quality = $QUALITY_FLAC;
+		}
+	}
+	if ( lc($OUTPUT_TYPE) eq 'ogg') {
+		if ($QUALITY_OGG !~ m/^-?[0-9]+(\.[0-9]+)?$/ || 
+		 $QUALITY_OGG < -1 || $QUALITY_OGG > 10 ) {
+			$b_error = 1;
+			$error_message .= "\n  $OUTPUT_TYPE only supports ";
+			$error_message .= "-1 to 10 quality levels. You entered: $QUALITY_OGG";
+		}
+		else {
+			$quality = $QUALITY_OGG;
+		}
+	}
+	# supports fractional quality levels
+	elsif ( lc($OUTPUT_TYPE) eq 'opus') {
+		if ($QUALITY_OPUS !~ m/^[0-9]+$/ || $QUALITY_OPUS < 6|| $QUALITY_OPUS > 256 ){
+			$b_error = 1;
+			$error_message .= "\n  $OUTPUT_TYPE only supports ";
+			$error_message .= "6 to 256 bitrate quality levels. You entered: $QUALITY_OPUS";
+		}
+		else {
+			$quality = $QUALITY_OPUS;
+		}
+	}
+	elsif ( lc($OUTPUT_TYPE) eq 'mp3') {
+		if ( $QUALITY_MP3 !~ m/^[0-9]$/ ) {
+			$b_error = 1;
+			$error_message .= "\n  $OUTPUT_TYPE only supports 0-9 quality levels. ";
+			$error_message .= "You entered: $QUALITY_MP3";
+		}
+		else {
+			$quality = $QUALITY_MP3;
+		}
+	}
+	if ( $b_error ) {
+		main::error_handler('quality-invalid',$error_message,0);
+	}
+	elsif ( $LOG_LEVEL > 0 ) {
+		print "Supported: $quality ($OUTPUT_TYPE)\n";
+	}
+}
+sub check_log_level {
+	$error_message = '';
+	if ( $LOG_LEVEL > 0 ) {
+		print main::dotify("Checking log/screen output level");
+	}
+	if ( $LOG_LEVEL !~ m/^([0-3])$/ ) {
+		$b_error = 1;
+		$error_message .= "\n  LOG_LEVEL only supports 0-3. ";
+		$error_message .= "You used: $LOG_LEVEL";
+	}
+	if ( $b_error ) {
+		main::error_handler('bad-level',$error_message,0);
+	}
+	elsif ( $LOG_LEVEL > 0 ) {
+		print "Supported: $LOG_LEVEL\n";
+	}
+}
+sub check_nlink {
+	$error_message = '';
+	if ( $LOG_LEVEL > 0 ) {
+		print main::dotify("Checking DONT_USE_NLINK value");
+	}
+	if ( $DONT_USE_NLINK !~ m/^[01]$/ ) {
+		$b_error = 1;
+		$error_message .= "\n  DONT_USE_NLINK only supports 0-1. ";
+		$error_message .= "You used: $DONT_USE_NLINK";
+	}
+	if ( $b_error ) {
+		main::error_handler('bad-nlink',$error_message,0);
+	}
+	elsif ( $LOG_LEVEL > 0 ) {
+		print "Supported: $DONT_USE_NLINK\n";
+	}
+}
+sub check_fork {
+	$error_message = '';
+	if ( $LOG_LEVEL > 0 ) {
+		print main::dotify("Checking FORK value");
+	}
+	if ( $FORK !~ m/^[0-9]+$/) {
+		$b_error = 1;
+		$error_message .= "\n  FORK requires value: 0 or more. ";
+		$error_message .= "You used: $FORK";
+	}
+	if ( $b_error ) {
+		main::error_handler('bad-fork',$error_message,0);
+	}
+	elsif ( $LOG_LEVEL > 0 ) {
+		print "Supported: $FORK\n";
+	}
+}
+# end Validation
+}
+
 ### PRINT HELP/VERSION ###
 sub print_help {
 	# so it shows the user config data if present
-	set_config_data(); 
+	UserConfigs::set(); 
 	# but this should override the config data so follows
 	set_basic_data();
 	my $output = "$SELF_NAME v: $SELF_VERSION :: Supported Options:\n";
@@ -935,7 +958,7 @@ sub print_help {
 	$output .= "                  Current value: $DESTINATION_DIRECTORY\n";
 	$output .= "--force, -f       Force overwrite the mp3/ogg/opus/jpg/txt/etc. files, even\n"; 
 	$output .= "                  if they already exist.\n";
-	$output .= "-F, --fork        [0-x] - Number of forks/threads to use. 0 default, disables.\n";
+	$output .= "--fork, -F        [0-x] - Number of forks/threads to use. 0 default, disables.\n";
 	$output .= "                  Requires Perl module: Parallel::ForkManager. Current: $FORK\n";
 	$output .= "--input, -i       Input type: flac, wav, raw, shn. mp3 only supports flac input.\n";
 	$output .= "                  shn requires codec shorten and only outputs to flac.\n";
@@ -953,21 +976,21 @@ sub print_help {
 	$output .= "--source, -s      Path to the top-most directory containing your source files.\n";
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
 	$output .= "--test            Test copy and sync without actually doing the copy/sync. Also\n";
-	$output .= "                  activates --debug for more complete path outputs.\n";
+	$output .= "                  activates --full for more complete path outputs.\n";
 	$output .= $line_small;
 	$output .= "Display output and debugging options:\n";
-	$output .= "--debug           Full screen output, including full verbosity of \n";
+	$output .= "--basic           Basic single line per operation screen output, default value.\n";
+	$output .= "                  Same as --log 1\n";
+	$output .= "--full            Full screen output, including full verbosity of \n";
 	$output .= "                  flac/lame/oggenc/opusenc conversion process for mp3, ogg,\n";
 	$output .= "                  or opus output. Same as --log 3\n";
-	$output .= "--default         Single line per operation screen output, default value for\n";
-	$output .= "                  $SELF_NAME. Same as --log 1\n";
 	$output .= "--help, -h        This help menu.\n";
 	$output .= "--log             [0-3] Dynamically set LOG_LEVEL. Current value: $LOG_LEVEL\n";
-	$output .= "--quiet, --silent Turns off all screen output, except for error messages.\n";
+	$output .= "--quiet           Turns off all screen output, except for error messages.\n";
 	$output .= "                  Same as --log 0\n";
-	$output .= "--verbose, -V     Without full verbosity of debug, no flac/lame/oggenc/opusenc\n";
-	$output .= "                  for mp3, ogg or opus conversion process screen output,\n";
-	$output .= "                  but more verbose than default. Same as --log 2\n";
+	$output .= "--verbose, -V     Without full verbosity of full, no flac/lame/oggenc/opusenc\n";
+	$output .= "                  for conversion process screen output. More verbose than\n";
+	$output .= "                  --basic. Same as --log 2\n";
 	$output .= "--version, -v     Show $SELF_NAME version.\n";
 	$output .= $line_small;
 	$output .= "User Configs ";
@@ -992,8 +1015,12 @@ sub print_version {
 	exit 0;
 }
 
-### SET PROGRAM DATA ###
-sub set_config_data {
+### SET PROGRAM CONFIGURATION DATA ###
+## Package UserConfigs
+{
+package UserConfigs;
+
+sub set {
 	my (@config_files,$file,$user_config);
 	# set list of supported config files
 	@config_files = ("/etc/$SELF_NAME.conf");
@@ -1021,12 +1048,12 @@ sub set_config_data {
 			next unless length;     # anything left?
 			my ($var, $value) = split(/\s*=\s*/, $_, 2);
 			if (defined $var && defined $value){
-				assign_config_value($var, $value);
+				assign_value($var, $value);
 			}
 		}
 	}
 }
-sub assign_config_value {
+sub assign_value {
 	my ($var,$value) = @_;
 	if ($var eq 'COMMAND_FLAC'){$COMMAND_FLAC = $value;}
 	elsif ($var eq 'COMMAND_FLAC_OUT'){$COMMAND_FLAC_OUT = $value;}
@@ -1056,47 +1083,50 @@ sub assign_config_value {
 	elsif ($var eq 'DONT_USE_NLINK'){$DONT_USE_NLINK = $value}
 	elsif ($var eq 'FORK'){$FORK = $value}
 }
+# end ConfigData
+}
+
 # get defaults from user config files if present
-set_config_data();
+UserConfigs::set();
 # Get Options and set values, this overrides defaults 
 # from top globals and config files
 GetOptions (
 	"a|append:s" => sub { 
 		my ($opt,$arg) = @_;
 		$COPY_TYPES .= ',' . $arg if $arg;},
+	"basic|default" => sub { 
+		$LOG_LEVEL = 1 },
 	"clean" => sub { 
 		$b_clean = 3 },
 	# accepts null value so users can not copy anything
 	"c|copy:s" => sub { 
 		my ($opt,$arg) = @_;
 		$COPY_TYPES = $arg;},
-	"debug" => sub { 
-		$LOG_LEVEL = 3 },
-	"default" => sub { 
-		$LOG_LEVEL = 1 },
 	"d|destination:s" => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires path.") if ! $arg;
+		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
 		$DESTINATION_DIRECTORY = $arg },
 	"f|force" => sub { 
 		$b_force = 1 },
 	"F|fork:i" => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires fork count integer.") if not defined $arg;
+		error_handler('missing-arg',"$opt requires fork count integer.",1) if not defined $arg;
 		$FORK = $arg; },
+	"full|debug" => sub { 
+		$LOG_LEVEL = 3 },
 	"h|help|?" => sub { 
 		print_help();},
 	"i|input:s" => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires type.") if ! $arg;
+		error_handler('missing-arg',"$opt requires type.",1) if ! $arg;
 		$INPUT_TYPE = $arg },
 	"log:i" => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt log level integer.") if not defined $arg;
+		error_handler('missing-arg',"$opt log level integer.",1) if not defined $arg;
 		$LOG_LEVEL = $arg; },
 	"o|output:s" => sub {
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires type.") if ! $arg;
+		error_handler('missing-arg',"$opt requires type.",1) if ! $arg;
 		$OUTPUT_TYPE = $arg;},
 	"nlink" => sub { 
 		$DONT_USE_NLINK = 0 },
@@ -1104,7 +1134,7 @@ GetOptions (
 		$DONT_USE_NLINK = 1 },
 	"q|quality:f" => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires number.") if ! defined $arg || $arg !~ /^-?[0-9\.]+$/;
+		error_handler('missing-arg',"$opt requires number.",1) if ! defined $arg || $arg !~ /^-?[0-9\.]+$/;
 		# validate these later
 		$QUALITY_FLAC = $arg;
 		$QUALITY_MP3 = $arg;
@@ -1112,7 +1142,7 @@ GetOptions (
 		$QUALITY_OPUS = $arg;}, 
 	"s|source:s" => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires path.") if ! $arg;
+		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
 		$SOURCE_DIRECTORY = $arg;},
 	"quiet|silent" => sub { 
 		$b_quiet = 1; 
@@ -1126,18 +1156,12 @@ GetOptions (
 		print_version(); },
 	'<>' => sub {
 		my ($opt) = @_;
-		error_handler('unsupported-option', "Unsupported option: $opt"); }
+		error_handler('unsupported-option', "Unsupported option: $opt",1); }
 );
 
 ### EXECUTE / PROCESS MUSIC ###
 set_display_output_data();
-validate_start_text();
-validate_log_level();
-validate_nlink();
-validate_fork();
-validate_src_dest_directories();
-validate_in_out_types();
-error_handler('validation-errors', '');
+Validation::check_user_values();
 set_basic_data();
 clean_destination() if $b_clean;
 sync_music_collections();
