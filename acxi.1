@@ -29,7 +29,6 @@ directories are valid, conversion programs for input and output formatting
 programs are present, and other user values are correct.
 
 .SH USING OPTIONS
-
 For example:
 .B acxi
 \fB\-o mp3\fR or \fBacxi \-fo opus\fR or \fBacxi \-d /home/you/music\fR
@@ -38,7 +37,6 @@ Note that some options have long and short forms. The short form is used
 when available in examples in order to keep things simple.
 
 .SH OPTIONS
-
 .TP
 .B \-a [extensions]\fR, \fB\-\-append [extensions]\fR
 Takes one or more comma separated extensions. Do not use whitespaces
@@ -243,13 +241,11 @@ section because that is what it will use to locate the configuration file.
 acxi will look for acxi.conf inside that directory. 
 
 .SH CONFIGURATION OPTIONS
-
 The following corresponds to the \fBBEGIN USER MODIFIABLE VALUES\fR section
 in the top comment header of acxi.
 
 .TP
 .B APPLICATION PATHS
-
 The following set your system path for the required applications:
 
 \fBCOMMAND_FLAC\fR \- Sample: \fBCOMMAND_FLAC=/usr/bin/flac\fR (default path)
@@ -269,7 +265,6 @@ you do not need this
 
 .TP
 .B SOURCE/DESTINATION/CONFIGURATION DIRECTORIES
-
 NOTE: \fBDESTINATION_DIRECTORY\fR cannot be the same as \fBSOURCE_DIRECTORY\fR.
 
 \fBCLEAN\fR \- Sample: \fBCLEAN=true\fR Switches on/off \fB\-\-clean\fR to 
@@ -291,7 +286,6 @@ directory.
 
 .TP
 .B INPUT/OUTPUT
-
 The following are NOT case sensitive,ie flac/FLAC, txt/TXT will be 
 found. INPUT_TYPE and OUTPUT_TYPE will be forced to lower case 
 internally.
@@ -321,7 +315,6 @@ the largest file size / highest quality.
 
 .TP
 .B ADVANCED
-
 The following are advanced options which should only be used if you know
 what you are doing:
 
