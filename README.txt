@@ -3,6 +3,34 @@ README for acxi - a comand line audio file conversion tool
 See acxi.changelog for changes.
 
 ========================================================================
+INSTALLATION
+------------------------------------------------------------------------
+
+Easy way to install. Change paths on local system if required.
+
+These are for GNU/Linux. These use a redirecting shortcut from smxi.org
+
+sudo wget -O /usr/local/bin/acxi smxi.org/acxi
+
+Then make executable:
+
+sudo chmod +x /usr/local/bin/acxi
+
+For man page:
+
+sudo wget -O /usr/local/share/man/man1/acxi.1 smxi.org/acxi.1
+
+If you prefer to use the full GitHub paths:
+
+Program:
+
+sudo wget -O /usr/local/bin/acxi https://github.com/smxi/acxi/raw/stable/acxi
+
+Man page:
+
+sudo wget -O /usr/local/share/man/man1/acxi.1 https://github.com/smxi/acxi/raw/stable/acxi.1
+
+========================================================================
 ABOUT
 ------------------------------------------------------------------------
 acxi is a simple tool that syncs/converts lossless (flac, wav, raw) 
