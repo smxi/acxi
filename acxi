@@ -883,7 +883,7 @@ sub print_help {
 	set_basic_data();
 	my $output = "$SELF_NAME v: $SELF_VERSION :: Supported Options:\n";
 	$output .= "Examples: $SELF_NAME -q 8 --destination /music/main/ogg\n";
-	$output .= "$SELF_NAME --input wav --output ogg\n";
+	$output .= "$SELF_NAME --input flac --output ogg -a md5\n";
 	$output .= "$SELF_NAME --copy doc,docx,bmp\n";
 	$output .= $line_small;
 	$output .= "Syncing options:\n";
