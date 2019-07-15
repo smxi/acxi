@@ -888,6 +888,7 @@ sub print_help {
 	$output .= $line_small;
 	$output .= "Syncing options:\n";
 	$output .= "--append, -a      Add extenssion type(s) to existing extension copy list.\n";
+	$output .= "                  1 or more, comma separated, no spaces.\n";
 	$output .= "--clean           Clean directories and files from destination not found in\n";
 	$output .= "                  source music directory. Will show you directories/files to\n";
 	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
