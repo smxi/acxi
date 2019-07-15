@@ -82,6 +82,8 @@ version 3, which should make acxi fully platform agnostic.
 
 * Ogg encoding requires oggenc (Debian/Ubuntu package: vorbis-tools).
 
+* Opus encoding requires opusenc (Debian/Ubuntu package: opus-tools).
+
 * MP3 encoding requires: lame and flac (if source file is a flac, MP3
   encoding does not support wav or raw formats).
   
@@ -120,9 +122,13 @@ configuration file.
 
 acxi defaults to flac for input, and defaults to the following quality 
 levels for output:
-ogg: 7
-mp3: 3
-opus: 160 
+
+* ogg: 7
+
+* mp3: 3
+
+* opus: 160 
+
 acxi also copies most common file types from source to destination 
 directories. 
 
@@ -136,10 +142,16 @@ option to see what acxi would have done, then, once you have confirmed
 everything is working as expected, you can start syncing your music
 files.
 
-You can change the screen output from none (--quiet, --log 0), single
-line (--basic, --log 1), verbose (--verbose, --log 2), or full, with
-all conversion tool outputs (--full, --log 3). These values can also be
-set in configuration files using LOG_LEVEL=[0-3].
+You can change the screen output from:
+
+* none (--quiet, --log 0)
+
+* single line (--basic, --log 1)
+
+* verbose (--verbose, --log 2)
+
+* full, with all conversion tool outputs (--full, --log 3). These 
+values can also be set in configuration files using LOG_LEVEL=[0-3].
 
 ========================================================================
 SHN SHORTEN

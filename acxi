@@ -669,7 +669,7 @@ sub check_in_out_types {
 		$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
 		$error_message .= "currently only supports input type: flac";
 	}
-	if ($INPUT_TYPE =~ m/^(raw|shn|wav)$/ && $OUTPUT_TYPE ne lc('flac')){
+	if ($INPUT_TYPE =~ m/^(raw|shn)$/ && $OUTPUT_TYPE ne lc('flac')){
 		$b_error = 1;
 		$error_message .= "\n  The input type $INPUT_TYPE you entered ";
 		$error_message .= "currently only supports output type: flac";
