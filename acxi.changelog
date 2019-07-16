@@ -13,7 +13,7 @@ many forks, but in general is very fast and works well. Thanks
 prupert for this suggestion on techpattern.com/forums.
 
 Requires Perl module Parallel::ForkManager, will exit if FORK 
-is greater than 1 and module not present.
+is greater than 0 and module not present.
 
 2. Finally, option to convert shn to flac. Requires shorten codec 
 library and ffmpeg. 
