@@ -948,7 +948,8 @@ sub print_help {
 		$output .= "(manually set):\n$CONFIG_DIRECTORY/$SELF_NAME.conf\n";
 	}
 	$output .= "Requires this syntax (any user modifiable variable can be used)\n";
-	$output .= "DIR_PREFIX_SOURCE=/home/me/music/flac\n";
+	$output .= "SOURCE_DIRECTORY=/home/me/music/flac\n";
+	$output .= "DESTINATION_DIRECTORY=/home/me/music/ogg\n";
 	$output .= "Do not use \$, \", or \' in config options or values (except in path names).\n";
 	$output .= "\n";
 	print $output;
