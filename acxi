@@ -58,7 +58,10 @@ Getopt::Long::Configure ('bundling', 'no_ignore_case',
 use File::stat;
 use File::Find;
 use File::Copy qw(copy);
+use File::Glob qw(:bsd_glob);
 use File::Path qw(rmtree);
+use Cwd qw(getcwd);
+use Data::Dumper;
 # only use for debugging, some distros do not ship with core modules.
 #use Data::Dumper qw(Dumper);
 
@@ -68,14 +71,17 @@ use File::Path qw(rmtree);
 
 ## SELF INFO
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.0';
-my $SELF_DATE = '2019-07-15';
+my $SELF_VERSION = '3.2.1';
+my $SELF_DATE = '2019-07-19';
 
 ## GLOBALS
-my ($b_dest_changed,$b_clean,$b_force,$b_fork,$b_quiet,$b_test);
+my ($b_dest_changed,$b_checksum,$b_checksum_delete,$b_clean,$b_force,
+$b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
-my ($quality,$silent_flac,$silent_flac_out,$silent_lame,$silent_opus) = (7,'','','','');
+my ($quality,$silent_flac,$silent_flac_out,$silent_lame,
+$silent_opus) = (7,'','','','');
 my ($extension,@extension_list,@found_list,$list_type);
+my ($b_check_dest,$b_check_out,$b_sync,$b_unlink_checksums) = (1,1,1,1);
 
 ## CONSTANTS
 my $line_heavy = "===========================================================================\n";
@@ -110,9 +116,11 @@ my $COMMAND_FLAC_OUT = '/usr/bin/ffmpeg';
 my $COMMAND_LAME = '/usr/bin/lame';
 my $COMMAND_OGG = '/usr/bin/oggenc';
 my $COMMAND_OPUS = '/usr/bin/opusenc';
-# metaflac is required ONLY for flac to mp3, to copy over the ID3 tags
-# If you are not going to make MP3s, only OGG files for output, you do 
-# not need this.
+# If you are not generating checksums, you do not need this.
+my $COMMAND_MD5 = '/usr/bin/md5sum';
+# metaflac is required for flac to mp3, to copy over the ID3 tags, or
+# for ffp checksum generator.
+# If you are not doing either, you don't need this.
 my $COMMAND_METAFLAC = '/usr/bin/metaflac';
 
 ## ASSIGN DIRECTORY PATHS
@@ -122,6 +130,11 @@ my $COMMAND_METAFLAC = '/usr/bin/metaflac';
 ## IMPORTANT: DESTINATION_DIRECTORY cannot be equal to SOURCE_DIRECTORY
 my $SOURCE_DIRECTORY = '/path/to/source/directory';
 my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
+
+## CHECKSUM DATA 
+# These are the file names MINUS the .ffp / .md5 extensions.
+my $FFP_FILE='fingerprints';
+my $MD5_FILE='md5sums';
 
 # NOTE: only use this if you are running Windows, or any OS without $HOME
 # or $XDG_CONFIG_HOME environmental variables. acxi will look for file:
@@ -182,37 +195,154 @@ my $FORK = 0;
 #########################################################################
 ### CLEAN/SYNC MUSIC DIRECTORIES ###
 #########################################################################
-sub clean_destination {
-	my (@extension_files);
+
+#### -------------------------------------------------------------------
+#### CHECKSUMS
+#### -------------------------------------------------------------------
+
+## package Checksums 
+{
+package Checksums;
+sub generate {
+	print $line_large;
+	print "Starting checksum generation in $SOURCE_DIRECTORY...\n";
+	process_directories();
+	print $line_small;
+	print "Completed checksum generation.\n";
+	print $line_large;
+}
+sub process_directories {
+	my (@files,$item,$print_src,$result);
+	$list_type = 'dir';
+	print $line_small;
+	print "Checking directories...\n";
+	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
+	if (@found_list){
+		foreach $item (@found_list) {
+			$print_src = $item;
+			$print_src =~ s|^$SOURCE_DIRECTORY/||;
+			#if ($LOG_LEVEL > 2){
+			#	say Cwd::getcwd();
+			#	system 'pwd';
+			#}
+			chdir "$item";
+			if ($LOG_LEVEL > 3){
+				say Cwd::getcwd();
+				system 'pwd';
+			}
+			print "$print_src...\n";
+			@files = main::globber("*.flac");
+			#print "\n", Data::Dumper::Dumper @files, "\n";
+			if (@files){
+				print " Processing...\n";
+				delete_checksums() if $b_checksum_delete;
+				generate_checksums();
+				$b_dest_changed = 1;
+				#print join("\n",@checksums);
+			}
+			else {
+				print " No $INPUT_TYPE files\n";
+			}
+			
+		}
+	}
+}
+sub generate_checksums {
+	my ($error_message);
+	system('pwd') if $LOG_LEVEL > 2;
+	print "  Generating checksums: ";
+	if ($b_test){
+		print "\n";
+		system("$COMMAND_MD5 *.*");
+		if ($? == -1 || $? > 0){
+			$error_message = "$COMMAND_METAFLAC returned error: $?";
+			main::error_handler('checksum-generate', $error_message,1)
+		}
+		system("$COMMAND_METAFLAC --show-md5sum *.flac");
+		if ($? == -1 || $? > 0){
+			$error_message = "$COMMAND_METAFLAC returned error: $?";
+			main::error_handler('checksum-generate', $error_message,1)
+		}
+	}
+	else {
+		print "$MD5_FILE.md5: ";
+		system("$COMMAND_MD5 *.* > $MD5_FILE.md5");
+		if ($? == -1 || $? > 0){
+			$error_message = "$COMMAND_METAFLAC returned error: $?";
+			main::error_handler('checksum-generate', $error_message,1)
+		}
+		else {
+			print "created; ";
+		}
+		print "$FFP_FILE.ffp: ";
+		system("$COMMAND_METAFLAC --show-md5sum *.flac > $FFP_FILE.ffp");
+		if ($? == -1 || $? > 0){
+			$error_message = "$COMMAND_METAFLAC returned error: $?";
+			main::error_handler('checksum-generate', $error_message,1)
+		}
+		else {
+			print "created";
+		}
+	}
+	print "\n";
+}
+sub delete_checksums {
+	my $error_message = '';
+	my @checksums = main::globber("*.{ffp,ffp.txt,md5,md5.txt}");
+	# print Data::Dumper::Dumper @checksums, "\n";
+	foreach my $file (@checksums){
+		print "  Deleting $file: ";
+		if ($b_test){
+			print "test deletion\n";
+		}
+		elsif (unlink($file)){
+			print "deleted\n";
+		}
+		else {
+			main::error_handler('checksum-delete', "Failed to delete: $file");
+		}
+	}
+}
+}
+
+#### -------------------------------------------------------------------
+#### CLEANING
+#### -------------------------------------------------------------------
+
+## package CleanCollection
+{
+package CleanCollection;
+
+sub process_destination {
 	print $line_large;
 	print "Starting cleanup of $DESTINATION_DIRECTORY...\n";
-	clean_destination_items('directory');
-	clean_destination_items('file');
+	process_type('directory');
+	process_type('file');
 	print $line_small;
 	print "Completed cleanup checks.\n";
 	print $line_large;
 }
-sub clean_destination_items {
+sub process_type {
 	my ($type) = @_;
 	my ($b_deleted,$item,$result);
 	$list_type = ($type eq 'directory') ? 'dir-clean': 'file-clean';
 	@found_list = ();
 	print $line_small;
 	print "Checking $type removal...\n";
-	File::Find::find( \&wanted, $DESTINATION_DIRECTORY);
-	if (@found_list && confirm_clean($type)){
+	File::Find::find( \&main::wanted, $DESTINATION_DIRECTORY);
+	if (@found_list && confirm_deletion($type)){
 		foreach $item (@found_list) {
 			$result = 'UNSET';
 			print "Deleting $type: $item\n";
-			$result = rmtree("$item") if !$b_test;
+			$result = File::Path::rmtree("$item") if !$b_test;
 			$b_deleted = 1;
 			$b_dest_changed = 1;
 			print "Delete $type result: $result\n" if $LOG_LEVEL > 1;
 		}
 	}
-	print_not_found("$type-cleaned") if ! $b_deleted;
+	main::print_not_found("$type-cleaned") if ! $b_deleted;
 }
-sub confirm_clean {
+sub confirm_deletion {
 	my ($type) = @_;
 	my ($b_confirm,$response) = (0,'');
 	print $line_small;
@@ -232,7 +362,16 @@ sub confirm_clean {
 	print "Skipping deletion for this $type group.\n";
 	return 0;
 }
-sub sync_music_collections {
+## end package 
+}
+#### -------------------------------------------------------------------
+#### SYNCING
+#### -------------------------------------------------------------------
+
+## package SyncCollection 
+{
+package SyncCollection; 
+sub process_collection {
 	my (@extension_files);
 	eval $print_line_heavy;
 	if ( $LOG_LEVEL > 1 ) {
@@ -242,41 +381,41 @@ sub sync_music_collections {
 	elsif ( $LOG_LEVEL > 0 ) {
 		print "Starting sync of $SOURCE_DIRECTORY\n to $DESTINATION_DIRECTORY\n";
 	}
-	sync_collection_directories();
+	update_directories();
 	$list_type = 'file';
 	foreach (@extension_list) {
 		eval $print_line_large;
 		$extension = $_;
 		@found_list = ();
-		File::Find::find( \&wanted, $SOURCE_DIRECTORY);
+		File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 		# print Dumper \@found_list;
 		if ( $LOG_LEVEL > 1 ) {
 			print "PROCESSING DATA TYPE: $extension\n";
 		}
 		elsif ( $LOG_LEVEL > 0 ) {
-			print "\n" . dotify("Processing $extension data type");
+			print "\n" . main::dotify("Processing $extension data type");
 		}
 		if (@found_list){
-			sync_collection_files();
+			update_files();
 		}
 		else {
-			print_not_found('extension');
+			main::print_not_found('extension');
 		}
 	}
 }
 # Recreate the directory hierarchy.
-sub sync_collection_directories {
+sub update_directories {
 	my ($b_created,$dest_dir,$dir,$result);
 	$list_type = 'dir';
 	@found_list = ();
-	File::Find::find( \&wanted, "$SOURCE_DIRECTORY");
+	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
 	eval $print_line_large;
 	# print Dumper \@found_list;
 	if ( $LOG_LEVEL > 1 ) {
 		print "Checking if $SELF_NAME needs to create destination directories...\n";
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
-		print dotify("Updating destination directories");
+		print main::dotify("Updating destination directories");
 	}
 	foreach $dir (@found_list) {
 		#print "\nd1:$dir\n";
@@ -303,7 +442,7 @@ sub sync_collection_directories {
 			print "Create Directory result: $result\n" if $LOG_LEVEL > 1;
 		}
 	}
-	print_not_found('dirs') if ! $b_created;
+	main::print_not_found('dirs') if ! $b_created;
 }
 sub convert_file { 
 	my ($src_file, $dest_file) = @_;
@@ -324,7 +463,7 @@ sub convert_file {
 		}
 		elsif ( $LOG_LEVEL > 0 ) {
 			# add line break only when file exists
-			print dotify("\nEncoding $src_print to $OUTPUT_TYPE");
+			print main::dotify("\nEncoding $src_print to $OUTPUT_TYPE");
 		}
 	}
 	if ( $OUTPUT_TYPE eq 'flac' ){
@@ -352,7 +491,7 @@ sub convert_file {
 		$action = 'To mp3';
 		if (!$b_test){
 			# Modified: Odd @2011-03-23 01:51:26 - Include ID3 copying
-			$cmd = flac2mp3_cmd("$src_file","$dest_file");
+			$cmd = main::flac2mp3_cmd("$src_file","$dest_file");
 			qx($cmd);
 			$result = $?;
 		}
@@ -366,13 +505,13 @@ sub convert_file {
 		}
 		elsif ( $LOG_LEVEL > 0 ) {
 			# add line break only when file exists
-			print dotify("\nEncoded $src_print to $OUTPUT_TYPE");
+			print main::dotify("\nEncoded $src_print to $OUTPUT_TYPE");
 		}
 	}
 	# this return only works with non forking
 	return ($result,$action); 
 }
-sub sync_collection_files {
+sub update_files {
 	my ($b_created);
 	my ($dest_file,$file,$result,$action,$src_file) = ('','','','','');
 	my ($dest_info,$dest_mod_time,$src_info, $src_mod_time) = ('',0,'',0);
@@ -396,10 +535,10 @@ sub sync_collection_files {
 		# Now stat the destinationFile, and see if it's date is more recent
 		# than that of the original file. If so, we re-encode.
 		# We also re-encode if the user supplied --force
-		$src_info = stat("$src_file") or 
-		  error_handler('stat-infile', "No $src_file: $!",1);
+		$src_info = File::stat::stat("$src_file") or 
+		  main::error_handler('stat-infile', "No $src_file: $!",1);
 		$src_mod_time = $src_info->mtime if $src_info;
-		$dest_info = stat("$dest_file");
+		$dest_info = File::stat::stat("$dest_file");
 		if ( $dest_info ) {
 			$dest_mod_time = $dest_info->mtime;
 			# print "DEST_MOD: $dest_mod_time :: SRC_MOD: $src_mod_time :: FORCE: $force\n"; 
@@ -432,8 +571,8 @@ sub sync_collection_files {
 					print "\nCopying $file...";
 				}
 				if (!$b_test){
-					$result = copy($src_file, $dest_file) or 
-					  error_handler('cp-file', "cp failure: $src_file =>\n$dest_file\nCode: $!",1);
+					$result = File::Copy::copy($src_file, $dest_file) or 
+					  main::error_handler('cp-file', "cp failure: $src_file =>\n$dest_file\nCode: $!",1);
 				}
 			}
 			# NOTE: for forking > 1, this will not print out for the output/input conversion files 
@@ -444,8 +583,13 @@ sub sync_collection_files {
 	# the parent.. otherwise terminating the parent force kills 
 	# all the forks 
 	$pm->wait_all_children if $b_fork;
-	print_not_found('files') if ! $b_created;
+	main::print_not_found('files') if ! $b_created;
 }
+## end package 
+}
+#### -------------------------------------------------------------------
+#### TAGGING
+#### -------------------------------------------------------------------
 
 # Added: Odd @2011-03-23 01:52:31
 sub flac2mp3_cmd {
@@ -493,39 +637,10 @@ sub get_flac_tags {
 ### PROGRAM TOOLS ###
 #########################################################################
 
-### UTILITIES ###
-# NOTE: File::Find will not follow symbolic links
-sub wanted {
-	return if -l; # skip symbolic links
-	if ($list_type eq 'dir' || $list_type eq 'file'){
-		return if $File::Find::name =~ m/^$DESTINATION_DIRECTORY/;
-		return if $File::Find::name =~ m/\/\./; # skip any dot files/directories
-		if ($list_type eq 'dir'){
-			return if ! -d; # only directories
-		}
-		elsif ($list_type eq 'file') {
-			return if -d; # skip directories
-			return if $File::Find::name !~ /\.$extension$/i;
-		}
-	}
-	elsif ($list_type eq 'dir-clean' || $list_type eq 'file-clean'){
-		if ($list_type eq 'dir-clean') {
-			return if ! -d; # skip non directories
-		}
-		else {
-			return if -d; # skip non directories
-		}
-		my $working = $File::Find::name;
-		$working =~ s|^$DESTINATION_DIRECTORY|$SOURCE_DIRECTORY|;
-		$working =~ s/\.$OUTPUT_TYPE$/\.$INPUT_TYPE/i if $list_type eq 'file-clean';
-		#print '1: ', "$File::Find::name\n$working\n";
-		return unless ! -e $working && -e $File::Find::name;
-		# print '2: ', "$File::Find::name\n";
-	}
-	# print $File::Find::name . "\n";
-	push (@found_list, $File::Find::name);
-	return;
-}
+#### -------------------------------------------------------------------
+#### UTILITIES
+#### -------------------------------------------------------------------
+
 # $1 - Perl module to check
 sub check_module {
 	my ($module) = @_;
@@ -541,6 +656,13 @@ sub dotify {
 	}
 	$string .= ' ';
 	return $string;
+}
+# args: 1 - string value to glob
+sub globber {
+	#my @files = glob qq{"$_[0]"};
+	#print Data::Dumper::Dumper @files;
+	#return @files;
+	return <$_[0]>;
 }
 sub print_not_found {
 	my ($message,$none);
@@ -586,8 +708,41 @@ sub print_completion_message {
 	}
 	exit 0;
 }
-
-### VALIDATION - ERROR HANDLING ###
+# NOTE: File::Find will not follow symbolic links
+sub wanted {
+	return if -l; # skip symbolic links
+	if ($list_type eq 'dir' || $list_type eq 'file'){
+		return if $File::Find::name =~ m/^$DESTINATION_DIRECTORY/;
+		return if $File::Find::name =~ m/\/\./; # skip any dot files/directories
+		if ($list_type eq 'dir'){
+			return if ! -d; # only directories
+		}
+		elsif ($list_type eq 'file') {
+			return if -d; # skip directories
+			return if $File::Find::name !~ /\.$extension$/i;
+		}
+	}
+	elsif ($list_type eq 'dir-clean' || $list_type eq 'file-clean'){
+		if ($list_type eq 'dir-clean') {
+			return if ! -d; # skip non directories
+		}
+		else {
+			return if -d; # skip non directories
+		}
+		my $working = $File::Find::name;
+		$working =~ s|^$DESTINATION_DIRECTORY|$SOURCE_DIRECTORY|;
+		$working =~ s/\.$OUTPUT_TYPE$/\.$INPUT_TYPE/i if $list_type eq 'file-clean';
+		#print '1: ', "$File::Find::name\n$working\n";
+		return unless ! -e $working && -e $File::Find::name;
+		# print '2: ', "$File::Find::name\n";
+	}
+	# print $File::Find::name . "\n";
+	push (@found_list, $File::Find::name);
+	return;
+}
+#### -------------------------------------------------------------------
+#### VALIDATION - ERROR HANDLING
+#### -------------------------------------------------------------------
 
 ## Args: 1: error id; 2: error message; 3: extt 0/1 [f/t]
 sub error_handler {
@@ -596,6 +751,7 @@ sub error_handler {
 	state $b_valid = 1;
 	state $error_no = 0;
 	if ($error eq 'unsupported-type'){$error_no = 2;$b_valid=0;}
+	
 	elsif ($error eq 'dest-dir'){$error_no = 1;$b_valid=0;}
 	elsif ($error eq 'dest-eq-src-dir'){$error_no = 9;$b_valid=0;$br=''}
 	elsif ($error eq 'missing-app'){$error_no = 3;$b_valid=0;}
@@ -606,6 +762,8 @@ sub error_handler {
 	elsif ($error eq 'stat-infile'){$error_no = 6;}
 	elsif ($error eq 'missing-arg'){$error_no = 7;
 		$message = "Option: $message";$br=''}
+	elsif ($error eq 'checksum-generate'){$error_no = 11;}
+	elsif ($error eq 'checksum-delete'){$error_no = 12;}
 	elsif ($error eq 'unsupported-option'){$error_no = 8;$br=''}
 	elsif ($error eq 'missing-perl-module'){$error_no = 10;
 		$message = "Perl Module not found in system: $message";}
@@ -637,7 +795,7 @@ sub check_user_values {
 	check_src_dest_directories();
 	check_in_out_types();
 	if ($b_valid_in_out){
-		check_quality();
+		check_quality() if $b_check_out;
 		check_application_paths();
 	}
 	main::error_handler('validation-errors', '',1);
@@ -654,22 +812,23 @@ sub check_in_out_types {
 		eval $print_line_large;
 		print main::dotify("Checking input and output types");
 	}
-	if ( $INPUT_TYPE !~ m/^(flac|raw|shn|wav)$/i ){
+	if ((!$b_checksum && $INPUT_TYPE !~ m/^(flac|raw|shn|wav)$/i) ||
+	 ($b_checksum && $INPUT_TYPE !~ m/^(flac)$/i)){
 		$b_error = 1;
 		$error_message .= "\n  The input type you entered is not supported: ";
 		$error_message .= "$INPUT_TYPE";
 	}
-	if ( $OUTPUT_TYPE !~ m/^(flac|mp3|ogg|opus)$/i ){
+	if ( $b_check_out && $OUTPUT_TYPE !~ m/^(flac|mp3|ogg|opus)$/i ){
 		$b_error = 1;
 		$error_message .= "\n  The output type you entered is not supported: ";
 		$error_message .= "$OUTPUT_TYPE";
 	}
-	if ( $OUTPUT_TYPE eq lc('mp3') && $INPUT_TYPE ne lc('flac') ){
+	if ( $b_check_out && $OUTPUT_TYPE eq lc('mp3') && $INPUT_TYPE ne lc('flac') ){
 		$b_error = 1;
 		$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
 		$error_message .= "only supports input type: flac";
 	}
-	if ($INPUT_TYPE =~ m/^(raw|shn)$/ && $OUTPUT_TYPE ne lc('flac')){
+	if ($b_check_out && $INPUT_TYPE =~ m/^(raw|shn)$/ && $OUTPUT_TYPE ne lc('flac')){
 		$b_error = 1;
 		$error_message .= "\n  The input type $INPUT_TYPE you entered ";
 		$error_message .= "only supports output type: flac";
@@ -695,7 +854,7 @@ sub check_src_dest_directories {
 		$b_error = 1;
 		$missing_dirs .= "\n  Source Directory: $SOURCE_DIRECTORY";
 	}
-	if ( ! -d "$DESTINATION_DIRECTORY" ){
+	if ( $b_check_dest && ! -d "$DESTINATION_DIRECTORY" ){
 		$b_error = 1;
 		$missing_dirs .= "\n  Destination Directory: $DESTINATION_DIRECTORY";
 	}
@@ -708,38 +867,39 @@ sub check_src_dest_directories {
 	elsif ( $LOG_LEVEL > 0 ) {
 		print "Directories: exist\n";
 	}
-	if (!$b_error && $DESTINATION_DIRECTORY eq $SOURCE_DIRECTORY){
-		main::error_handler('dest-eq-src-dir',"Destination directory cannot be same as Source directory!",0);
+	if ($b_check_dest && !$b_error && $DESTINATION_DIRECTORY eq $SOURCE_DIRECTORY){
+		$error_message = "Destination directory cannot be same as Source directory!";
+		main::error_handler('dest-eq-src-dir',$error_message,0);
 	}
 }
 sub check_application_paths {
 	my ($b_error,$error_message) = (0,'');
 	my $app_paths = ''; 
 	if ( $LOG_LEVEL > 0 ) {
-		print main::dotify("Checking audio conversion tool path");
+		print main::dotify("Checking required tools paths");
 	}
-	if ($OUTPUT_TYPE eq 'flac') {
+	if ($b_check_out && $OUTPUT_TYPE eq 'flac') {
 		$app_paths .= "$COMMAND_FLAC_OUT";
 		if ( ! -x "$COMMAND_FLAC_OUT" ) {
 			$b_error = 1;
 			$error_message .= "\n  Encoding application not available: $COMMAND_FLAC_OUT";
 		}
 	}
-	elsif ( $OUTPUT_TYPE eq 'ogg' ) {
+	elsif ($b_check_out && $OUTPUT_TYPE eq 'ogg' ) {
 		$app_paths .= "\n $COMMAND_OGG";
 		if ( ! -x "$COMMAND_OGG" ) {
 			$b_error = 1;
 			$error_message .= "\n  Encoding application not available: $COMMAND_OGG";
 		}
 	}
-	elsif ( $OUTPUT_TYPE eq 'opus' ) {
+	elsif ($b_check_out && $OUTPUT_TYPE eq 'opus' ) {
 		$app_paths .= "\n $COMMAND_OPUS";
 		if ( ! -x "$COMMAND_OPUS" ) {
 			$b_error = 1;
 			$error_message .= "\n  Encoding application not available: $COMMAND_OPUS";
 		}
 	}
-	elsif ( $OUTPUT_TYPE eq 'mp3' ) {
+	elsif ($b_check_out && $OUTPUT_TYPE eq 'mp3' ) {
 		$app_paths .= "\n $COMMAND_LAME ";
 		if ( ! -x "$COMMAND_LAME" ) {
 			$b_error = 1;
@@ -757,6 +917,22 @@ sub check_application_paths {
 			$b_error = 1;
 			$error_message .= "\n  $COMMAND_METAFLAC not found. Required to copy ";
 			$error_message .= "ID3 tags from Flac to MP3.";
+		}
+	}
+	elsif ($b_checksum){
+		$app_paths .= "$COMMAND_MD5 ";
+		# Added: Odd @2011-03-23 01:55:28
+		if ( ! -x "$COMMAND_MD5" ) {
+			$b_error = 1;
+			$error_message .= "\n  $COMMAND_MD5 not found. Required to generate ";
+			$error_message .= "md5 checksum files.";
+		}
+		$app_paths .= "$COMMAND_METAFLAC ";
+		# Added: Odd @2011-03-23 01:55:28
+		if ( ! -x "$COMMAND_METAFLAC" ) {
+			$b_error = 1;
+			$error_message .= "\n  $COMMAND_METAFLAC not found. Required to generate ";
+			$error_message .= "ffp checksum files.";
 		}
 	}
 	if ( $b_error ) {
@@ -875,7 +1051,9 @@ sub check_fork {
 # end Validation
 }
 
-### PRINT HELP/VERSION ###
+#### -------------------------------------------------------------------
+#### PRINT HELP/VERSION
+#### -------------------------------------------------------------------
 sub print_help {
 	# so it shows the user config data if present
 	UserConfigs::set(); 
@@ -922,14 +1100,25 @@ sub print_help {
 	$output .= "--test            Test copy and sync without actually doing the copy/sync. Also\n";
 	$output .= "                  activates --full for more complete path outputs.\n";
 	$output .= $line_small;
+	$output .= "Specialized options:\n";
+	$output .= "--checksum        Create .ffp and .md5 checksum files in your source directory.\n";
+	$output .= "                  Checksum files are only created inside directories where flac\n";
+	$output .= "                  files are found. Use with --checksum-delete to delete existing\n";
+	$output .= "                  checksum files. Only flac type is supported.\n";
+	$output .= "                  Do not use together with other cleaning/syncing options!\n";
+	$output .= "--checksum-delete Delete all existing .ffp, .md5, .ffp.txt, and md5.txt files\n";
+	$output .= "                  before creating the new checksum files. Files only deleted in\n";
+	$output .= "                  directories where flac files are found.\n";
+	$output .= $line_small;
 	$output .= "Display output and debugging options:\n";
 	$output .= "--basic           Basic single line per operation screen output, default value.\n";
 	$output .= "                  Same as --log 1\n";
 	$output .= "--full            Full screen output, including full verbosity of \n";
 	$output .= "                  flac/lame/oggenc/opusenc conversion process for mp3, ogg,\n";
 	$output .= "                  or opus output. Same as --log 3\n";
+	$output .= "--debug           Trigger advanced output debugging data.\n";
 	$output .= "--help, -h        This help menu.\n";
-	$output .= "--log             [0-3] Dynamically set LOG_LEVEL. Current value: $LOG_LEVEL\n";
+	$output .= "--log             [0-4] Dynamically set LOG_LEVEL. Current value: $LOG_LEVEL\n";
 	$output .= "--quiet           Turns off all screen output, except for error messages.\n";
 	$output .= "                  Same as --log 0\n";
 	$output .= "--verbose, -V     Without full verbosity of full, no flac/lame/oggenc/opusenc\n";
@@ -960,7 +1149,9 @@ sub print_version {
 	exit 0;
 }
 
-### SET RUNTIME VALUES ###
+#### -------------------------------------------------------------------
+#### SET RUNTIME VALUES
+#### -------------------------------------------------------------------
 sub set_basic_data {
 	# if --copy/-c is set, then use that data instead of default copy types
 	if ( defined $COPY_TYPES ){
@@ -984,7 +1175,7 @@ sub set_basic_data {
 		}
 	}
 }
-sub set_display_output_data {
+sub set_display_data {
 	if ( $LOG_LEVEL < 3 ) {
 		if ( $OUTPUT_TYPE eq 'mp3' ) {
 			$silent_flac = '--silent'; # flac output 
@@ -1094,12 +1285,23 @@ sub get_options{
 		$COPY_TYPES .= ',' . $arg if $arg;},
 	"basic|default" => sub { 
 		$LOG_LEVEL = 1 },
+	"checksum" => sub { 
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		$b_checksum = 1;
+		$b_sync = 0;
+		$OUTPUT_TYPE = 'UNSET';
+		},
+	"checksum-delete" => sub { 
+		$b_checksum_delete = 1 },
 	"clean" => sub { 
-		$b_clean = 3 },
+		$b_clean = 1 },
 	# accepts null value so users can not copy anything
 	"c|copy:s" => sub { 
 		my ($opt,$arg) = @_;
 		$COPY_TYPES = $arg;},
+	"debug" => sub { 
+		$LOG_LEVEL = 4},
 	"d|destination:s" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
@@ -1110,7 +1312,7 @@ sub get_options{
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires fork count integer.",1) if not defined $arg;
 		$FORK = $arg; },
-	"full|debug" => sub { 
+	"full" => sub { 
 		$LOG_LEVEL = 3 },
 	"h|help|?" => sub { 
 		print_help();},
@@ -1164,11 +1366,12 @@ sub get_options{
 
 UserConfigs::set();
 get_options();
-set_display_output_data();
+set_display_data();
 Validation::check_user_values();
 set_basic_data();
-clean_destination() if $b_clean;
-sync_music_collections();
+CleanCollection::process_destination() if $b_clean;
+SyncCollection::process_collection() if $b_sync;
+Checksums::generate() if $b_checksum;
 print_completion_message();
 
 ###**EOF**###

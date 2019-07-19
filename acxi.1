@@ -167,6 +167,8 @@ audio codec conversions for example.
 
 \fB3\fR \- full output, incuding all conversion tool output. Same as \fB\-\-full\fR.
 
+\fB4\fR \- debug output, includes some extra debugging data. Don't use in general.
+
 .TP
 .B \-\-nlink\fR
 Set \fB$File::Find::dont_use_nlink = 0\fR. Default is \fB1\fR. Only change this 
@@ -225,7 +227,7 @@ operations. Activates \fB \-\-full\fR as well for more complete output.
                   
 .TP
 .B  \-V\fR, \fB\-\-verbose\fR
-Without full verbosity of debug, no flac/oggenc/opusenc/lame for mp3,
+Without full verbosity of full, no flac/oggenc/opusenc/lame for mp3,
 ogg, or opus conversion process screen output, but more verbose than
 default. Same as \fB\-\-log 2\fR
 
@@ -357,14 +359,16 @@ Sample: \fBLOG_LEVEL=3\fR
 
 \fB0\fR \- quiet/silent \- no output at all (except for errors).
 
-\fB1\fR \- default \- single line per operation. This is the default, so you don't need 
+\fB1\fR \- basic \- single line per operation. This is the default, so you don't need 
 to change it.
     
 \fB2\fR \- verbose \- but without the actual conversion data from codecs
 
-\fB3\fR \- debug \-  all available information. Note: with \fB\-F\fR / \fB\-\-fork\fR 
+\fB3\fR \- full \-  all available information. Note: with \fB\-F\fR / \fB\-\-fork\fR 
 conversion output may be ordered somewhat randomly since it shows each thread's results 
 as it completes as well as when it started.
+
+\fB4\fR \- debug \-  all available plus some specialized debugging information.
 
 .SH BUGS
 Please report bugs using the following resources.
