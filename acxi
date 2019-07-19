@@ -238,7 +238,6 @@ sub process_directories {
 				delete_checksums() if $b_checksum_delete;
 				generate_checksums();
 				$b_dest_changed = 1;
-				#print join("\n",@checksums);
 			}
 			else {
 				print " No $INPUT_TYPE files\n";
@@ -248,40 +247,41 @@ sub process_directories {
 	}
 }
 sub generate_checksums {
-	my ($error_message);
+	my ($error_message,@output);
 	system('pwd') if $LOG_LEVEL > 2;
 	print "  Generating checksums: ";
-	if ($b_test){
-		print "\n";
-		system("$COMMAND_MD5 *.*");
-		if ($? == -1 || $? > 0){
-			$error_message = "$COMMAND_METAFLAC returned error: $?";
-			main::error_handler('checksum-generate', $error_message,1)
-		}
-		system("$COMMAND_METAFLAC --show-md5sum *.flac");
-		if ($? == -1 || $? > 0){
-			$error_message = "$COMMAND_METAFLAC returned error: $?";
-			main::error_handler('checksum-generate', $error_message,1)
-		}
+	print "$MD5_FILE.md5: ";
+	# system("$COMMAND_MD5 *.* > $MD5_FILE.md5");
+	@output = qx($COMMAND_MD5 *.*);
+	if ($? == -1 || $? > 0){
+		$error_message = "$COMMAND_MD5 returned error: $?";
+		main::error_handler('checksum-generate', $error_message,1)
 	}
 	else {
-		print "$MD5_FILE.md5: ";
-		system("$COMMAND_MD5 *.* > $MD5_FILE.md5");
-		if ($? == -1 || $? > 0){
-			$error_message = "$COMMAND_METAFLAC returned error: $?";
-			main::error_handler('checksum-generate', $error_message,1)
+		chomp (@output = grep {$_ !~ m^\.(ffp|md5)^} @output);
+		if (!$b_test){
+			main::writer("$MD5_FILE.md5",\@output);
+			print "created; " ;
 		}
 		else {
-			print "created; ";
+			print "\n", join( "\n", @output),"\n";
 		}
-		print "$FFP_FILE.ffp: ";
-		system("$COMMAND_METAFLAC --show-md5sum *.flac > $FFP_FILE.ffp");
-		if ($? == -1 || $? > 0){
-			$error_message = "$COMMAND_METAFLAC returned error: $?";
-			main::error_handler('checksum-generate', $error_message,1)
+	}
+	print "$FFP_FILE.ffp: ";
+	#system("$COMMAND_METAFLAC --show-md5sum *.flac > $FFP_FILE.ffp");
+	@output = qx($COMMAND_METAFLAC --show-md5sum *.flac);
+	if ($? == -1 || $? > 0){
+		$error_message = "$COMMAND_METAFLAC returned error: $?";
+		main::error_handler('checksum-generate', $error_message,1)
+	}
+	else {
+		chomp (@output);
+		if (!$b_test){
+			main::writer("$FFP_FILE.ffp",\@output);
+			print "created; " ;
 		}
 		else {
-			print "created";
+			print "\n", join( "\n", @output),"\n";
 		}
 	}
 	print "\n";
@@ -740,6 +740,26 @@ sub wanted {
 	push (@found_list, $File::Find::name);
 	return;
 }
+# arg: 1 file full  path to write to; 2 - arrayof data to write. 
+# note: turning off strict refs so we can pass it a scalar or an array reference.
+sub writer {
+	my ($path, $ref_content) = @_;
+	my ($content);
+	no strict 'refs';
+	# print Dumper $ref_content, "\n";
+	if (ref $ref_content eq 'ARRAY'){
+		$content = join "\n", @$ref_content or die "failed with error $!";
+	}
+	else {
+		$content = scalar $ref_content;
+	}
+	open(my $fh, ">", $path) or 
+	 error_handler('open',"$path failed to open for writing.\nMessage: $!",1);
+	print $fh $content;
+	close $fh;
+}
+
+
 #### -------------------------------------------------------------------
 #### VALIDATION - ERROR HANDLING
 #### -------------------------------------------------------------------
@@ -759,6 +779,7 @@ sub error_handler {
 	elsif ($error eq 'bad-level'){$error_no = 5;$b_valid=0;}
 	elsif ($error eq 'bad-fork'){$error_no = 9;$b_valid=0;}
 	elsif ($error eq 'bad-nlink'){$error_no = 9;$b_valid=0;}
+	elsif ($error eq 'open'){$error_no = 12;}
 	elsif ($error eq 'stat-infile'){$error_no = 6;}
 	elsif ($error eq 'missing-arg'){$error_no = 7;
 		$message = "Option: $message";$br=''}
