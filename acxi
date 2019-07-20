@@ -1293,6 +1293,8 @@ sub assign_value {
 		$COPY_TYPES = $value;}
 	elsif ($var eq 'DONT_USE_NLINK'){$DONT_USE_NLINK = $value}
 	elsif ($var eq 'FORK'){$FORK = $value}
+	elsif ($var eq 'FFP_FILE'){$FFP_FILE = $value}
+	elsif ($var eq 'MD5_FILE'){$MD5_FILE = $value}
 }
 # end ConfigData
 }
