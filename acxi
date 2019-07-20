@@ -231,7 +231,7 @@ sub process_directories {
 				system 'pwd';
 			}
 			print "$print_src...\n";
-			@files = main::globber("*.flac");
+			@files = main::globber("*.{flac,FLAC}");
 			#print "\n", Data::Dumper::Dumper @files, "\n";
 			if (@files){
 				print " Processing...\n";
@@ -242,7 +242,6 @@ sub process_directories {
 			else {
 				print " No $INPUT_TYPE files\n";
 			}
-			
 		}
 	}
 }
@@ -278,16 +277,16 @@ sub generate_checksums {
 		chomp (@output);
 		if (!$b_test){
 			main::writer("$FFP_FILE.ffp",\@output);
-			print "created; " ;
+			print "created\n" ;
 		}
 		else {
 			print "\n", join( "\n", @output),"\n";
 		}
 	}
-	print "\n";
 }
 sub delete_checksums {
 	my $error_message = '';
+	# note: some checksum generators tack on a .txt to the filename.
 	my @checksums = main::globber("*.{ffp,ffp.txt,md5,md5.txt}");
 	# print Data::Dumper::Dumper @checksums, "\n";
 	foreach my $file (@checksums){
@@ -658,6 +657,8 @@ sub dotify {
 	return $string;
 }
 # args: 1 - string value to glob
+# Note: because of spaces and other strange user file paths, need to use 
+# bsd glob, which returns space agnostic globs, as you'd expect. 
 sub globber {
 	#my @files = glob qq{"$_[0]"};
 	#print Data::Dumper::Dumper @files;
