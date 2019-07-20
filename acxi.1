@@ -1,20 +1,22 @@
-.TH ACXI 1 "2019\-07\-18" acxi "acxi manual"
+.TH ACXI 1 "2019\-07\-19" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
-\fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-basic\fR] [\fB\-\-clean\fR] 
-[\fB\-c\fR extensions] [\fB\-\-full\fR]  [\fB\-d\fR destination-path] 
-[\fB\-f\fR] [\fB\-\-fork\fR 0-xx] [\fB\-h\fR] [\fB\-i\fR {flac|raw|shn|wave}] 
+\fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-basic\fR] [\fB\-\-checksum\fR] 
+[\fB\-\-checksum\-delete\fR] [\fB\-\-clean\fR] [\fB\-c\fR extensions] 
+[\fB\-d\fR destination-path] [\fB\-f\fR] [\fB\-\-fork\fR 0-xx] 
+[\fB\-\-full\fR] [\fB\-h\fR] [\fB\-i\fR {flac|raw|shn|wave}] 
 [\fB\-\-log\fR {0-3}] [\fB\-\-nlink\fR] [\fB\-\-no\-nlink\fR] 
 [\fB\-o\fR {flac|mp3|ogg|opus}] [\fB\-q\fR NUMBER] [\fB\-\-quiet\fR] 
 [\fB\-s\fR source\-path] [\fB\-V\fR] [\fB\-\-test\fR] [\fB\-v\fR]
 
 .SH DESCRIPTION
-\fBacxi\fR is a command line audio conversion program. It converts and syncs
-all desired source lossless files to a lossy directory location. 
+\fBacxi\fR is a command line audio conversion program. It converts 
+and syncs all desired source lossless files to the desired output 
+format, and to adifferent directory location. 
 
 Supports lossless input formats flac/raw/shn/wav. Output formats are flac, 
-ogg, opus, or mp3. raw/shn/wav can only output to flac. mp3 can only have 
+ogg, opus, or mp3. raw/shn can only output to flac. mp3 can only have 
 flac as input format.
 
 By default, it will also copy over most common filetypes like gif, jpg, png, 
@@ -23,6 +25,8 @@ a configuration file, or the \fB\-c\fR or \fB\-a\fR options..
 
 The destination directory cannot be the same as the source directory, but
 it can be inside of the source directory.
+
+It can also generate md5 and ffp checksum files if required.
 
 \fBacxi\fR runs pretests on each start to make sure input and output
 directories are valid, conversion programs for input and output formatting
@@ -42,6 +46,10 @@ version 3, which should make acxi fully platform agnostic.
 MP3 encoding does not support wav or raw formats).
   
 \fBSHN \-> \fBFLAC\fR conversion requires the codec \fBshorten\fR and \fBffmpeg\fR.
+
+\fB\-\-checksum\fR requires \fBffmpeg\fR and \fBmd5sum\fR (or any comparable 
+program that generates md5sums). md5 generating logic may be moved to straight 
+Perl to remove the md5 program requirement.
 
 In theory, acxi 3.x should run on Windows and Macs, but I have not
 tested that, but as long as the source/destination directory paths and
@@ -70,6 +78,33 @@ Sample: \fBacxi \-a md5\fR will add md5 file type to copy list.
 .B \-\-basic\fR
 Single line per operation screen output, default value for acxi.
 Same as \fB\-\-log 1\fR
+
+.TP
+.B \-\-checksum\fR
+Create \fB.ffp and \fB.md5 checksum files in your source directory.
+Checksum files are only created inside directories where flac
+files are found. Use with \fB\-\-checksum\-delete\fR to delete existing
+checksum files. Only flac input type is supported.
+
+This will not create md5 sums for for files in directories that 
+do not contain flac files, because that creates a very complicated 
+logical puzzle which is hard to accurately or reliably resolve in
+code.
+
+Do not use together with other cleaning/syncing options!
+
+.TP
+.B \-\-checksum\-delete\fR
+When used with \fB\-\-checksum\fR, will first delete all \fB.md5\fR, 
+\fB.md5.txt\fR, \fB.ffp\fR, and \fB.ffp.txt\fR files. Note that some 
+audio processing tools add \fB.txt\fR to the file name, which creates 
+undesirable outcomes since some tools that use \fB.ffp\fR or \fB.md5\fR 
+files don't recognize the files if they have the \fB.txt\fR 
+extension added on.
+ 
+I can think of very few reasons to want to preserve \fB.ffp\fR or 
+\fB.md5\fR files, since they should in general reflect what the actual 
+files you have are.
 
 .TP
 .B \-\-clean\fR
@@ -332,6 +367,20 @@ the largest file size / highest quality.
 
 \fBQUALITY_OPUS\fR \- Sample: \fBQUALITY_OPUS=256\fR Supported values: 6\-256. 
 256 is the largest file size / highest quality / best bitrate.
+
+.TP
+.B CHECKSUMS
+These only apply to the \fB\-\-checksum\fR option, and set a different name 
+than the default file names used in the top section of acxi. Note that the
+names should not include an extension, since that is added on automatically.
+
+\fBFFP_FILE\fR \- Sample: \fBFPP_FILE=fingerprint\fR This is the name of the 
+generated .ffp file, not including the .ffp extension, you want your flac ffp
+files to have. 
+
+\fBMD5_FILE\fR \- Sample: \fBMD5_FILE=checksum\fR This is the name of the 
+generated .md5 file, not including the .md5 extension, you want your md5
+checksum files to have.
 
 .TP
 .B ADVANCED
