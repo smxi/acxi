@@ -1,4 +1,37 @@
 ===================================================================
+Date: 2019-07-21
+Version: 3.2.2
+-------------------------------------------------------------------
+More updates. 
+
+New Features:
+1. --checksum and --checksum-delete. --checksum will create .md5
+and .ffp checksum files in each directory in --source that contains
+flac files. Only flac lossless format supported. --checksum-delete
+if used together with --checksum will delete all .md5, .ffp, 
+.m5.txt, and .ffp.txt. The latter two are because some tools add 
+a .txt extension, which is an error.
+
+Current requirements are metaflac for .ffp generation, and mdsum
+for md5 generation, though I may move to native Perl for md5 since
+there is no strict need to use an external program for that.
+
+man and help updated to show this, and also rearranged a bit more
+to make more readable. Note that you can view online versions  
+of the help and man at:
+
+https://smxi.org/docs/acxi-man.htm
+https://smxi.org/docs/acxi-options.htm
+
+2. More refactoring, now it's pretty much done, all main logic is
+wrapped in packages aka classes, which makes working on it easier.
+
+3. Trimming off source and destination directory paths from copy,
+sync, and checksum generation paths. Since those show at the 
+beginning, there's no point in repeating them over and over.
+--log 3 / --full will show the full paths however if you want.
+
+===================================================================
 Date: 2019-07-15
 Version: 3.2.0
 -------------------------------------------------------------------

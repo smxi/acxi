@@ -42,7 +42,7 @@
 # $SOURCE_DIRECTORY and $DESTINATION_DIRECTORY variables, or passed on 
 # the command line, or can be set in the configuration file (recommended).  
 #
-# See BEGIN USER MODIFIABLE VALUES for configuration information.
+# See USER MODIFIABLE VALUES for configuration information.
 
 #########################################################################
 ### NO USER CHANGES IN THIS SECTION ###
@@ -69,12 +69,12 @@ use Data::Dumper;
 ### PROGRAM GLOBALS - DO NOT TOUCH THESE! ###
 #########################################################################
 
-## SELF INFO
+## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.1';
-my $SELF_DATE = '2019-07-19';
+my $SELF_VERSION = '3.2.2';
+my $SELF_DATE = '2019-07-21';
 
-## GLOBALS
+## GLOBALS ##
 my ($b_dest_changed,$b_checksum,$b_checksum_delete,$b_clean,$b_force,
 $b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
@@ -83,13 +83,13 @@ $silent_opus) = (7,'','','','');
 my ($extension,@extension_list,@found_list,$list_type);
 my ($b_check_dest,$b_check_out,$b_sync,$b_unlink_checksums) = (1,1,1,1);
 
-## CONSTANTS
+## CONSTANTS ##
 my $line_heavy = "===========================================================================\n";
 my $line_small = "-----------------------------------------------------------------\n";
 my $line_large = "---------------------------------------------------------------------------\n";
 
 #########################################################################
-### BEGIN USER MODIFIABLE VALUES ###
+### USER MODIFIABLE VALUES ###
 #########################################################################
 # User config file at:
 # Global: /etc/acxi.conf
@@ -108,9 +108,17 @@ my $line_large = "--------------------------------------------------------------
 #
 # Anything in configs or in this section will be overridden if you use
 # a startup argument.
+#### -------------------------------------------------------------------
+#### CUSTOM CONFIGURATION FILE LOCATION
+#### -------------------------------------------------------------------
+# NOTE: only use this if you are running Windows, or any OS without $HOME
+# or $XDG_CONFIG_HOME environmental variables. acxi will look for file:
+# acxi.conf inside that directory. 
+my $CONFIG_DIRECTORY='';
 
-## APPLICATION PATHS
-
+#### -------------------------------------------------------------------
+#### APPLICATION PATHS
+#### -------------------------------------------------------------------
 my $COMMAND_FLAC = '/usr/bin/flac'; 
 my $COMMAND_FLAC_OUT = '/usr/bin/ffmpeg';
 my $COMMAND_LAME = '/usr/bin/lame';
@@ -123,31 +131,35 @@ my $COMMAND_MD5 = '/usr/bin/md5sum';
 # If you are not doing either, you don't need this.
 my $COMMAND_METAFLAC = '/usr/bin/metaflac';
 
-## ASSIGN DIRECTORY PATHS
-##  $SOURCE_DIRECTORY is the original, working, like flac, wav, etc
-##  $DESTINATION_DIRECTORY is the processed, ie, ogg, mp3
-##  CHANGE TO FIT YOUR SYSTEM - do not end in /
-## IMPORTANT: DESTINATION_DIRECTORY cannot be equal to SOURCE_DIRECTORY
+#### -------------------------------------------------------------------
+#### ASSIGN DIRECTORY PATHS
+#### -------------------------------------------------------------------
+# Options: -s/--source path -d/--destination path
+# $SOURCE_DIRECTORY is the original, working, like flac, wav, etc
+# $DESTINATION_DIRECTORY is the processed, ie, ogg, mp3
+# CHANGE TO FIT YOUR SYSTEM - do not end in /
+# IMPORTANT: DESTINATION_DIRECTORY cannot be equal to SOURCE_DIRECTORY
 my $SOURCE_DIRECTORY = '/path/to/source/directory';
 my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
 
-## CHECKSUM DATA 
+#### -------------------------------------------------------------------
+#### CHECKSUM DATA
+#### -------------------------------------------------------------------
 # These are the file names MINUS the .ffp / .md5 extensions.
 my $FFP_FILE='fingerprints';
 my $MD5_FILE='md5sums';
 
-# NOTE: only use this if you are running Windows, or any OS without $HOME
-# or $XDG_CONFIG_HOME environmental variables. acxi will look for file:
-# acxi.conf inside that directory. 
-my $CONFIG_DIRECTORY='';
-
-## INPUT/OUTPUT
+#### -------------------------------------------------------------------
+#### INPUT/OUTPUT
+#### -------------------------------------------------------------------
+# Options: -i/--input type ; -o/--output type
 # The following are NOT case sensitive,ie flac/FLAC, txt/TXT will be 
 # found. INPUT_TYPE and OUTPUT_TYPE will be forced to lower case 
 # internally.
 my $INPUT_TYPE = 'flac';
 my $OUTPUT_TYPE = 'ogg';
 
+# Option: -q/--quality number
 # for flac: n can be 0-8. 0 produces largest file, is fastest, anything over 4
 # is probably pointless since compression gain is very little vs time required.
 # For mp3: n can be 0-9 (variable bit rate), 0 is largest file / highest quality
@@ -159,6 +171,8 @@ my $QUALITY_FLAC = 4;
 my $QUALITY_MP3 = 3;
 my $QUALITY_OGG = 7;
 my $QUALITY_OPUS = 160;
+
+# Option: -c/--copy and -a/--append (to append extension types to existing list.
 ## NOTE: if you want to override $COPY_TYPES in your config files, you
 # must use this syntax:
 # COPY_TYPES=doc,docx,bmp,jpg,jpeg
@@ -167,6 +181,10 @@ my $QUALITY_OPUS = 160;
 # If you want no copying done, simply change to: $COPY_TYPES = 'none';
 my $COPY_TYPES = 'bmp,doc,docx,gif,jpg,jpeg,odt,pdf,png,tif,txt';
 
+#### -------------------------------------------------------------------
+#### PRINT OUTPUT
+#### -------------------------------------------------------------------
+# OPtions: --basic -V/--verbose --full --log 0-4
 # You can turn these to always on either here or in config file by setting to 
 # desired verbosity level here directly, or in config file. 
 # 0 = quiet/silent - no output at all; 
@@ -177,12 +195,16 @@ my $COPY_TYPES = 'bmp,doc,docx,gif,jpg,jpeg,odt,pdf,png,tif,txt';
 # NOTE: with FORK > 1, conversion debugging output can be out of order.
 my $LOG_LEVEL = 1;
 
-## ADVANCED
+#### -------------------------------------------------------------------
+#### ADVANCED
+#### -------------------------------------------------------------------
+# Options: --nlink --no-nlink
 # Only change to 0 if you encounter file tree failures. This is for File::Find
 # values:  0 - use nlink; 1 - don't use nlink [default, only change if you know
 # why.
 my $DONT_USE_NLINK = 1;
 
+# Option: -F/--fork 0-xx
 ## number of forks/threads to use. 0 is default, and will not use forking
 # note that debugging output gets strange with forking, so debug with fork = 0
 # FORK = 1 results in slower times than using no forking so avoid that. 
@@ -191,6 +213,22 @@ my $FORK = 0;
 #########################################################################
 ### END USER MODIFIABLE VALUES ###
 #########################################################################
+
+########################################################################
+#### STARTUP
+########################################################################
+
+sub main {
+	UserConfigs::set();
+	get_options();
+	set_display_data();
+	Validation::check_user_values();
+	set_basic_data();
+	CleanCollection::process_destination() if $b_clean;
+	SyncCollection::process_collection() if $b_sync;
+	Checksums::generate() if $b_checksum;
+	print_completion_message();
+}
 
 #########################################################################
 ### CLEAN/SYNC MUSIC DIRECTORIES ###
@@ -220,7 +258,7 @@ sub process_directories {
 	if (@found_list){
 		foreach $item (@found_list) {
 			$print_src = $item;
-			$print_src =~ s|^$SOURCE_DIRECTORY/||;
+			$print_src =~ s|^$SOURCE_DIRECTORY/|| if $LOG_LEVEL < 3;
 			#if ($LOG_LEVEL > 2){
 			#	say Cwd::getcwd();
 			#	system 'pwd';
@@ -370,6 +408,7 @@ sub confirm_deletion {
 ## package SyncCollection 
 {
 package SyncCollection; 
+
 sub process_collection {
 	my (@extension_files);
 	eval $print_line_heavy;
@@ -443,6 +482,92 @@ sub update_directories {
 	}
 	main::print_not_found('dirs') if ! $b_created;
 }
+
+sub update_files {
+	my ($b_created);
+	my ($dest_file,$file,$result,$action,$src_file) = ('','','','','');
+	my ($dest_info,$dest_mod_time,$src_info, $src_mod_time) = ('',0,'',0);
+	my $pm = new Parallel::ForkManager($FORK) if $b_fork;
+	foreach $file (@found_list) {
+		next if ! $file;
+		$dest_file = $src_file = $file;
+		#print "\nIF: $src_file\n";
+		$dest_file =~ s|^$SOURCE_DIRECTORY|$DESTINATION_DIRECTORY|;
+		$dest_file =~ s/\`/\'/g;
+		# $dest_file =~ s/\$/\\\$/g;
+		# get rid of escape sequences in case someone used them: \40
+		# $src_file =~ s/\0//g; 
+		$dest_file =~ s/\0//g;
+		# Figure out what the destination file would be...
+		if ( lc($extension) eq $INPUT_TYPE ){
+			$dest_file =~ s/\.$INPUT_TYPE$/\.$OUTPUT_TYPE/i;
+		}
+		#print "OF: $dest_file\n";
+		($action,$result,$dest_mod_time,$src_mod_time ) = ('UNSET','UNSET',0,0);
+		# Now stat the destinationFile, and see if it's date is more recent
+		# than that of the original file. If so, we re-encode.
+		# We also re-encode if the user supplied --force
+		$src_info = File::stat::stat("$src_file") or 
+		  main::error_handler('stat-infile', "No $src_file: $!",1);
+		$src_mod_time = $src_info->mtime if $src_info;
+		$dest_info = File::stat::stat("$dest_file");
+		if ( $dest_info ) {
+			$dest_mod_time = $dest_info->mtime;
+			# print "DEST_MOD: $dest_mod_time :: SRC_MOD: $src_mod_time :: FORCE: $force\n"; 
+# 		} else {
+# 			print "NOT EXISTS: $destinationFile \n"; 
+# 			print "P1: $file ==> \n  $destinationFile\n"; 
+		}
+		# If the destination file does not exist, or the user specified force,
+		# or the srcfile is more recent then the dest file, we encode/copy.
+		# print "src-mt: $src_mod_time dest-mt:$dest_mod_time\n";
+		if ( !$dest_info || $b_force || ( $src_mod_time > $dest_mod_time) ) {
+			# these have to be set before the forking
+			$b_created = 1;
+			$b_dest_changed = 1;
+			if ( lc($extension) eq $INPUT_TYPE ){
+				$pm->start and next if $b_fork; # do the fork 
+				my @returns = convert_file($src_file, $dest_file);
+				$result = $returns[0];
+				$action = $returns[1];
+				$pm->finish if $b_fork;
+			} 
+			else {
+				$action = 'Copy';
+				$result = copy_file($file, $src_file, $dest_file);
+			}
+			# NOTE: for forking > 1, this will not print out for the output/input conversion files 
+			print "$action result: $result\n" if $LOG_LEVEL > 1;
+		} 
+	}
+	# wait for all the forks to finish before terminating 
+	# the parent.. otherwise terminating the parent force kills 
+	# all the forks 
+	$pm->wait_all_children if $b_fork;
+	main::print_not_found('files') if ! $b_created;
+}
+
+sub copy_file {
+	my ($file, $src_file, $dest_file) = @_;
+	my $result = 'UNSET';
+	my ($src_print,$dest_print) = ($src_file, $dest_file);
+	$src_print =~ s|^$SOURCE_DIRECTORY/|| if $LOG_LEVEL < 3;
+	$dest_print =~ s|^$DESTINATION_DIRECTORY/|| if $LOG_LEVEL < 3;
+	eval $print_line_small;
+	if ( $LOG_LEVEL > 1 ) {
+		print "COPY: $src_print ==> \n";
+		print "      $dest_print\n"; 
+	}
+	elsif ( $LOG_LEVEL > 0 ) {
+		print "\nCopying $src_print...";
+	}
+	if (!$b_test){
+		$result = File::Copy::copy($src_file, $dest_file) or 
+			main::error_handler('cp-file', "cp failure: $src_file =>\n$dest_file\nCode: $!",1);
+	}
+	return $result;
+}
+
 sub convert_file { 
 	my ($src_file, $dest_file) = @_;
 	my ($src_print,$dest_print) = ($src_file, $dest_file);
@@ -452,6 +577,8 @@ sub convert_file {
 	$dest_file =~ s/"/\\"/g;
 	$src_file =~ s/\$/\\\$/g;
 	$dest_file =~ s/\$/\\\$/g;
+	$src_print =~ s|^$SOURCE_DIRECTORY/|| if $LOG_LEVEL < 3;
+	$dest_print =~ s|^$DESTINATION_DIRECTORY/|| if $LOG_LEVEL < 3;
 	# with forking, the printing gets messed up unless it's done 
 	# just like this.
 	if (!$b_fork){
@@ -510,82 +637,9 @@ sub convert_file {
 	# this return only works with non forking
 	return ($result,$action); 
 }
-sub update_files {
-	my ($b_created);
-	my ($dest_file,$file,$result,$action,$src_file) = ('','','','','');
-	my ($dest_info,$dest_mod_time,$src_info, $src_mod_time) = ('',0,'',0);
-	my $pm = new Parallel::ForkManager($FORK) if $b_fork;
-	foreach $file (@found_list) {
-		next if ! $file;
-		$dest_file = $src_file = $file;
-		#print "\nIF: $src_file\n";
-		$dest_file =~ s|^$SOURCE_DIRECTORY|$DESTINATION_DIRECTORY|;
-		$dest_file =~ s/\`/\'/g;
-		# $dest_file =~ s/\$/\\\$/g;
-		# get rid of escape sequences in case someone used them: \40
-		# $src_file =~ s/\0//g; 
-		$dest_file =~ s/\0//g;
-		# Figure out what the destination file would be...
-		if ( lc($extension) eq $INPUT_TYPE ){
-			$dest_file =~ s/\.$INPUT_TYPE$/\.$OUTPUT_TYPE/i;
-		}
-		#print "OF: $dest_file\n";
-		($action,$result,$dest_mod_time,$src_mod_time ) = ('UNSET','UNSET',0,0);
-		# Now stat the destinationFile, and see if it's date is more recent
-		# than that of the original file. If so, we re-encode.
-		# We also re-encode if the user supplied --force
-		$src_info = File::stat::stat("$src_file") or 
-		  main::error_handler('stat-infile', "No $src_file: $!",1);
-		$src_mod_time = $src_info->mtime if $src_info;
-		$dest_info = File::stat::stat("$dest_file");
-		if ( $dest_info ) {
-			$dest_mod_time = $dest_info->mtime;
-			# print "DEST_MOD: $dest_mod_time :: SRC_MOD: $src_mod_time :: FORCE: $force\n"; 
-# 		} else {
-# 			print "NOT EXISTS: $destinationFile \n"; 
-# 			print "P1: $file ==> \n  $destinationFile\n"; 
-		}
-		# If the destination file does not exist, or the user specified force,
-		# or the srcfile is more recent then the dest file, we encode/copy.
-		# print "src-mt: $src_mod_time dest-mt:$dest_mod_time\n";
-		if ( !$dest_info || $b_force || ( $src_mod_time > $dest_mod_time) ) {
-			# these have to be set before the forking
-			$b_created = 1;
-			$b_dest_changed = 1;
-			if ( lc($extension) eq $INPUT_TYPE ){
-				$pm->start and next if $b_fork; # do the fork 
-				my @returns = convert_file($src_file, $dest_file);
-				$result = $returns[0];
-				$action = $returns[1];
-				$pm->finish if $b_fork;
-			} 
-			else {
-				$action = 'Copy';
-				eval $print_line_small;
-				if ( $LOG_LEVEL > 1 ) {
-					print "COPY: $file ==> \n";
-					print "      $dest_file\n"; 
-				}
-				elsif ( $LOG_LEVEL > 0 ) {
-					print "\nCopying $file...";
-				}
-				if (!$b_test){
-					$result = File::Copy::copy($src_file, $dest_file) or 
-					  main::error_handler('cp-file', "cp failure: $src_file =>\n$dest_file\nCode: $!",1);
-				}
-			}
-			# NOTE: for forking > 1, this will not print out for the output/input conversion files 
-			print "$action result: $result\n" if $LOG_LEVEL > 1;
-		} 
-	}
-	# wait for all the forks to finish before terminating 
-	# the parent.. otherwise terminating the parent force kills 
-	# all the forks 
-	$pm->wait_all_children if $b_fork;
-	main::print_not_found('files') if ! $b_created;
-}
 ## end package 
 }
+
 #### -------------------------------------------------------------------
 #### TAGGING
 #### -------------------------------------------------------------------
@@ -632,6 +686,7 @@ sub get_flac_tags {
 	# print Dumper \%tag_list;
 	return %tag_list;
 }
+
 #########################################################################
 ### PROGRAM TOOLS ###
 #########################################################################
@@ -648,6 +703,7 @@ sub check_module {
 	$b_present = 1 if !$@;
 	return $b_present;
 }
+
 sub dotify {
 	my $string = $_[0];
 	while (length($string) < 53){
@@ -656,6 +712,7 @@ sub dotify {
 	$string .= ' ';
 	return $string;
 }
+
 # args: 1 - string value to glob
 # Note: because of spaces and other strange user file paths, need to use 
 # bsd glob, which returns space agnostic globs, as you'd expect. 
@@ -665,6 +722,7 @@ sub globber {
 	#return @files;
 	return <$_[0]>;
 }
+
 sub print_not_found {
 	my ($message,$none);
 	if ( $_[0] eq 'files'){
@@ -694,6 +752,7 @@ sub print_not_found {
 		print $none;
 	}
 }
+
 sub print_completion_message {
 	eval $print_line_heavy;
 	if ( $b_dest_changed ) {
@@ -709,6 +768,7 @@ sub print_completion_message {
 	}
 	exit 0;
 }
+
 # NOTE: File::Find will not follow symbolic links
 sub wanted {
 	return if -l; # skip symbolic links
@@ -741,6 +801,7 @@ sub wanted {
 	push (@found_list, $File::Find::name);
 	return;
 }
+
 # arg: 1 file full  path to write to; 2 - arrayof data to write. 
 # note: turning off strict refs so we can pass it a scalar or an array reference.
 sub writer {
@@ -759,7 +820,6 @@ sub writer {
 	print $fh $content;
 	close $fh;
 }
-
 
 #### -------------------------------------------------------------------
 #### VALIDATION - ERROR HANDLING
@@ -1166,6 +1226,7 @@ sub print_help {
 	print $output;
 	exit 0;
 }
+
 sub print_version {
 	print "$SELF_NAME version: $SELF_VERSION ($SELF_DATE)\n";
 	exit 0;
@@ -1197,6 +1258,7 @@ sub set_basic_data {
 		}
 	}
 }
+
 sub set_display_data {
 	if ( $LOG_LEVEL < 3 ) {
 		if ( $OUTPUT_TYPE eq 'mp3' ) {
@@ -1388,14 +1450,6 @@ sub get_options{
 ### EXECUTE / PROCESS MUSIC ###
 #########################################################################
 
-UserConfigs::set();
-get_options();
-set_display_data();
-Validation::check_user_values();
-set_basic_data();
-CleanCollection::process_destination() if $b_clean;
-SyncCollection::process_collection() if $b_sync;
-Checksums::generate() if $b_checksum;
-print_completion_message();
+main();
 
 ###**EOF**###
