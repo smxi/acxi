@@ -12,7 +12,7 @@ if used together with --checksum will delete all .md5, .ffp,
 .m5.txt, and .ffp.txt. The latter two are because some tools add 
 a .txt extension, which is an error.
 
-Current requirements are metaflac for .ffp generation, and mdsum
+Current requirements are metaflac for .ffp generation, and md5sum
 for md5 generation, though I may move to native Perl for md5 since
 there is no strict need to use an external program for that.
 
