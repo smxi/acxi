@@ -65,9 +65,9 @@ use Data::Dumper;
 # only use for debugging, some distros do not ship with core modules.
 #use Data::Dumper qw(Dumper);
 
-#########################################################################
-### PROGRAM GLOBALS - DO NOT TOUCH THESE! ###
-#########################################################################
+#### -------------------------------------------------------------------
+#### PROGRAM GLOBALS - DO NOT TOUCH THESE!
+#### -------------------------------------------------------------------
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
