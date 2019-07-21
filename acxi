@@ -231,7 +231,7 @@ sub main {
 }
 
 #########################################################################
-### CLEAN/SYNC MUSIC DIRECTORIES ###
+### CLEAN/SYNC MUSIC DIRECTORIES ###-
 #########################################################################
 
 #### -------------------------------------------------------------------
@@ -723,52 +723,6 @@ sub globber {
 	return <$_[0]>;
 }
 
-sub print_not_found {
-	my ($message,$none);
-	if ( $_[0] eq 'files'){
-		$message = "No files to update of type: $extension\n";
-		$none = "None to update";
-	}
-	elsif ( $_[0] eq 'extension'){
-		$message = "No files found of type: $extension\n";
-		$none = "None found";
-	}
-	elsif ($_[0] eq 'dirs') {
-		$message = "No new directories required. Continuing...\n";
-		$none = "None required";
-	}
-	elsif ($_[0] eq 'directory-cleaned') {
-		$message = "No directories to remove. Continuing...\n";
-		$none = "None to remove\n";
-	}
-	elsif ($_[0] eq 'file-cleaned') {
-		$message = "No files to remove. Continuing...\n";
-		$none = "None to remove\n";
-	}
-	if ( $LOG_LEVEL > 1 ) {
-		print $message;
-	}
-	elsif ( $LOG_LEVEL > 0 ) {
-		print $none;
-	}
-}
-
-sub print_completion_message {
-	eval $print_line_heavy;
-	if ( $b_dest_changed ) {
-		if ( $LOG_LEVEL > 1 ) {
-			print "All done updating. Enjoy your music!\n";
-		}
-		elsif ( $LOG_LEVEL > 0 ) {
-			print "\nUpdating completed. Enjoy your music!\n";
-		}
-	}
-	elsif ( $LOG_LEVEL > 0 ) {
-		print "\nThere was nothing to update today in your collection.\n";
-	}
-	exit 0;
-}
-
 # NOTE: File::Find will not follow symbolic links
 sub wanted {
 	return if -l; # skip symbolic links
@@ -1134,8 +1088,54 @@ sub check_fork {
 }
 
 #### -------------------------------------------------------------------
-#### PRINT HELP/VERSION
+#### PRINT HELP/VERSION/MESSAGES
 #### -------------------------------------------------------------------
+sub print_completion_message {
+	eval $print_line_heavy;
+	if ( $b_dest_changed ) {
+		if ( $LOG_LEVEL > 1 ) {
+			print "All done updating. Enjoy your music!\n";
+		}
+		elsif ( $LOG_LEVEL > 0 ) {
+			print "\nUpdating completed. Enjoy your music!\n";
+		}
+	}
+	elsif ( $LOG_LEVEL > 0 ) {
+		print "\nThere was nothing to update today in your collection.\n";
+	}
+	exit 0;
+}
+
+sub print_not_found {
+	my ($message,$none);
+	if ( $_[0] eq 'files'){
+		$message = "No files to update of type: $extension\n";
+		$none = "None to update";
+	}
+	elsif ( $_[0] eq 'extension'){
+		$message = "No files found of type: $extension\n";
+		$none = "None found";
+	}
+	elsif ($_[0] eq 'dirs') {
+		$message = "No new directories required. Continuing...\n";
+		$none = "None required";
+	}
+	elsif ($_[0] eq 'directory-cleaned') {
+		$message = "No directories to remove. Continuing...\n";
+		$none = "None to remove\n";
+	}
+	elsif ($_[0] eq 'file-cleaned') {
+		$message = "No files to remove. Continuing...\n";
+		$none = "None to remove\n";
+	}
+	if ( $LOG_LEVEL > 1 ) {
+		print $message;
+	}
+	elsif ( $LOG_LEVEL > 0 ) {
+		print $none;
+	}
+}
+
 sub print_help {
 	# so it shows the user config data if present
 	UserConfigs::set(); 
