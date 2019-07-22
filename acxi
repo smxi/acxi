@@ -801,6 +801,7 @@ sub error_handler {
 		$message = "Option: $message";$br=''}
 	elsif ($error eq 'checksum-generate'){$error_no = 11;}
 	elsif ($error eq 'checksum-delete'){$error_no = 12;}
+	elsif ($error eq 'checksum-bad-action'){$error_no = 13;$br=''}
 	elsif ($error eq 'unsupported-option'){$error_no = 8;$br=''}
 	elsif ($error eq 'missing-perl-module'){$error_no = 10;
 		$message = "Perl Module not found in system: $message";}
@@ -1377,6 +1378,7 @@ sub get_options{
 		$b_check_out = 0;
 		$b_checksum = 1;
 		$b_sync = 0;
+		$b_clean = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	"checksum-delete" => sub { 
@@ -1445,6 +1447,10 @@ sub get_options{
 		my ($opt) = @_;
 		error_handler('unsupported-option', "Unsupported option: $opt",1); }
 	);
+	if ($b_checksum && ($b_sync || $b_clean)){
+		error_handler('checksum-bad-action', 
+		 "You cannot use --checksum with any clean or sync options.",1);
+	}
 }
 
 #########################################################################
