@@ -90,6 +90,9 @@ version 3, which should make acxi fully platform agnostic.
   
 * SHN -> FLAC conversion requires the codec 'shorten' and ffmpeg.
 
+* checksum generation requires metaflac and md5sum (or a comparable
+md5 generating command line utility).
+
 In theory, acxi 3.x should run on Windows and Macs, but I have not
 tested that, but as long as the source/destination directory paths and
 the application/configuration paths are correct, it should 'just work'.
@@ -151,8 +154,12 @@ You can change the screen output from:
 
 * verbose (--verbose, --log 2)
 
-* full, with all conversion tool outputs (--full, --log 3). These 
-values can also be set in configuration files using LOG_LEVEL=[0-3].
+* full, with all conversion tool outputs (--full, --log 3)
+
+* debug, all output, incuding at times various debugging events
+(--debug, --log 4)
+
+These values can also be set in configuration files using LOG_LEVEL=[0-4].
 
 ========================================================================
 SHN SHORTEN

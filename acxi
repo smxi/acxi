@@ -1168,9 +1168,6 @@ sub print_help {
 	$output .= "--input, -i       Input type: flac, wav, raw, shn. shn requires codec shorten. \n";
 	$output .= "                  raw, shn only output to flac.\n";
 	$output .= "                  Current value: $INPUT_TYPE\n";
-	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
-	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
-	$output .= "                  Expert use only.\n";
 	$output .= "--output, -o      Output type: mp3, ogg, opus. mp3 requires input type flac.\n";
 	$output .= "                  Current value: $OUTPUT_TYPE\n";
 	$output .= "--quality n, -q n ogg: n between -1 and 10. Fractions ok. 10 best quality.\n";
@@ -1191,6 +1188,9 @@ sub print_help {
 	$output .= "--checksum-delete Delete all existing .ffp, .md5, .ffp.txt, and md5.txt files\n";
 	$output .= "                  before creating the new checksum files. Files only deleted in\n";
 	$output .= "                  directories where flac files are found.\n";
+	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
+	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
+	$output .= "                  Expert use only.\n";
 	$output .= $line_small;
 	$output .= "Display output and debugging options:\n";
 	$output .= "--basic           Basic single line per operation screen output, default value.\n";
@@ -1198,7 +1198,7 @@ sub print_help {
 	$output .= "--full            Full screen output, including full verbosity of \n";
 	$output .= "                  flac/lame/oggenc/opusenc conversion process for mp3, ogg,\n";
 	$output .= "                  or opus output. Same as --log 3\n";
-	$output .= "--debug           Trigger advanced output debugging data.\n";
+	$output .= "--debug           Trigger advanced output debugging data. Same as --log 4\n";
 	$output .= "--help, -h        This help menu.\n";
 	$output .= "--log             [0-4] Dynamically set LOG_LEVEL. Current value: $LOG_LEVEL\n";
 	$output .= "--quiet           Turns off all screen output, except for error messages.\n";

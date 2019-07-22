@@ -141,6 +141,11 @@ If you use no value, it will not copy anything.
 Sample: \fB\-c txt,pdf,png,jpg,jpeg,gif\fR
 
 .TP
+.B \-\-debug\fR
+All output available, including debugger data for some events.
+Same as \fB\-\-log 4\fR
+
+.TP
 .B \-d [path]\fR, \fB\-\-destination [path]\fR
 Full path to the directory where you want the processed lossy
 (eg, ogg) files to go.
@@ -189,7 +194,7 @@ unless you can find a package for it. Use \fB\-\-log 3\fR to test the
 first time to make sure you have shorten codec installed.
 
 .TP
-.B \-\-log [0-3]\fR
+.B \-\-log [0-4]\fR
 Dynamically set LOG_LEVEL. Helps for debugging certain types of issues
 where you might want to see the full level 3 debugging information from
 audio codec conversions for example. 
@@ -203,6 +208,7 @@ audio codec conversions for example.
 \fB3\fR \- full output, incuding all conversion tool output. Same as \fB\-\-full\fR.
 
 \fB4\fR \- debug output, includes some extra debugging data. Don't use in general.
+Same as \fB\-\-debug\fR.
 
 .TP
 .B \-\-nlink\fR
