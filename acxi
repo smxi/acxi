@@ -231,6 +231,7 @@ sub main {
 	set_display_data();
 	Validation::check_user_values();
 	set_basic_data();
+	AutoTag::run() if $b_autotag;
 	CleanCollection::process_destination() if $b_clean;
 	SyncCollection::process_collection() if $b_sync;
 	Checksums::generate() if $b_checksum;
@@ -250,26 +251,77 @@ sub main {
 package AutoTag;
 sub run {
 	print $line_large;
-	process_tags();
+	print "Starting auto-tagging in $SOURCE_DIRECTORY...\n";
+	get_tag_files();
 	print $line_small;
 	print "Completed auto-tagging.\n";
 	print $line_large;
 }
-sub process_tags {
-	my (@files,$item,$print_src,$result,$working_dir);
+sub get_tag_files {
+	my ($item,$print_file,$result,$working_dir);
 	$list_type = 'file';
 	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
 	foreach $item (@found_list) {
-		$print_src = $working_dir = $item;
-		$print_src =~ s|^$SOURCE_DIRECTORY/|| if $LOG_LEVEL < 3;
+		$print_file = $working_dir = $item;
+		$print_file =~ s|^$SOURCE_DIRECTORY/|| if $LOG_LEVEL < 3;
 		$working_dir =~ s/[^\/]+$//;
 		chdir "$working_dir";
 		if ($LOG_LEVEL > 3){
 			say Cwd::getcwd();
 			system 'pwd';
 		}
+		print "Processing: $print_file...\n";
+		process_tags();
+		$b_dest_changed = 1;
+	}
+	if (!@found_list) {
+		print "No $TAG_FILE files found.\n";
 	}
 }
+sub process_tags {
+	my @tags = main::reader($TAG_FILE,'strip');
+	my ($b_tracks,$error_message,@main_tags,$args,@track_tags,@working);
+	my ($cmd,$comments,$tag) = ('','','');
+	foreach (@tags){
+		@working=split /%:/, $_;
+		#print Data::Dumper::Dumper \@working;
+		next if ! $working[1];
+		print "@working\n" if $LOG_LEVEL > 3;
+		$working[1] =~ s/"/\\"/g;
+		if ($working[0] =~ /^(TITLE|TRACKNUMBER|VERSION)$/){
+			$tag = "--set-tag=$working[0]=\"$working[1]\"";
+			push @track_tags, $tag;
+		}
+		elsif ($working[0] ne 'FILE') {
+			$tag = "--set-tag=$working[0]=\"$working[1]\"";
+			push @main_tags, $tag;
+		}
+		elsif ($working[0] eq 'FILE'){
+			print "Tagging \"$working[1]\"... ";
+			# note: must be set here, not in qx to avoid quote errors
+			$cmd = "$COMMAND_METAFLAC --remove-all-tags \"$working[1]\"";
+			say $cmd if $LOG_LEVEL > 3;
+			qx($cmd);
+			if ($? == -1 || $? > 0){
+				$error_message = "$COMMAND_METAFLAC returned error: $?";
+				main::error_handler('application-error', $error_message,1);
+			}
+			@track_tags = (@main_tags,@track_tags);
+			$args = join ' ', @track_tags;
+			@track_tags = ();
+			$cmd = "$COMMAND_METAFLAC $args \"$working[1]\"";
+			say $cmd if $LOG_LEVEL > 3;
+			$b_tracks = 1;
+			qx($cmd);
+			if ($? == -1 || $? > 0){
+				$error_message = "$COMMAND_METAFLAC returned error: $?";
+				main::error_handler('application-error', $error_message,1);
+			}
+			print "tagged\n";
+		}
+	}
+}
+# --preserve-modtime --remove-all-tags --remove-tag
 ## end of AutoTag
 }
 
@@ -329,7 +381,7 @@ sub generate_checksums {
 	@output = qx($COMMAND_MD5 *.*);
 	if ($? == -1 || $? > 0){
 		$error_message = "$COMMAND_MD5 returned error: $?";
-		main::error_handler('checksum-generate', $error_message,1)
+		main::error_handler('application-error', $error_message,1);
 	}
 	else {
 		chomp (@output = grep {$_ !~ m^\.(ffp|md5)^} @output);
@@ -346,7 +398,7 @@ sub generate_checksums {
 	@output = qx($COMMAND_METAFLAC --show-md5sum *.flac);
 	if ($? == -1 || $? > 0){
 		$error_message = "$COMMAND_METAFLAC returned error: $?";
-		main::error_handler('checksum-generate', $error_message,1)
+		main::error_handler('application-error', $error_message,1);
 	}
 	else {
 		chomp (@output);
@@ -765,6 +817,20 @@ sub globber {
 	return <$_[0]>;
 }
 
+# arg: 1 - full file path, returns array of file lines.
+# 2 - optionsl, strip and clean data
+# note: chomp has to chomp the entire action, not just <$fh>
+sub reader {
+	my ($file,$strip) = @_;
+	open( my $fh, '<', $file ) or error_handler('open-failed', $file, $!);
+	chomp(my @rows = <$fh>);
+	if ($strip && @rows){
+		@rows = grep {!/^\s*#|^\s*$/} @rows;
+		@rows = map {s/^\s+|\s+$//g; $_} @rows if @rows;
+	}
+	return @rows;
+}
+
 # NOTE: File::Find will not follow symbolic links
 sub wanted {
 	return if -l; # skip symbolic links
@@ -777,7 +843,7 @@ sub wanted {
 		elsif ($list_type eq 'file') {
 			return if -d; # skip directories
 			return if $b_autotag && $File::Find::name !~ /$TAG_FILE$/;
-			return if $File::Find::name !~ /\.$extension$/i;
+			return if !$b_autotag && $File::Find::name !~ /\.$extension$/i;
 		}
 	}
 	elsif ($list_type eq 'dir-clean' || $list_type eq 'file-clean'){
@@ -841,7 +907,7 @@ sub error_handler {
 	elsif ($error eq 'stat-infile'){$error_no = 6;}
 	elsif ($error eq 'missing-arg'){$error_no = 7;
 		$message = "Option: $message";$br=''}
-	elsif ($error eq 'checksum-generate'){$error_no = 11;}
+	elsif ($error eq 'application-error'){$error_no = 11;}
 	elsif ($error eq 'checksum-delete'){$error_no = 12;}
 	elsif ($error eq 'invalid-options'){$error_no = 13;$br=''}
 	elsif ($error eq 'unsupported-option'){$error_no = 8;$br=''}
@@ -893,7 +959,7 @@ sub check_in_out_types {
 		print main::dotify("Checking input and output types");
 	}
 	if ((!$b_checksum && $INPUT_TYPE !~ m/^(flac|raw|shn|wav)$/i) ||
-	 ($b_checksum && $INPUT_TYPE !~ m/^(flac)$/i)){
+	 (($b_checksum || $b_autotag) && $INPUT_TYPE !~ m/^(flac)$/i)){
 		$b_error = 1;
 		$error_message .= "\n  The input type you entered is not supported: ";
 		$error_message .= "$INPUT_TYPE";
@@ -1013,6 +1079,15 @@ sub check_application_paths {
 			$b_error = 1;
 			$error_message .= "\n  $COMMAND_METAFLAC not found. Required to generate ";
 			$error_message .= "ffp checksum files.";
+		}
+	}
+	elsif ($b_autotag){
+		$app_paths .= "$COMMAND_METAFLAC ";
+		# Added: Odd @2011-03-23 01:55:28
+		if ( ! -x "$COMMAND_METAFLAC" ) {
+			$b_error = 1;
+			$error_message .= "\n  $COMMAND_METAFLAC not found. Required to auto-tag ";
+			$error_message .= "collection files.";
 		}
 	}
 	if ( $b_error ) {
