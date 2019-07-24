@@ -310,6 +310,7 @@ sub process_tags {
 		}
 		elsif ($working[0] eq 'FILE'){
 			print "Tagging \"$working[1]\"... ";
+			main::error_handler('file-missing',"Missing file: $working[1]",1) if ! -e "$working[1]";
 			# note: must be set here, not in qx to avoid quote errors
 			$cmd = "$COMMAND_METAFLAC --remove-all-tags \"$working[1]\"";
 			say $cmd if $LOG_LEVEL > 3;
@@ -838,7 +839,7 @@ sub globber {
 # note: chomp has to chomp the entire action, not just <$fh>
 sub reader {
 	my ($file,$strip) = @_;
-	open( my $fh, '<', $file ) or error_handler('open-failed', $file, $!);
+	open( my $fh, '<', $file ) or error_handler('open', $file, $!);
 	chomp(my @rows = <$fh>);
 	if ($strip && @rows){
 		@rows = grep {!/^\s*#|^\s*$/} @rows;
@@ -911,7 +912,6 @@ sub error_handler {
 	state $b_valid = 1;
 	state $error_no = 0;
 	if ($error eq 'unsupported-type'){$error_no = 2;$b_valid=0;}
-	
 	elsif ($error eq 'dest-dir'){$error_no = 1;$b_valid=0;}
 	elsif ($error eq 'dest-eq-src-dir'){$error_no = 9;$b_valid=0;$br=''}
 	elsif ($error eq 'missing-app'){$error_no = 3;$b_valid=0;}
@@ -919,7 +919,8 @@ sub error_handler {
 	elsif ($error eq 'bad-level'){$error_no = 5;$b_valid=0;}
 	elsif ($error eq 'bad-fork'){$error_no = 9;$b_valid=0;}
 	elsif ($error eq 'bad-nlink'){$error_no = 9;$b_valid=0;}
-	elsif ($error eq 'open'){$error_no = 12;}
+	elsif ($error eq 'open'){$error_no = 14;}
+	elsif ($error eq 'file-missing'){$error_no = 15;}
 	elsif ($error eq 'stat-infile'){$error_no = 6;}
 	elsif ($error eq 'missing-arg'){$error_no = 7;
 		$message = "Option: $message";$br=''}
