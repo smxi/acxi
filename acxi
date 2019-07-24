@@ -55,6 +55,7 @@ use feature 'state';
 use Getopt::Long qw(GetOptions);
 Getopt::Long::Configure ('bundling', 'no_ignore_case', 
 'no_getopt_compat', 'no_auto_abbrev','pass_through');
+use File::Basename;
 use File::stat;
 use File::Find;
 use File::Copy qw(copy);
@@ -71,8 +72,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.3';
-my $SELF_DATE = '2019-07-23';
+my $SELF_VERSION = '3.2.4';
+my $SELF_DATE = '2019-07-24';
 
 ## GLOBALS ##
 my ($b_autotag,$b_dest_changed,$b_checksum,$b_checksum_delete,
@@ -82,6 +83,8 @@ my ($quality,$silent_flac,$silent_flac_out,$silent_lame,
 $silent_opus) = (7,'','','','');
 my ($extension,@extension_list,@found_list,$list_type);
 my ($b_check_dest,$b_check_out,$b_sync,$b_unlink_checksums) = (1,1,1,1);
+my $b_win = ($^O =~ /win/i) ? 1 : 0; # detect if $^O returns windows 
+my $path_separator = ($b_win) ? '\\': '/';
 
 ## CONSTANTS ##
 my $line_heavy = "===========================================================================\n";
@@ -263,8 +266,9 @@ sub get_tag_files {
 	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
 	foreach $item (@found_list) {
 		$print_file = $working_dir = $item;
-		$print_file =~ s|^$SOURCE_DIRECTORY/|| if $LOG_LEVEL < 3;
-		$working_dir =~ s/[^\/]+$//;
+		$print_file =~ s|^$SOURCE_DIRECTORY$path_separator|| if $LOG_LEVEL < 3;
+		# $working_dir =~ s/[^\/]+$//;
+		$working_dir = File::Basename::dirname($item);
 		chdir "$working_dir";
 		if ($LOG_LEVEL > 3){
 			say Cwd::getcwd();
@@ -352,7 +356,7 @@ sub process_directories {
 	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
 	foreach $item (@found_list) {
 		$print_src = $item;
-		$print_src =~ s|^$SOURCE_DIRECTORY/|| if $LOG_LEVEL < 3;
+		$print_src =~ s|^$SOURCE_DIRECTORY$path_separator|| if $LOG_LEVEL < 3;
 		#if ($LOG_LEVEL > 2){
 		#	say Cwd::getcwd();
 		#	system 'pwd';
@@ -408,7 +412,7 @@ sub generate_checksums {
 		chomp (@output);
 		if (!$b_test){
 			main::writer("$FFP_FILE.ffp",\@output);
-			print "created\n" ;
+			say "created" ;
 		}
 		else {
 			print "\n", join( "\n", @output),"\n";
@@ -423,10 +427,10 @@ sub delete_checksums {
 	foreach my $file (@checksums){
 		print "  Deleting $file: ";
 		if ($b_test){
-			print "test deletion\n";
+			say "test deletion";
 		}
 		elsif (unlink($file)){
-			print "deleted\n";
+			say "deleted";
 		}
 		else {
 			main::error_handler('checksum-delete', "Failed to delete: $file");
@@ -553,9 +557,9 @@ sub update_directories {
 		#print "\nd1:$dir\n";
 		$result = 'UNSET';
 		next if $dir eq $SOURCE_DIRECTORY || $dir eq $DESTINATION_DIRECTORY;
-		$dir =~ s|^$SOURCE_DIRECTORY/||; # strip out source path
+		$dir =~ s|^$SOURCE_DIRECTORY$path_separator||; # strip out source path
 		next if !$dir;
-		$dest_dir = "$DESTINATION_DIRECTORY/$dir";
+		$dest_dir = "$DESTINATION_DIRECTORY$path_separator$dir";
 		#print "d2:$dir\n";
 		# check to see if the destination dir already exists
 		if ( ! stat("$dest_dir") ) {
@@ -645,8 +649,8 @@ sub copy_file {
 	my ($file, $src_file, $dest_file) = @_;
 	my $result = 'UNSET';
 	my ($src_print,$dest_print) = ($src_file, $dest_file);
-	$src_print =~ s|^$SOURCE_DIRECTORY/|| if $LOG_LEVEL < 3;
-	$dest_print =~ s|^$DESTINATION_DIRECTORY/|| if $LOG_LEVEL < 3;
+	$src_print =~ s|^$SOURCE_DIRECTORY$path_separator|| if $LOG_LEVEL < 3;
+	$dest_print =~ s|^$DESTINATION_DIRECTORY$path_separator|| if $LOG_LEVEL < 3;
 	eval $print_line_small;
 	if ( $LOG_LEVEL > 1 ) {
 		print "COPY: $src_print ==> \n";
@@ -672,7 +676,7 @@ sub convert_file {
 	$src_file =~ s/\$/\\\$/g;
 	$dest_file =~ s/\$/\\\$/g;
 	$src_print =~ s|^$SOURCE_DIRECTORY/|| if $LOG_LEVEL < 3;
-	$dest_print =~ s|^$DESTINATION_DIRECTORY/|| if $LOG_LEVEL < 3;
+	$dest_print =~ s|^$DESTINATION_DIRECTORY$path_separator|| if $LOG_LEVEL < 3;
 	# with forking, the printing gets messed up unless it's done 
 	# just like this.
 	if (!$b_fork){
