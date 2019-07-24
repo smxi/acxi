@@ -2,8 +2,9 @@
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
-\fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-basic\fR] [\fB\-\-checksum\fR] 
-[\fB\-\-checksum\-delete\fR] [\fB\-\-clean\fR] [\fB\-c\fR extensions] 
+\fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-autotag\fR] [\fB\-\-basic\fR] 
+[\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] [\fB\-\-clean\fR] 
+[\fB\-c\fR extensions] 
 [\fB\-d\fR destination-path] [\fB\-f\fR] [\fB\-\-fork\fR 0-xx] 
 [\fB\-\-full\fR] [\fB\-h\fR] [\fB\-i\fR {flac|raw|shn|wave}] 
 [\fB\-\-log\fR {0-3}] [\fB\-\-nlink\fR] [\fB\-\-no\-nlink\fR] 
@@ -73,6 +74,14 @@ over a specific file type for one sync action without
 having to make a full list with \fB\-c\fR.
 
 Sample: \fBacxi \-a md5\fR will add md5 file type to copy list.
+
+.TP
+.B \-\-autotag\fR
+Requires specially formatted file, default name \fBauto.tag\fR, 
+to be put into each music collection directory. See the file for 
+explanations.
+
+FLAC files only currently, OGG/Opus may be added. 
 
 .TP
 .B \-\-basic\fR

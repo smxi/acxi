@@ -77,7 +77,7 @@ my $SELF_DATE = '2019-07-24';
 
 ## GLOBALS ##
 my ($b_autotag,$b_dest_changed,$b_checksum,$b_checksum_delete,
-$b_clean,$b_delete_tags,$b_force,$b_fork,$b_quiet,$b_test);
+$b_clean,$b_force,$b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
 my ($quality,$silent_flac,$silent_flac_out,$silent_lame,
 $silent_opus) = (7,'','','','');
@@ -1285,6 +1285,8 @@ sub print_help {
 	$output .= "Syncing options:\n";
 	$output .= "--append, -a      Add extenssion type(s) to existing extension copy list.\n";
 	$output .= "                  1 or more, comma separated, no spaces.\n";
+	$output .= "--autotag         Requires auto.tag formatted file in each directory. Flac only.\n";
+	$output .= "                  Deletes all existing tags, then creates a fully tagged set of files.\n";
 	$output .= "--clean           Clean directories and files from destination not found in\n";
 	$output .= "                  source music directory. Will show you directories/files to\n";
 	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
@@ -1506,7 +1508,7 @@ sub get_options{
 	"a|append:s" => sub { 
 		my ($opt,$arg) = @_;
 		$COPY_TYPES .= ',' . $arg if $arg;},
-	"auto-tag" => sub { 
+	"autotag" => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$b_autotag = 1;
@@ -1581,8 +1583,6 @@ sub get_options{
 	"quiet|silent" => sub { 
 		$b_quiet = 1; 
 		$LOG_LEVEL = 0 },
-	"tag-delete" => sub { 
-		$b_delete_tags = 1 },
 	"test" => sub { 
 		$LOG_LEVEL = 3;
 		$b_test = 1 },
