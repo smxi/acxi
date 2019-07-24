@@ -71,12 +71,12 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.2';
-my $SELF_DATE = '2019-07-21';
+my $SELF_VERSION = '3.2.3';
+my $SELF_DATE = '2019-07-23';
 
 ## GLOBALS ##
-my ($b_dest_changed,$b_checksum,$b_checksum_delete,$b_clean,$b_force,
-$b_fork,$b_quiet,$b_test);
+my ($b_autotag,$b_dest_changed,$b_checksum,$b_checksum_delete,
+$b_clean,$b_delete_tags,$b_force,$b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
 my ($quality,$silent_flac,$silent_flac_out,$silent_lame,
 $silent_opus) = (7,'','','','');
@@ -148,6 +148,13 @@ my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
 # These are the file names MINUS the .ffp / .md5 extensions.
 my $FFP_FILE='fingerprints';
 my $MD5_FILE='md5sums';
+
+#### -------------------------------------------------------------------
+#### AUTO TAGGING
+#### -------------------------------------------------------------------
+# This is the file that contains the syntax found in auto.tag file. But
+# you can call it something else if you prefer.
+my $TAG_FILE='auto.tag';
 
 #### -------------------------------------------------------------------
 #### INPUT/OUTPUT
@@ -235,6 +242,38 @@ sub main {
 #########################################################################
 
 #### -------------------------------------------------------------------
+#### AUTO-TAGGING
+#### -------------------------------------------------------------------
+
+## package AutoTag 
+{
+package AutoTag;
+sub run {
+	print $line_large;
+	process_tags();
+	print $line_small;
+	print "Completed auto-tagging.\n";
+	print $line_large;
+}
+sub process_tags {
+	my (@files,$item,$print_src,$result,$working_dir);
+	$list_type = 'file';
+	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
+	foreach $item (@found_list) {
+		$print_src = $working_dir = $item;
+		$print_src =~ s|^$SOURCE_DIRECTORY/|| if $LOG_LEVEL < 3;
+		$working_dir =~ s/[^\/]+$//;
+		chdir "$working_dir";
+		if ($LOG_LEVEL > 3){
+			say Cwd::getcwd();
+			system 'pwd';
+		}
+	}
+}
+## end of AutoTag
+}
+
+#### -------------------------------------------------------------------
 #### CHECKSUMS
 #### -------------------------------------------------------------------
 
@@ -255,31 +294,29 @@ sub process_directories {
 	print $line_small;
 	print "Checking directories...\n";
 	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
-	if (@found_list){
-		foreach $item (@found_list) {
-			$print_src = $item;
-			$print_src =~ s|^$SOURCE_DIRECTORY/|| if $LOG_LEVEL < 3;
-			#if ($LOG_LEVEL > 2){
-			#	say Cwd::getcwd();
-			#	system 'pwd';
-			#}
-			chdir "$item";
-			if ($LOG_LEVEL > 3){
-				say Cwd::getcwd();
-				system 'pwd';
-			}
-			print "$print_src...\n";
-			@files = main::globber("*.{flac,FLAC}");
-			#print "\n", Data::Dumper::Dumper @files, "\n";
-			if (@files){
-				print " Processing...\n";
-				delete_checksums() if $b_checksum_delete;
-				generate_checksums();
-				$b_dest_changed = 1;
-			}
-			else {
-				print " No $INPUT_TYPE files\n";
-			}
+	foreach $item (@found_list) {
+		$print_src = $item;
+		$print_src =~ s|^$SOURCE_DIRECTORY/|| if $LOG_LEVEL < 3;
+		#if ($LOG_LEVEL > 2){
+		#	say Cwd::getcwd();
+		#	system 'pwd';
+		#}
+		chdir "$item";
+		if ($LOG_LEVEL > 3){
+			say Cwd::getcwd();
+			system 'pwd';
+		}
+		print "$print_src...\n";
+		@files = main::globber("*.{flac,FLAC}");
+		#print "\n", Data::Dumper::Dumper @files, "\n";
+		if (@files){
+			print " Processing...\n";
+			delete_checksums() if $b_checksum_delete;
+			generate_checksums();
+			$b_dest_changed = 1;
+		}
+		else {
+			print " No $INPUT_TYPE files\n";
 		}
 	}
 }
@@ -649,11 +686,15 @@ sub convert_file {
 sub flac2mp3_cmd {
 	my ($i_file, $o_file) = @_;
 	my %tags = get_flac_tags("$i_file");
+	my $lame_params = '';
 	# print Dumper \%tags;
 	if ($tags{'TRACKNUMBER'} && $tags{'TRACKTOTAL'}){
 		$tags{'TRACKNUMBER'} .= "/$tags{'TRACKTOTAL'}";
 	}
-	my $lame_params = "--ta \"$tags{'ARTIST'}\" --tl \"$tags{'ALBUM'}\"";
+	if ($tags{'DISKNUMBER'}){
+		$lame_params .= "--tv \"DISKNUMBER=$tags{'DISKNUMBER'}\" ";
+	}
+	$lame_params .= " --ta \"$tags{'ARTIST'}\" --tl \"$tags{'ALBUM'}\"";
 	$lame_params .= " --tt \"$tags{'TITLE'}\" --tg \"$tags{'GENRE'}\"";
 	$lame_params .= " --ty \"$tags{'DATE'}\" --tn \"$tags{'TRACKNUMBER'}\" - \"$o_file\"";
 	# $lame_params .= " --tt \"$tags{'TRACKTOTAL'}\" --tg \"$tags{'DISKNUMBER'}\"";
@@ -735,6 +776,7 @@ sub wanted {
 		}
 		elsif ($list_type eq 'file') {
 			return if -d; # skip directories
+			return if $b_autotag && $File::Find::name !~ /$TAG_FILE$/;
 			return if $File::Find::name !~ /\.$extension$/i;
 		}
 	}
@@ -801,7 +843,7 @@ sub error_handler {
 		$message = "Option: $message";$br=''}
 	elsif ($error eq 'checksum-generate'){$error_no = 11;}
 	elsif ($error eq 'checksum-delete'){$error_no = 12;}
-	elsif ($error eq 'checksum-bad-action'){$error_no = 13;$br=''}
+	elsif ($error eq 'invalid-options'){$error_no = 13;$br=''}
 	elsif ($error eq 'unsupported-option'){$error_no = 8;$br=''}
 	elsif ($error eq 'missing-perl-module'){$error_no = 10;
 		$message = "Perl Module not found in system: $message";}
@@ -1359,6 +1401,7 @@ sub assign_value {
 	elsif ($var eq 'FORK'){$FORK = $value}
 	elsif ($var eq 'FFP_FILE'){$FFP_FILE = $value}
 	elsif ($var eq 'MD5_FILE'){$MD5_FILE = $value}
+	elsif ($var eq 'TAG_FILE'){$TAG_FILE = $value}
 }
 # end ConfigData
 }
@@ -1371,6 +1414,15 @@ sub get_options{
 	"a|append:s" => sub { 
 		my ($opt,$arg) = @_;
 		$COPY_TYPES .= ',' . $arg if $arg;},
+	"auto-tag" => sub { 
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		$b_autotag = 1;
+		$b_sync = 0;
+		$b_clean = 0;
+		$b_checksum = 0;
+		$OUTPUT_TYPE = 'UNSET';
+		},
 	"basic|default" => sub { 
 		$LOG_LEVEL = 1 },
 	"checksum" => sub { 
@@ -1379,6 +1431,7 @@ sub get_options{
 		$b_checksum = 1;
 		$b_sync = 0;
 		$b_clean = 0;
+		$b_autotag = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	"checksum-delete" => sub { 
@@ -1436,6 +1489,8 @@ sub get_options{
 	"quiet|silent" => sub { 
 		$b_quiet = 1; 
 		$LOG_LEVEL = 0 },
+	"tag-delete" => sub { 
+		$b_delete_tags = 1 },
 	"test" => sub { 
 		$LOG_LEVEL = 3;
 		$b_test = 1 },
@@ -1447,9 +1502,13 @@ sub get_options{
 		my ($opt) = @_;
 		error_handler('unsupported-option', "Unsupported option: $opt",1); }
 	);
-	if ($b_checksum && ($b_sync || $b_clean)){
-		error_handler('checksum-bad-action', 
-		 "You cannot use --checksum with any clean or sync options.",1);
+	if ($b_checksum && ($b_sync || $b_clean || $b_autotag)){
+		error_handler('invalid-options', 
+		 "You cannot use --checksum with any clean, sync, or autotag options.",1);
+	}
+	if ($b_autotag && ($b_sync || $b_clean || $b_checksum)){
+		error_handler('invalid-options', 
+		 "You cannot use --auto-tag with any clean, sync, or checksum options.",1);
 	}
 }
 
