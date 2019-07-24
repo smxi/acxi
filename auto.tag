@@ -1,11 +1,16 @@
-## NOTE%: any item left blank will not create a tag for that item.
+## To be used with acxi auto-tag feature, or any other program that
+## supports this autotag file syntax.
+## NOTE: any item left blank will not create a tag for that item.
 ## If FILE is left blank, that track file will not be tagged.
+## Any collection/recording info item can be used more than 1 time,
+## though some shouldn't be. For per track or track block items, reset
+## values between track blocks to set the subsequent blocks for the new
+## values, like DISCNUMBER%:, PERFORMER%:, DATE%:, YEAR%:
 
 ## COLLECTION/RECORDING INFORMATION ##
 ALBUM%:
-# repeat ARTIST if multiartist, 1 artist per.
 ARTIST%:
-# Repeat, 1 line per COMMENT, will be combined.
+# repeat: 1 line per COMMENT, will be combined.
 COMMENT%:
 COMPOSER%:
 CONDUCTOR%:
@@ -17,6 +22,7 @@ GENRE%:
 LABEL%:
 LOCATION%:
 ORGANIZATION%:
+# repeat: 1 performer per entry.
 PERFORMER%:
 PUBLISHER%:
 # 0 to 100, yields 0-5 stars usually, 1 star = 20.
