@@ -1,4 +1,4 @@
-.TH ACXI 1 "2019\-07\-21" acxi "acxi manual"
+.TH ACXI 1 "2019\-07\-24" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -47,6 +47,8 @@ version 3, which should make acxi fully platform agnostic.
 MP3 encoding does not support wav or raw formats).
   
 \fBSHN \-> \fBFLAC\fR conversion requires the codec \fBshorten\fR and \fBffmpeg\fR.
+
+\fB\-\-autotag\fR requires \fBmetaflac\fR for tagging.
 
 \fB\-\-checksum\fR requires \fBffmpeg\fR and \fBmd5sum\fR (or any comparable 
 program that generates md5sums). md5 generating logic may be moved to straight 
@@ -382,6 +384,14 @@ the largest file size / highest quality.
 
 \fBQUALITY_OPUS\fR \- Sample: \fBQUALITY_OPUS=256\fR Supported values: 6\-256. 
 256 is the largest file size / highest quality / best bitrate.
+
+.TP
+.B AUTO\-TAGGING
+These only apply to the \fB\-\-autotag\fR option, and set a different name 
+for the default auto.tag filename. The filename must be unique and never 
+occur in your music collection files.
+
+\fBTAG_FILE\fR \- Sample: \fBTAG_FILE=autotags.tag\fR 
 
 .TP
 .B CHECKSUMS

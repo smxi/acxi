@@ -90,6 +90,9 @@ version 3, which should make acxi fully platform agnostic.
   
 * SHN -> FLAC conversion requires the codec 'shorten' and ffmpeg.
 
+* autotag requires metaflac plus a specially formatted auto.tag file 
+placed inside each album/collection directory.
+
 * checksum generation requires metaflac and md5sum (or a comparable
 md5 generating command line utility).
 
