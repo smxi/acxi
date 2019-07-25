@@ -1,4 +1,4 @@
-.TH ACXI 1 "2019\-07\-24" acxi "acxi manual"
+.TH ACXI 1 "2019\-07\-25" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -27,7 +27,8 @@ a configuration file, or the \fB\-c\fR or \fB\-a\fR options..
 The destination directory cannot be the same as the source directory, but
 it can be inside of the source directory.
 
-It can also generate md5 and ffp checksum files if required.
+It can also generate md5 and ffp checksum files if required, as well
+as tag using \fBauto.tag\fR method.
 
 \fBacxi\fR runs pretests on each start to make sure input and output
 directories are valid, conversion programs for input and output formatting
@@ -48,7 +49,7 @@ MP3 encoding does not support wav or raw formats).
   
 \fBSHN \-> \fBFLAC\fR conversion requires the codec \fBshorten\fR and \fBffmpeg\fR.
 
-\fB\-\-autotag\fR requires \fBmetaflac\fR for tagging.
+\fB\-\-autotag\fR requires \fBmetaflac\fR for \fBVORBIS\fR tagging.
 
 \fB\-\-checksum\fR requires \fBffmpeg\fR and \fBmd5sum\fR (or any comparable 
 program that generates md5sums). md5 generating logic may be moved to straight 
@@ -83,7 +84,11 @@ Requires specially formatted file, default name \fBauto.tag\fR,
 to be put into each music collection directory. See the file for 
 explanations.
 
-FLAC files only currently, OGG/Opus may be added. 
+FLAC input files only. OGG/Opus may be added. Will search source 
+directory for \fBauto.tag\fR and update each collection/album that
+has that file present with the tagging information contained in it.
+
+See github acxi page for a blank sample file.
 
 .TP
 .B \-\-basic\fR
@@ -278,7 +283,7 @@ Test your configurations without actually doing the copy and sync
 operations. Activates \fB \-\-full\fR as well for more complete output.
                   
 .TP
-.B  \-V\fR, \fB\-\-verbose\fR
+.B  \-\-verbose\fR
 Without full verbosity of full, no flac/oggenc/opusenc/lame for mp3,
 ogg, or opus conversion process screen output, but more verbose than
 default. Same as \fB\-\-log 2\fR
@@ -293,6 +298,8 @@ You can see by running \fBacxi \-h\fR the configuration file locations.
 acxi will read its configuration/initialization files in the
 following order.
 
+.TP
+.B STANDARD DETECTION
 \fB/etc/acxi.conf\fR contains the default configurations. These can be 
 overridden by user configurations found in one of the following locations.
  If \fB$XDG_CONFIG_HOME/acxi.conf\fR exists, it use it, else if
@@ -302,16 +309,19 @@ the legacy location \fB$HOME/.acxi.conf\fR is used, i.e.:
 \fB$XDG_CONFIG_HOME/acxi.conf\fR > \fB$HOME/.conf/acxi.conf\fR >
 \fB$HOME/.acxi.conf\fR
 
+.TP
+.B MANUALLY SET
 \fB$CONFIG_DIRECTORY\fR \- Sample: 
 \fB$CONFIG_DIRECTORY='/path/to/configuration/directory'\fR
 
-NOTE: only use this if you are running Windows, or any OS without 
+NOTE: only use this method if you are running Windows, or any OS without 
 \fB$HOME\fR or \fB$XDG_CONFIG_HOME\fR environmental variables, or
 if you want the configuration file to be located somewhere else. 
 
 This value must be set on top of acxi in the \fBUSER MODIFIABLE VALUES\fR
 section because that is what it will use to locate the configuration file. 
-acxi will look for acxi.conf inside that directory. 
+acxi will look for acxi.conf inside that directory. This path value will
+override/ignore all other configuration files.
 
 .SH CONFIGURATION OPTIONS
 The following corresponds to the \fBUSER MODIFIABLE VALUES\fR section
@@ -328,9 +338,6 @@ The following set your system path for the required applications:
 \fBCOMMAND_LAME\fR \- Sample: \fBCOMMAND_LAME=/usr/bin/lame\fR (default path)
 
 \fBCOMMAND_METAFLAC\fR \- Sample: \fBCOMMAND_METAFLAC=/usr/bin/metaflac\fR 
-(default path) Metaflac is required ONLY for flac to mp3, to copy over the 
-ID3 tags If you are not going to make mp3s, only ogg or opus files for output, 
-you do not need this
 
 \fBCOMMAND_OGG\fR \- Sample: \fBCOMMAND_OGG=/usr/bin/oggenc\fR (default path)
 
@@ -389,9 +396,13 @@ the largest file size / highest quality.
 .B AUTO\-TAGGING
 These only apply to the \fB\-\-autotag\fR option, and set a different name 
 for the default auto.tag filename. The filename must be unique and never 
-occur in your music collection files.
+occur in any other context in your music collection files.
 
 \fBTAG_FILE\fR \- Sample: \fBTAG_FILE=autotags.tag\fR 
+
+\fBauto.tag\fR \- This file must be located inside of each album/collection
+directory you want to be autotagged. See github acxi page for a sample copy.
+This file contains all the tagging information following a pre-defined format.
 
 .TP
 .B CHECKSUMS

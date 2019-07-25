@@ -6,11 +6,18 @@
 ## though some shouldn't be. For per track or track block items, reset
 ## values between track blocks to set the subsequent blocks for the new
 ## values, like DISCNUMBER%:, PERFORMER%:, DATE%:, YEAR%:
+## Check tags: metaflac --list --block-type=VORBIS_COMMENT *.flac
 
 ## COLLECTION/RECORDING INFORMATION ##
 ALBUM%:
+# for tag based collections, 1 tag per artist so you can find 
+# them based on the tag.
 ARTIST%:
 # repeat: 1 line per COMMENT, will be combined.
+COMMENT%:
+COMMENT%:
+COMMENT%:
+COMMENT%:
 COMMENT%:
 COMPOSER%:
 CONDUCTOR%:
@@ -41,6 +48,9 @@ PUBLISHER%:
 # 0 to 100, yields 0-5 stars usually, 1 star = 20.
 RATING%:
 # could be useful for tapers and live concert data about source
+SOURCEMEDIA%:
+SOURCEMEDIA%:
+SOURCEMEDIA%:
 SOURCEMEDIA%:
 VENUE%:
 # YYYY

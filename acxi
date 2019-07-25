@@ -72,8 +72,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.5';
-my $SELF_DATE = '2019-07-24';
+my $SELF_VERSION = '3.2.6';
+my $SELF_DATE = '2019-07-25';
 
 ## GLOBALS ##
 my ($b_autotag,$b_dest_changed,$b_checksum,$b_checksum_delete,
@@ -295,7 +295,7 @@ sub process_tags {
 		print "@working\n" if $LOG_LEVEL > 3;
 		$working[1] =~ s/"/\\"/g;
 		
-		if ($working[0] =~ /^(TITLE|TRACKNUMBER|VERSION)$/){
+		if ($working[0] =~ /^(TITLE|TRACKNUMBER|VERSION|PART)$/){
 			$tag = "--set-tag=$working[0]=\"$working[1]\"";
 			push @track_tags, $tag;
 		}
@@ -1352,7 +1352,7 @@ sub print_help {
 	$output .= "--log             [0-4] Dynamically set LOG_LEVEL. Current value: $LOG_LEVEL\n";
 	$output .= "--quiet           Turns off all screen output, except for error messages.\n";
 	$output .= "                  Same as --log 0\n";
-	$output .= "--verbose, -V     Without full verbosity of full, no flac/lame/oggenc/opusenc\n";
+	$output .= "--verbose         Without full verbosity of full, no flac/lame/oggenc/opusenc\n";
 	$output .= "                  for conversion process screen output. More verbose than\n";
 	$output .= "                  --basic. Same as --log 2\n";
 	$output .= "--version, -v     Show $SELF_NAME version.\n";
