@@ -27,6 +27,10 @@ GENRE%:
 # 8: artist/performer; 15:during performance; 19: band/artist logo; 
 # FILE should be path from where auto.tag is located.
 # Sample: IMAGE%:3||||images/cover.jpg
+# WARNING: the image file data will be added to each music file, so
+# make sure to optimize the picture you are going to add a as much as 
+# possible, 75% jpeg quality at 400px width gives a good quality but 
+# small file size.
 IMAGE%:
 LABEL%:
 LOCATION%:
