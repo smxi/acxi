@@ -294,7 +294,10 @@ sub process_tags {
 		next if ! $working[1];
 		print "@working\n" if $LOG_LEVEL > 3;
 		$working[1] =~ s/"/\\"/g;
-		if ($working[0] =~ /^(TITLE|TRACKNUMBER|VERSION)$/){
+		if ($working[0] eq 'IMAGE'){
+		
+		}
+		elsif ($working[0] =~ /^(TITLE|TRACKNUMBER|VERSION)$/){
 			$tag = "--set-tag=$working[0]=\"$working[1]\"";
 			push @track_tags, $tag;
 		}

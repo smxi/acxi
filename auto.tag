@@ -19,6 +19,14 @@ DATE%:
 DESCRIPTION%:
 # Repeat if > 1 genre
 GENRE%:
+# creates image data in music file: 
+# [TYPE]|[MIME-TYPE]|[DESCRIPTION]|[WIDTHxHEIGHTxDEPTH[/COLORS]]|FILE
+# In general, you can leave mime-type, description, widthxheight blank, 
+# FILE and TYPE [number between 0-20, see docs] should be filled out.
+# Leave | in. 3:cover, front; 4:cover, back; 5:leaflet page; 
+# 8: artist/performer; 15:during performance; 19: band/artist logo; 
+# Sample: IMAGE%:3||||images/cover.jpg
+IMAGE%:
 LABEL%:
 LOCATION%:
 ORGANIZATION%:
