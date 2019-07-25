@@ -4,12 +4,13 @@ acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
 \fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-autotag\fR] [\fB\-\-basic\fR] 
 [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] [\fB\-\-clean\fR] 
-[\fB\-c\fR extensions] 
+[\fB\-c\fR extensions] [\fB\-\-debug\fR]
 [\fB\-d\fR destination-path] [\fB\-f\fR] [\fB\-\-fork\fR 0-xx] 
 [\fB\-\-full\fR] [\fB\-h\fR] [\fB\-i\fR {flac|raw|shn|wave}] 
 [\fB\-\-log\fR {0-3}] [\fB\-\-nlink\fR] [\fB\-\-no\-nlink\fR] 
 [\fB\-o\fR {flac|mp3|ogg|opus}] [\fB\-q\fR NUMBER] [\fB\-\-quiet\fR] 
-[\fB\-s\fR source\-path] [\fB\-V\fR] [\fB\-\-test\fR] [\fB\-v\fR]
+[\fB\-s\fR source\-path] [\fB\-\-verbose\fR] [\fB\-\-test\fR] 
+[\fB\-v\fR]
 
 .SH DESCRIPTION
 \fBacxi\fR is a command line audio conversion program. It converts 
@@ -44,8 +45,8 @@ version 3, which should make acxi fully platform agnostic.
 
 \fBOpus\fR encoding requires \fBopusenc\fR (Debian/Ubuntu package: \fBopus-tools\fR).
 
-\fBMP3\fR encoding requires: \fBlame\fR and \fBflac\fR. Source file must be a flac. 
-MP3 encoding does not support wav or raw formats).
+\fBMP3\fR encoding requires: \fBlame\fR and \fBflac\fR. Source file must be flac. 
+MP3 encoding does not support wav or raw input formats.
   
 \fBSHN \-> \fBFLAC\fR conversion requires the codec \fBshorten\fR and \fBffmpeg\fR.
 
