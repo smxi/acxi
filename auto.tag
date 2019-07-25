@@ -25,6 +25,7 @@ GENRE%:
 # FILE and TYPE [number between 0-20, see docs] should be filled out.
 # Leave | in. 3:cover, front; 4:cover, back; 5:leaflet page; 
 # 8: artist/performer; 15:during performance; 19: band/artist logo; 
+# FILE should be path from where auto.tag is located.
 # Sample: IMAGE%:3||||images/cover.jpg
 IMAGE%:
 LABEL%:
