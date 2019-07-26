@@ -1,4 +1,15 @@
 ===================================================================
+Date: 2019-07-24
+Version: 3.2.4
+-------------------------------------------------------------------
+More updates. 
+
+New Features:
+1. --autotag which uses a file, auto.tag, which follows a specific
+syntax to automatically generate tags for a recording/album. 
+Includes support for per track specifics, etc.
+
+===================================================================
 Date: 2019-07-21
 Version: 3.2.2
 -------------------------------------------------------------------
