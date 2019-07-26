@@ -1,5 +1,7 @@
 ## To be used with acxi auto-tag feature, or any other program that
 ## supports this autotag file syntax.
+## You can generate this file, with prefilled TRACK blocks including
+## file names using: acxi --autotag-create -s [recording folder].
 ## NOTE: any item left blank will not create a tag for that item.
 ## If FILE is left blank, that track file will not be tagged.
 ## Any collection/recording info item can be used more than 1 time,
@@ -8,28 +10,36 @@
 ## values, like DISCNUMBER%:, PERFORMER%:, DATE%:, YEAR%:
 ## Check tags: metaflac --list --block-type=VORBIS_COMMENT *.flac
 
-## COLLECTION/RECORDING INFORMATION ##
+## COLLECTION/RECORDING NAME/CREATORS ##
 ALBUM%:
 # name to sort under
 ALBUMSORT%:
+# Multi-Artist only
+ALBUMARTIST%:
 # for tag based collections, 1 tag per artist so you can find 
-# them based on the tag.
+# them based on the tag. Not same as PERFORMER, which is the people
+# who performed the piece, like members of the band.
 ARTIST%:
+COMPOSER%:
+# classical only
+CONDUCTOR%:
+OPUS%:
+# repeat: 1 performer per entry. For example members of band.
+PERFORMER%:
+PERFORMER%:
+PERFORMER%:
+PERFORMER%:
+
+## RECORDING COMMENTS. NOTE: COMMENT PREFERRED OVER DESCRIPTION ##
 # repeat: 1 line per COMMENT, will be combined.
 COMMENT%:
 COMMENT%:
 COMMENT%:
 COMMENT%:
 COMMENT%:
-COMPOSER%:
-CONDUCTOR%:
-# use iso format so it is consistent: YYYY-MM-DD
-DATE%:
 DESCRIPTION%:
-# tech info about the flac generation
-ENCODING%:
-# Repeat if > 1 genre
-GENRE%:
+
+## FILE DISPLAY IMAGES ##
 # creates image data in music file: 
 # [TYPE]|[MIME-TYPE]|[DESCRIPTION]|[WIDTHxHEIGHTxDEPTH[/COLORS]]|FILE
 # In general, you can leave mime-type, description, widthxheight blank, 
@@ -43,36 +53,43 @@ GENRE%:
 # possible, 75% jpeg quality at 400px width gives a good quality but 
 # small file size.
 IMAGE%:
-LABEL%:
-LOCATION%:
-# classical only
-OPUS%:
-ORGANIZATION%:
-# repeat: 1 performer per entry.
-PERFORMER%:
-PRODUCER%:
-PUBLISHER%:
+
+## RECORDING INFO ##
+# Repeat if > 1 genre
+GENRE%:
 # 0 to 100, yields 0-5 stars usually, 1 star = 20.
 RATING%:
+# Suggestion: use ISO format for consistent and sortable dates: YYYY-MM-DD
+DATE%:
+# Format: YYYY
+YEAR%:
+LOCATION%:
+VENUE%:
+LABEL%:
+PRODUCER%:
+PUBLISHER%:
+ORGANIZATION%:
+
+## TECHNICAL INFORMATION ##
+# tech info about the flac generation
+ENCODING%:
 # could be useful for tapers and live concert data about source
 SOURCE%:
 SOURCE%:
 SOURCE%:
 # the original media eg, tape, vinyl, cd, dat, etc.
 SOURCEMEDIA%:
-VENUE%:
-# YYYY
-YEAR%:
 
 ## DISK INFORMATION ##
+
+# only use if > 1 disks.
+DISCTOTAL%:
 # leave blank unless > 1 disks, some media players will show: 1.1
 # If a two or more disk set, place next one before the start of
 # the second disk track list, and so on.
 DISCNUMBER%:
 # for multidisc sets
 DISCSUBTITLE%:
-# only use if > 1 disks.
-DISCTOTAL%:
 # total per disc, not per collection
 TRACKTOTAL%:
 

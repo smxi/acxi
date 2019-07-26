@@ -72,12 +72,12 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.7';
-my $SELF_DATE = '2019-07-25';
+my $SELF_VERSION = '3.2.8';
+my $SELF_DATE = '2019-07-26';
 
 ## GLOBALS ##
-my ($b_autotag,$b_dest_changed,$b_checksum,$b_checksum_delete,
-$b_clean,$b_force,$b_fork,$b_quiet,$b_test);
+my ($b_autotag,$b_autotag_create,$b_dest_changed,$b_checksum,
+$b_checksum_delete,$b_clean,$b_force,$b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
 my ($quality,$silent_flac,$silent_flac_out,$silent_lame,
 $silent_opus) = (7,'','','','');
@@ -234,7 +234,8 @@ sub main {
 	set_display_data();
 	Validation::check_user_values();
 	set_basic_data();
-	AutoTag::run() if $b_autotag;
+	AutoTag::create_file() if $b_autotag_create;
+	AutoTag::run_tagger() if $b_autotag;
 	CleanCollection::process_destination() if $b_clean;
 	SyncCollection::process_collection() if $b_sync;
 	Checksums::generate() if $b_checksum;
@@ -252,12 +253,20 @@ sub main {
 ## package AutoTag 
 {
 package AutoTag;
-sub run {
+sub run_tagger {
 	print $line_large;
 	print "Starting auto-tagging in $SOURCE_DIRECTORY...\n";
 	get_tag_files();
 	print $line_small;
 	print "Completed auto-tagging.\n";
+	print $line_large;
+}
+sub create_file {
+	print $line_large;
+	print "Creating $TAG_FILE in $SOURCE_DIRECTORY...\n";
+	make_file();
+	print $line_small;
+	print "Completed file creation.\n";
 	print $line_large;
 }
 sub get_tag_files {
@@ -266,7 +275,7 @@ sub get_tag_files {
 	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
 	foreach $item (@found_list) {
 		$print_file = $working_dir = $item;
-		$print_file =~ s|^$SOURCE_DIRECTORY$path_separator|| if $LOG_LEVEL < 3;
+		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
 		# $working_dir =~ s/[^\/]+$//;
 		$working_dir = File::Basename::dirname($item);
 		chdir "$working_dir";
@@ -330,11 +339,13 @@ sub process_tags {
 			# single quotes, in case contains $ symbol
 			#say "$working[1]";
 			$cmd = qq($COMMAND_METAFLAC --remove-all-tags "$working[1]");
-			say $cmd if $LOG_LEVEL > 3;
-			qx($cmd);
-			if ($? > 0){
-				$error_message = "$COMMAND_METAFLAC returned error: $?";
-				main::error_handler('application-error', $error_message,1);
+			print "\n", $cmd, "\n" if $LOG_LEVEL > 3;
+			if (!$b_test){
+				qx($cmd);
+				if ($? > 0){
+					$error_message = "$COMMAND_METAFLAC returned error: $?";
+					main::error_handler('application-error', $error_message,1);
+				}
 			}
 			@track_tags = (@main_tags,@track_tags);
 			$args = join ' ', @track_tags;
@@ -344,15 +355,96 @@ sub process_tags {
 				$set{$_} = 0;
 			}
 			$cmd = qq($COMMAND_METAFLAC $args "$working[1]");
-			say $cmd if $LOG_LEVEL > 3;
+			print "\n", $cmd, "\n" if $LOG_LEVEL > 3;
 			$b_tracks = 1;
-			qx($cmd);
-			if ($? > 0){
-				$error_message = "$COMMAND_METAFLAC returned error: $?";
-				main::error_handler('application-error', $error_message,1);
+			if (!$b_test){
+				qx($cmd);
+				if ($? > 0){
+					$error_message = "$COMMAND_METAFLAC returned error: $?";
+					main::error_handler('application-error', $error_message,1);
+				}
+				say 'tagged';
 			}
-			say 'tagged';
+			
 		}
+	}
+}
+sub make_file {
+	my ($file,@files);
+	chdir $SOURCE_DIRECTORY;
+	my $source_dir = $SOURCE_DIRECTORY;
+	#$source_dir =~ s|([\(\)\$])|\\$1|g;
+	$source_dir =~ s|^\Q$source_dir$path_separator\E||;
+	say $source_dir;
+	print "Checking for pre-existing $TAG_FILE... ";
+	if (-e $source_dir . $path_separator . $TAG_FILE){
+		main::error_handler('file-exists', "File $TAG_FILE already exists in:\n$source_dir",1);
+	}
+	else {
+		print "none found. Proceeding.\n";
+	}
+	if ($LOG_LEVEL > 3){
+		say Cwd::getcwd();
+		system 'pwd';
+	}
+	print "Creating $TAG_FILE file... ";
+	$extension = $INPUT_TYPE;
+	$list_type = 'file';
+	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
+	print "\n" if $LOG_LEVEL > 2;
+	foreach $file (@found_list) {
+		$b_dest_changed = 1;
+		$file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
+		say $file if $LOG_LEVEL > 2;
+		push @files, $file;
+	}
+	if (@files){
+		print "Processing.\n";
+		populate_file(\@files);
+	}
+	else {
+		print "No files found to process.\n";
+	}
+}
+sub populate_file {
+	my ($files) = @_;
+	my (@tags);
+	my @collection = (
+	'## Recording Name/Creators ##',
+	'ALBUM',
+	'# Name to sort under','ALBUMSORT',
+	'# Multi-Artist only','ALBUMARTIST',
+	'ARTIST','COMPOSER','CONDUCTOR','OPUS',
+	'PERFORMER','PERFORMER','PERFORMER','PERFORMER',
+	'## Recording comments. Note: COMMENT preferred ##',
+	'COMMENT','COMMENT','COMMENT','COMMENT','DESCRIPTION',
+	'## File Display Images ##',
+	'# Please see sample auto.tag file for more information on IMAGE',
+	'# Format: [TYPE]|[MIME-TYPE]|[DESCRIPTION]|[WIDTHxHEIGHTxDEPTH[/COLORS]]|FILE',
+	'# Example: IMAGE%:3||||images/cover.jpg', 
+	'IMAGE',
+	'## Recording Info ##',
+	'GENRE','RATING','DATE','YEAR','LOCATION','VENUE',
+	'LABEL','PRODUCER','PUBLISHER','ORGANIZATION',
+	'## Technical Information ##',
+	'ENCODING',
+	'# Useful for tapers etc','SOURCE','SOURCE','SOURCE',
+	'# Media recording taken from, eg, tape, dat, vinyl','SOURCEMEDIA',
+	);
+	my @disk = ('','# Disk info','DISCTOTAL','DISCNUMBER','DISCSUBTITLE','TRACKTOTAL');
+	my @track = ('', '# Track info','TRACKNUMBER','TITLE','VERSION','PART','FILE');
+	@tags = (@collection,@disk);
+	@tags = map {$_ = $_ . '%:' if /^[A-Z]/; $_;} @tags;
+	@track = map {$_ = $_ . '%:' if /^[A-Z]/; $_;} @track;
+	foreach (@$files){
+		local $track[6] = $track[6] . $_;
+		@tags = (@tags,@track);
+	}
+	if ($b_test){
+		print join "\n", @tags, "\n";
+	}
+	else {
+		main::writer($TAG_FILE,\@tags);
 	}
 }
 # --preserve-modtime --remove-all-tags --remove-tag
@@ -379,10 +471,10 @@ sub process_directories {
 	$list_type = 'dir';
 	print $line_small;
 	print "Checking directories...\n";
-	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
+	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 	foreach $item (@found_list) {
 		$print_src = $item;
-		$print_src =~ s|^$SOURCE_DIRECTORY$path_separator|| if $LOG_LEVEL < 3;
+		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
 		#if ($LOG_LEVEL > 2){
 		#	say Cwd::getcwd();
 		#	system 'pwd';
@@ -570,7 +662,7 @@ sub update_directories {
 	my ($b_created,$dest_dir,$dir,$result);
 	$list_type = 'dir';
 	@found_list = ();
-	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
+	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 	eval $print_line_large;
 	# print Dumper \@found_list;
 	if ( $LOG_LEVEL > 1 ) {
@@ -583,9 +675,9 @@ sub update_directories {
 		#print "\nd1:$dir\n";
 		$result = 'UNSET';
 		next if $dir eq $SOURCE_DIRECTORY || $dir eq $DESTINATION_DIRECTORY;
-		$dir =~ s|^$SOURCE_DIRECTORY$path_separator||; # strip out source path
+		$dir =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||; # strip out source path
 		next if !$dir;
-		$dest_dir = "$DESTINATION_DIRECTORY$path_separator$dir";
+		$dest_dir = $DESTINATION_DIRECTORY . $path_separator . $dir;
 		#print "d2:$dir\n";
 		# check to see if the destination dir already exists
 		if ( ! stat("$dest_dir") ) {
@@ -675,8 +767,8 @@ sub copy_file {
 	my ($file, $src_file, $dest_file) = @_;
 	my $result = 'UNSET';
 	my ($src_print,$dest_print) = ($src_file, $dest_file);
-	$src_print =~ s|^$SOURCE_DIRECTORY$path_separator|| if $LOG_LEVEL < 3;
-	$dest_print =~ s|^$DESTINATION_DIRECTORY$path_separator|| if $LOG_LEVEL < 3;
+	$src_print =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
+	$dest_print =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
 	eval $print_line_small;
 	if ( $LOG_LEVEL > 1 ) {
 		print "COPY: $src_print ==> \n";
@@ -701,8 +793,8 @@ sub convert_file {
 	$dest_file =~ s/"/\\"/g;
 	$src_file =~ s/\$/\\\$/g;
 	$dest_file =~ s/\$/\\\$/g;
-	$src_print =~ s|^$SOURCE_DIRECTORY/|| if $LOG_LEVEL < 3;
-	$dest_print =~ s|^$DESTINATION_DIRECTORY$path_separator|| if $LOG_LEVEL < 3;
+	$src_print =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
+	$dest_print =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
 	# with forking, the printing gets messed up unless it's done 
 	# just like this.
 	if (!$b_fork){
@@ -869,14 +961,14 @@ sub reader {
 sub wanted {
 	return if -l; # skip symbolic links
 	if ($list_type eq 'dir' || $list_type eq 'file'){
-		return if $File::Find::name =~ m/^$DESTINATION_DIRECTORY/;
+		return if $File::Find::name =~ m/^\Q$DESTINATION_DIRECTORY\E/;
 		return if $File::Find::name =~ m/\/\./; # skip any dot files/directories
 		if ($list_type eq 'dir'){
 			return if ! -d; # only directories
 		}
 		elsif ($list_type eq 'file') {
 			return if -d; # skip directories
-			return if $b_autotag && $File::Find::name !~ /$TAG_FILE$/;
+			return if $b_autotag && $File::Find::name !~ /\Q$TAG_FILE\E$/;
 			return if !$b_autotag && $File::Find::name !~ /\.$extension$/i;
 		}
 	}
@@ -888,7 +980,7 @@ sub wanted {
 			return if -d; # skip non directories
 		}
 		my $working = $File::Find::name;
-		$working =~ s|^$DESTINATION_DIRECTORY|$SOURCE_DIRECTORY|;
+		$working =~ s|^\Q$DESTINATION_DIRECTORY\E|$SOURCE_DIRECTORY|;
 		$working =~ s/\.$OUTPUT_TYPE$/\.$INPUT_TYPE/i if $list_type eq 'file-clean';
 		#print '1: ', "$File::Find::name\n$working\n";
 		return unless ! -e $working && -e $File::Find::name;
@@ -937,6 +1029,7 @@ sub error_handler {
 	elsif ($error eq 'bad-fork'){$error_no = 9;$b_valid=0;}
 	elsif ($error eq 'bad-nlink'){$error_no = 9;$b_valid=0;}
 	elsif ($error eq 'open'){$error_no = 14;}
+	elsif ($error eq 'file-exists'){$error_no = 16;}
 	elsif ($error eq 'file-missing'){$error_no = 15;}
 	elsif ($error eq 'stat-infile'){$error_no = 6;}
 	elsif ($error eq 'missing-arg'){$error_no = 7;
@@ -1030,11 +1123,11 @@ sub check_src_dest_directories {
 		eval $print_line_large;
 		print main::dotify("Checking source / destination directories");
 	}
-	if ( ! -d "$SOURCE_DIRECTORY" ){
+	if ( ! -d $SOURCE_DIRECTORY ){
 		$b_error = 1;
 		$missing_dirs .= "\n  Source Directory: $SOURCE_DIRECTORY";
 	}
-	if ( $b_check_dest && ! -d "$DESTINATION_DIRECTORY" ){
+	if ( $b_check_dest && ! -d $DESTINATION_DIRECTORY ){
 		$b_error = 1;
 		$missing_dirs .= "\n  Destination Directory: $DESTINATION_DIRECTORY";
 	}
@@ -1191,9 +1284,9 @@ sub check_log_level {
 	if ( $LOG_LEVEL > 0 ) {
 		print main::dotify("Checking log/screen output level");
 	}
-	if ( $LOG_LEVEL !~ m/^([0-3])$/ ) {
+	if ( $LOG_LEVEL !~ m/^([0-4])$/ ) {
 		$b_error = 1;
-		$error_message .= "\n  LOG_LEVEL only supports 0-3. ";
+		$error_message .= "\n  LOG_LEVEL only supports 0-4. ";
 		$error_message .= "You used: $LOG_LEVEL";
 	}
 	if ( $b_error ) {
@@ -1304,6 +1397,8 @@ sub print_help {
 	$output .= "                  1 or more, comma separated, no spaces.\n";
 	$output .= "--autotag         Requires auto.tag formatted file in each directory. Flac only.\n";
 	$output .= "                  Deletes all existing tags, then creates a fully tagged set of files.\n";
+	$output .= "--autotag-create  Create $TAG_FILE template in source directory. Will be populated\n";
+	$output .= "                  with file names for recording filled in already in track listing.\n";
 	$output .= "--clean           Clean directories and files from destination not found in\n";
 	$output .= "                  source music directory. Will show you directories/files to\n";
 	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
@@ -1529,6 +1624,17 @@ sub get_options{
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$b_autotag = 1;
+		$b_autotag_create = 0;
+		$b_sync = 0;
+		$b_clean = 0;
+		$b_checksum = 0;
+		$OUTPUT_TYPE = 'UNSET';
+		},
+	"autotag-create" => sub { 
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		$b_autotag_create = 1;
+		$b_autotag = 0;
 		$b_sync = 0;
 		$b_clean = 0;
 		$b_checksum = 0;
@@ -1611,13 +1717,17 @@ sub get_options{
 		my ($opt) = @_;
 		error_handler('unsupported-option', "Unsupported option: $opt",1); }
 	);
-	if ($b_checksum && ($b_sync || $b_clean || $b_autotag)){
+	if ($b_checksum && ($b_sync || $b_clean || $b_autotag || $b_autotag_create)){
 		error_handler('invalid-options', 
 		 "You cannot use --checksum with any clean, sync, or autotag options.",1);
 	}
-	if ($b_autotag && ($b_sync || $b_clean || $b_checksum)){
+	if ($b_autotag && ($b_sync || $b_clean || $b_checksum || $b_autotag_create)){
 		error_handler('invalid-options', 
-		 "You cannot use --auto-tag with any clean, sync, or checksum options.",1);
+		 "You cannot use --autotag with autotag-generate, clean, sync, or checksum options.",1);
+	}
+	if ($b_autotag_create && ($b_sync || $b_clean || $b_checksum || $b_autotag)){
+		error_handler('invalid-options', 
+		 "You cannot use --autotag-generate with autotag, clean, sync, or checksum options.",1);
 	}
 }
 
