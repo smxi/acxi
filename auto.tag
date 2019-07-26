@@ -10,6 +10,8 @@
 
 ## COLLECTION/RECORDING INFORMATION ##
 ALBUM%:
+# name to sort under
+ALBUMSORT%:
 # for tag based collections, 1 tag per artist so you can find 
 # them based on the tag.
 ARTIST%:
@@ -24,6 +26,8 @@ CONDUCTOR%:
 # use iso format so it is consistent: YYYY-MM-DD
 DATE%:
 DESCRIPTION%:
+# tech info about the flac generation
+ENCODING%:
 # Repeat if > 1 genre
 GENRE%:
 # creates image data in music file: 
@@ -41,16 +45,20 @@ GENRE%:
 IMAGE%:
 LABEL%:
 LOCATION%:
+# classical only
+OPUS%:
 ORGANIZATION%:
 # repeat: 1 performer per entry.
 PERFORMER%:
+PRODUCER%:
 PUBLISHER%:
 # 0 to 100, yields 0-5 stars usually, 1 star = 20.
 RATING%:
 # could be useful for tapers and live concert data about source
-SOURCEMEDIA%:
-SOURCEMEDIA%:
-SOURCEMEDIA%:
+SOURCE%:
+SOURCE%:
+SOURCE%:
+# the original media eg, tape, vinyl, cd, dat, etc.
 SOURCEMEDIA%:
 VENUE%:
 # YYYY
@@ -61,6 +69,8 @@ YEAR%:
 # If a two or more disk set, place next one before the start of
 # the second disk track list, and so on.
 DISCNUMBER%:
+# for multidisc sets
+DISCSUBTITLE%:
 # only use if > 1 disks.
 DISCTOTAL%:
 # total per disc, not per collection
@@ -76,7 +86,7 @@ TRACKTOTAL%:
 # Samples: FILE%:track12.flac or: FILE%:Disc One/track12.flac
 # TITLE is track name
 # VERSION is if alternate mix, or whatever, eg, > 1 versions of same track
-# otherwise leave VERSION blank.
+# otherwise leave VERSION blank. eg: "live", "acoustic", "Radio Edit" "12 inch remix" 
 # Sample: 
 # TRACKNUMBER%:2
 # TITLE%:The Song We Love
