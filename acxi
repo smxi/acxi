@@ -72,7 +72,7 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.8';
+my $SELF_VERSION = '3.2.9';
 my $SELF_DATE = '2019-07-26';
 
 ## GLOBALS ##
@@ -399,6 +399,7 @@ sub make_file {
 		push @files, $file;
 	}
 	if (@files){
+		@files = sort @files; # can be a problem, if track number comes last!
 		print "Processing.\n";
 		populate_file(\@files);
 	}
@@ -431,8 +432,11 @@ sub populate_file {
 	'# Useful for tapers etc','SOURCE','SOURCE','SOURCE',
 	'# Media recording taken from, eg, tape, dat, vinyl','SOURCEMEDIA',
 	);
-	my @disk = ('','# Disk info','DISCTOTAL','DISCNUMBER','DISCSUBTITLE','TRACKTOTAL');
-	my @track = ('', '# Track info','TRACKNUMBER','TITLE','VERSION','PART','FILE');
+	my @disk = ('','## Disk info ##',
+	'DISCTOTAL','DISCNUMBER','DISCSUBTITLE',
+	'# Do not leave empty, this is per disk track totals for players','TRACKTOTAL');
+	my @track = ('', '## Track info - TRACKNUMBER and FILE required ##',
+	'TRACKNUMBER','TITLE','VERSION','PART','FILE');
 	@tags = (@collection,@disk);
 	@tags = map {$_ = $_ . '%:' if /^[A-Z]/; $_;} @tags;
 	@track = map {$_ = $_ . '%:' if /^[A-Z]/; $_;} @track;

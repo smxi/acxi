@@ -1,4 +1,23 @@
 ===================================================================
+Date: 2019-07-26
+Version: 3.2.8
+-------------------------------------------------------------------
+More Updates.
+
+New Feature:
+1. --autotag-create which creates an auto.tag file in the folder
+you are working on, prepopulated with track blocks with filenames
+already filled in.
+
+Bugs/Fixes:
+1. Found a long standing weakness that would result in some file
+paths/names containing regex characters, which would in some cases
+result in output or internal errors, failures to find paths.
+This has been corrected, and now all file trims use s/\Q$PATH\E// 
+escapes, which I didn't know about. Those prevent anything in the
+variables executing as a regex character. Easy fix!
+
+===================================================================
 Date: 2019-07-24
 Version: 3.2.4
 -------------------------------------------------------------------
