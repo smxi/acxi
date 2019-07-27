@@ -14,17 +14,17 @@
 ALBUM%:
 # name to sort under
 ALBUMSORT%:
-# Multi-Artist only
-ALBUMARTIST%:
 # for tag based collections, 1 tag per artist so you can find 
 # them based on the tag. Not same as PERFORMER, which is the people
 # who performed the piece, like members of the band.
 ARTIST%:
+# Multi-Artist only
+ALBUMARTIST%:
 COMPOSER%:
-# classical only
+# Classical fields
 CONDUCTOR%:
 OPUS%:
-# repeat: 1 performer per entry. For example members of band.
+# 1 performer per entry. For example members of band.
 PERFORMER%:
 PERFORMER%:
 PERFORMER%:
@@ -108,10 +108,11 @@ TRACKTOTAL%:
 # VERSION is if alternate mix, or whatever, eg, > 1 versions of same track
 # otherwise leave VERSION blank. eg: "live", "acoustic", "Radio Edit" "12 inch remix" 
 # Sample: 
-# TRACKNUMBER%:2
+# TRACKNUMBER%:4
 # TITLE%:The Song We Love
 # VERSION%:remix
-# FILE%:d1track2.flac
+# PART%:
+# FILE%:d2track4.flac
 
 TRACKNUMBER%:
 TITLE%:
