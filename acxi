@@ -310,7 +310,7 @@ sub process_tags {
 		}
 		elsif ($working[0] ne 'FILE') {
 			# delete all previous items for key, to avoid multi tagging
-			if ($b_tracks && !$set{$working[0]}){
+			if ($b_tracks && (!$set{$working[0]} || $working[1] eq 'UNSET')){
 				if ($working[0] eq 'IMAGE'){
 					@main_tags = grep {!/^--import-picture-from/} @main_tags;
 				}
@@ -437,6 +437,8 @@ sub populate_file {
 	'DISCTOTAL','DISCNUMBER','DISCSUBTITLE',
 	'# Do not leave empty, this is per disk track totals for players','TRACKTOTAL',
 	'', '## TRACK INFO ##', 
+	'# Use of any of above tags between track blocks will switch to the new value.',
+	'# To make the value empty use: UNSET as the field value.',
 	'# TRACKNUMBER and FILE required, title not known?: suggest TITLE%:Unknown ');
 	my @track = ('', 'TRACKNUMBER','TITLE','VERSION','PART','FILE');
 	@tags = (@collection,@disk);

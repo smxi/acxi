@@ -82,6 +82,7 @@ SOURCEMEDIA%:
 
 ## DISK INFORMATION ##
 
+
 # only use if > 1 disks.
 DISCTOTAL%:
 # leave blank unless > 1 disks, some media players will show: 1.1
@@ -93,8 +94,10 @@ DISCSUBTITLE%:
 # total per disc, not per collection
 TRACKTOTAL%:
 
-## TRACK INFORMATION ##
-
+## TRACK INFO ##
+# To make the value of any field above empty use: UNSET as the field value.
+#
+# TRACKNUMBER and FILE required, title not known?: suggest TITLE%:Unknown 
 # IMPORTANT: FILE%: must be last item per track because
 # that will trigger the actual writing of the tags/comments to the flac file.
 # TRACKNUMBER zero padded automatically. This is the per disk track number.
@@ -109,11 +112,6 @@ TRACKTOTAL%:
 # TITLE%:The Song We Love
 # VERSION%:remix
 # FILE%:d1track2.flac
-TRACKNUMBER%:
-TITLE%:
-VERSION%:
-PART%:
-FILE%:
 
 TRACKNUMBER%:
 TITLE%:
@@ -126,6 +124,13 @@ TITLE%:
 VERSION%:
 PART%:
 FILE%:
+
+TRACKNUMBER%:
+TITLE%:
+VERSION%:
+PART%:
+FILE%:
+
 TRACKNUMBER%:
 TITLE%:
 VERSION%:
