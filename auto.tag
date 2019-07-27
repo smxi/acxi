@@ -1,4 +1,4 @@
-## To be used with acxi auto-tag feature, or any other program that
+## To be used with acxi autotag feature, or any other program that
 ## supports this autotag file syntax.
 ## You can generate this file, with prefilled TRACK blocks including
 ## file names using: acxi --autotag-create -s [recording folder].

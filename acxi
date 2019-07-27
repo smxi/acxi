@@ -72,20 +72,20 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.10';
-my $SELF_DATE = '2019-07-26';
+my $SELF_VERSION = '3.2.11';
+my $SELF_DATE = '2019-07-27';
 
 ## GLOBALS ##
-my ($b_autotag,$b_autotag_create,$b_dest_changed,$b_checksum,
-$b_checksum_delete,$b_clean,$b_force,$b_fork,$b_quiet,$b_test);
+my %run;
+$run{'sync'} = 1;
+my ($b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
 my ($quality,$silent_flac,$silent_flac_out,$silent_lame,
 $silent_opus) = (7,'','','','');
 my ($extension,@extension_list,@found_list,$list_type);
-my ($b_check_dest,$b_check_out,$b_sync,$b_unlink_checksums) = (1,1,1,1);
+my ($b_check_dest,$b_check_out) = (1,1);
 my $b_win = ($^O =~ /win/i) ? 1 : 0; # detect if $^O returns windows 
-my $path_separator = ($b_win) ? '\\': '/';
-
+my $path_separator = ($b_win) ? '\\' : '/';
 ## CONSTANTS ##
 my $line_heavy = "===========================================================================\n";
 my $line_small = "-----------------------------------------------------------------\n";
@@ -234,11 +234,11 @@ sub main {
 	set_display_data();
 	Validation::check_user_values();
 	set_basic_data();
-	AutoTag::create_file() if $b_autotag_create;
-	AutoTag::run_tagger() if $b_autotag;
-	CleanCollection::process_destination() if $b_clean;
-	SyncCollection::process_collection() if $b_sync;
-	Checksums::generate() if $b_checksum;
+	AutoTag::create_file() if $run{'autotag-create'};
+	AutoTag::run_tagger() if $run{'autotag'};
+	CleanCollection::process_destination() if $run{'clean'};
+	SyncCollection::process_collection() if $run{'sync'};
+	Checksums::generate() if $run{'checksum'};
 	print_completion_message();
 }
 
@@ -377,7 +377,10 @@ sub make_file {
 	$source_dir =~ s|^\Q$source_dir$path_separator\E||;
 	say $source_dir;
 	print "Checking for pre-existing $TAG_FILE... ";
-	if (-e $source_dir . $path_separator . $TAG_FILE){
+	if ($b_test){
+		print "Running test mode.\n";
+	}
+	elsif (-e $source_dir . $path_separator . $TAG_FILE){
 		main::error_handler('file-exists', "File $TAG_FILE already exists in:\n$source_dir",1);
 	}
 	else {
@@ -410,12 +413,12 @@ sub make_file {
 sub populate_file {
 	my ($files) = @_;
 	my (@tags);
+	my $counter=0;
 	my @collection = (
 	'## RECORDING NAME/CREATORS ##',
-	'ALBUM',
-	'# Name to sort under','ALBUMSORT',
-	'# Multi-Artist only','ALBUMARTIST',
-	'ARTIST','COMPOSER','CONDUCTOR','OPUS',
+	'ALBUM','# Name to sort under','ALBUMSORT',
+	'ARTIST','# Multi-Artist only','ALBUMARTIST',
+	'COMPOSER','# Classical fields','CONDUCTOR','OPUS',
 	'# Band members, etc.', 'PERFORMER','PERFORMER','PERFORMER','PERFORMER',
 	'## RECORDING COMMENTS. Note: COMMENT preferred ##',
 	'COMMENT','COMMENT','COMMENT','COMMENT','DESCRIPTION',
@@ -441,12 +444,19 @@ sub populate_file {
 	'# To make the value empty use: UNSET as the field value.',
 	'# TRACKNUMBER and FILE required, title not known?: suggest TITLE%:Unknown ');
 	my @track = ('', 'TRACKNUMBER','TITLE','VERSION','PART','FILE');
+	@collection = map {$_ .= '%:' if /^[A-Z]/; $_;} @collection;
+	@disk = map {$_ .= '%:' if /^[A-Z]/; $_;} @disk;
+	if ($run{'autotag-number'} && @$files){
+		@disk = map {$_ .= scalar (@$files) if $_ eq 'TRACKTOTAL%:'; $_;} @disk;
+	}
 	@tags = (@collection,@disk);
-	@tags = map {$_ = $_ . '%:' if /^[A-Z]/; $_;} @tags;
-	@track = map {$_ = $_ . '%:' if /^[A-Z]/; $_;} @track;
+	@track = map {$_ .= '%:' if /^[A-Z]/; $_;} @track;
 	foreach (@$files){
+		$counter++;
+		local $track[1] = $track[1] . $counter if $run{'autotag-number'};
 		local $track[5] = $track[5] . $_;
 		@tags = (@tags,@track);
+		
 	}
 	if ($b_test){
 		print join "\n", @tags, "\n";
@@ -497,7 +507,7 @@ sub process_directories {
 		#print "\n", Data::Dumper::Dumper @files, "\n";
 		if (@files){
 			print " Processing...\n";
-			delete_checksums() if $b_checksum_delete;
+			delete_checksums() if $run{'checksum-delete'};
 			generate_checksums();
 			$b_dest_changed = 1;
 		}
@@ -976,8 +986,8 @@ sub wanted {
 		}
 		elsif ($list_type eq 'file') {
 			return if -d; # skip directories
-			return if $b_autotag && $File::Find::name !~ /\Q$TAG_FILE\E$/;
-			return if !$b_autotag && $File::Find::name !~ /\.$extension$/i;
+			return if $run{'autotag'} && $File::Find::name !~ /\Q$TAG_FILE\E$/;
+			return if !$run{'autotag'} && $File::Find::name !~ /\.$extension$/i;
 		}
 	}
 	elsif ($list_type eq 'dir-clean' || $list_type eq 'file-clean'){
@@ -1093,8 +1103,8 @@ sub check_in_out_types {
 		eval $print_line_large;
 		print main::dotify("Checking input and output types");
 	}
-	if ((!$b_checksum && $INPUT_TYPE !~ m/^(flac|raw|shn|wav)$/i) ||
-	 (($b_checksum || $b_autotag) && $INPUT_TYPE !~ m/^(flac)$/i)){
+	if ((!$run{'checksum'} && $INPUT_TYPE !~ m/^(flac|raw|shn|wav)$/i) ||
+	 (($run{'checksum'} || $run{'autotag'}) && $INPUT_TYPE !~ m/^(flac)$/i)){
 		$b_error = 1;
 		$error_message .= "\n  The input type you entered is not supported: ";
 		$error_message .= "$INPUT_TYPE";
@@ -1200,7 +1210,7 @@ sub check_application_paths {
 			$error_message .= "ID3 tags from Flac to MP3.";
 		}
 	}
-	elsif ($b_checksum){
+	elsif ($run{'checksum'}){
 		$app_paths .= "$COMMAND_MD5 ";
 		# Added: Odd @2011-03-23 01:55:28
 		if ( ! -x "$COMMAND_MD5" ) {
@@ -1216,7 +1226,7 @@ sub check_application_paths {
 			$error_message .= "ffp checksum files.";
 		}
 	}
-	elsif ($b_autotag){
+	elsif ($run{'autotag'}){
 		$app_paths .= "$COMMAND_METAFLAC ";
 		# Added: Odd @2011-03-23 01:55:28
 		if ( ! -x "$COMMAND_METAFLAC" ) {
@@ -1403,10 +1413,6 @@ sub print_help {
 	$output .= "Syncing options:\n";
 	$output .= "--append, -a      Add extenssion type(s) to existing extension copy list.\n";
 	$output .= "                  1 or more, comma separated, no spaces.\n";
-	$output .= "--autotag         Requires auto.tag formatted file in each directory. Flac only.\n";
-	$output .= "                  Deletes all existing tags, then creates a fully tagged set of files.\n";
-	$output .= "--autotag-create  Create $TAG_FILE template in source directory. Will be populated\n";
-	$output .= "                  with file names for recording filled in already in track listing.\n";
 	$output .= "--clean           Clean directories and files from destination not found in\n";
 	$output .= "                  source music directory. Will show you directories/files to\n";
 	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
@@ -1438,10 +1444,21 @@ sub print_help {
 	$output .= "                  activates --full for more complete path outputs.\n";
 	$output .= $line_small;
 	$output .= "Specialized options:\n";
+	$output .= "--autotag         Requires auto.tag formatted file in each directory. Flac only.\n";
+	$output .= "                  Deletes all existing tags, then creates a fully tagged set of\n";
+	$output .= "                  files.\n";
+	$output .= "--autotag-create  Create $TAG_FILE template in source directory. Will be\n";
+	$output .= "                  populated with file names for recording filled in already in\n";
+	$output .= "                  track listing.\n";
+	$output .= "--autotag-create-single\n";
+	$output .= "                  For single disc recordings, will also add TRACKTOTAL and\n";
+	$output .= "                  TRACKNUMBER counts when creating and populating the\n";
+	$output .= "                  $TAG_FILE file.\n";
 	$output .= "--checksum        Create .ffp and .md5 checksum files in your source directory.\n";
 	$output .= "                  Checksum files are only created inside directories where flac\n";
-	$output .= "                  files are found. Use with --checksum-delete to delete existing\n";
-	$output .= "                  checksum files. Only flac type is supported.\n";
+	$output .= "                  files are found. Use --checksum-delete if you also want\n";
+	$output .= "                  to delete existing checksum files. Only flac type\n";
+	$output .= "                  is supported.\n";
 	$output .= "                  Do not use together with other cleaning/syncing options!\n";
 	$output .= "--checksum-delete Delete all existing .ffp, .md5, .ffp.txt, and md5.txt files\n";
 	$output .= "                  before creating the new checksum files. Files only deleted in\n";
@@ -1595,7 +1612,7 @@ sub assign_value {
 	elsif ($var eq 'CLEAN'){
 		$value =~ s/^(yes|1|true|enable|on)$/1/;
 		$value =~ s/^(no|0|false|disable|off)$/0/;
-		$b_clean = $value if $value =~ /^[10]$/;}
+		$run{'clean'} = $value if $value =~ /^[10]$/;}
 	elsif ($var eq 'SOURCE_DIRECTORY' || $var eq 'DIR_PREFIX_SOURCE'){
 		$SOURCE_DIRECTORY = $value;}
 	elsif ($var eq 'DESTINATION_DIRECTORY' || $var eq 'DIR_PREFIX_DEST'){
@@ -1631,21 +1648,32 @@ sub get_options{
 	"autotag" => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
-		$b_autotag = 1;
-		$b_autotag_create = 0;
-		$b_sync = 0;
-		$b_clean = 0;
-		$b_checksum = 0;
+		$run{'autotag'} = 1;
+		$run{'autotag-create'} = 0;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$run{'checksum'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	"autotag-create" => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
-		$b_autotag_create = 1;
-		$b_autotag = 0;
-		$b_sync = 0;
-		$b_clean = 0;
-		$b_checksum = 0;
+		$run{'autotag-create'} = 1;
+		$run{'autotag'} = 0;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$run{'checksum'} = 0;
+		$OUTPUT_TYPE = 'UNSET';
+		},
+	"autotag-create-single" => sub { 
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		$run{'autotag-create'} = 1;
+		$run{'autotag-number'} = 1;
+		$run{'autotag'} = 0;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$run{'checksum'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	"basic|default" => sub { 
@@ -1653,16 +1681,24 @@ sub get_options{
 	"checksum" => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
-		$b_checksum = 1;
-		$b_sync = 0;
-		$b_clean = 0;
-		$b_autotag = 0;
+		$run{'checksum'} = 1;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$run{'autotag'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	"checksum-delete" => sub { 
-		$b_checksum_delete = 1 },
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		$run{'checksum'} = 1;
+		$run{'checksum-delete'} = 1; 
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$run{'autotag'} = 0;
+		$OUTPUT_TYPE = 'UNSET';
+		},
 	"clean" => sub { 
-		$b_clean = 1 },
+		$run{'clean'} = 1 },
 	# accepts null value so users can not copy anything
 	"c|copy:s" => sub { 
 		my ($opt,$arg) = @_;
@@ -1725,15 +1761,18 @@ sub get_options{
 		my ($opt) = @_;
 		error_handler('unsupported-option', "Unsupported option: $opt",1); }
 	);
-	if ($b_checksum && ($b_sync || $b_clean || $b_autotag || $b_autotag_create)){
+	if ($run{'checksum'} && ($run{'sync'} || $run{'clean'} || 
+	 $run{'autotag'} || $run{'autotag-create'})){
 		error_handler('invalid-options', 
 		 "You cannot use --checksum with any clean, sync, or autotag options.",1);
 	}
-	if ($b_autotag && ($b_sync || $b_clean || $b_checksum || $b_autotag_create)){
+	if ($run{'autotag'} && ($run{'sync'} || $run{'clean'} || 
+	 $run{'checksum'} || $run{'autotag-create'})){
 		error_handler('invalid-options', 
 		 "You cannot use --autotag with autotag-generate, clean, sync, or checksum options.",1);
 	}
-	if ($b_autotag_create && ($b_sync || $b_clean || $b_checksum || $b_autotag)){
+	if ($run{'autotag-create'} && ($run{'sync'} || $run{'clean'} || 
+	 $run{'checksum'} || $run{'autotag'})){
 		error_handler('invalid-options', 
 		 "You cannot use --autotag-generate with autotag, clean, sync, or checksum options.",1);
 	}

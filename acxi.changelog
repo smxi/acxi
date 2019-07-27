@@ -1,9 +1,22 @@
 ===================================================================
+Date: 2019-07-27
+Version: 3.2.11
+-------------------------------------------------------------------
+New Feature:
+1. --autotag-create-single will also fill in the TRACKTOTAL and 
+TRACKNUMBER for a single disk set. Due to complexity of handling 
+various user multidisk naming and folder schemes, too hard to 
+automate. But for single disks, it will speed up the auto.tag file
+generation process.
+
+Changes:
+1. --checksum-delete now triggers --checksum so you don't have to
+type it again.
+
+===================================================================
 Date: 2019-07-26
 Version: 3.2.8
 -------------------------------------------------------------------
-More Updates.
-
 New Feature:
 1. --autotag-create which creates an auto.tag file in the folder
 you are working on, prepopulated with track blocks with filenames
@@ -21,8 +34,6 @@ variables executing as a regex character. Easy fix!
 Date: 2019-07-24
 Version: 3.2.4
 -------------------------------------------------------------------
-More updates. 
-
 New Features:
 1. --autotag which uses a file, auto.tag, which follows a specific
 syntax to automatically generate tags for a recording/album. 
@@ -32,8 +43,6 @@ Includes support for per track specifics, etc.
 Date: 2019-07-21
 Version: 3.2.2
 -------------------------------------------------------------------
-More updates. 
-
 New Features:
 1. --checksum and --checksum-delete. --checksum will create .md5
 and .ffp checksum files in each directory in --source that contains

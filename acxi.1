@@ -1,10 +1,11 @@
-.TH ACXI 1 "2019\-07\-25" acxi "acxi manual"
+.TH ACXI 1 "2019\-07\-27" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
-\fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-autotag\fR] [\fB\-\-basic\fR] 
-[\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] [\fB\-\-clean\fR] 
-[\fB\-c\fR extensions] [\fB\-\-debug\fR]
+\fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-autotag\fR] 
+[\fB\-\-autotag\-create\fR] [\fB\-\-autotag\-create\-single\fR] 
+[\fB\-\-basic\fR] [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] 
+[\fB\-\-clean\fR] [\fB\-c\fR extensions] [\fB\-\-debug\fR]
 [\fB\-d\fR destination-path] [\fB\-f\fR] [\fB\-\-fork\fR 0-xx] 
 [\fB\-\-full\fR] [\fB\-h\fR] [\fB\-i\fR {flac|raw|shn|wave}] 
 [\fB\-\-log\fR {0-3}] [\fB\-\-nlink\fR] [\fB\-\-no\-nlink\fR] 
@@ -52,9 +53,10 @@ MP3 encoding does not support wav or raw input formats.
 
 \fB\-\-autotag\fR requires \fBmetaflac\fR for \fBVORBIS\fR tagging.
 
-\fB\-\-checksum\fR requires \fBffmpeg\fR and \fBmd5sum\fR (or any comparable 
-program that generates md5sums). md5 generating logic may be moved to straight 
-Perl to remove the md5 program requirement.
+\fB\-\-checksum\fR and \fB\-\-checksum\-delete\fR require \fBffmpeg\fR 
+and \fBmd5sum\fR (or any comparable program that generates md5sums). 
+Md5 generating logic may be moved to straight Perl to remove the md5 
+program requirement.
 
 In theory, acxi 3.x should run on Windows and Macs, but I have not
 tested that, but as long as the source/destination directory paths and
@@ -92,6 +94,23 @@ has that file present with the tagging information contained in it.
 See github acxi page for a blank sample file.
 
 .TP
+.B \-\-autotag\-create\fR
+Creates the \fBauto.tag\fR file in the directory, and populates it
+with field names, and per track blocks that include the track file
+name so you can just fill out the fields you want.
+
+.TP
+.B \-\-autotag\-create\-single\fR
+When creating \fBauto.tag\fR file, as well as populating the per track
+file names, it also fills in the \fBTRACKTOTAL\fR and \fBTRACKNUMBER\fR
+fields.
+
+Do not use for multidisk recordings since the totals per disk and
+the track numbering for the second or more disks will be wrong, but
+for single disks, it will speed up slightly the time required to 
+manually populate the \fBauto.tag\fR file.
+
+.TP
 .B \-\-basic\fR
 Single line per operation screen output, default value for acxi.
 Same as \fB\-\-log 1\fR
@@ -100,8 +119,9 @@ Same as \fB\-\-log 1\fR
 .B \-\-checksum\fR
 Create \fB.ffp\fR and \fB.md5\fR checksum files in your source directory.
 Checksum files are only created inside directories where flac
-files are found. Use with \fB\-\-checksum\-delete\fR to delete existing
-checksum files. Only flac input type is supported.
+files are found. Use \fB\-\-checksum\-delete\fR if you also want to delete 
+existing checksum files before creating new ones. 
+Only flac input type is supported.
 
 This will not create md5 sums for for files in directories that 
 do not contain flac files, because that creates a very complicated 
@@ -112,11 +132,11 @@ Do not use together with other cleaning/syncing options!
 
 .TP
 .B \-\-checksum\-delete\fR
-When used with \fB\-\-checksum\fR, will first delete all \fB.md5\fR, 
-\fB.md5.txt\fR, \fB.ffp\fR, and \fB.ffp.txt\fR files. Note that some 
-audio processing tools add \fB.txt\fR to the file name, which creates 
-undesirable outcomes since some tools that use \fB.ffp\fR or \fB.md5\fR 
-files don't recognize the files if they have the \fB.txt\fR 
+Will first delete all \fB.md5\fR, \fB.md5.txt\fR, \fB.ffp\fR, and 
+\fB.ffp.txt\fR files before creating new checksum files. Note that some 
+audio processing tools add \fB.txt\fR to the checksum file name, 
+which creates undesirable outcomes since some tools that use \fB.ffp\fR 
+or \fB.md5\fR files don't recognize the files if they have the \fB.txt\fR 
 extension added on.
  
 I can think of very few reasons to want to preserve \fB.ffp\fR or 
