@@ -411,37 +411,39 @@ sub populate_file {
 	my ($files) = @_;
 	my (@tags);
 	my @collection = (
-	'## Recording Name/Creators ##',
+	'## RECORDING NAME/CREATORS ##',
 	'ALBUM',
 	'# Name to sort under','ALBUMSORT',
 	'# Multi-Artist only','ALBUMARTIST',
 	'ARTIST','COMPOSER','CONDUCTOR','OPUS',
-	'PERFORMER','PERFORMER','PERFORMER','PERFORMER',
-	'## Recording comments. Note: COMMENT preferred ##',
+	'# Band members, etc.', 'PERFORMER','PERFORMER','PERFORMER','PERFORMER',
+	'## RECORDING COMMENTS. Note: COMMENT preferred ##',
 	'COMMENT','COMMENT','COMMENT','COMMENT','DESCRIPTION',
-	'## File Display Images ##',
+	'## DISPLAY IMAGES ##',
 	'# Please see sample auto.tag file for more information on IMAGE',
 	'# Format: [TYPE]|[MIME-TYPE]|[DESCRIPTION]|[WIDTHxHEIGHTxDEPTH[/COLORS]]|FILE',
 	'# Example: IMAGE%:3||||images/cover.jpg', 
 	'IMAGE',
-	'## Recording Info ##',
+	'## RECORDING INFO ##',
 	'GENRE','RATING','DATE','YEAR','LOCATION','VENUE',
 	'LABEL','PRODUCER','PUBLISHER','ORGANIZATION',
-	'## Technical Information ##',
+	'## TECHNICAL INFORMATION ##',
 	'ENCODING',
 	'# Useful for tapers etc','SOURCE','SOURCE','SOURCE',
 	'# Media recording taken from, eg, tape, dat, vinyl','SOURCEMEDIA',
 	);
-	my @disk = ('','## Disk info ##',
+	my @disk = ('','## DISC INFO ##',
+	'# Leave DISCNUMBER, DISCTOTAL empty if 1 disc set',
 	'DISCTOTAL','DISCNUMBER','DISCSUBTITLE',
-	'# Do not leave empty, this is per disk track totals for players','TRACKTOTAL');
-	my @track = ('', '## Track info - TRACKNUMBER and FILE required ##',
-	'TRACKNUMBER','TITLE','VERSION','PART','FILE');
+	'# Do not leave empty, this is per disk track totals for players','TRACKTOTAL',
+	'', '## TRACK INFO ##', 
+	'# TRACKNUMBER and FILE required, title not known?: suggest TITLE%:Unknown ');
+	my @track = ('', 'TRACKNUMBER','TITLE','VERSION','PART','FILE');
 	@tags = (@collection,@disk);
 	@tags = map {$_ = $_ . '%:' if /^[A-Z]/; $_;} @tags;
 	@track = map {$_ = $_ . '%:' if /^[A-Z]/; $_;} @track;
 	foreach (@$files){
-		local $track[6] = $track[6] . $_;
+		local $track[5] = $track[5] . $_;
 		@tags = (@tags,@track);
 	}
 	if ($b_test){
