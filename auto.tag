@@ -104,8 +104,8 @@ TRACKTOTAL%:
 # FILE is path to file from the directory where auto.tag is located.
 # Samples: FILE%:track12.flac or: FILE%:Disc One/track12.flac
 # TITLE is track name
-# VERSION is if alternate mix, or whatever, eg, > 1 versions of same track
-# otherwise leave VERSION blank. eg: "live", "acoustic", "Radio Edit" "12 inch remix" 
+# VERSION is extra info on the song, like encore, accoustic, radio edit, 12 inch remix,
+# live. Leave blank if no extra info has to be shown.
 # Sample: 
 # TRACKNUMBER%:4
 # TITLE%:The Song We Love
