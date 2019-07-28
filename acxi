@@ -72,8 +72,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.11';
-my $SELF_DATE = '2019-07-27';
+my $SELF_VERSION = '3.2.12';
+my $SELF_DATE = '2019-07-28';
 
 ## GLOBALS ##
 my %run;
@@ -420,20 +420,22 @@ sub populate_file {
 	'ARTIST','# Multi-Artist only','ALBUMARTIST',
 	'COMPOSER','# Classical fields','CONDUCTOR','OPUS',
 	'# Band members, etc.', 'PERFORMER','PERFORMER','PERFORMER','PERFORMER',
-	'## RECORDING COMMENTS. Note: COMMENT preferred ##',
-	'COMMENT','COMMENT','COMMENT','COMMENT','DESCRIPTION',
+	'## RECORDING COMMENTS. Note: COMMENT preferred over DESCRIPTION ##',
+	'COMMENT','COMMENT','COMMENT','COMMENT',
 	'## DISPLAY IMAGES ##',
 	'# Please see sample auto.tag file for more information on IMAGE',
 	'# Format: [TYPE]|[MIME-TYPE]|[DESCRIPTION]|[WIDTHxHEIGHTxDEPTH[/COLORS]]|FILE',
 	'# Example: IMAGE%:3||||images/cover.jpg', 
 	'IMAGE',
 	'## RECORDING INFO ##',
-	'GENRE','RATING','DATE','YEAR','LOCATION','VENUE',
-	'LABEL','PRODUCER','PUBLISHER','ORGANIZATION',
+	# note: VENUE and LABEL better handled by xiph spec: LOCATION and ORGANIZATION
+	# Include YEAR to make conversion to mp3 tagging cleaner
+	'GENRE','RATING','DATE','YEAR','LOCATION','PRODUCER','PUBLISHER',
+	'# e.g. record label, taper group,, etc. ','ORGANIZATION',
 	'## TECHNICAL INFORMATION ##',
 	'ENCODING',
 	'# Useful for tapers etc','SOURCE','SOURCE','SOURCE',
-	'# Media recording taken from, eg, tape, dat, vinyl','SOURCEMEDIA',
+	'# Media recording taken from, eg, cassette, tape, dat, vinyl','SOURCEMEDIA',
 	);
 	my @disk = ('','## DISC INFO ##',
 	'# Leave DISCNUMBER, DISCTOTAL empty if 1 disc set',

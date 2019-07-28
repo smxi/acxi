@@ -29,6 +29,7 @@ PERFORMER%:
 PERFORMER%:
 PERFORMER%:
 PERFORMER%:
+PERFORMER%:
 
 ## RECORDING COMMENTS. NOTE: COMMENT PREFERRED OVER DESCRIPTION ##
 # repeat: 1 line per COMMENT, will be combined.
@@ -37,7 +38,6 @@ COMMENT%:
 COMMENT%:
 COMMENT%:
 COMMENT%:
-DESCRIPTION%:
 
 ## FILE DISPLAY IMAGES ##
 # creates image data in music file: 
@@ -65,9 +65,9 @@ DATE%:
 YEAR%:
 LOCATION%:
 VENUE%:
-LABEL%:
 PRODUCER%:
 PUBLISHER%:
+# e.g.: label, taper group, etc.
 ORGANIZATION%:
 
 ## TECHNICAL INFORMATION ##
