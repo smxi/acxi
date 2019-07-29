@@ -460,7 +460,7 @@ sub populate_file {
 		local $track[1] = $track[1] . $counter if $run{'autotag-number'};
 		local $track[5] = $track[5] . $_;
 		@replaygain = get_replaygain($_) if !$run{'no-replaygain'};
-		@tags = (@tags,@track,@replaygain);
+		@tags = (@tags,@replaygain,@track);
 		
 	}
 	if ($b_test){
