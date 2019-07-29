@@ -72,8 +72,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.12';
-my $SELF_DATE = '2019-07-28';
+my $SELF_VERSION = '3.2.13';
+my $SELF_DATE = '2019-07-29';
 
 ## GLOBALS ##
 my %run;
@@ -317,6 +317,7 @@ sub process_tags {
 				else {
 					@main_tags = grep {!/^--set-tag=$working[0]/} @main_tags;
 				}
+				next if $working[1] eq 'UNSET';
 			}
 			# then set the key flag again
 			$set{$working[0]} = 1;
@@ -412,7 +413,7 @@ sub make_file {
 }
 sub populate_file {
 	my ($files) = @_;
-	my (@tags);
+	my (@replaygain,@tags);
 	my $counter=0;
 	my @collection = (
 	'## RECORDING NAME/CREATORS ##',
@@ -446,6 +447,7 @@ sub populate_file {
 	'# To make the value empty use: UNSET as the field value.',
 	'# TRACKNUMBER and FILE required, title not known?: suggest TITLE%:Unknown ');
 	my @track = ('', 'TRACKNUMBER','TITLE','VERSION','PART','FILE');
+	
 	@collection = map {$_ .= '%:' if /^[A-Z]/; $_;} @collection;
 	@disk = map {$_ .= '%:' if /^[A-Z]/; $_;} @disk;
 	if ($run{'autotag-number'} && @$files){
@@ -457,7 +459,8 @@ sub populate_file {
 		$counter++;
 		local $track[1] = $track[1] . $counter if $run{'autotag-number'};
 		local $track[5] = $track[5] . $_;
-		@tags = (@tags,@track);
+		@replaygain = get_replaygain($_) if !$run{'no-replaygain'};
+		@tags = (@tags,@track,@replaygain);
 		
 	}
 	if ($b_test){
@@ -465,6 +468,15 @@ sub populate_file {
 	}
 	else {
 		main::writer($TAG_FILE,\@tags);
+	}
+	sub get_replaygain {
+		my ($input_file) = @_;
+		my (@tags);
+		my %replaygain = main::get_flac_tags('replaygain',$input_file);
+		foreach (keys %replaygain){
+			push @tags, "$_%:$replaygain{$_}" if $replaygain{$_};
+		}
+		return @tags;
 	}
 }
 # --preserve-modtime --remove-all-tags --remove-tag
@@ -883,7 +895,7 @@ sub convert_file {
 # Added: Odd @2011-03-23 01:52:31
 sub flac2mp3_cmd {
 	my ($i_file, $o_file) = @_;
-	my %tags = get_flac_tags("$i_file");
+	my %tags = get_flac_tags('standard',"$i_file");
 	my $lame_params = '';
 	# print Dumper \%tags;
 	if ($tags{'TRACKNUMBER'} && $tags{'TRACKTOTAL'}){
@@ -902,17 +914,24 @@ sub flac2mp3_cmd {
 }
 
 # Added: Odd @2011-03-23 01:52:17
+# args: $type: standard|replaygain; $i_file: file to work on
 # For this function to work reliably, it should be passed tag queries in the order of:
 # artist, album, title, genre, date, tracknumber
 sub get_flac_tags {
-	my ($i_file) = @_;
-	my (%tag_list,@working);
-	my @tags = ('ARTIST', 'ALBUM', 'TITLE','GENRE', 'DATE', 'TRACKNUMBER', 
-	'TRACKTOTAL','DISKNUMBER','DISKTOTAL');
-	my $cmd = "$COMMAND_METAFLAC \"$i_file\" --show-tag=\"$tags[0]\"";
-	$cmd .= " --show-tag=\"$tags[1]\" --show-tag=\"$tags[2]\" --show-tag=\"$tags[3]\"";
-	$cmd .= " --show-tag=\"$tags[4]\" --show-tag=\"$tags[5]\"";
-	$cmd .= " --show-tag=\"$tags[6]\" --show-tag=\"$tags[7]\" --show-tag=\"$tags[8]\"";
+	my ($type,$i_file) = @_;
+	my (%tag_list,@tags,@working);
+	if ($type eq 'standard'){
+		@tags = ('ARTIST', 'ALBUM', 'TITLE','GENRE', 'DATE', 'TRACKNUMBER', 
+		'TRACKTOTAL','DISKNUMBER','DISKTOTAL');
+	}
+	elsif ($type eq 'replaygain'){
+		@tags = ('REPLAYGAIN_TRACK_PEAK','REPLAYGAIN_TRACK_GAIN',
+		'REPLAYGAIN_ALBUM_PEAK','REPLAYGAIN_ALBUM_GAIN');
+	}
+	my $cmd = "$COMMAND_METAFLAC \"$i_file\" ";
+	foreach (@tags){
+		$cmd .= "--show-tag=\"$_\" ";
+	}
 	my @orig_tags = qx($cmd);
 	chomp @orig_tags;
 	foreach (@orig_tags) {
@@ -1451,7 +1470,7 @@ sub print_help {
 	$output .= "                  files.\n";
 	$output .= "--autotag-create  Create $TAG_FILE template in source directory. Will be\n";
 	$output .= "                  populated with file names for recording filled in already in\n";
-	$output .= "                  track listing.\n";
+	$output .= "                  track listing. Preserves existing REPLAYGAIN values.\n";
 	$output .= "--autotag-create-single\n";
 	$output .= "                  For single disc recordings, will also add TRACKTOTAL and\n";
 	$output .= "                  TRACKNUMBER counts when creating and populating the\n";
@@ -1468,6 +1487,7 @@ sub print_help {
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
+	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
 	$output .= $line_small;
 	$output .= "Display output and debugging options:\n";
 	$output .= "--basic           Basic single line per operation screen output, default value.\n";
@@ -1737,6 +1757,8 @@ sub get_options{
 		$DONT_USE_NLINK = 0 },
 	"no-nlink" => sub { 
 		$DONT_USE_NLINK = 1 },
+	"no-replaygain" => sub { 
+		$run{'no-replaygain'} = 1 },
 	"q|quality:f" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires number.",1) if ! defined $arg || $arg !~ /^-?[0-9\.]+$/;

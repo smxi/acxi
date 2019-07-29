@@ -98,6 +98,8 @@ TRACKTOTAL%:
 # TRACKNUMBER and FILE required, title not known?: suggest TITLE%:Unknown 
 # IMPORTANT: FILE%: must be last item per track because
 # that will trigger the actual writing of the tags/comments to the flac file.
+# REPLAYGAIN: When --autotag-create is used, existing REPLAYGAIN tags will 
+# be included in the per track block of tags.
 # TRACKNUMBER zero padded automatically. This is the per disk track number.
 # Some playback devices will not sort correctly if not zero padded.
 # FILE is path to file from the directory where auto.tag is located.

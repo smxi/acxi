@@ -1,4 +1,4 @@
-.TH ACXI 1 "2019\-07\-27" acxi "acxi manual"
+.TH ACXI 1 "2019\-07\-29" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -91,6 +91,10 @@ FLAC input files only. OGG/Opus may be added. Will search source
 directory for \fBauto.tag\fR and update each collection/album that
 has that file present with the tagging information contained in it.
 
+Note that all existing tags are removed. Default is to preserve
+the existing \fBREPLAYGAIN\fR tags in the \fBauto.tag\fR file
+since the assumption is those were generated for a reason.
+
 See github acxi page for a blank sample file.
 
 .TP
@@ -98,6 +102,10 @@ See github acxi page for a blank sample file.
 Creates the \fBauto.tag\fR file in the directory, and populates it
 with field names, and per track blocks that include the track file
 name so you can just fill out the fields you want.
+
+All existing \fBREPLAYGAIN\fR tags for the audio files are preserved
+and used in the auto.tag file. If want to remove those, use the 
+\fB\-\-no\-replaygain\fR option. 
 
 .TP
 .B \-\-autotag\-create\-single\fR
@@ -262,6 +270,11 @@ See this PerlMonks thread for an explanation:
 .B \-\-no\-nlink\fR
 Set \fB$File::Find::dont_use_nlink = 1\fR. This is the default value. 
 See \fB\-\-nlink\fR for details.
+
+.TP
+.B \-\-no\-replaygain\fR
+Remove any existing \fBREPLAYGAIN\fR tags when creating a new \fBauto.tag\fR
+file. See \fB\-\-autotag\-create\fR for details.
 
 .TP
 .B \-o [flac|mp3|ogg|opus]\fR, \fB\-\-output [flac|mp3|ogg|opus]\fR
