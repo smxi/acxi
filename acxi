@@ -1559,7 +1559,8 @@ sub print_help {
 	$output .= "                  Expert use only.\n";
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
 	$output .= "-U                Update $SELF_NAME and man page. Set paths if not Linux.\n";
-	$output .= "                  $SELF_NAME must be in $SELF_DIRECTORY.\n";
+	$output .= "                  Current values: $SELF_NAME: $SELF_DIRECTORY\n";
+	$output .= "                  man $SELF_NAME.1: $MAN_DIRECTORY\n";
 	$output .= $line_small;
 	$output .= "Display output and debugging options:\n";
 	$output .= "--basic           Basic single line per operation screen output, default value.\n";
