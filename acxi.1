@@ -9,6 +9,7 @@ acxi  \- Command line audio conversion tool
 [\fB\-d\fR destination-path] [\fB\-f\fR] [\fB\-\-fork\fR 0-xx] 
 [\fB\-\-full\fR] [\fB\-h\fR] [\fB\-i\fR {flac|raw|shn|wave}] 
 [\fB\-\-log\fR {0-3}] [\fB\-\-nlink\fR] [\fB\-\-no\-nlink\fR] 
+[\fB\-\-no\-replaygain\fR] 
 [\fB\-o\fR {flac|mp3|ogg|opus}] [\fB\-q\fR NUMBER] [\fB\-\-quiet\fR] 
 [\fB\-s\fR source\-path] [\fB\-\-verbose\fR] [\fB\-\-test\fR] 
 [\fB\-v\fR]
@@ -95,7 +96,9 @@ Note that all existing tags are removed. Default is to preserve
 the existing \fBREPLAYGAIN\fR tags in the \fBauto.tag\fR file
 since the assumption is those were generated for a reason.
 
-See github acxi page for a blank sample file.
+See github acxi page for a blank sample file, but make sure to
+use \fB\-\-autotag\-create\fR or \fB\-\-autotag\-create\-single\fR 
+if you want to preserve \fBREPLAYGAIN\fR data.
 
 .TP
 .B \-\-autotag\-create\fR
