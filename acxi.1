@@ -323,8 +323,9 @@ operations. Activates \fB \-\-full\fR as well for more complete output.
 
 .TP
 .B \-U\fR
-Self updater, will update acxi and its man page. Linux/BSD only. Default
-paths set in \fBUSER VARIABLES\fR for acxi and man page acxi.1. 
+Self updater, will update acxi and its man page. Non GNU/LInux 
+will probably require changing the default values, which are set 
+in \fBUSER VARIABLES\fR for curl, acxi and man page acxi.1. 
 Requires \fBcurl\fR.
                   
 .TP
@@ -505,8 +506,8 @@ as it completes as well as when it started.
 
 .TP
 .B SELF UPDATER
-These are only for the \fB\-U\fR self updater feature, which only runs in BSD and
-GNU/Linux.
+These are only for the \fB\-U\fR self updater feature. The path defaults must be
+changed for non\-GNU/Linux systems in most cases.
 
 \fBCOMMAND_CURL\fR \- Sample: \fBCOMMAND_CURL=/usr/local/bin\fR
 

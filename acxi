@@ -1558,7 +1558,7 @@ sub print_help {
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
-	$output .= "-U                Update $SELF_NAME and man page. Linux only. Super user (root).\n";
+	$output .= "-U                Update $SELF_NAME and man page. Set paths if not Linux.\n";
 	$output .= "                  $SELF_NAME must be in $SELF_DIRECTORY.\n";
 	$output .= $line_small;
 	$output .= "Display output and debugging options:\n";
