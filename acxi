@@ -72,7 +72,7 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.14';
+my $SELF_VERSION = '3.2.15';
 my $SELF_DATE = '2019-07-29';
 
 ## GLOBALS ##
@@ -220,6 +220,17 @@ my $DONT_USE_NLINK = 1;
 # FORK = 1 results in slower times than using no forking so avoid that. 
 my $FORK = 0;
 
+#### -------------------------------------------------------------------
+#### SELF UPDATER
+#### -------------------------------------------------------------------
+# this will be used to update the program and man page. You must have 
+# write permissions to the file locations. Linux or BSD only.
+# do not end paths with /
+
+my $CURL_PATH='/usr/bin/curl';
+my $MAN_DIRECTORY='/usr/local/share/man/man1';
+my $SELF_DIRECTORY='/usr/local/bin';
+
 #########################################################################
 ### END USER MODIFIABLE VALUES ###
 #########################################################################
@@ -232,6 +243,7 @@ sub main {
 	UserConfigs::set();
 	get_options();
 	set_display_data();
+	SelfUpdater::update() if $run{'update'};
 	Validation::check_user_values();
 	set_basic_data();
 	AutoTag::create_file() if $run{'autotag-create'};
@@ -1054,6 +1066,57 @@ sub writer {
 }
 
 #### -------------------------------------------------------------------
+#### SELF UPDATER
+#### -------------------------------------------------------------------
+
+## package SelfUpdater
+{
+package SelfUpdater;
+my $self_source = "$SELF_DIRECTORY/$self_name";
+my $self_man = "$MAN_DIRECTORY/$self_name.1";
+my $curl = $CURL_PATH;
+sub update {
+	print $line_large;
+	print "Starting $self_name self updater...\n";
+	validate();
+	grab();
+	print $line_small;
+	print "Completed self updates.\n";
+	print $line_large;
+	exit 0;
+}
+sub grab {
+	my $cmd = "$CURL_PATH  -o $self_source -L https:/smxi.org/acxi";
+	qx($cmd);
+	if ($? > 0){
+		main::error_handler('self-updater',"Self update error: curl returns: $?.",1);
+	}
+	my $cmd = "$CURL_PATH  -o $man_source -L https:/smxi.org/acxi.1";
+	qx($cmd);
+	if ($? > 0){
+		main::error_handler('self-updater',"Man update error: curl returns: $?.",1);
+	}
+}
+sub validate {
+	if (!-e $self_source){
+		main::error_handler('self-updater',"Only updating $self_name at $self_source supported.",1);
+	}
+	if (!-e $self_man){
+		main::error_handler('self-updater',"Only updating man at $self_man supported.",1);
+	}
+	if (!-x $CURL_PATH){
+		main::error_handler('self-updater',"Downloadert $CURL_PATH missing or not executable.",1);
+	}
+	if (!-w $self_source){
+		main::error_handler('self-updater',"$self_source is not writeable. Need superuser rights?",1);
+	}
+	if (!-w $self_man){
+		main::error_handler('self-updater',"$self_man is not writeable. Need superuser rights?.",1);
+	}
+}
+}
+
+#### -------------------------------------------------------------------
 #### VALIDATION - ERROR HANDLING
 #### -------------------------------------------------------------------
 
@@ -1071,6 +1134,7 @@ sub error_handler {
 	elsif ($error eq 'bad-level'){$error_no = 5;$b_valid=0;}
 	elsif ($error eq 'bad-fork'){$error_no = 9;$b_valid=0;}
 	elsif ($error eq 'bad-nlink'){$error_no = 9;$b_valid=0;}
+	elsif ($error eq 'self-updater'){$error_no = 17;}
 	elsif ($error eq 'open'){$error_no = 14;}
 	elsif ($error eq 'file-exists'){$error_no = 16;}
 	elsif ($error eq 'file-missing'){$error_no = 15;}
@@ -1492,6 +1556,8 @@ sub print_help {
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
+	$output .= "-U                Update $self_name and man page. Linux only. Super user (root).\n";
+	$output .= "                  $self_name must be in $SELF_DIRECTORY.\n";
 	$output .= $line_small;
 	$output .= "Display output and debugging options:\n";
 	$output .= "--basic           Basic single line per operation screen output, default value.\n";
@@ -1781,6 +1847,16 @@ sub get_options{
 	"test" => sub { 
 		$LOG_LEVEL = 3;
 		$b_test = 1 },
+	'U'=> sub { 
+		$run{'update'} = 1; 
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		$run{'checksum'} = 0;
+		$run{'checksum-delete'} = 0; 
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$run{'autotag'} = 0;
+		$OUTPUT_TYPE = 'UNSET';},
 	"V|verbose" => sub { 
 		$LOG_LEVEL = 2 },
 	"v|version" => sub { 

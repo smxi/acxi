@@ -59,6 +59,8 @@ and \fBmd5sum\fR (or any comparable program that generates md5sums).
 Md5 generating logic may be moved to straight Perl to remove the md5 
 program requirement.
 
+\fB\-U\fR Self-updater requires \fBcurl\fR. BSD and GNU/Linux only.
+
 In theory, acxi 3.x should run on Windows and Macs, but I have not
 tested that, but as long as the source/destination directory paths and
 the application/configuration paths are correct, it should 'just work'.
@@ -318,6 +320,12 @@ Path to the top-most directory containing your source files (eg, flac).
 .B \-\-test\fR
 Test your configurations without actually doing the copy and sync 
 operations. Activates \fB \-\-full\fR as well for more complete output.
+
+.TP
+.B \-U\fR
+Self updater, will update acxi and its man page. Linux/BSD only. Default
+paths set in \fBUSER VARIABLES\fR for acxi and man page acxi.1. 
+Requires \fBcurl\fR.
                   
 .TP
 .B  \-\-verbose\fR
@@ -473,6 +481,19 @@ see that option for more information.
 This uses Perl's \fBParallel::ForkManager\fR and accepts values of 0 or more.
 Note that 0 will not create a fork. See \fB\-\-fork\fR for details.
 Using this will speed up your syncing a lot if you have more than a 1 core CPU.
+
+.TP
+.B SELF UPDATER
+These are only for the \fB\-U\fR self updater feature, which only runs in BSD and
+GNU/Linux.
+
+\fBCURL_PATH\fR \- Sample: \fBCURL_PATH=/usr/local/bin\fR
+
+\fBMAN_DIRECTORY\fR \- Sample: \fBSELF_DIRECTORY=/usr/share/man/man1\fR This is the 
+directory the man page is in.
+
+\fBSELF_DIRECTORY\fR \- Sample: \fBSELF_DIRECTORY=/usr/bin\fR This is the directory that
+\fBacxi\fR is in.
 
 .TP
 .B SCREEN/DEBUGGING OUTPUT
