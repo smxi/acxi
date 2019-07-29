@@ -227,7 +227,7 @@ my $FORK = 0;
 # write permissions to the file locations. Linux or BSD only.
 # do not end paths with /
 
-my $CURL_PATH='/usr/bin/curl';
+my $COMMAND_CURL='/usr/bin/curl';
 my $MAN_DIRECTORY='/usr/local/share/man/man1';
 my $SELF_DIRECTORY='/usr/local/bin';
 
@@ -1074,7 +1074,7 @@ sub writer {
 package SelfUpdater;
 my $self_source = "$SELF_DIRECTORY/$SELF_NAME";
 my $man_source = "$MAN_DIRECTORY/$SELF_NAME.1";
-my $curl = $CURL_PATH;
+my $curl = $COMMAND_CURL;
 sub update {
 	print $line_large;
 	print "Starting $SELF_NAME self updater...\n";
@@ -1086,13 +1086,13 @@ sub update {
 	exit 0;
 }
 sub grab {
-	my $cmd = "$CURL_PATH  -o $self_source -L https:/smxi.org/acxi";
+	my $cmd = "$COMMAND_CURL  -o $self_source -L https:/smxi.org/acxi";
 	print "Downloading $SELF_NAME now...\n";
 	qx($cmd);
 	if ($? > 0){
 		main::error_handler('self-updater',"Self update error: curl returns: $?.",1);
 	}
-	$cmd = "$CURL_PATH  -o $man_source -L https:/smxi.org/acxi.1";
+	$cmd = "$COMMAND_CURL  -o $man_source -L https:/smxi.org/acxi.1";
 	print "Downloading $SELF_NAME.1 man page now...\n";
 	qx($cmd);
 	if ($? > 0){
@@ -1106,8 +1106,8 @@ sub validate {
 	if (!-e $man_source){
 		main::error_handler('self-updater',"Only updating man at $man_source supported.",1);
 	}
-	if (!-x $CURL_PATH){
-		main::error_handler('self-updater',"Downloadert $CURL_PATH missing or not executable.",1);
+	if (!-x $COMMAND_CURL){
+		main::error_handler('self-updater',"Downloadert $COMMAND_CURL missing or not executable.",1);
 	}
 	if (!-w $self_source){
 		main::error_handler('self-updater',"$self_source is not writeable. Need superuser rights?",1);

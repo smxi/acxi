@@ -12,7 +12,7 @@ acxi  \- Command line audio conversion tool
 [\fB\-\-no\-replaygain\fR] 
 [\fB\-o\fR {flac|mp3|ogg|opus}] [\fB\-q\fR NUMBER] [\fB\-\-quiet\fR] 
 [\fB\-s\fR source\-path] [\fB\-\-verbose\fR] [\fB\-\-test\fR] 
-[\fB\-v\fR]
+[\fB\-U\fR] [\fB\-v\fR]
 
 .SH DESCRIPTION
 \fBacxi\fR is a command line audio conversion program. It converts 
@@ -483,19 +483,6 @@ Note that 0 will not create a fork. See \fB\-\-fork\fR for details.
 Using this will speed up your syncing a lot if you have more than a 1 core CPU.
 
 .TP
-.B SELF UPDATER
-These are only for the \fB\-U\fR self updater feature, which only runs in BSD and
-GNU/Linux.
-
-\fBCURL_PATH\fR \- Sample: \fBCURL_PATH=/usr/local/bin\fR
-
-\fBMAN_DIRECTORY\fR \- Sample: \fBSELF_DIRECTORY=/usr/share/man/man1\fR This is the 
-directory the man page is in.
-
-\fBSELF_DIRECTORY\fR \- Sample: \fBSELF_DIRECTORY=/usr/bin\fR This is the directory that
-\fBacxi\fR is in.
-
-.TP
 .B SCREEN/DEBUGGING OUTPUT
 You can change \fBLOG_LEVEL\fR either at the top of the \fBacxi\fR file itself, 
 or in the configuration file, by setting the verbosity/debugging level to what 
@@ -515,6 +502,19 @@ conversion output may be ordered somewhat randomly since it shows each thread's 
 as it completes as well as when it started.
 
 \fB4\fR \- debug \-  all available plus some specialized debugging information.
+
+.TP
+.B SELF UPDATER
+These are only for the \fB\-U\fR self updater feature, which only runs in BSD and
+GNU/Linux.
+
+\fBCOMMAND_CURL\fR \- Sample: \fBCOMMAND_CURL=/usr/local/bin\fR
+
+\fBMAN_DIRECTORY\fR \- Sample: \fBSELF_DIRECTORY=/usr/share/man/man1\fR This is the 
+directory the man page is in.
+
+\fBSELF_DIRECTORY\fR \- Sample: \fBSELF_DIRECTORY=/usr/bin\fR This is the directory that
+\fBacxi\fR is in.
 
 .SH BUGS
 Please report bugs using the following resources.
