@@ -1704,7 +1704,8 @@ sub set {
 }
 sub assign_value {
 	my ($var,$value) = @_;
-	if ($var eq 'COMMAND_FLAC'){$COMMAND_FLAC = $value;}
+	if ($var eq 'COMMAND_CURL'){$COMMAND_CURL = $value;}
+	elsif ($var eq 'COMMAND_FLAC'){$COMMAND_FLAC = $value;}
 	elsif ($var eq 'COMMAND_FLAC_OUT'){$COMMAND_FLAC_OUT = $value;}
 	elsif ($var eq 'COMMAND_LAME'){$COMMAND_LAME = $value;}
 	elsif ($var eq 'COMMAND_METAFAC'){$COMMAND_METAFLAC = $value;}
@@ -1718,6 +1719,8 @@ sub assign_value {
 		$SOURCE_DIRECTORY = $value;}
 	elsif ($var eq 'DESTINATION_DIRECTORY' || $var eq 'DIR_PREFIX_DEST'){
 		$DESTINATION_DIRECTORY = $value;}
+	elsif ($var eq 'MAN_DIRECTORY'){$MAN_DIRECTORY = $value}
+	elsif ($var eq 'SELF_DIRECTORY'){$SELF_DIRECTORY = $value}
 	elsif ($var eq 'INPUT_TYPE'){$INPUT_TYPE = $value;}
 	elsif ($var eq 'LOG_LEVEL'){$LOG_LEVEL = $value;}
 	elsif ($var eq 'OUTPUT_TYPE'){$OUTPUT_TYPE = $value;}
