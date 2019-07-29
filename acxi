@@ -72,7 +72,7 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.13';
+my $SELF_VERSION = '3.2.14';
 my $SELF_DATE = '2019-07-29';
 
 ## GLOBALS ##
@@ -462,9 +462,8 @@ sub populate_file {
 		$track_working[5] = $track[5] . $_;
 		if (!$run{'no-replaygain'}){
 			@replaygain = get_replaygain($_);
-			#print "@replaygain\n";
+			# we want the replaygain data right before FILE
 			splice (@track_working, 5, 0, @replaygain) if @replaygain;
-			#print "@track_working\n";
 		}
 		@tags = (@tags,@track_working);
 	}
