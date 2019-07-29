@@ -81,7 +81,6 @@ SOURCEMEDIA%:
 
 ## DISK INFORMATION ##
 
-
 # only use if > 1 disks.
 DISCTOTAL%:
 # leave blank unless > 1 disks, some media players will show: 1.1

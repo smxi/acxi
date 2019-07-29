@@ -889,8 +889,8 @@ sub flac2mp3_cmd {
 	if ($tags{'TRACKNUMBER'} && $tags{'TRACKTOTAL'}){
 		$tags{'TRACKNUMBER'} .= "/$tags{'TRACKTOTAL'}";
 	}
-	if ($tags{'DISKNUMBER'}){
-		$lame_params .= "--tv \"DISKNUMBER=$tags{'DISKNUMBER'}\" ";
+	if ($tags{'DISKNUMBER'} && $tags{'DISKTOTAL'}){
+		$lame_params .= "--tv \"TPOS=$tags{'DISKNUMBER'}/$tags{'DISKTOTAL'}\" ";
 	}
 	$lame_params .= " --ta \"$tags{'ARTIST'}\" --tl \"$tags{'ALBUM'}\"";
 	$lame_params .= " --tt \"$tags{'TITLE'}\" --tg \"$tags{'GENRE'}\"";
@@ -907,12 +907,12 @@ sub flac2mp3_cmd {
 sub get_flac_tags {
 	my ($i_file) = @_;
 	my (%tag_list,@working);
-	my @tags = ("ARTIST", "ALBUM", "TITLE","GENRE", "DATE", "TRACKNUMBER", 
-	"TRACKTOTAL","DISKNUMBER","LYRICS");
+	my @tags = ('ARTIST', 'ALBUM', 'TITLE','GENRE', 'DATE', 'TRACKNUMBER', 
+	'TRACKTOTAL','DISKNUMBER','DISKTOTAL');
 	my $cmd = "$COMMAND_METAFLAC \"$i_file\" --show-tag=\"$tags[0]\"";
 	$cmd .= " --show-tag=\"$tags[1]\" --show-tag=\"$tags[2]\" --show-tag=\"$tags[3]\"";
 	$cmd .= " --show-tag=\"$tags[4]\" --show-tag=\"$tags[5]\"";
-	$cmd .= " --show-tag=\"$tags[6]\" --show-tag=\"$tags[7]\"";
+	$cmd .= " --show-tag=\"$tags[6]\" --show-tag=\"$tags[7]\" --show-tag=\"$tags[8]\"";
 	my @orig_tags = qx($cmd);
 	chomp @orig_tags;
 	foreach (@orig_tags) {
