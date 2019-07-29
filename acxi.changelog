@@ -1,5 +1,17 @@
 ===================================================================
 Date: 2019-07-27
+Version: 3.2.16
+-------------------------------------------------------------------
+New Feature:
+1. -U self updater. I got tired of manually updating it. Now it 
+joins all the other *xi tools to have a self-updater.
+2. Preserves REPLAYGAIN values when creating autotag-create 
+file. This can help when the people who made the source flacs
+took the time to set replaygain data, but did not do any other
+tagging, or did incorrect tagging.
+
+===================================================================
+Date: 2019-07-27
 Version: 3.2.11
 -------------------------------------------------------------------
 New Feature:
