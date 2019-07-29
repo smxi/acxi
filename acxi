@@ -1072,12 +1072,12 @@ sub writer {
 ## package SelfUpdater
 {
 package SelfUpdater;
-my $self_source = "$SELF_DIRECTORY/$self_name";
-my $self_man = "$MAN_DIRECTORY/$self_name.1";
+my $self_source = "$SELF_DIRECTORY/$SELF_NAME";
+my $man_source = "$MAN_DIRECTORY/$SELF_NAME.1";
 my $curl = $CURL_PATH;
 sub update {
 	print $line_large;
-	print "Starting $self_name self updater...\n";
+	print "Starting $SELF_NAME self updater...\n";
 	validate();
 	grab();
 	print $line_small;
@@ -1087,11 +1087,13 @@ sub update {
 }
 sub grab {
 	my $cmd = "$CURL_PATH  -o $self_source -L https:/smxi.org/acxi";
+	print "Downloading $SELF_NAME now...\n";
 	qx($cmd);
 	if ($? > 0){
 		main::error_handler('self-updater',"Self update error: curl returns: $?.",1);
 	}
-	my $cmd = "$CURL_PATH  -o $man_source -L https:/smxi.org/acxi.1";
+	$cmd = "$CURL_PATH  -o $man_source -L https:/smxi.org/acxi.1";
+	print "Downloading $SELF_NAME.1 man page now...\n";
 	qx($cmd);
 	if ($? > 0){
 		main::error_handler('self-updater',"Man update error: curl returns: $?.",1);
@@ -1099,10 +1101,10 @@ sub grab {
 }
 sub validate {
 	if (!-e $self_source){
-		main::error_handler('self-updater',"Only updating $self_name at $self_source supported.",1);
+		main::error_handler('self-updater',"Only updating $SELF_NAME at $self_source supported.",1);
 	}
-	if (!-e $self_man){
-		main::error_handler('self-updater',"Only updating man at $self_man supported.",1);
+	if (!-e $man_source){
+		main::error_handler('self-updater',"Only updating man at $man_source supported.",1);
 	}
 	if (!-x $CURL_PATH){
 		main::error_handler('self-updater',"Downloadert $CURL_PATH missing or not executable.",1);
@@ -1110,8 +1112,8 @@ sub validate {
 	if (!-w $self_source){
 		main::error_handler('self-updater',"$self_source is not writeable. Need superuser rights?",1);
 	}
-	if (!-w $self_man){
-		main::error_handler('self-updater',"$self_man is not writeable. Need superuser rights?.",1);
+	if (!-w $man_source){
+		main::error_handler('self-updater',"$man_source is not writeable. Need superuser rights?.",1);
 	}
 }
 }
@@ -1556,8 +1558,8 @@ sub print_help {
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
-	$output .= "-U                Update $self_name and man page. Linux only. Super user (root).\n";
-	$output .= "                  $self_name must be in $SELF_DIRECTORY.\n";
+	$output .= "-U                Update $SELF_NAME and man page. Linux only. Super user (root).\n";
+	$output .= "                  $SELF_NAME must be in $SELF_DIRECTORY.\n";
 	$output .= $line_small;
 	$output .= "Display output and debugging options:\n";
 	$output .= "--basic           Basic single line per operation screen output, default value.\n";
