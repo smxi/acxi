@@ -446,7 +446,7 @@ sub populate_file {
 	'# Use of any of above tags between track blocks will switch to the new value.',
 	'# To make the value empty use: UNSET as the field value.',
 	'# TRACKNUMBER and FILE required, title not known?: suggest TITLE%:Unknown ');
-	my @track = ('', 'TRACKNUMBER','TITLE','VERSION','PART','FILE');
+	my @track = ('','TRACKNUMBER','TITLE','VERSION','PART','FILE');
 	
 	@collection = map {$_ .= '%:' if /^[A-Z]/; $_;} @collection;
 	@disk = map {$_ .= '%:' if /^[A-Z]/; $_;} @disk;
@@ -457,11 +457,16 @@ sub populate_file {
 	@track = map {$_ .= '%:' if /^[A-Z]/; $_;} @track;
 	foreach (@$files){
 		$counter++;
-		local $track[1] = $track[1] . $counter if $run{'autotag-number'};
-		local $track[5] = $track[5] . $_;
-		@replaygain = get_replaygain($_) if !$run{'no-replaygain'};
-		@tags = (@tags,@replaygain,@track);
-		
+		my @track_working = @track;
+		$track_working[1] = $track[1] . $counter if $run{'autotag-number'};
+		$track_working[5] = $track[5] . $_;
+		if (!$run{'no-replaygain'}){
+			@replaygain = get_replaygain($_);
+			#print "@replaygain\n";
+			splice (@track_working, 5, 0, @replaygain) if @replaygain;
+			#print "@track_working\n";
+		}
+		@tags = (@tags,@track_working);
 	}
 	if ($b_test){
 		print join "\n", @tags, "\n";
