@@ -220,6 +220,9 @@ my $DONT_USE_NLINK = 1;
 # FORK = 1 results in slower times than using no forking so avoid that. 
 my $FORK = 0;
 
+# Only for maintainers, set to 0 in config file to disable.
+my $ALLOW_UPDATES = 1;
+
 #### -------------------------------------------------------------------
 #### SELF UPDATER
 #### -------------------------------------------------------------------
@@ -1100,6 +1103,9 @@ sub grab {
 	}
 }
 sub validate {
+	if (!$ALLOW_UPDATES){
+		main::error_handler('self-updater',"Self Updater has been disabled by package maintainer.",1);
+	}
 	if (!-e $self_source){
 		main::error_handler('self-updater',"Only updating $SELF_NAME at $self_source supported.",1);
 	}
