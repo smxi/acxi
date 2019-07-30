@@ -1075,8 +1075,8 @@ sub writer {
 ## package SelfUpdater
 {
 package SelfUpdater;
-my $self_source = "$SELF_DIRECTORY/$SELF_NAME";
-my $man_source = "$MAN_DIRECTORY/$SELF_NAME.1";
+my $self_source = "$SELF_DIRECTORY$path_separator$SELF_NAME";
+my $man_source = "$MAN_DIRECTORY$path_separator$SELF_NAME.1";
 my $curl = $COMMAND_CURL;
 sub update {
 	print $line_large;
