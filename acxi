@@ -1590,7 +1590,7 @@ sub print_help {
 	$output .= "                  Expert use only.\n";
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
 	if ($ALLOW_UPDATES){
-		$output .= "-U                Update $SELF_NAME and man page. Set paths if not Linux.\n";
+		$output .= "--update, -U      Update $SELF_NAME and man page. Set paths if not Linux.\n";
 		$output .= "                  Current values: $SELF_NAME: $SELF_DIRECTORY\n";
 		$output .= "                  man $SELF_NAME.1: $MAN_DIRECTORY\n";
 	}
@@ -1886,7 +1886,7 @@ sub get_options{
 	"test" => sub { 
 		$LOG_LEVEL = 3;
 		$b_test = 1 },
-	'U'=> sub { 
+	'U|update'=> sub { 
 		$run{'update'} = 1; 
 		$b_check_dest = 0;
 		$b_check_out = 0;
