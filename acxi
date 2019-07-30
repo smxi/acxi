@@ -381,7 +381,6 @@ sub process_tags {
 				}
 				say 'tagged';
 			}
-			
 		}
 	}
 }
@@ -1077,13 +1076,12 @@ sub writer {
 package SelfUpdater;
 my $self_source = "$SELF_DIRECTORY$path_separator$SELF_NAME";
 my $man_source = "$MAN_DIRECTORY$path_separator$SELF_NAME.1";
-my $curl = $COMMAND_CURL;
+
 sub update {
 	print $line_large;
 	print "Starting $SELF_NAME self updater...\n";
 	validate();
 	grab();
-	print $line_small;
 	print "Completed self updates.\n";
 	print $line_large;
 	exit 0;
