@@ -1139,7 +1139,7 @@ sub validate {
 		main::error_handler('self-updater',"Only updating man at $man_source supported.",1);
 	}
 	if (!-x $COMMAND_CURL){
-		main::error_handler('self-updater',"Downloadert $COMMAND_CURL missing or not executable.",1);
+		main::error_handler('self-updater',"Downloader: $COMMAND_CURL missing or not executable.",1);
 	}
 	if (!-w $self_source){
 		main::error_handler('self-updater',"$self_source is not writeable. Need superuser rights?",1);
