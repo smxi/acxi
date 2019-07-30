@@ -107,7 +107,7 @@ version 3, which should make acxi fully platform agnostic.
   
 * -U self updater requires curl, and valid paths for currently 
 installed acxi and acxi.1 man page. Will not update if both acxi 
-and acxi.1 are present on your system and paths set.
+and acxi.1 are not present on your system, and correct paths set.
 
 In theory, acxi 3.x should run on Windows and Macs, but I have not
 tested that, but as long as the source/destination directory paths and
