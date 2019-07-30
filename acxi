@@ -1079,7 +1079,7 @@ my $man_source = "$MAN_DIRECTORY$path_separator$SELF_NAME.1";
 
 sub update {
 	print $line_large;
-	print "Starting $SELF_NAME self updater...\n";
+	print "Starting $SELF_NAME self updater.\n";
 	validate();
 	grab();
 	print "Completed self updates.\n";
@@ -1102,9 +1102,9 @@ sub grab {
 		main::error_handler('self-updater',"Self update error: Download data corrupted.",1);
 	}
 	else {
-		print "verified.\nWriting to $SELF_NAME location... ";
+		print "Verified.\nWriting to $SELF_NAME location... ";
 		main::writer($self_source,\@content);
-		print "file updated\n";
+		print "File updated\n";
 	}
 	print "Downloading $SELF_NAME.1 man page.\n";
 	$cmd = "$COMMAND_CURL -L https:/smxi.org/acxi.1";
@@ -1120,9 +1120,9 @@ sub grab {
 		main::error_handler('self-updater',"Man update error: Download data corrupted.",1);
 	}
 	else {
-		print "verified.\nWriting to $SELF_NAME.1 location... ";
+		print "Verified.\nWriting to $SELF_NAME.1 location... ";
 		main::writer($man_source,\@content);
-		print "file updated\n";
+		print "File updated\n";
 	}
 }
 sub validate {
@@ -1145,7 +1145,7 @@ sub validate {
 	if (!-w $man_source){
 		main::error_handler('self-updater',"$man_source is not writeable. Need superuser rights?.",1);
 	}
-	print "valid\n";
+	print "Valid\n";
 }
 }
 
