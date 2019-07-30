@@ -106,7 +106,9 @@ if you want to preserve \fBREPLAYGAIN\fR data.
 .B \-\-autotag\-create\fR
 Creates the \fBauto.tag\fR file in the directory, and populates it
 with field names, and per track blocks that include the track file
-name so you can just fill out the fields you want.
+name so you can just fill out the fields you want. Will also 
+populate the \fBTRACKNUMBER\fR and \fBTRACKTOTAL\fR fields if you 
+use the \fB\-\-autotag\-create\-single\fR option instead.
 
 All existing \fBREPLAYGAIN\fR tags for the audio files are preserved
 and used in the auto.tag file. If want to remove those, use the 
@@ -446,12 +448,10 @@ occur in any other context in your music collection files.
 
 \fBTAG_FILE\fR \- Sample: \fBTAG_FILE=autotags.tag\fR 
 
-\fBauto.tag\fR \- This file must be located inside of each album/collection
-directory you want to be autotagged. See github acxi page for a sample copy.
-This file contains all the tagging information following a pre-defined format.
+\fBauto.tag\fR \- Thes filename to be used to autotag. Default is \fBauto.tag\fR.
+Filename must be unique, and not be found anywhere else in your collection. Do
+not change unless you have a very good reason to.
 
-Can be generated as well using \fB\-\-autotag\-create\fR when given the 
-directorysource path.
 
 .TP
 .B CHECKSUMS
