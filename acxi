@@ -1090,13 +1090,15 @@ sub update {
 }
 sub grab {
 	my ($cmd,@content);
-	print "Downloading $SELF_NAME now...\n";
+	print "Downloading $SELF_NAME.\n";
 	$cmd = "$COMMAND_CURL -L https:/smxi.org/acxi";
+	print $line_small;
 	@content = qx($cmd);
 	if ($? > 0){
 		main::error_handler('self-updater',"Self update error: curl returns: $?.",1);
 	}
 	chomp(@content);
+	print $line_small;
 	print "Verifying $SELF_NAME data... ";
 	if (! grep {/###\*\*EOF\*\*###/} @content){
 		main::error_handler('self-updater',"Self update error: Download data corrupted.",1);
@@ -1106,13 +1108,15 @@ sub grab {
 		main::writer($self_source,\@content);
 		print "file updated\n";
 	}
-	print "Downloading $SELF_NAME.1 man page now...\n";
+	print "Downloading $SELF_NAME.1 man page.\n";
 	$cmd = "$COMMAND_CURL -L https:/smxi.org/acxi.1";
+	print $line_small;
 	@content = qx($cmd);
 	if ($? > 0){
 		main::error_handler('self-updater',"Man update error: curl returns: $?.",1);
 	}
 	chomp(@content);
+	print $line_small;
 	print "Verifying $SELF_NAME.1 data... ";
 	if (! grep {/\Qis a fork and full rewrite of flac2ogg.pl.\E/} @content){
 		main::error_handler('self-updater',"Man update error: Download data corrupted.",1);
