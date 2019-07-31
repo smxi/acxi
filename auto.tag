@@ -39,21 +39,6 @@ COMMENT%:
 COMMENT%:
 COMMENT%:
 
-## FILE DISPLAY IMAGES ##
-# creates image data in music file: 
-# [TYPE]|[MIME-TYPE]|[DESCRIPTION]|[WIDTHxHEIGHTxDEPTH[/COLORS]]|FILE
-# In general, you can leave mime-type, description, widthxheight blank, 
-# FILE and TYPE [number between 0-20, see docs] should be filled out.
-# Leave | in. 3:cover, front; 4:cover, back; 5:leaflet page; 
-# 8: artist/performer; 15:during performance; 19: band/artist logo; 
-# FILE should be path from where auto.tag is located.
-# Sample: IMAGE%:3||||images/cover.jpg
-# WARNING: the image file data will be added to each music file, so
-# make sure to optimize the picture you are going to add a as much as 
-# possible, 75% jpeg quality at 400px width gives a good quality but 
-# small file size.
-IMAGE%:
-
 ## RECORDING INFO ##
 # Repeat if > 1 genre
 GENRE%:

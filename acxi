@@ -72,8 +72,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.16';
-my $SELF_DATE = '2019-07-29';
+my $SELF_VERSION = '3.2.17';
+my $SELF_DATE = '2019-07-30';
 
 ## GLOBALS ##
 my %run;
@@ -308,8 +308,9 @@ sub get_tag_files {
 }
 sub process_tags {
 	my @tags = main::reader($TAG_FILE,'strip');
-	my ($args,$error_message,@main_tags,@track_tags,@working);
-	my ($b_tracks);
+	my ($args,$error_message,@image_args,@images,@main_tags,
+	@track_tags,@working);
+	my ($b_image_check,$b_tracks);
 	my ($cmd,$comments,$tag) = ('','','');
 	state %set;
 	foreach (@tags){
@@ -327,7 +328,7 @@ sub process_tags {
 			# delete all previous items for key, to avoid multi tagging
 			if ($b_tracks && (!$set{$working[0]} || $working[1] eq 'UNSET')){
 				if ($working[0] eq 'IMAGE'){
-					@main_tags = grep {!/^--import-picture-from/} @main_tags;
+					@images = (); # reset the images completely
 				}
 				else {
 					@main_tags = grep {!/^--set-tag=$working[0]/} @main_tags;
@@ -337,12 +338,13 @@ sub process_tags {
 			# then set the key flag again
 			$set{$working[0]} = 1;
 			if ($working[0] eq 'IMAGE'){
-				$tag = qq(--import-picture-from="$working[1]");
+				$tag = qq($working[1]);
+				push @images, $tag;
 			}
 			else {
 				$tag = qq(--set-tag=$working[0]="$working[1]");
+				push @main_tags, $tag;
 			}
-			push @main_tags, $tag;
 		}
 		elsif ($working[0] eq 'FILE'){
 			## NOTE: we have to unescape $ in paths for -e tests, but leave it escaped
@@ -363,9 +365,13 @@ sub process_tags {
 					main::error_handler('application-error', $error_message,1);
 				}
 			}
-			@track_tags = (@main_tags,@track_tags);
+			# disable for now, the test for type isn't working, metaflac is making types
+			# 3 regardless of actual type.
+			# @image_args = image_args("$working[1]",@images) if @images;
+			@track_tags = (@main_tags,@image_args,@track_tags);
 			$args = join ' ', @track_tags;
 			@track_tags = ();
+			@image_args = ();
 			# reset all detected @main items
 			foreach (keys %set) {
 				$set{$_} = 0;
@@ -383,6 +389,37 @@ sub process_tags {
 			}
 		}
 	}
+}
+# note: metaflac is ignring type integer and assigning 3, not sure why
+sub image_args {
+	my ($file,@images) = @_;
+	my ($image_data,$type,@args,@result,@temp);
+	my $cmd = qq($COMMAND_METAFLAC --list --block-type=PICTURE "$file");
+	@result = qx($cmd);
+	@result = grep {!/type:.*\(PICTURE\)/} @result if @result;
+	@result = grep {/type:\s[0-9]+\s/} @result if @result;
+	# filename: type: 6 (PICTURE) 3||||images/cover.jpg
+	# --import-picture-from="3||||front.jpg"
+	foreach (@images){
+		@temp = split /\|/, $_;
+		if (scalar(@temp) == 5 && defined $temp[0] && $temp[0] =~ /^[0-9]+$/) {
+			$type = $temp[0];
+		}
+		# cover, type 3, is default
+		else {
+			$type = 3;
+		}
+		say scalar(@temp), ' ', $type, ' ', $temp[4];
+		if (!@result || !(grep {/type:\s+$type\s+/} @result)){
+			$image_data = (scalar(@temp) == 5) ? $temp[4]:$temp[0] ;
+			push @args, qq(--import-picture-from=""$image_data);
+			print "\nAdding $image_data...\n" if $LOG_LEVEL > 2;
+		}
+		else {
+			print "\nImage type $type for $temp[4] is already used in metadata.\n" if $LOG_LEVEL > 2;
+		}
+	}
+	return @args;
 }
 sub make_file {
 	my ($file,@files);
@@ -437,11 +474,11 @@ sub populate_file {
 	'# Band members, etc.', 'PERFORMER','PERFORMER','PERFORMER','PERFORMER',
 	'## RECORDING COMMENTS. Note: COMMENT preferred over DESCRIPTION ##',
 	'COMMENT','COMMENT','COMMENT','COMMENT',
-	'## DISPLAY IMAGES ##',
-	'# Please see sample auto.tag file for more information on IMAGE',
-	'# Format: [TYPE]|[MIME-TYPE]|[DESCRIPTION]|[WIDTHxHEIGHTxDEPTH[/COLORS]]|FILE',
-	'# Example: IMAGE%:3||||images/cover.jpg', 
-	'IMAGE',
+	# '## DISPLAY IMAGES ##',
+	# '# Please see sample auto.tag file for more information on IMAGE',
+	# '# Format: [TYPE]|[MIME-TYPE]|[DESCRIPTION]|[WIDTHxHEIGHTxDEPTH[/COLORS]]|FILE',
+	# '# Example: IMAGE%:3||||images/cover.jpg', 
+	# 'IMAGE',
 	'## RECORDING INFO ##',
 	# note: VENUE and LABEL better handled by xiph spec: LOCATION and ORGANIZATION
 	# Include YEAR to make conversion to mp3 tagging cleaner
