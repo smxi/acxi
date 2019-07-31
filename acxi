@@ -72,8 +72,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.18';
-my $SELF_DATE = '2019-07-30';
+my $SELF_VERSION = '3.2.19';
+my $SELF_DATE = '2019-07-31';
 
 ## GLOBALS ##
 my %run;
@@ -364,6 +364,18 @@ sub process_tags {
 					$error_message = "$COMMAND_METAFLAC returned error: $?";
 					main::error_handler('application-error', $error_message,1);
 				}
+			}
+			if ($run{'remove-images'}){
+				print "removing embedded images... ";
+				$cmd = qq($COMMAND_METAFLAC --remove --block-type=PICTURE,PADDING --dont-use-padding "$working[1]");
+				if (!$b_test){
+					qx($cmd);
+					if ($? > 0){
+						$error_message = "$COMMAND_METAFLAC returned error: $?";
+						main::error_handler('application-error', $error_message,1);
+					}
+				}
+				print "\n", $cmd, "\n" if $LOG_LEVEL > 3;
 			}
 			# disable for now, the test for type isn't working, metaflac is making types
 			# 3 regardless of actual type.
@@ -1618,6 +1630,8 @@ sub print_help {
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
+	$output .= "--remove-images   Remove all embedded images and image padding from file\n";
+	$output .= "                  before autotagging.\n";
 	if ($ALLOW_UPDATES){
 		$output .= "--update, -U      Update $SELF_NAME and man page. Set paths if not Linux.\n";
 		$output .= "                  Current values: $SELF_NAME: $SELF_DIRECTORY\n";
@@ -1912,6 +1926,8 @@ sub get_options{
 	"quiet|silent" => sub { 
 		$b_quiet = 1; 
 		$LOG_LEVEL = 0 },
+	"remove-images" => sub { 
+		$run{'remove-images'} = 1 },
 	"test" => sub { 
 		$LOG_LEVEL = 3;
 		$b_test = 1 },

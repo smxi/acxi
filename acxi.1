@@ -1,4 +1,4 @@
-.TH ACXI 1 "2019\-07\-29" acxi "acxi manual"
+.TH ACXI 1 "2019\-07\-31" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -313,6 +313,12 @@ of the existing files.
 .B \-\-quiet\fR, \fB\-\-silent\fR
 Turns off all screen output, except for error messages. 
 Same as \fB\-\-log 0\fR
+
+.TP
+.B \-\-remove\-images\fR
+Use with \fB\-\-autotag\fR. Will remove all embedded image data, and the
+associated padding, prior to tagging (and adding new image if applicable)
+audio file.
 
 .TP
 .B \-s [path]\fR, \fB\-\-source [path]\fR

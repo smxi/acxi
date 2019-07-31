@@ -47,7 +47,7 @@ COMMENT%:
 # WARNING: the image file data will be added to each music file, so
 # make sure to optimize the picture you are going to add as much as 
 # possible, 75% jpeg quality at 3-400px width gives a good quality but 
-# small file size. Remove all image data with: 
+# small file size. Remove all image data with: --remove-images
 # metaflac --remove --block-type=PICTURE,PADDING --dont-use-padding *.flac
 # To avoid errors, acxi will only embed an image if none have been embedded.
 IMAGE%:
