@@ -39,7 +39,6 @@ COMMENT%:
 COMMENT%:
 COMMENT%:
 
-## sample image from auto.tag 
 ## FILE DISPLAY IMAGES ##
 # creates image data in music file: 
 # Only default cover type supported due to some glitches I found in metaflac

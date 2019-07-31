@@ -402,7 +402,7 @@ sub image_args {
 	foreach (@images){
 		if (!@result){
 			push @args, qq(--import-picture-from="$_");
-			print "\n  adding image $_... ";
+			print "\n  embedding $_... ";
 		}
 		else {
 			print "\n  skipping $_ (images already present in track)... ";
@@ -465,7 +465,8 @@ sub populate_file {
 	'COMMENT','COMMENT','COMMENT','COMMENT',
 	 '## DISPLAY IMAGES ##',
 	 '# Please see sample auto.tag file for more information on IMAGE',
-	# '# Format: [TYPE]|[MIME-TYPE]|[DESCRIPTION]|[WIDTHxHEIGHTxDEPTH[/COLORS]]|FILE',
+	 '# Path to image file from where auto.tag file is located. Will be',
+	 '# set as default type 3, cover image. ',
 	 '# Example: IMAGE%:images/cover.jpg', 
 	 'IMAGE',
 	'## RECORDING INFO ##',
