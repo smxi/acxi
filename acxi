@@ -380,7 +380,7 @@ sub process_tags {
 			#say File::stat::stat("$working[1]")->size;
 			# disable for now, the test for type isn't working, metaflac is making types
 			# 3 regardless of actual type.
-			@image_args = image_args("$working[1]",@images) if @images;
+			@image_args = image_handler("$working[1]",@images) if @images;
 			@track_tags = (@main_tags,@image_args,@track_tags);
 			$args = join ' ', @track_tags;
 			@track_tags = ();
@@ -405,7 +405,7 @@ sub process_tags {
 	}
 }
 # note: metaflac is ignring type integer and assigning 3, not sure why
-sub image_args {
+sub image_handler {
 	my ($file,@images) = @_;
 	my ($size,@args,@result,$working);
 	my $cmd = qq($COMMAND_METAFLAC --list --block-type=PICTURE "$file");
@@ -415,20 +415,19 @@ sub image_args {
 	# filename: type: 6 (PICTURE) 3||||images/cover.jpg
 	# --import-picture-from="3||||front.jpg"
 	foreach (@images){
-		if (!@result){
-			$working = $_;
-			$working = (split /\|/, $working)[-1];
+		$working = (split /\|/, $_)[-1];
+		if (@result){
+			print "\n  Skipping $working (pre-existing image data)... ";
+		}
+		else {
 			if (-e $working){
 				$size = sprintf("%.1f", File::stat::stat("$working")->size / 1024);
 				push @args, qq(--import-picture-from="$_");
-				print "\n  Embedding $_ ($size KiB)... ";
+				print "\n  Embedding $working ($size KiB)... ";
 			}
 			else {
 				print "\n  File $working not found... ";
 			}
-		}
-		else {
-			print "\n  Skipping $_ (pre-existing image data)... ";
 		}
 	}
 	return @args;
