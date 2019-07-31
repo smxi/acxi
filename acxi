@@ -72,7 +72,7 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.17';
+my $SELF_VERSION = '3.2.18';
 my $SELF_DATE = '2019-07-30';
 
 ## GLOBALS ##
@@ -468,6 +468,8 @@ sub populate_file {
 	 '# Path to image file from where auto.tag file is located. Will be',
 	 '# set as default type 3, cover image. ',
 	 '# Example: IMAGE%:images/cover.jpg', 
+	 '# To remove all embedded images:',
+	 '# metaflac --remove --block-type=PICTURE,PADDING --dont-use-padding *.flac',
 	 'IMAGE',
 	'## RECORDING INFO ##',
 	# note: VENUE and LABEL better handled by xiph spec: LOCATION and ORGANIZATION
