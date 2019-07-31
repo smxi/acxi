@@ -1607,13 +1607,14 @@ sub print_help {
 	$output .= "                  activates --full for more complete path outputs.\n";
 	$output .= $line_small;
 	$output .= "Specialized options:\n";
-	$output .= "--autotag         Requires auto.tag formatted file in each directory. Flac only.\n";
+	$output .= "-A, --autotag     Requires auto.tag formatted file in each directory. Flac only.\n";
 	$output .= "                  Deletes all existing tags, then creates a fully tagged set of\n";
 	$output .= "                  files.\n";
-	$output .= "--autotag-create  Create $TAG_FILE template in source directory. Will be\n";
+	$output .= "-C, --autotag-create\n";
+	$output .= "                  Create $TAG_FILE template in source directory. Will be\n";
 	$output .= "                  populated with file names for recording filled in already in\n";
 	$output .= "                  track listing. Preserves existing REPLAYGAIN values.\n";
-	$output .= "--autotag-create-single\n";
+	$output .= "-S, --autotag-create-single\n";
 	$output .= "                  For single disc recordings, will also add TRACKTOTAL and\n";
 	$output .= "                  TRACKNUMBER counts when creating and populating the\n";
 	$output .= "                  $TAG_FILE file.\n";
@@ -1819,7 +1820,7 @@ sub get_options{
 	"a|append:s" => sub { 
 		my ($opt,$arg) = @_;
 		$COPY_TYPES .= ',' . $arg if $arg;},
-	"autotag" => sub { 
+	"A|autotag" => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'autotag'} = 1;
@@ -1829,7 +1830,7 @@ sub get_options{
 		$run{'checksum'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
-	"autotag-create" => sub { 
+	"C|autotag-create" => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'autotag-create'} = 1;
@@ -1839,7 +1840,7 @@ sub get_options{
 		$run{'checksum'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
-	"autotag-create-single" => sub { 
+	"S|autotag-create-single" => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'autotag-create'} = 1;

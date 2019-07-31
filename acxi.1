@@ -11,6 +11,7 @@ acxi  \- Command line audio conversion tool
 [\fB\-\-log\fR {0-3}] [\fB\-\-nlink\fR] [\fB\-\-no\-nlink\fR] 
 [\fB\-\-no\-replaygain\fR] 
 [\fB\-o\fR {flac|mp3|ogg|opus}] [\fB\-q\fR NUMBER] [\fB\-\-quiet\fR] 
+[\fB\-\-remove\-imagesn\fR]
 [\fB\-s\fR source\-path] [\fB\-\-verbose\fR] [\fB\-\-test\fR] 
 [\fB\-U\fR] [\fB\-v\fR]
 
@@ -85,7 +86,7 @@ having to make a full list with \fB\-c\fR.
 Sample: \fBacxi \-a md5\fR will add md5 file type to copy list.
 
 .TP
-.B \-\-autotag\fR
+.B \-A\fR, \fB\-\-autotag\fR
 Requires specially formatted file, default name \fBauto.tag\fR, 
 to be put into each music collection directory. See the file for 
 explanations.
@@ -103,7 +104,7 @@ use \fB\-\-autotag\-create\fR or \fB\-\-autotag\-create\-single\fR
 if you want to preserve \fBREPLAYGAIN\fR data.
 
 .TP
-.B \-\-autotag\-create\fR
+.B \-C\fR, \fB\-\-autotag\-create\fR
 Creates the \fBauto.tag\fR file in the directory, and populates it
 with field names, and per track blocks that include the track file
 name so you can just fill out the fields you want. Will also 
@@ -115,7 +116,7 @@ and used in the auto.tag file. If want to remove those, use the
 \fB\-\-no\-replaygain\fR option. 
 
 .TP
-.B \-\-autotag\-create\-single\fR
+.B \-S\fR, \fB\-\-autotag\-create\-single\fR
 When creating \fBauto.tag\fR file, as well as populating the per track
 file names, it also fills in the \fBTRACKTOTAL\fR and \fBTRACKNUMBER\fR
 fields.
