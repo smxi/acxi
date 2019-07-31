@@ -39,6 +39,20 @@ COMMENT%:
 COMMENT%:
 COMMENT%:
 
+## sample image from auto.tag 
+## FILE DISPLAY IMAGES ##
+# creates image data in music file: 
+# Only default cover type supported due to some glitches I found in metaflac
+# implementation. The image path is from where auto.tag is located.
+# Sample: IMAGE%:images/cover.jpg
+# WARNING: the image file data will be added to each music file, so
+# make sure to optimize the picture you are going to add as much as 
+# possible, 75% jpeg quality at 3-400px width gives a good quality but 
+# small file size. Remove all image data with: 
+# metaflac --remove --block-type=PICTURE,PADDING --dont-use-padding *.flac
+# To avoid errors, acxi will only embed an image if none have been embedded.
+IMAGE%:
+
 ## RECORDING INFO ##
 # Repeat if > 1 genre
 GENRE%:

@@ -367,7 +367,7 @@ sub process_tags {
 			}
 			# disable for now, the test for type isn't working, metaflac is making types
 			# 3 regardless of actual type.
-			# @image_args = image_args("$working[1]",@images) if @images;
+			@image_args = image_args("$working[1]",@images) if @images;
 			@track_tags = (@main_tags,@image_args,@track_tags);
 			$args = join ' ', @track_tags;
 			@track_tags = ();
@@ -393,30 +393,19 @@ sub process_tags {
 # note: metaflac is ignring type integer and assigning 3, not sure why
 sub image_args {
 	my ($file,@images) = @_;
-	my ($image_data,$type,@args,@result,@temp);
+	my (@args,@result);
 	my $cmd = qq($COMMAND_METAFLAC --list --block-type=PICTURE "$file");
 	@result = qx($cmd);
-	@result = grep {!/type:.*\(PICTURE\)/} @result if @result;
-	@result = grep {/type:\s[0-9]+\s/} @result if @result;
+	@result = grep {/type:.*\(PICTURE\)/} @result if @result;
 	# filename: type: 6 (PICTURE) 3||||images/cover.jpg
 	# --import-picture-from="3||||front.jpg"
 	foreach (@images){
-		@temp = split /\|/, $_;
-		if (scalar(@temp) == 5 && defined $temp[0] && $temp[0] =~ /^[0-9]+$/) {
-			$type = $temp[0];
-		}
-		# cover, type 3, is default
-		else {
-			$type = 3;
-		}
-		say scalar(@temp), ' ', $type, ' ', $temp[4];
-		if (!@result || !(grep {/type:\s+$type\s+/} @result)){
-			$image_data = (scalar(@temp) == 5) ? $temp[4]:$temp[0] ;
-			push @args, qq(--import-picture-from=""$image_data);
-			print "\nAdding $image_data...\n" if $LOG_LEVEL > 2;
+		if (!@result){
+			push @args, qq(--import-picture-from="$_");
+			print "\n  adding image $_... ";
 		}
 		else {
-			print "\nImage type $type for $temp[4] is already used in metadata.\n" if $LOG_LEVEL > 2;
+			print "\n  skipping $_ (images already present in track)... ";
 		}
 	}
 	return @args;
@@ -474,11 +463,11 @@ sub populate_file {
 	'# Band members, etc.', 'PERFORMER','PERFORMER','PERFORMER','PERFORMER',
 	'## RECORDING COMMENTS. Note: COMMENT preferred over DESCRIPTION ##',
 	'COMMENT','COMMENT','COMMENT','COMMENT',
-	# '## DISPLAY IMAGES ##',
-	# '# Please see sample auto.tag file for more information on IMAGE',
+	 '## DISPLAY IMAGES ##',
+	 '# Please see sample auto.tag file for more information on IMAGE',
 	# '# Format: [TYPE]|[MIME-TYPE]|[DESCRIPTION]|[WIDTHxHEIGHTxDEPTH[/COLORS]]|FILE',
-	# '# Example: IMAGE%:3||||images/cover.jpg', 
-	# 'IMAGE',
+	 '# Example: IMAGE%:images/cover.jpg', 
+	 'IMAGE',
 	'## RECORDING INFO ##',
 	# note: VENUE and LABEL better handled by xiph spec: LOCATION and ORGANIZATION
 	# Include YEAR to make conversion to mp3 tagging cleaner
