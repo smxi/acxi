@@ -72,7 +72,7 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.2.19';
+my $SELF_VERSION = '3.2.20';
 my $SELF_DATE = '2019-07-31';
 
 ## GLOBALS ##
@@ -355,7 +355,7 @@ sub process_tags {
 			main::error_handler('file-missing',"Missing file: $temp",1) if ! -e "$temp";
 			# note: must be set here, not in qx to avoid quote errors
 			# single quotes, in case contains $ symbol
-			#say "$working[1]";
+			#say File::stat::stat("$working[1]")->size;
 			$cmd = qq($COMMAND_METAFLAC --remove-all-tags "$working[1]");
 			print "\n", $cmd, "\n" if $LOG_LEVEL > 3;
 			if (!$b_test){
@@ -366,7 +366,7 @@ sub process_tags {
 				}
 			}
 			if ($run{'remove-images'}){
-				print "removing embedded images... ";
+				print "Removing images... ";
 				$cmd = qq($COMMAND_METAFLAC --remove --block-type=PICTURE,PADDING --dont-use-padding "$working[1]");
 				if (!$b_test){
 					qx($cmd);
@@ -377,6 +377,7 @@ sub process_tags {
 				}
 				print "\n", $cmd, "\n" if $LOG_LEVEL > 3;
 			}
+			#say File::stat::stat("$working[1]")->size;
 			# disable for now, the test for type isn't working, metaflac is making types
 			# 3 regardless of actual type.
 			@image_args = image_args("$working[1]",@images) if @images;
@@ -397,27 +398,37 @@ sub process_tags {
 					$error_message = "$COMMAND_METAFLAC returned error: $?";
 					main::error_handler('application-error', $error_message,1);
 				}
-				say 'tagged';
+				say 'File tagged';
 			}
+			#say File::stat::stat("$working[1]")->size;
 		}
 	}
 }
 # note: metaflac is ignring type integer and assigning 3, not sure why
 sub image_args {
 	my ($file,@images) = @_;
-	my (@args,@result);
+	my ($size,@args,@result,$working);
 	my $cmd = qq($COMMAND_METAFLAC --list --block-type=PICTURE "$file");
+	
 	@result = qx($cmd);
 	@result = grep {/type:.*\(PICTURE\)/} @result if @result;
 	# filename: type: 6 (PICTURE) 3||||images/cover.jpg
 	# --import-picture-from="3||||front.jpg"
 	foreach (@images){
 		if (!@result){
-			push @args, qq(--import-picture-from="$_");
-			print "\n  embedding $_... ";
+			$working = $_;
+			$working = (split /\|/, $working)[-1];
+			if (-e $working){
+				$size = sprintf("%.1f", File::stat::stat("$working")->size / 1024);
+				push @args, qq(--import-picture-from="$_");
+				print "\n  Embedding $_ ($size KiB)... ";
+			}
+			else {
+				print "\n  File $working not found... ";
+			}
 		}
 		else {
-			print "\n  skipping $_ (pre-existing image data)... ";
+			print "\n  Skipping $_ (pre-existing image data)... ";
 		}
 	}
 	return @args;
