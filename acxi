@@ -405,7 +405,7 @@ sub image_args {
 			print "\n  embedding $_... ";
 		}
 		else {
-			print "\n  skipping $_ (images already present in track)... ";
+			print "\n  skipping $_ (pre-existing image data)... ";
 		}
 	}
 	return @args;
