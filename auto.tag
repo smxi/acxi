@@ -2,6 +2,8 @@
 ## supports this autotag file syntax.
 ## You can generate this file, with prefilled TRACK blocks including
 ## file names using: acxi --autotag-create -s [recording folder].
+## For single disk collections: --autotag-create-single
+## will also number the tracks, and add track total.
 ## NOTE: any item left blank will not create a tag for that item.
 ## If FILE is left blank, that track file will not be tagged.
 ## Any collection/recording info item can be used more than 1 time,
