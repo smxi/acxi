@@ -9,6 +9,7 @@
 ## values between track blocks to set the subsequent blocks for the new
 ## values, like DISCNUMBER%:, PERFORMER%:, DATE%:, YEAR%:
 ## Check tags: metaflac --list --block-type=VORBIS_COMMENT *.flac
+## Check images: metaflac --list --block-type=PICTURE *.flac | grep -A8 -i metadata
 
 ## COLLECTION/RECORDING NAME/CREATORS ##
 ALBUM%:
