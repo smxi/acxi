@@ -36,7 +36,7 @@ Man page:
  sudo wget -O /usr/local/share/man/man1/acxi.1 https://github.com/smxi/acxi/raw/stable/acxi.1
  
 If you want to use the -U self-updater option, both acxi and the man 
-age must be present on your system, and paths to them set either by
+page must be present on your system, and paths to them set either by
 placing them in the default locations above, or adding the required
 configuration paths.
 
