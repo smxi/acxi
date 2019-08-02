@@ -14,6 +14,10 @@ INSTALLATION
 
 Easy way to install. Change paths on local system if required.
 
+With acxi 3.2.16 or newer, self updater: sudo acxi -U
+
+Or, to install the man and acxi files manually:
+
 These are for GNU/Linux. These use a redirecting shortcut from smxi.org
  sudo wget -O /usr/local/bin/acxi smxi.org/acxi
 

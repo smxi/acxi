@@ -1,5 +1,31 @@
 ===================================================================
 Date: 2019-07-27
+Version: 3.3.0
+-------------------------------------------------------------------
+Rolling all the recent updates into acxi 3.3. I believe I've found 
+all the issues I'm going to find on my own with tagging and image 
+embedding.
+
+New Features:
+1. Self updater -U/--update. No need to manually grab man/acxi from
+ github anymore, let acxi do it for you.
+2. Autotagging: --autotag/-A, --autotag-create/-C,
+ --autotag-create-single/-S, --remove-images, which work with the 
+ newly created auto.tag text file format for quickly creating the 
+ tag data for a collection/album. Does not support Forking.
+3. Checksum generation: --checksum and --checksum-delete. Either 
+ only create, or first delete old files, then create new checksum 
+ files. Does not support Forking. Only support flac ffp and md5.
+4. Documentation pages:
+ https://smxi.org/docs/acxi-man.htm
+ https://smxi.org/docs/acxi-options.htm
+ 
+Fixes:
+1. Better handling of file name/paths, now avoiding some errors 
+ that could happen if file name contained regex characters.
+ 
+===================================================================
+Date: 2019-07-27
 Version: 3.2.16
 -------------------------------------------------------------------
 New Feature:
