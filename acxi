@@ -1613,8 +1613,6 @@ sub print_help {
 	$output .= "                  Current values: $QUALITY_MP3 (mp3); $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
 	$output .= "--source, -s      Path to the top-most directory containing your source files.\n";
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
-	$output .= "--test            Test copy and sync without actually doing the copy/sync. Also\n";
-	$output .= "                  activates --full for more complete path outputs.\n";
 	$output .= $line_small;
 	$output .= "Specialized options:\n";
 	$output .= "-A, --autotag     Requires auto.tag formatted file in each directory. Flac only.\n";
@@ -1660,6 +1658,8 @@ sub print_help {
 	$output .= "--log             [0-4] Dynamically set LOG_LEVEL. Current value: $LOG_LEVEL\n";
 	$output .= "--quiet           Turns off all screen output, except for error messages.\n";
 	$output .= "                  Same as --log 0\n";
+	$output .= "--test            Test copy, sync, autotag, checksum without actually doing \n";
+	$output .= "                  the action. Also activates --full for more verbose outputs.\n";
 	$output .= "--verbose         Without full verbosity of full, no flac/lame/oggenc/opusenc\n";
 	$output .= "                  for conversion process screen output. More verbose than\n";
 	$output .= "                  --basic. Same as --log 2\n";
