@@ -1,19 +1,28 @@
-.TH ACXI 1 "2019\-07\-31" acxi "acxi manual"
+.TH ACXI 1 "2019\-08\-02" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
-\fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-autotag\fR] 
-[\fB\-\-autotag\-create\fR] [\fB\-\-autotag\-create\-single\fR] 
-[\fB\-\-basic\fR] [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] 
-[\fB\-\-clean\fR] [\fB\-c\fR extensions] [\fB\-\-debug\fR]
+.IP * 2
+Syncing: \fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-clean\fR] 
+[\fB\-c\fR extensions] 
 [\fB\-d\fR destination-path] [\fB\-f\fR] [\fB\-\-fork\fR 0-xx] 
-[\fB\-\-full\fR] [\fB\-h\fR] [\fB\-i\fR {flac|raw|shn|wave}] 
-[\fB\-\-log\fR {0-3}] [\fB\-\-nlink\fR] [\fB\-\-no\-nlink\fR] 
-[\fB\-\-no\-replaygain\fR] 
-[\fB\-o\fR {flac|mp3|ogg|opus}] [\fB\-q\fR NUMBER] [\fB\-\-quiet\fR] 
-[\fB\-\-remove\-imagesn\fR]
-[\fB\-s\fR source\-path] [\fB\-\-verbose\fR] [\fB\-\-test\fR] 
-[\fB\-U\fR] [\fB\-v\fR]
+[\fB\-i\fR {flac|raw|shn|wave}] [\fB\-o\fR {flac|mp3|ogg|opus}] 
+[\fB\-q\fR NUMBER] [\fB\-s\fR source\-path] 
+.IP * 2
+Tagging: \fBacxi\fR [\fB\-\-autotag\fR] [\fB\-\-autotag\-create\fR] 
+[\fB\-\-autotag\-create\-single\fR] [\fB\-\-no\-replaygain\fR] 
+[\fB\-\-remove\-images\fR]
+.IP * 2
+Checkums: \fBacxi\fR [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] 
+.IP * 2
+Output Controls: \fBacxi\fR [\fB\-\-basic\fR] [\fB\-\-full\fR]
+[\fB\-\-log\fR {0-3}] [\fB\-\-quiet\fR] [\fB\-\-verbose\fR] 
+.IP * 2
+Miscellaneous:  [\fB\-h\fR] [\fB\-U\fR] [\fB\-v\fR]
+.IP * 2
+Debugging: \fBacxi\fR [\fB\-\-debug\fR]  [\fB\-\-nlink\fR] 
+[\fB\-\-no\-nlink\fR] [\fB\-\-test\fR] 
+
 
 .SH DESCRIPTION
 \fBacxi\fR is a command line audio conversion program. It converts 
@@ -43,25 +52,25 @@ For backward compatibility, acxi requires only Perl 5.010 (or newer),
 so it should run on anything. Several features (copy, make directory, 
 find files) were moved from *nix commands to Perl native commands in
 version 3, which should make acxi fully platform agnostic.
-
+.IP * 2
 \fBOgg\fR encoding requires \fBoggenc\fR (Debian/Ubuntu package: \fBvorbis-tools\fR).
-
+.IP * 2
 \fBOpus\fR encoding requires \fBopusenc\fR (Debian/Ubuntu package: \fBopus-tools\fR).
-
+.IP * 2
 \fBMP3\fR encoding requires: \fBlame\fR and \fBflac\fR. Source file must be flac. 
 MP3 encoding does not support wav or raw input formats.
-  
+.IP * 2
 \fBSHN \-> \fBFLAC\fR conversion requires the codec \fBshorten\fR and \fBffmpeg\fR.
-
+.IP * 2
 \fB\-\-autotag\fR requires \fBmetaflac\fR for \fBVORBIS\fR tagging.
-
+.IP * 2
 \fB\-\-checksum\fR and \fB\-\-checksum\-delete\fR require \fBffmpeg\fR 
 and \fBmd5sum\fR (or any comparable program that generates md5sums). 
 Md5 generating logic may be moved to straight Perl to remove the md5 
 program requirement.
-
+.IP * 2
 \fB\-U\fR Self-updater requires \fBcurl\fR. 
-
+.PP
 In theory, acxi 3.x should run on Windows and Macs, but I have not
 tested that, but as long as the source/destination directory paths and
 the application/configuration paths are correct, it should 'just work'.
@@ -102,6 +111,18 @@ since the assumption is those were generated for a reason.
 See github acxi page for a blank sample file, but make sure to
 use \fB\-\-autotag\-create\fR or \fB\-\-autotag\-create\-single\fR 
 if you want to preserve \fBREPLAYGAIN\fR data.
+
+Notes on \fBIMAGE\fR: Avoid using large images, and as far as I can 
+tell, there's no point in using anything other than the standard 
+'cover' type image (type 3). Keep sizes down by optimizing the 
+image down to around 30\-60 KiB, 300\-400 pixel width. If you 
+make a mistake, or want to undo the 
+images, use \fB\-\-remove\-images \-\-autotag\fR after updating the 
+\fBauto.tag\fR file by either removing the value for \fBIMAGE\fR
+or changing the value. Most media players I tested on only pay 
+attention to the main image, and only one of them. Don't use a flac
+file as a way to store large high resolution images as a general
+rule, it just makes the entire collection pointlessly bloated.
 
 .TP
 .B \-C\fR, \fB\-\-autotag\-create\fR
@@ -154,7 +175,7 @@ audio processing tools add \fB.txt\fR to the checksum file name,
 which creates undesirable outcomes since some tools that use \fB.ffp\fR 
 or \fB.md5\fR files don't recognize the files if they have the \fB.txt\fR 
 extension added on.
- 
+
 I can think of very few reasons to want to preserve \fB.ffp\fR or 
 \fB.md5\fR files, since they should in general reflect what the actual 
 files you have are.
@@ -319,7 +340,13 @@ Same as \fB\-\-log 0\fR
 .B \-\-remove\-images\fR
 Use with \fB\-\-autotag\fR. Will remove all embedded image data, and the
 associated padding, prior to tagging (and adding new image if applicable)
-audio file.
+audio file. Note that simply removing image data will leave the padding
+in place. 
+
+This is the full command required to fully restore a flac file size. 
+Failure to use \fB\-\-dont\-use\-padding\fR leaves the file size unchanged.
+
+\fBmetaflac \-\-remove \-\-block\-type=PICTURE,PADDING \-\-dont\-use\-padding file.flac\fR
 
 .TP
 .B \-s [path]\fR, \fB\-\-source [path]\fR
@@ -459,7 +486,6 @@ occur in any other context in your music collection files.
 Filename must be unique, and not be found anywhere else in your collection. Do
 not change unless you have a very good reason to.
 
-
 .TP
 .B CHECKSUMS
 These only apply to the \fB\-\-checksum\fR option, and set a different name 
@@ -502,7 +528,7 @@ Sample: \fBLOG_LEVEL=3\fR
 
 \fB1\fR \- basic \- single line per operation. This is the default, so you don't need 
 to change it.
-    
+
 \fB2\fR \- verbose \- but without the actual conversion data from codecs
 
 \fB3\fR \- full \-  all available information. Note: with \fB\-F\fR / \fB\-\-fork\fR 
