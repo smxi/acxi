@@ -1615,14 +1615,14 @@ sub print_help {
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
 	$output .= $line_small;
 	$output .= "Specialized options:\n";
-	$output .= "-A, --autotag     Requires auto.tag formatted file in each directory. Flac only.\n";
+	$output .= "--autotag, -A     Requires auto.tag formatted file in each directory. Flac only.\n";
 	$output .= "                  Deletes all existing tags, then creates a fully tagged set of\n";
 	$output .= "                  files.\n";
-	$output .= "-C, --autotag-create\n";
+	$output .= "--autotag-create, -C\n";
 	$output .= "                  Create $TAG_FILE template in source directory. Will be\n";
 	$output .= "                  populated with file names for recording filled in already in\n";
 	$output .= "                  track listing. Preserves existing REPLAYGAIN values.\n";
-	$output .= "-S, --autotag-create-single\n";
+	$output .= "--autotag-create-single, -S\n";
 	$output .= "                  For single disc recordings, will also add TRACKTOTAL and\n";
 	$output .= "                  TRACKNUMBER counts when creating and populating the\n";
 	$output .= "                  $TAG_FILE file.\n";
