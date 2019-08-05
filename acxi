@@ -1068,6 +1068,7 @@ sub reader {
 # NOTE: File::Find will not follow symbolic links
 sub wanted {
 	return if -l; # skip symbolic links
+	return if $File::Find::name =~ m/lost\+found/;
 	if ($list_type eq 'dir' || $list_type eq 'file'){
 		return if $File::Find::name =~ m/^\Q$DESTINATION_DIRECTORY\E/;
 		return if $File::Find::name =~ m/\/\./; # skip any dot files/directories
