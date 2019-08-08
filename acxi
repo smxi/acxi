@@ -73,7 +73,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.00';
-my $SELF_DATE = '2019-08-02';
+my $SELF_DATE = '2019-08-07';
 
 ## GLOBALS ##
 my %run;
@@ -180,7 +180,7 @@ my $OUTPUT_TYPE = 'ogg';
 my $QUALITY_FLAC = 4;
 my $QUALITY_MP3 = 3;
 my $QUALITY_OGG = 7;
-my $QUALITY_OPUS = 160;
+my $QUALITY_OPUS = 128;
 
 # Option: -c/--copy and -a/--append (to append extension types to existing list.
 ## NOTE: if you want to override $COPY_TYPES in your config files, you
@@ -918,6 +918,7 @@ sub convert_file {
 	}
 	elsif ( $OUTPUT_TYPE eq 'ogg' ){
 		$action = 'To ogg';
+		# my $meta_data = '--map_metadata:s:a 0:g';
 		if (!$b_test){
 			qx($COMMAND_OGG $silent_flac -q $quality -o "$dest_file" "$src_file");
 			$result = $?;
