@@ -288,7 +288,7 @@ sub get_tag_files {
 	my ($item,$print_file,$result,$working_dir);
 	$list_type = 'file';
 	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
-	foreach $item (@found_list) {
+	foreach $item (sort @found_list) {
 		$print_file = $working_dir = $item;
 		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
 		# $working_dir =~ s/[^\/]+$//;
@@ -573,7 +573,7 @@ sub process_directories {
 	print $line_small;
 	print "Checking directories...\n";
 	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
-	foreach $item (@found_list) {
+	foreach $item (sort @found_list) {
 		$print_src = $item;
 		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
 		#if ($LOG_LEVEL > 2){
@@ -684,7 +684,7 @@ sub process_type {
 	print "Checking $type removal...\n";
 	File::Find::find( \&main::wanted, $DESTINATION_DIRECTORY);
 	if (@found_list && confirm_deletion($type)){
-		foreach $item (@found_list) {
+		foreach $item (sort @found_list) {
 			$result = 'UNSET';
 			print "Deleting $type: $item\n";
 			$result = File::Path::rmtree("$item") if !$b_test;
@@ -772,7 +772,7 @@ sub update_directories {
 	elsif ( $LOG_LEVEL > 0 ) {
 		print main::dotify("Updating destination directories");
 	}
-	foreach $dir (@found_list) {
+	foreach $dir (sort @found_list) {
 		#print "\nd1:$dir\n";
 		$result = 'UNSET';
 		next if $dir eq $SOURCE_DIRECTORY || $dir eq $DESTINATION_DIRECTORY;
@@ -805,7 +805,7 @@ sub update_files {
 	my ($dest_file,$file,$result,$action,$src_file) = ('','','','','');
 	my ($dest_info,$dest_mod_time,$src_info, $src_mod_time) = ('',0,'',0);
 	my $pm = new Parallel::ForkManager($FORK) if $b_fork;
-	foreach $file (@found_list) {
+	foreach $file (sort @found_list) {
 		next if ! $file;
 		$dest_file = $src_file = $file;
 		#print "\nIF: $src_file\n";
