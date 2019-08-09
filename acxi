@@ -912,7 +912,7 @@ sub convert_file {
 	if ( $OUTPUT_TYPE eq 'flac' ){
 		$action = 'To flac';
 		if (!$b_test){
-			qx($COMMAND_FFMPEG $silent_ffmpeg -i "$src_file" "$dest_file" );
+			qx($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" "$dest_file" );
 			$result = $?;
 		}
 	}
@@ -926,7 +926,7 @@ sub convert_file {
 			$result = $?;
 		}
 		if ($run{'ffmpeg'} && !$b_test){
-			qx($COMMAND_FFMPEG $silent_ffmpeg -i "$src_file" -map_metadata:s:a 0:s -aq $quality "$dest_file")
+			qx($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" -map_metadata:s:a 0:s -aq $quality "$dest_file")
 		}
 	}
 	elsif ( $OUTPUT_TYPE eq 'opus' ){
