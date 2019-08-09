@@ -180,7 +180,7 @@ my $OUTPUT_TYPE = 'ogg';
 my $QUALITY_FLAC = 4;
 my $QUALITY_MP3 = 3;
 my $QUALITY_OGG = 7;
-my $QUALITY_OPUS = 140; # 128 claimed to be stereo transparent, 160 very good
+my $QUALITY_OPUS = 144; # 128 claimed to be stereo transparent, 160 very good
 
 # Option: -c/--copy and -a/--append (to append extension types to existing list.
 ## NOTE: if you want to override $COPY_TYPES in your config files, you
