@@ -72,15 +72,15 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.00';
-my $SELF_DATE = '2019-08-07';
+my $SELF_VERSION = '3.3.01';
+my $SELF_DATE = '2019-08-08';
 
 ## GLOBALS ##
 my %run;
 $run{'sync'} = 1;
 my ($b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
-my ($quality,$silent_flac,$silent_flac_out,$silent_lame,
+my ($quality,$silent_flac,$silent_ffmpeg,$silent_lame,
 $silent_opus) = (7,'','','','');
 my ($extension,@extension_list,@found_list,$list_type);
 my ($b_check_dest,$b_check_out) = (1,1);
@@ -123,7 +123,7 @@ my $CONFIG_DIRECTORY='';
 #### APPLICATION PATHS
 #### -------------------------------------------------------------------
 my $COMMAND_FLAC = '/usr/bin/flac'; 
-my $COMMAND_FLAC_OUT = '/usr/bin/ffmpeg';
+my $COMMAND_FFMPEG = '/usr/bin/ffmpeg';
 my $COMMAND_LAME = '/usr/bin/lame';
 my $COMMAND_OGG = '/usr/bin/oggenc';
 my $COMMAND_OPUS = '/usr/bin/opusenc';
@@ -912,16 +912,21 @@ sub convert_file {
 	if ( $OUTPUT_TYPE eq 'flac' ){
 		$action = 'To flac';
 		if (!$b_test){
-			qx($COMMAND_FLAC_OUT $silent_flac_out -i "$src_file" "$dest_file" );
+			qx($COMMAND_FFMPEG $silent_ffmpeg -i "$src_file" "$dest_file" );
 			$result = $?;
 		}
 	}
+	
 	elsif ( $OUTPUT_TYPE eq 'ogg' ){
 		$action = 'To ogg';
+		# ffmpeg -i 'file.flac'  -map_metadata:s:a 0:g 'file.ogg'
 		# my $meta_data = '--map_metadata:s:a 0:g';
-		if (!$b_test){
+		if (!$run{'ffmpeg'} && !$b_test){
 			qx($COMMAND_OGG $silent_flac -q $quality -o "$dest_file" "$src_file");
 			$result = $?;
+		}
+		if ($run{'ffmpeg'} && !$b_test){
+			qx($COMMAND_FFMPEG $silent_ffmpeg -i "$src_file" -map_metadata:s:a 0:s -aq $quality "$dest_file")
 		}
 	}
 	elsif ( $OUTPUT_TYPE eq 'opus' ){
@@ -1278,6 +1283,11 @@ sub check_in_out_types {
 		eval $print_line_large;
 		print main::dotify("Checking input and output types");
 	}
+	if ($run{'ffmpeg'} && ($INPUT_TYPE !~ /^(flac)$/ || $OUTPUT_TYPE !~ m/^(ogg)$/i) ){
+		$b_error = 1;
+		$error_message .= "\n  The input/output type combination you entered is not supported: ";
+		$error_message .= "in: $INPUT_TYPE out: $OUTPUT_TYPE";
+	}
 	if ((!$run{'checksum'} && $INPUT_TYPE !~ m/^(flac|raw|shn|wav)$/i) ||
 	 (($run{'checksum'} || $run{'autotag'}) && $INPUT_TYPE !~ m/^(flac)$/i)){
 		$b_error = 1;
@@ -1345,24 +1355,37 @@ sub check_application_paths {
 		print main::dotify("Checking required tools paths");
 	}
 	if ($b_check_out && $OUTPUT_TYPE eq 'flac') {
-		$app_paths .= "$COMMAND_FLAC_OUT";
-		if ( ! -x "$COMMAND_FLAC_OUT" ) {
+		$app_paths .= "$COMMAND_FFMPEG";
+		if ( ! -x "$COMMAND_FFMPEG" ) {
 			$b_error = 1;
-			$error_message .= "\n  Encoding application not available: $COMMAND_FLAC_OUT";
+			$error_message .= "\n  Encoding application not available: $COMMAND_FFMPEG";
 		}
 	}
-	elsif ($b_check_out && $OUTPUT_TYPE eq 'ogg' ) {
-		$app_paths .= "\n $COMMAND_OGG";
-		if ( ! -x "$COMMAND_OGG" ) {
-			$b_error = 1;
-			$error_message .= "\n  Encoding application not available: $COMMAND_OGG";
+	elsif ($b_check_out && ($OUTPUT_TYPE eq 'ogg' || $OUTPUT_TYPE eq 'opus' ) ) {
+		if (!$run{'ffmpeg'}){
+			if ($OUTPUT_TYPE eq 'ogg'){
+				$app_paths .= "\n $COMMAND_OGG";
+				if ( ! -x "$COMMAND_OGG" ) {
+					$b_error = 1;
+					$error_message .= "\n  Encoding application not available: $COMMAND_OGG";
+				}
+			}
+			elsif ($OUTPUT_TYPE eq 'opus'){
+				$app_paths .= "\n $COMMAND_OPUS";
+				if (!$run{'ffmpeg'}){
+					if ( ! -x "$COMMAND_OPUS" ) {
+						$b_error = 1;
+						$error_message .= "\n  Encoding application not available: $COMMAND_OPUS";
+					}
+				}
+			}
 		}
-	}
-	elsif ($b_check_out && $OUTPUT_TYPE eq 'opus' ) {
-		$app_paths .= "\n $COMMAND_OPUS";
-		if ( ! -x "$COMMAND_OPUS" ) {
-			$b_error = 1;
-			$error_message .= "\n  Encoding application not available: $COMMAND_OPUS";
+		else {
+			$app_paths .= "\n $COMMAND_FFMPEG";
+			if ( ! -x "$COMMAND_FFMPEG" ) {
+				$b_error = 1;
+				$error_message .= "\n  Encoding application not available: $COMMAND_FFMPEG";
+			}
 		}
 	}
 	elsif ($b_check_out && $OUTPUT_TYPE eq 'mp3' ) {
@@ -1600,6 +1623,8 @@ sub print_help {
 	$output .= "--destination, -d Path to the directory where you want the processed\n";
 	$output .= "                  (eg, ogg) files to go.\n";
 	$output .= "                  Current value: $DESTINATION_DIRECTORY\n";
+	$output .= "--ffmpeg          Force flac to ogg/opus conversions to use ffmpeg. Useful if\n";
+	$output .= "                  you want to include embedded images to oggs (Experimental).\n";
 	$output .= "--force, -f       Force overwrite the mp3/ogg/opus/jpg/txt/etc. files, even\n"; 
 	$output .= "                  if they already exist.\n";
 	$output .= "--fork, -F        [0-x] - Number of forks/threads to use. 0 default, disables.\n";
@@ -1724,13 +1749,14 @@ sub set_display_data {
 			$silent_flac = '--silent'; # flac output 
 			$silent_lame = '--silent'; # lame output
 		}
-		elsif ( $OUTPUT_TYPE eq 'ogg' ) {
+		elsif ( !$run{'ffmpeg'} && $OUTPUT_TYPE eq 'ogg' ) {
 			$silent_flac = '--quiet'; # for oggenc output
 		}
-		elsif ( $OUTPUT_TYPE eq 'flac' ) {
+		elsif ( ($run{'ffmpeg'} && $OUTPUT_TYPE =~ /^(ogg)$/ ) || $OUTPUT_TYPE eq 'flac' ) {
 			# -nostats -loglevel 0
+			# -hide_banner -loglevel panic
 			# -v quiet
-			$silent_flac_out = '-nostats -loglevel error'; # 
+			$silent_ffmpeg = '-hide_banner -loglevel panic'; # 
 		}
 		elsif ( $OUTPUT_TYPE eq 'opus' ) {
 			$silent_opus = '--quiet'; # for oggenc output
@@ -1789,7 +1815,7 @@ sub assign_value {
 	my ($var,$value) = @_;
 	if ($var eq 'COMMAND_CURL'){$COMMAND_CURL = $value;}
 	elsif ($var eq 'COMMAND_FLAC'){$COMMAND_FLAC = $value;}
-	elsif ($var eq 'COMMAND_FLAC_OUT'){$COMMAND_FLAC_OUT = $value;}
+	elsif ($var eq 'COMMAND_FFMPEG'){$COMMAND_FFMPEG = $value;}
 	elsif ($var eq 'COMMAND_LAME'){$COMMAND_LAME = $value;}
 	elsif ($var eq 'COMMAND_METAFAC'){$COMMAND_METAFLAC = $value;}
 	elsif ($var eq 'COMMAND_OGG'){$COMMAND_OGG = $value;}
@@ -1898,6 +1924,8 @@ sub get_options{
 		$DESTINATION_DIRECTORY = $arg },
 	"f|force" => sub { 
 		$b_force = 1 },
+	"ffmpeg" => sub { 
+		$run{'ffmpeg'} = 1 },
 	"F|fork:i" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires fork count integer.",1) if not defined $arg;
@@ -1976,6 +2004,10 @@ sub get_options{
 	 $run{'checksum'} || $run{'autotag'})){
 		error_handler('invalid-options', 
 		 "You cannot use --autotag-generate with autotag, clean, sync, or checksum options.",1);
+	}
+	if (!$run{'sync'} && $run{'ffmpeg'}){
+		error_handler('invalid-options', 
+		 "You can only use --ffmpeg with sync operations.",1);
 	}
 }
 
