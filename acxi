@@ -74,7 +74,7 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.02';
+my $SELF_VERSION = '3.3.03';
 my $SELF_DATE = '2019-08-09';
 
 ## GLOBALS ##
@@ -599,7 +599,7 @@ sub process_directories {
 			print " Processing...\n";
 			delete_checksums() if $run{'checksum-delete'};
 			generate_checksums();
-			# verify_checksums();
+			verify_checksums() if $run{'checksum-verify'};
 			$b_dest_changed = 1;
 		}
 		else {
@@ -610,7 +610,7 @@ sub process_directories {
 }
 sub generate_checksums {
 	my ($error_message,@output);
-	system('pwd') if $LOG_LEVEL > 2;
+	system('pwd') if $LOG_LEVEL > 3;
 	print "  Generating checksums: ";
 	print "$MD5_FILE.md5: ";
 	# system("$COMMAND_MD5 *.* > $MD5_FILE.md5");
@@ -648,11 +648,11 @@ sub generate_checksums {
 	}
 }
 # NOTE: something is wrong with how flac outputs to stderr and
-# creates invisible text strings, maybe unicode related, can't tell.
+# creates invisible text strings, maybe unicode related
 sub verify_checksums {
 	my ($error_message,@errors);
-	print "  Verifying $INPUT_TYPE files (be patient)... ";
-	# note, we have to redirect sto stdout! why?
+	print "  Verifying $INPUT_TYPE files (be patient): ";
+	# note, flac sends output to stderr
 	# NOTE: $_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
 	# shows the weird hidden text this command creates
 	my @results = qx($COMMAND_FLAC -t *.flac 2>&1);
@@ -662,46 +662,34 @@ sub verify_checksums {
 	}
 	#print scalar @results, "\n", "@results","\n";
 	chomp @results;
-	#@results = map {$_ =~ s/[^[:print:]]+|[^[:ascii:]]+//g;$_} @results;
-	#@results = map {$_ =~ s/[^[:ascii:]]|[^[:print:]]|[^!-~\s]//g;$_ =~ s/\s+$//;$_} @results;
-	# [^\x20-\x7E]
-	#@results = map {$_ =~ s/(\.$INPUT_TYPE: ).+(ok|)?/$1$2/g;$_ =~ s/\s+$//;$_} @results;
-	
 	@results = grep {/\.$INPUT_TYPE:\s/i} @results;
-	@results = map {
-		print length($_), "\n";
-		$_ =~ s/(^[^[:print:]]|[^[:print:]]$)//g;
-		$_ =~ s/\s+$//;
-		my $working = $_;
-		$working =~ s/^(.*\.$INPUT_TYPE:\s[^\s]+)\s/$1/;
-		$working = ($_ =~ /ok$/) ? $working . ' OK': $working . ' FAILED' ;
-		$working;
-	} @results;
-	
-	print scalar @results, "\n", "@results","\n";
-# 	foreach (@results){
-# 		$_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
-# 		print "##$_##\n";
-# 	
-# 	};
 	# track.flac: testing, 33% completetesting, 65% completetesting, 98% completeok
+	@results = map {
+		#print length($_), "\n";
+		$_ =~ s/[^[:print:]]+//g;
+		$_ =~ s/\.$INPUT_TYPE: (testing.*complete)/.$INPUT_TYPE: /gi;
+		$_ =~ s/\s+$//;
+		#print length($_), "\n";
+		$_;
+	} @results;
+	#print scalar @results, "\n", "@results","\n";
 	@errors = grep {!/\.$INPUT_TYPE: ok$/i} @results;
+	@results = grep {/\.$INPUT_TYPE: ok$/i} @results;
 	#print scalar @results, "\n", "@errors","\n";
 	#print "errors:\n", join "\n", @errors, "\n";
-	# say scalar @results;
 	if (@errors){
-		print "ERRORS!\n    The following files show errors:\n    ", join "\n    ", @errors, "\n";
+		print "ERROR!\n    The following files show errors:\n    ", join "\n    ", @errors, "\n";
 	}
-	else {
-		if ($LOG_LEVEL < 3){
-			print "Valid\n";
+	if (@results){
+		if ($LOG_LEVEL > 2){
+			print "\n   Verified files:\n    ",  join "\n    ", @results, "\n";
+		}
+		else {
+			print "Verified.\n";
 		}
 	}
-	if ($LOG_LEVEL > 2){
-		print "    Verified files:\n",  join "\n    ", @results, "\n";
-	}
-	elsif (@errors) {
-		print "Verified\n";
+	else {
+		print "No verified $INPUT_TYPE files.\n";
 	}
 }
 sub delete_checksums {
@@ -1976,6 +1964,9 @@ sub get_options{
 		$run{'autotag'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
+	'checksum-verify' => sub { 
+		$run{'checksum-verify'} = 1;
+	},
 	"clean" => sub { 
 		$run{'clean'} = 1 },
 	# accepts null value so users can not copy anything
