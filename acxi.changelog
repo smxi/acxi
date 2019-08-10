@@ -1,5 +1,15 @@
 ===================================================================
 Date: 2019-07-27
+Version: 3.3.02
+-------------------------------------------------------------------
+
+Bug fix, --checksum was not correctly changing directories, and
+so would only make the checksums for the first directory it 
+encountered in the following directories, resulting in checksum
+test failures, of course.
+
+===================================================================
+Date: 2019-07-27
 Version: 3.3.0
 -------------------------------------------------------------------
 Rolling all the recent updates into acxi 3.3. I believe I've found 
