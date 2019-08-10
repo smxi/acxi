@@ -3,6 +3,17 @@ Date: 2019-07-27
 Version: 3.3.02
 -------------------------------------------------------------------
 
+Enhancements:
+1. New feature --checksum-verify, to be used, currently, with 
+--checksum or --checksum-delete. Will also verify FLAC files.
+This is time consuming, and is not yet handled by forking, and
+may not be because making forking output consistent is a real pain.
+
+===================================================================
+Date: 2019-07-27
+Version: 3.3.02
+-------------------------------------------------------------------
+
 Bug fix:
 
 1 --checksum was not correctly changing directories, and
