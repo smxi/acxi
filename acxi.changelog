@@ -3,10 +3,25 @@ Date: 2019-07-27
 Version: 3.3.02
 -------------------------------------------------------------------
 
-Bug fix, --checksum was not correctly changing directories, and
+Bug fix:
+
+1 --checksum was not correctly changing directories, and
 so would only make the checksums for the first directory it 
 encountered in the following directories, resulting in checksum
 test failures, of course.
+
+Fixes:
+1. Improvement. All the features now sort the file list so the 
+files/directories are processed in order, which makes for nicer
+screen output.
+2. Fixed some help menu ordering things.
+
+Experiments:
+1. Added --ffmpeg flag. Don't use this, it's experimental, and
+so far the experiments don't look or work well.
+
+Changes:
+1. Changed default opus bitrate to 144.
 
 ===================================================================
 Date: 2019-07-27
