@@ -655,30 +655,56 @@ sub verify_checksums {
 	# note, flac sends output to stderr
 	# NOTE: $_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
 	# shows the weird hidden text this command creates
-	my @results = qx($COMMAND_FLAC -t *.flac 2>&1);
+	my @results = qx($COMMAND_FLAC -wt *.flac 2>&1);
 	if ($? > 0){
 		$error_message = "$COMMAND_FLAC returned error: $?";
 		main::error_handler('application-error', $error_message,1);
 	}
 	#print scalar @results, "\n", "@results","\n";
 	chomp @results;
-	@results = grep {/\.$INPUT_TYPE:\s/i} @results;
+# 	foreach (@results){
+# 		$_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
+# 		print "##$_##\n";
+# 	}
+	#@results = grep {/\.$INPUT_TYPE:\s/i} @results;
 	# track.flac: testing, 33% completetesting, 65% completetesting, 98% completeok
-	@results = map {
+	#@results = map {
+	my $i = 0;
+	my ($holder,$b_start,@temp);
+	foreach (@results){
 		#print length($_), "\n";
-		$_ =~ s/[^[:print:]]+//g;
-		$_ =~ s/\.$INPUT_TYPE: (testing.*complete)/.$INPUT_TYPE: /gi;
 		$_ =~ s/\s+$//;
+		#print "${_}::\n";
+		next if /^\s*$/;
+		$b_start = 1 if !$b_start && $_ =~ /\.$INPUT_TYPE:/;
+		next if !$b_start;
+		$_ =~ s/(testing.*complete|\x{08})//gi;
+		$_ =~ s/[^[:print:]]+//g;
 		#print length($_), "\n";
-		$_;
-	} @results;
+		# the idiocy of flac output is hard to put into words
+		# not only do they use those backspace hidden things, but
+		# sometimes they decide to put the ok/failed on its own line!!!
+		if (/\.$INPUT_TYPE:\s[a-z]+/i){
+			push @temp, $_;
+			$i++;
+		}
+		elsif(/\.$INPUT_TYPE:$/i){
+			$holder = $_;
+			$i++;
+		}
+		else {
+			$temp[$i-1] = $holder . ' ' . $_;
+		}
+	}
+	@results = @temp;
 	#print scalar @results, "\n", "@results","\n";
+	# NOTE: cases found where ok and rest of string prints on next line!!
 	@errors = grep {!/\.$INPUT_TYPE: ok$/i} @results;
 	@results = grep {/\.$INPUT_TYPE: ok$/i} @results;
 	#print scalar @results, "\n", "@errors","\n";
 	#print "errors:\n", join "\n", @errors, "\n";
 	if (@errors){
-		print "ERROR!\n    The following files show errors:\n    ", join "\n    ", @errors, "\n";
+		print "\n   ERROR!\n    The following files show errors:\n    ", join "\n    ", @errors, "\n";
 	}
 	if (@results){
 		if ($LOG_LEVEL > 2){
@@ -1476,6 +1502,11 @@ sub check_application_paths {
 			$b_error = 1;
 			$error_message .= "\n  $COMMAND_METAFLAC not found. Required to generate ";
 			$error_message .= "ffp checksum files.";
+		}
+		if ($run{'checsum-verify'} && ! -x "$COMMAND_FLAC" ){
+			$b_error = 1;
+			$error_message .= "\n  $COMMAND_FLAC not found. Required to verify ";
+			$error_message .= "$INPUT_TYPE files.";
 		}
 	}
 	elsif ($run{'autotag'}){
