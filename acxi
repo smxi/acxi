@@ -732,13 +732,13 @@ sub verify_flacs {
 }
 sub verify_md5 {
 	my (@data,@errors,@results,@working);
-	my ($b_bad,$b_error,$cmd,$hash,$hash2,$error_message,$msg,$result);
+	my ($b_bad,$b_break,$cmd,$hash,$hash2,$error_message,$msg,$result);
 	my @checksums = main::globber("*.{md5,md5.txt}");
 	foreach my $file (@checksums){
 		print "  Checking checksums in: $file: ";
 		@data = main::reader("$file",'strip');
 		#print "data\n", join ("\n", @data), "\n";
-		$b_error = 0;
+		$b_break = 0;
 		foreach my $track (@data){
 			#print "track: $track\n";
 			($hash,$hash2) = ('','');
@@ -748,7 +748,11 @@ sub verify_md5 {
 				$track = $3;
 				# convert to local paths, windows vs nix
 				$track =~ s^[/|\\]^$path_separator^g;
-				print "    Checking: $track: " if $LOG_LEVEL > 2;
+				if ($LOG_LEVEL > 2){
+					print "\n" if !$b_break;
+					print "    Checking: $track: " if $LOG_LEVEL > 2;
+					$b_break = 1;
+				}
 				if (-e "$track"){
 					$cmd = qq($COMMAND_MD5 "$track");
 					$result = qx($cmd);
@@ -759,15 +763,15 @@ sub verify_md5 {
 				}
 				if ($hash2){
 					if ( $hash eq $hash2) {
-						print "Matched\n" if $LOG_LEVEL > 2;
+						print "Matched\n" if ($LOG_LEVEL > 2 );
 					}
 					else {
-						print "\n" if !$b_error;
+						print "\n" if !$b_break;
 						print "   $track: " if $LOG_LEVEL < 3;
-						$msg = ($hash2 ne 'missing') ? "FAILED" : "File Not Found";
+						$msg = ($hash2 ne 'missing') ? "FAILED" : "FAILED: File Not Found";
 						print "$msg\n";
 						$b_bad = 1;
-						$b_error = 1;
+						$b_break = 1;
 					}
 				}
 			}
