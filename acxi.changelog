@@ -1,5 +1,30 @@
 ===================================================================
 Date: 2019-08-10
+Version: 3.3.05
+-------------------------------------------------------------------
+
+New Feature:
+1. --autotag-create-multi / -M will follow a pattern you provide it
+to identify your track numbering scheme for multi disc sets.
+
+This still has to be documented, but it's working well. I was 
+initially thinking of making the logic 'smart' and to try to figure
+out automatically when file starters indicated disc numbers, but
+there are so many variants, it wasn't going to happen.
+
+Note: this does not support multi folder disc storage, like:
+ Disc 1/
+ Disc 2/ 
+because that's a real pain to deal with in automated systems
+that have to figure out where they are in your music library
+without actually knowing that. 
+
+But assuming you've gotten rid of those legacy ways of storing
+per cd files, this will speed things up significantly, to a few
+minutes on a large multi disc set.
+
+===================================================================
+Date: 2019-08-10
 Version: 3.3.04
 -------------------------------------------------------------------
 
