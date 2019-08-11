@@ -297,7 +297,7 @@ sub aggregate {
 		push @files, $file;
 	}
 	# print Data::Dumper::Dumper \@files;
-	print "Finished copying over $TAG_FILE to " . main::sourcer("$DESTINATION_DIRECTORY");
+	print "Finished copying over $TAG_FILE to " . main::sourcer("$DESTINATION_DIRECTORY" . "\n");
 	print $line_large;
 	exit;
 }
