@@ -567,7 +567,7 @@ sub populate_file {
 			}
 			if ($holder ne $starter){
 				$holder = $starter;
-				say "$starter";
+				# say "$starter";
 				if (!$b_first){
 					$counter = 1;
 					$j++;
