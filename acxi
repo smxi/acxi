@@ -251,6 +251,7 @@ sub main {
 	SelfUpdater::update() if $run{'update'};
 	Validation::check_user_values();
 	set_basic_data();
+	AutoTag::aggregate() if $run{'autotag-aggregate'};
 	AutoTag::create_file() if $run{'autotag-create'};
 	AutoTag::run_tagger() if $run{'autotag'};
 	CleanCollection::process_destination() if $run{'clean'};
@@ -278,9 +279,31 @@ sub run_tagger {
 	print "Completed auto-tagging.\n";
 	print $line_large;
 }
+sub aggregate {
+	print $line_large;
+	$extension = $TAG_FILE;
+	$list_type = 'file';
+	my (@files);
+	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
+	my $start_dir = Cwd::getcwd();
+	chdir $SOURCE_DIRECTORY;
+	print "Starting tag file aggregator in " . main::sourcer("$SOURCE_DIRECTORY") . "\n";
+	foreach my $file (sort @found_list) {
+		$b_dest_changed = 1;
+		$file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
+		my $dir = File::Basename::dirname($file);
+		say $file if $LOG_LEVEL > 2;
+		File::Copy::copy($file, $DESTINATION_DIRECTORY . $path_separator . $dir . '.' .$TAG_FILE);
+		push @files, $file;
+	}
+	# print Data::Dumper::Dumper \@files;
+	print "Finished copying over $TAG_FILE to " . main::sourcer("$DESTINATION_DIRECTORY");
+	print $line_large;
+	exit;
+}
 sub create_file {
 	print $line_large;
-	print "Creating $TAG_FILE in $SOURCE_DIRECTORY...\n";
+	print "Creating $TAG_FILE in " . main::sourcer("$SOURCE_DIRECTORY") . "...\n";
 	make_file();
 	print $line_small;
 	print "Completed file creation.\n";
@@ -2088,6 +2111,17 @@ sub get_options{
 	my (@args) = @_;
 	my ($msg);
 	GetOptions (
+	"aggregate" => sub { 
+		$b_check_out = 0;
+		$run{'autotag-aggregate'} = 1;
+		$run{'autotag'} = 1;
+		$run{'autotag-create'} = 0;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$run{'checksum'} = 0;
+		$run{'checksum-verify'} = 0;
+		$OUTPUT_TYPE = 'UNSET';
+	},
 	"a|append:s" => sub { 
 		my ($opt,$arg) = @_;
 		$COPY_TYPES .= ',' . $arg if $arg;},
