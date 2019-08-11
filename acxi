@@ -74,7 +74,7 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.05';
+my $SELF_VERSION = '3.3.06';
 my $SELF_DATE = '2019-08-10';
 
 ## GLOBALS ##
@@ -1874,16 +1874,18 @@ sub print_help {
 	$output .= "                  For single disc recordings, will also add TRACKTOTAL and\n";
 	$output .= "                  TRACKNUMBER counts when creating and populating the\n";
 	$output .= "                  $TAG_FILE file.\n";
-	$output .= "--checksum        Create .ffp and .md5 checksum files in your source directory.\n";
+	$output .= "--checksum, -K    Create .ffp and .md5 checksum files in your source directory.\n";
 	$output .= "                  Checksum files are only created inside directories where flac\n";
 	$output .= "                  files are found. Use --checksum-delete if you also want\n";
 	$output .= "                  to delete existing checksum files. Only flac type\n";
 	$output .= "                  is supported.\n";
 	$output .= "                  Do not use together with other cleaning/syncing options!\n";
-	$output .= "--checksum-delete Delete all existing .ffp, .md5, .ffp.txt, and md5.txt files\n";
+	$output .= "--checksum-delete, -D\n";
+	$output .= "                  Delete all existing .ffp, .md5, .ffp.txt, and md5.txt files\n";
 	$output .= "                  before creating the new checksum files. Files only deleted in\n";
 	$output .= "                  directories where flac files are found.\n";
-	$output .= "--checksum-verify Verifies FLAC files and confirms MD5 file data matches actual\n";
+	$output .= "--checksum-verify, -V\n";
+	$output .= "                  Verifies FLAC files and confirms MD5 file data matches actual\n";
 	$output .= "                  files found. Can be run alone or with other --checksum options.\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
@@ -2136,7 +2138,7 @@ sub get_options{
 		},
 	"basic|default" => sub { 
 		$LOG_LEVEL = 1 },
-	"checksum" => sub { 
+	"K|checksum" => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'checksum'} = 1;
@@ -2145,7 +2147,7 @@ sub get_options{
 		$run{'autotag'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
-	"checksum-delete" => sub { 
+	"D|checksum-delete" => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'checksum'} = 1;
@@ -2155,7 +2157,7 @@ sub get_options{
 		$run{'autotag'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
-	'checksum-verify' => sub { 
+	'V|checksum-verify' => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'checksum-verify'} = 1;
@@ -2237,7 +2239,7 @@ sub get_options{
 		$run{'clean'} = 0;
 		$run{'autotag'} = 0;
 		$OUTPUT_TYPE = 'UNSET';},
-	"V|verbose" => sub { 
+	"verbose" => sub { 
 		$LOG_LEVEL = 2 },
 	"v|version" => sub { 
 		print_version(); },
