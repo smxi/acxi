@@ -1201,7 +1201,7 @@ sub get_flac_tags {
 	}
 	elsif ($type eq 'replaygain'){
 		@tags = ('REPLAYGAIN_TRACK_PEAK','REPLAYGAIN_TRACK_GAIN',
-		'REPLAYGAIN_ALBUM_PEAK','REPLAYGAIN_ALBUM_GAIN');
+		'REPLAYGAIN_ALBUM_PEAK','REPLAYGAIN_ALBUM_GAIN','WAVEFORMATEXTENSIBLE_CHANNEL_MASK');
 	}
 	my $cmd = "$COMMAND_METAFLAC \"$i_file\" ";
 	foreach (@tags){
@@ -1862,6 +1862,14 @@ sub print_help {
 	$output .= "                  Create $TAG_FILE template in source directory. Will be\n";
 	$output .= "                  populated with file names for recording filled in already in\n";
 	$output .= "                  track listing. Preserves existing REPLAYGAIN values.\n";
+	$output .= "--autotag-create-multi, -M [disc ID]\n";
+	$output .= "                  Required argument tells logic how to determine your disc\n";
+	$output .= "                  numbering method. The letter x is used to indicate the value\n";
+	$output .= "                  is a number between 1-9. Will complete TRACKTOTAL, DISCNUMBER,\n";
+	$output .= "                  TRACKNUMBER values in auto.tag file, which saves a lot of time.\n";
+	$output .= "                  Samples: -M dx [d1track02.flac]; -m x [112.flac]\n";
+	$output .= "                  -M dx- [d2-track04.flac]\n";
+	$output .= "                  Flac input type only.\n";
 	$output .= "--autotag-create-single, -S\n";
 	$output .= "                  For single disc recordings, will also add TRACKTOTAL and\n";
 	$output .= "                  TRACKNUMBER counts when creating and populating the\n";
