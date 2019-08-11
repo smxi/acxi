@@ -74,7 +74,7 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.04';
+my $SELF_VERSION = '3.3.05';
 my $SELF_DATE = '2019-08-10';
 
 ## GLOBALS ##
@@ -82,8 +82,8 @@ my %run;
 $run{'sync'} = 1;
 my ($b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
-my ($quality,$silent_flac,$silent_ffmpeg,$silent_lame,
-$silent_opus) = (7,'','','','');
+my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
+$silent_opus) = (7,'','','','','');
 my ($extension,@extension_list,@found_list,$list_type);
 my ($b_check_dest,$b_check_out) = (1,1);
 my $b_win = ($^O =~ /win/i) ? 1 : 0; # detect if $^O returns windows 
@@ -460,7 +460,7 @@ sub make_file {
 	$list_type = 'file';
 	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 	print "\n" if $LOG_LEVEL > 2;
-	foreach $file (@found_list) {
+	foreach $file (sort @found_list) {
 		$b_dest_changed = 1;
 		$file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
 		say $file if $LOG_LEVEL > 2;
@@ -477,7 +477,8 @@ sub make_file {
 }
 sub populate_file {
 	my ($files) = @_;
-	my (@replaygain,@tags);
+	my (@multi,@replaygain,@tags);
+	my ($b_first,$j,$holder,$starter) = (1,0,'','');
 	my $counter=0;
 	my @collection = (
 	'## RECORDING NAME/CREATORS ##',
@@ -505,27 +506,82 @@ sub populate_file {
 	'# Useful for tapers etc','SOURCE','SOURCE','SOURCE',
 	'# Media recording taken from, eg, cassette, tape, dat, vinyl','SOURCEMEDIA',
 	);
-	my @disk = ('','## DISC INFO ##',
+	my @discs = ('DISCNUMBER','DISCSUBTITLE','TRACKTOTAL');
+	my @disc = ('','## DISC INFO ##',
 	'# Leave DISCNUMBER, DISCTOTAL empty if 1 disc set',
-	'DISCTOTAL','DISCNUMBER','DISCSUBTITLE',
-	'# Do not leave empty, this is per disk track totals for players','TRACKTOTAL',
-	'', '## TRACK INFO ##', 
+	'DISCTOTAL',
+	'# Do not leave TRACKTOTAL empty, this is per disc track totals for players',
+	@discs,'',
+	'## TRACK INFO ##', 
 	'# Use of any of above tags between track blocks will switch to the new value.',
 	'# To make the value empty use: UNSET as the field value.',
 	'# TRACKNUMBER and FILE required, title not known?: suggest TITLE%:Unknown ');
 	my @track = ('','TRACKNUMBER','TITLE','VERSION','PART','FILE');
-	
 	@collection = map {$_ .= '%:' if /^[A-Z]/; $_;} @collection;
-	@disk = map {$_ .= '%:' if /^[A-Z]/; $_;} @disk;
-	if ($run{'autotag-number'} && @$files){
-		@disk = map {$_ .= scalar (@$files) if $_ eq 'TRACKTOTAL%:'; $_;} @disk;
+	@disc = map {$_ .= '%:' if /^[A-Z]/; $_;} @disc;
+	@discs = map {$_ .= '%:' if /^[A-Z]/; $_;} @discs;
+	if ($run{'autotag-single'} && @$files){
+		@disc = map {$_ .= scalar (@$files) if $_ eq 'TRACKTOTAL%:'; $_;} @disc;
 	}
-	@tags = (@collection,@disk);
+	if ($run{'autotag-multi'} && @$files){
+		$autotag_multi =~ s/x/[1-9]/g;
+		#print "$autotag_multi\n";
+		foreach (@$files){
+			if (/^($autotag_multi)/){
+				$starter = $1;
+				$counter++;
+			}
+			else {
+				main::error_handler('autotag-multi',
+				 "$autotag_multi filename start pattern not found in file!!",'');
+			}
+			if ($holder ne $starter){
+				$j++;
+				$holder = $starter;
+				$multi[$j] = 1;
+				$counter = 0;
+				#say "$starter $j";
+			}
+			else {
+				$multi[$j]++;
+			}
+		}
+		shift @multi;# get rid of first element
+		($counter,$j,$holder,$starter) = (0,0,'','');
+		if (scalar @multi > 1){
+			@disc = map {$_ .= scalar (@multi) if $_ eq 'DISCTOTAL%:'; $_;} @disc;
+			@disc = map {$_ .= $multi[0] if $_ eq 'TRACKTOTAL%:'; $_;} @disc;
+			@disc = map {$_ .= 1 if $_ eq 'DISCNUMBER%:'; $_;} @disc;
+		}
+	}
+	#print Data::Dumper::Dumper \@multi, "\n";
+	@tags = (@collection,@disc);
 	@track = map {$_ .= '%:' if /^[A-Z]/; $_;} @track;
+	my @disc_working;
 	foreach (@$files){
 		$counter++;
 		my @track_working = @track;
-		$track_working[1] = $track[1] . $counter if $run{'autotag-number'};
+		if ($run{'autotag-multi'} && scalar @multi > 1){
+			if (/^($autotag_multi)/){
+				$starter = $1;
+			}
+			if ($holder ne $starter){
+				$holder = $starter;
+				say "$starter";
+				if (!$b_first){
+					$counter = 1;
+					$j++;
+					@disc_working = @discs;
+					$disc_working[0] .= $j+1;
+					$disc_working[2] .= $multi[$j];
+					@tags = (@tags,'',@disc_working);
+				}
+				$b_first = 0;
+			}
+		}
+		if ($run{'autotag-single'} || $run{'autotag-multi'}){
+			$track_working[1] = $track[1] . $counter;
+		}
 		$track_working[5] = $track[5] . $_;
 		if (!$run{'no-replaygain'}){
 			@replaygain = get_replaygain($_);
@@ -540,15 +596,15 @@ sub populate_file {
 	else {
 		main::writer($TAG_FILE,\@tags);
 	}
-	sub get_replaygain {
-		my ($input_file) = @_;
-		my (@tags);
-		my %replaygain = main::get_flac_tags('replaygain',$input_file);
-		foreach (keys %replaygain){
-			push @tags, "$_%:$replaygain{$_}" if $replaygain{$_};
-		}
-		return @tags;
+}
+sub get_replaygain {
+	my ($input_file) = @_;
+	my (@tags);
+	my %replaygain = main::get_flac_tags('replaygain',$input_file);
+	foreach (keys %replaygain){
+		push @tags, "$_%:$replaygain{$_}" if $replaygain{$_};
 	}
+	return @tags;
 }
 # --preserve-modtime --remove-all-tags --remove-tag
 ## end of AutoTag
@@ -719,7 +775,7 @@ sub verify_flacs {
 		print "\n   ERROR!\n    The following files show errors:\n    ", join "\n    ", @errors, "\n";
 	}
 	if (@results){
-		if ($LOG_LEVEL > 2){
+		if ($LOG_LEVEL > 1){
 			print "\n   Verified files:\n    ",  join "\n    ", @results, "\n";
 		}
 		else {
@@ -748,9 +804,9 @@ sub verify_md5 {
 				$track = $3;
 				# convert to local paths, windows vs nix
 				$track =~ s^[/|\\]^$path_separator^g;
-				if ($LOG_LEVEL > 2){
+				if ($LOG_LEVEL > 1){
 					print "\n" if !$b_break;
-					print "    Checking: $track: " if $LOG_LEVEL > 2;
+					print "    Checking: $track: ";
 					$b_break = 1;
 				}
 				if (-e "$track"){
@@ -763,20 +819,23 @@ sub verify_md5 {
 				}
 				if ($hash2){
 					if ( $hash eq $hash2) {
-						print "Matched\n" if ($LOG_LEVEL > 2 );
+						print "Matched\n" if $LOG_LEVEL > 1;
 					}
 					else {
 						print "\n" if !$b_break;
-						print "   $track: " if $LOG_LEVEL < 3;
+						print "   $track: " if $LOG_LEVEL < 2;
 						$msg = ($hash2 ne 'missing') ? "FAILED" : "FAILED: File Not Found";
 						print "$msg\n";
 						$b_bad = 1;
 						$b_break = 1;
 					}
+					if ($LOG_LEVEL > 2){
+						print "     MD5 Test: $hash Actual: $hash2\n";
+					}
 				}
 			}
 		}
-		print "All Files Matched\n" if !$b_bad && $LOG_LEVEL < 3;
+		print "All Files Matched\n" if !$b_bad && $LOG_LEVEL < 2;
 	}
 }
 sub delete_checksums {
@@ -1377,6 +1436,7 @@ sub error_handler {
 	elsif ($error eq 'checksum-delete'){$error_no = 12;}
 	elsif ($error eq 'invalid-options'){$error_no = 13;$br=''}
 	elsif ($error eq 'unsupported-option'){$error_no = 8;$br=''}
+	elsif ($error eq 'autotag-multi'){$error_no = 18;}
 	elsif ($error eq 'missing-perl-module'){$error_no = 10;
 		$message = "Perl Module not found in system: $message";}
 	if ($error eq 'validation-errors'){
@@ -2009,6 +2069,7 @@ sub assign_value {
 # from top globals and config files
 sub get_options{
 	my (@args) = @_;
+	my ($msg);
 	GetOptions (
 	"a|append:s" => sub { 
 		my ($opt,$arg) = @_;
@@ -2035,11 +2096,29 @@ sub get_options{
 		$run{'checksum-verify'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
+	"M|autotag-create-multi:s" => sub { 
+		my ($opt,$arg) = @_;
+		if (!$arg || $arg !~ /x/){
+			$msg = "$opt requires multidisk file name identifier. See -h.";
+			error_handler('missing-arg',$msg,1);
+		}
+		$autotag_multi = $arg;
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		$run{'autotag-create'} = 1;
+		$run{'autotag-multi'} = 1;
+		$run{'autotag'} = 0;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$run{'checksum'} = 0;
+		$run{'checksum-verify'} = 0;
+		$OUTPUT_TYPE = 'UNSET';
+		},
 	"S|autotag-create-single" => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'autotag-create'} = 1;
-		$run{'autotag-number'} = 1;
+		$run{'autotag-single'} = 1;
 		$run{'autotag'} = 0;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
