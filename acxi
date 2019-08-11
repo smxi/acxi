@@ -272,7 +272,7 @@ sub main {
 package AutoTag;
 sub run_tagger {
 	print $line_large;
-	print "Starting auto-tagging in $SOURCE_DIRECTORY...\n";
+	print "Starting auto-tagging in " . main::sourcer("$SOURCE_DIRECTORY") . "...\n";
 	get_tag_files();
 	print $line_small;
 	print "Completed auto-tagging.\n";
@@ -290,11 +290,13 @@ sub get_tag_files {
 	my ($item,$print_file,$result,$working_dir);
 	$list_type = 'file';
 	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
+	my $start_dir = Cwd::getcwd();
 	foreach $item (sort @found_list) {
 		$print_file = $working_dir = $item;
 		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
 		# $working_dir =~ s/[^\/]+$//;
 		$working_dir = File::Basename::dirname($item);
+		chdir "$start_dir";
 		chdir "$working_dir";
 		if ($LOG_LEVEL > 3){
 			say Cwd::getcwd();
@@ -619,7 +621,7 @@ sub get_replaygain {
 package Checksums;
 sub process {
 	print $line_large;
-	print "Starting checksum processing in $SOURCE_DIRECTORY...\n";
+	print "Starting checksum processing in " . main::sourcer("$SOURCE_DIRECTORY") . "...\n";
 	process_directories();
 	print $line_small;
 	print "Completed checksum processing.\n";
@@ -637,6 +639,7 @@ sub process_directories {
 		my $b_valid;
 		$print_src = $item;
 		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
+		$print_src = main::sourcer("$print_src");
 		#if ($LOG_LEVEL > 2){
 		#	say Cwd::getcwd();
 		#	system 'pwd';
@@ -649,11 +652,10 @@ sub process_directories {
 			say 'cwd: ', Cwd::getcwd();
 			system 'pwd';
 		}
-		print "Working: $print_src...\n";
+		print "Processing: $print_src...\n";
 		@files = main::globber("*.{flac,FLAC}");
 		#print "\n", Data::Dumper::Dumper @files, "\n";
 		if (grep -f, @files){
-			print " Processing...\n";
 			delete_checksums() if $run{'checksum-delete'};
 			generate_checksums() if $run{'checksum'};
 			$b_dest_changed = 1;
@@ -667,7 +669,7 @@ sub process_directories {
 sub generate_checksums {
 	my ($error_message,@output);
 	system('pwd') if $LOG_LEVEL > 3;
-	print "  Generating checksums: ";
+	print " Generating checksums: ";
 	print "$MD5_FILE.md5: ";
 	# system("$COMMAND_MD5 *.* > $MD5_FILE.md5");
 	@output = qx($COMMAND_MD5 *.*);
@@ -712,7 +714,7 @@ sub verify_checksums {
 # creates invisible text strings, maybe unicode related
 sub verify_flacs {
 	my ($error_message,@errors);
-	print "  Verifying $INPUT_TYPE files (be patient): ";
+	print " Verifying $INPUT_TYPE files (be patient): ";
 	# note, flac sends output to stderr
 	# NOTE: $_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
 	# shows the weird hidden text this command creates
@@ -772,11 +774,11 @@ sub verify_flacs {
 	#print scalar @results, "\n", "@errors","\n";
 	#print "errors:\n", join "\n", @errors, "\n";
 	if (@errors){
-		print "\n   ERROR!\n    The following files show errors:\n    ", join "\n    ", @errors, "\n";
+		print "\n  ERROR!\n   The following files show errors:\n   ", join "\n    ", @errors, "\n";
 	}
 	if (@results){
 		if ($LOG_LEVEL > 1){
-			print "\n   Verified files:\n    ",  join "\n    ", @results, "\n";
+			print "\n  Verified files:\n    ",  join "\n    ", @results, "\n";
 		}
 		else {
 			print "Verified\n";
@@ -791,7 +793,7 @@ sub verify_md5 {
 	my ($b_bad,$b_break,$cmd,$hash,$hash2,$error_message,$msg,$result);
 	my @checksums = main::globber("*.{md5,md5.txt}");
 	foreach my $file (@checksums){
-		print "  Checking checksums in: $file: ";
+		print " Checking checksums in: $file: ";
 		@data = main::reader("$file",'strip');
 		#print "data\n", join ("\n", @data), "\n";
 		$b_break = 0;
@@ -806,7 +808,7 @@ sub verify_md5 {
 				$track =~ s^[/|\\]^$path_separator^g;
 				if ($LOG_LEVEL > 1){
 					print "\n" if !$b_break;
-					print "    Checking: $track: ";
+					print "   Checking: $track: ";
 					$b_break = 1;
 				}
 				if (-e "$track"){
@@ -830,7 +832,7 @@ sub verify_md5 {
 						$b_break = 1;
 					}
 					if ($LOG_LEVEL > 2){
-						print "     MD5 Test: $hash Actual: $hash2\n";
+						print "   MD5 Test: $hash Actual: $hash2\n";
 					}
 				}
 			}
@@ -844,7 +846,7 @@ sub delete_checksums {
 	my @checksums = main::globber("*.{ffp,ffp.txt,md5,md5.txt}");
 	# print Data::Dumper::Dumper @checksums, "\n";
 	foreach my $file (@checksums){
-		print "  Deleting $file: ";
+		print " Deleting $file: ";
 		if ($b_test){
 			say "test deletion";
 		}
@@ -868,7 +870,7 @@ package CleanCollection;
 
 sub process_destination {
 	print $line_large;
-	print "Starting cleanup of $DESTINATION_DIRECTORY...\n";
+	print "Starting cleanup of " . main::sourcer("$DESTINATION_DIRECTORY") . "...\n";
 	process_type('directory');
 	process_type('file');
 	print $line_small;
@@ -930,11 +932,12 @@ sub process_collection {
 	my (@extension_files);
 	eval $print_line_heavy;
 	if ( $LOG_LEVEL > 1 ) {
-		print "Syncing $DESTINATION_DIRECTORY (destination) with\n";
-		print "        $SOURCE_DIRECTORY (source)...\n";
+		print "Syncing " . main::sourcer("$DESTINATION_DIRECTORY") . " (destination) with\n";
+		print "  " . main::sourcer("$SOURCE_DIRECTORY") . " (source)...\n";
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
-		print "Starting sync of $SOURCE_DIRECTORY\n to $DESTINATION_DIRECTORY\n";
+		print "Starting sync of " . main::sourcer("$SOURCE_DIRECTORY");
+		print "\n to " . main::sourcer("$DESTINATION_DIRECTORY") . "\n";
 	}
 	update_directories();
 	$list_type = 'file';
@@ -1257,6 +1260,10 @@ sub globber {
 	return <$_[0]>;
 }
 
+# returns either printed source, or in case of ., return full path
+sub sourcer {
+	($_[0] eq '.' ) ? Cwd::getcwd() : $_[0];
+}
 # arg: 1 - full file path, returns array of file lines.
 # 2 - optionsl, strip and clean data
 # note: chomp has to chomp the entire action, not just <$fh>
