@@ -74,8 +74,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.06';
-my $SELF_DATE = '2019-08-10';
+my $SELF_VERSION = '3.3.07';
+my $SELF_DATE = '2019-08-11';
 
 ## GLOBALS ##
 my %run;
@@ -353,7 +353,7 @@ sub process_tags {
 			## for qq cmd strings. Why? Shell expands it, perl does not.
 			my $temp = $working[1];
 			$temp =~ s/\\\$/\$/g;
-			print "Tagging \"$temp\"... ";
+			print " Tagging \"$temp\"... ";
 			main::error_handler('file-missing',"Missing file: $temp",1) if ! -e "$temp";
 			# note: must be set here, not in qx to avoid quote errors
 			# single quotes, in case contains $ symbol
