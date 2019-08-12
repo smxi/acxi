@@ -298,7 +298,9 @@ sub aggregate {
 		}
 		else {
 			$path = $DESTINATION_DIRECTORY . $path_separator . $dir;
-			mkdir $path if ! -d $path;
+			if (! -d $path){
+				mkdir $path or die qq("Arg... can't make: $path\n");
+			}
 			$path .= $path_separator . $TAG_FILE;
 		}
 		say $file if $LOG_LEVEL > 2;
