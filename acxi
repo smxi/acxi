@@ -288,7 +288,7 @@ sub aggregate {
 	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 	my $start_dir = Cwd::getcwd();
 	chdir $SOURCE_DIRECTORY;
-	print "Starting tag file aggregator in " . main::sourcer("$SOURCE_DIRECTORY") . "\n";
+	print "Starting $extension file aggregator in " . main::sourcer("$SOURCE_DIRECTORY") . "\n";
 	print $line_small;
 	foreach my $file (sort @found_list) {
 		$b_dest_changed = 1;
@@ -326,6 +326,7 @@ sub create_file {
 sub get_tag_files {
 	my ($item,$print_file,$result,$working_dir);
 	$list_type = 'file';
+	$extension = $TAG_FILE;
 	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
 	my $start_dir = Cwd::getcwd();
 	foreach $item (sort @found_list) {
@@ -1327,8 +1328,8 @@ sub wanted {
 		}
 		elsif ($list_type eq 'file') {
 			return if -d; # skip directories
-			return if $run{'autotag'} && $File::Find::name !~ /\Q$TAG_FILE\E$/;
-			return if !$run{'autotag'} && $File::Find::name !~ /\.$extension$/i;
+			# extension can be either a full file name, or extension
+			return if $File::Find::name !~ /(\.|\/)$extension$/i;
 		}
 	}
 	elsif ($list_type eq 'dir-clean' || $list_type eq 'file-clean'){
