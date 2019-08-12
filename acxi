@@ -60,7 +60,7 @@ use File::stat;
 use File::Find;
 use File::Copy qw(copy);
 use File::Glob qw(:bsd_glob);
-use File::Path qw(rmtree);
+use File::Path qw(rmtree make_path);
 use Cwd qw(getcwd);
 use Data::Dumper;
 # use File::Copy::Recursive qw(fcopy rcopy dircopy fmove rmove dirmove);
@@ -289,6 +289,7 @@ sub aggregate {
 	my $start_dir = Cwd::getcwd();
 	chdir $SOURCE_DIRECTORY;
 	print "Starting tag file aggregator in " . main::sourcer("$SOURCE_DIRECTORY") . "\n";
+	print $line_small;
 	foreach my $file (sort @found_list) {
 		$b_dest_changed = 1;
 		$file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
@@ -299,16 +300,18 @@ sub aggregate {
 		else {
 			$path = $DESTINATION_DIRECTORY . $path_separator . $dir;
 			if (! -d $path){
-				mkdir $path or die qq("Arg... can't make: $path\n");
+				File::Path::make_path($path) or die qq("Arg... can't make: $path\n");
 			}
 			$path .= $path_separator . $TAG_FILE;
 		}
-		say $file if $LOG_LEVEL > 2;
+		$file =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E||;
+		say $file;
 		File::Copy::copy($file, $path) if !$b_test;
 		push @files, $file;
 	}
+	print $line_small;
 	# print Data::Dumper::Dumper \@files;
-	print "Finished copying over $TAG_FILE to " . main::sourcer("$DESTINATION_DIRECTORY" . "\n");
+	print "Finished copying over $TAG_FILE files to " . main::sourcer("$DESTINATION_DIRECTORY" . "\n");
 	print $line_large;
 	exit;
 }
@@ -2122,7 +2125,7 @@ sub get_options{
 	my (@args) = @_;
 	my ($msg);
 	GetOptions (
-	"G|aggregate" => sub { 
+	"G|aggregate:s" => sub { 
 		my ($opt,$arg) = @_;
 		$b_check_out = 0;
 		$run{'aggregate-file'} = 1 if $arg && $arg eq 'file';
