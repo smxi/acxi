@@ -2122,7 +2122,7 @@ sub get_options{
 	my (@args) = @_;
 	my ($msg);
 	GetOptions (
-	"aggregate" => sub { 
+	"G|aggregate" => sub { 
 		my ($opt,$arg) = @_;
 		$b_check_out = 0;
 		$run{'aggregate-file'} = 1 if $arg && $arg eq 'file';
