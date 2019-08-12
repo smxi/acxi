@@ -295,14 +295,14 @@ sub aggregate {
 		$file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
 		$dir = File::Basename::dirname($file);
 		if ($run{'aggregate-file'}){
-			$path = $DESTINATION_DIRECTORY . $path_separator . $dir . '.' .$TAG_FILE;
+			$path = $DESTINATION_DIRECTORY . $path_separator . $dir . '.' . $extension;
 		}
 		else {
 			$path = $DESTINATION_DIRECTORY . $path_separator . $dir;
 			if (! -d $path){
 				File::Path::make_path($path) or die qq("Arg... can't make: $path\n");
 			}
-			$path .= $path_separator . $TAG_FILE;
+			$path .= $path_separator . $extension;
 		}
 		$file =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E||;
 		say $file;
@@ -311,7 +311,7 @@ sub aggregate {
 	}
 	print $line_small;
 	# print Data::Dumper::Dumper \@files;
-	print "Finished copying over $TAG_FILE files to " . main::sourcer("$DESTINATION_DIRECTORY" . "\n");
+	print "Finished copying over $extension files to " . main::sourcer("$DESTINATION_DIRECTORY" . "\n");
 	print $line_large;
 	exit;
 }
