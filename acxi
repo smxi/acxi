@@ -1899,6 +1899,9 @@ sub print_help {
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
 	$output .= $line_small;
 	$output .= "Specialized options:\n";
+	$output .= "--aggregate, -G   Copy all existing $TAG_FILE files to the --destination directory.\n";
+	$output .= "                  With extra argument 'file' will create a single filename using.\n";
+	$output .= "                  the source directory name plus the tag file name.\n";
 	$output .= "--autotag, -A     Requires auto.tag formatted file in each directory. Flac only.\n";
 	$output .= "                  Deletes all existing tags, then creates a fully tagged set of\n";
 	$output .= "                  files.\n";
