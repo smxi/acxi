@@ -63,6 +63,7 @@ use File::Glob qw(:bsd_glob);
 use File::Path qw(rmtree);
 use Cwd qw(getcwd);
 use Data::Dumper;
+# use File::Copy::Recursive qw(fcopy rcopy dircopy fmove rmove dirmove);
 #use feature 'unicode_strings';
 # use open qw(:std :utf8); # don't use
 # only use for debugging, some distros do not ship with core modules.
@@ -281,9 +282,9 @@ sub run_tagger {
 }
 sub aggregate {
 	print $line_large;
+	my ($dir,$path,@files);
 	$extension = $TAG_FILE;
 	$list_type = 'file';
-	my (@files);
 	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 	my $start_dir = Cwd::getcwd();
 	chdir $SOURCE_DIRECTORY;
@@ -291,9 +292,17 @@ sub aggregate {
 	foreach my $file (sort @found_list) {
 		$b_dest_changed = 1;
 		$file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
-		my $dir = File::Basename::dirname($file);
+		$dir = File::Basename::dirname($file);
+		if ($run{'aggregate-file'}){
+			$path = $DESTINATION_DIRECTORY . $path_separator . $dir . '.' .$TAG_FILE;
+		}
+		else {
+			$path = $DESTINATION_DIRECTORY . $path_separator . $dir;
+			mkdir $path if ! -d $path;
+			$path .= $path_separator . $TAG_FILE;
+		}
 		say $file if $LOG_LEVEL > 2;
-		File::Copy::copy($file, $DESTINATION_DIRECTORY . $path_separator . $dir . '.' .$TAG_FILE);
+		File::Copy::copy($file, $path) if !$b_test;
 		push @files, $file;
 	}
 	# print Data::Dumper::Dumper \@files;
@@ -2112,7 +2121,9 @@ sub get_options{
 	my ($msg);
 	GetOptions (
 	"aggregate" => sub { 
+		my ($opt,$arg) = @_;
 		$b_check_out = 0;
+		$run{'aggregate-file'} = 1 if $arg && $arg eq 'file';
 		$run{'autotag-aggregate'} = 1;
 		$run{'autotag'} = 1;
 		$run{'autotag-create'} = 0;
