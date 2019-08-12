@@ -283,7 +283,7 @@ sub run_tagger {
 sub aggregate {
 	print $line_large;
 	my ($dir,$path,@files);
-	$extension = $TAG_FILE;
+	$extension = ($run{'alt-ag'}) ? $run{'alt-ag'} : $TAG_FILE;
 	$list_type = 'file';
 	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 	my $start_dir = Cwd::getcwd();
@@ -2140,6 +2140,10 @@ sub get_options{
 		$run{'checksum'} = 0;
 		$run{'checksum-verify'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
+	},
+	"alt-ag:s" => sub { 
+		my ($opt,$arg) = @_;
+		$run{'alt-ag'} = $arg;
 	},
 	"a|append:s" => sub { 
 		my ($opt,$arg) = @_;
