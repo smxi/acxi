@@ -1,4 +1,15 @@
 ===================================================================
+Date: 2019-08-12
+Version: 3.3.12
+-------------------------------------------------------------------
+
+New feature:
+1. --aggregate/-G and --alt-ag [track id] which lets you collect all
+auto.tag files, or with --alt-ag, any other filename in a collection
+to one place. This can be useful for tracking changes and exchanging
+information about such things.
+
+===================================================================
 Date: 2019-08-10
 Version: 3.3.06
 -------------------------------------------------------------------

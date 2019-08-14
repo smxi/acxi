@@ -75,8 +75,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.12';
-my $SELF_DATE = '2019-08-12';
+my $SELF_VERSION = '3.3.13';
+my $SELF_DATE = '2019-08-13';
 
 ## GLOBALS ##
 my %run;
@@ -299,15 +299,18 @@ sub aggregate {
 		}
 		else {
 			$path = $DESTINATION_DIRECTORY . $path_separator . $dir;
+			#say 'path: ', $path;
 			if (! -d $path){
-				File::Path::make_path($path) or die qq("Arg... can't make: $path\n");
+				File::Path::make_path($path) or die qq("Arg... can't make: $path\n") if !$b_test;
 			}
 			$path .= $path_separator . $extension;
 		}
+		
 		$file =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E||;
 		say $file;
 		File::Copy::copy($file, $path) if !$b_test;
 		push @files, $file;
+		$path = '';
 	}
 	print $line_small;
 	# print Data::Dumper::Dumper \@files;
