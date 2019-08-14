@@ -287,7 +287,8 @@ sub aggregate {
 	$list_type = 'file';
 	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 	my $start_dir = Cwd::getcwd();
-	chdir $SOURCE_DIRECTORY;
+	# my $abs_path = Cwd::abs_path($SOURCE_DIRECTORY);
+	chdir $start_dir; #$SOURCE_DIRECTORY;
 	print "Starting $extension file aggregator in " . main::sourcer("$SOURCE_DIRECTORY") . "\n";
 	print $line_small;
 	foreach my $file (sort @found_list) {
@@ -917,6 +918,7 @@ sub process_destination {
 	print $line_small;
 	print "Completed cleanup checks.\n";
 	print $line_large;
+	exit;
 }
 sub process_type {
 	my ($type) = @_;
