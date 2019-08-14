@@ -84,7 +84,8 @@ levels, you have to use the -f/--force option.
 
 It can also be used to autotag your collection. Read the man page
 for more on auto tagging. It can also generate new checksum files
-(md5 and ffp) if you need those for some reason.
+(md5 and ffp) if you need those for some reason, and verify existing
+md5 hashes and flac file integrity.
 
 ========================================================================
 DEPENDENCIES
@@ -108,6 +109,8 @@ version 3, which should make acxi fully platform agnostic.
 
 * --checksum / --checksum-delete checksum generation require metaflac 
   and md5sum (or a comparable md5 generating command line utility).
+  
+* --checksum-verify requires md5sum (or comparable tool) and flac.
   
 * -U self updater requires curl, and valid paths for currently 
   installed acxi and acxi.1 man page. Will not update if both acxi 

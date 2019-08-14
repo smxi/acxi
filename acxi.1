@@ -1,4 +1,4 @@
-.TH ACXI 1 "2019\-08\-02" acxi "acxi manual"
+.TH ACXI 1 "2019\-08\-14" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -10,10 +10,13 @@ Syncing: \fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-clean\fR]
 [\fB\-q\fR NUMBER] [\fB\-s\fR source\-path] 
 .IP * 2
 Tagging: \fBacxi\fR [\fB\-\-autotag\fR] [\fB\-\-autotag\-create\fR] 
-[\fB\-\-autotag\-create\-single\fR] [\fB\-\-no\-replaygain\fR] 
-[\fB\-\-remove\-images\fR]
+[\fB\-\-autotag\-create\-single\fR] 
+[\fB\-\-autotag\-create\-multi {filename start ID}\fR]
+[\fB\-\-aggregate\fR] [\fB\-\-alt\-ag {file name}\fR] 
+[\fB\-\-no\-replaygain\fR] [\fB\-\-remove\-images\fR]
 .IP * 2
-Checkums: \fBacxi\fR [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] 
+Checksums: \fBacxi\fR [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] 
+[\fB\-\-checksum\-verify\fR] 
 .IP * 2
 Output Controls: \fBacxi\fR [\fB\-\-basic\fR] [\fB\-\-full\fR]
 [\fB\-\-log\fR {0-3}] [\fB\-\-quiet\fR] [\fB\-\-verbose\fR] 
@@ -69,6 +72,9 @@ and \fBmd5sum\fR (or any comparable program that generates md5sums).
 Md5 generating logic may be moved to straight Perl to remove the md5 
 program requirement.
 .IP * 2
+\fB\-\-checksum\-verify\fR require \fBflac\fR executable and 
+\fBmd5sum\fR (or any comparable program that generates md5 hashes). 
+.IP * 2
 \fB\-U\fR Self-updater requires \fBcurl\fR. 
 .PP
 In theory, acxi 3.x should run on Windows and Macs, but I have not
@@ -84,8 +90,29 @@ Note that some options have long and short forms. The short form is used
 when available in examples in order to keep things simple.
 
 .SH OPTIONS
+
 .TP
-.B \-a [extensions]\fR, \fB\-\-append [extensions]\fR
+.B \-\-aggregate\fR
+Collect all the \fBauto.tag\fR files in a source directory and send to
+a target directory. Useful to collect data for a large collection:
+
+Sample: \fBacxi \-\-aggregate \-s my\-music -d music\-data\fR
+
+Defaults to creating the directories the files were found in in 
+the destination directory, but with the added optional argument 
+\fB'file'\fR it will instead create files made out of the directory
+name and the file name. Only use that if it's a single level
+deep directory or it won't work.
+
+.TP
+.B \-\-alt\-ag [file name]\fR
+When used with \fB\-\-aggregate\fR, will aggregate the file name given 
+instead of the default \fBauto.tag\fR file name.
+
+Sample: \fBacxi \-\-aggregate \-\-alt\-ag info.txt \-s my\-music -d music\-data\fR
+
+.TP
+.B \-\-append [extensions]\fR, \fB\-a [extensions]\fR
 Takes one or more comma separated extensions. Do not use whitespaces
 in this list. These will be appended on to the current list being 
 used on a one time basis. This can be useful if you want to copy 
@@ -95,7 +122,7 @@ having to make a full list with \fB\-c\fR.
 Sample: \fBacxi \-a md5\fR will add md5 file type to copy list.
 
 .TP
-.B \-A\fR, \fB\-\-autotag\fR
+.B \-\-autotag\fR, \fB\-A\fR
 Requires specially formatted file, default name \fBauto.tag\fR, 
 to be put into each music collection directory. See the file for 
 explanations.
@@ -109,8 +136,12 @@ the existing \fBREPLAYGAIN\fR tags in the \fBauto.tag\fR file
 since the assumption is those were generated for a reason.
 
 See github acxi page for a blank sample file, but make sure to
-use \fB\-\-autotag\-create\fR or \fB\-\-autotag\-create\-single\fR 
-if you want to preserve \fBREPLAYGAIN\fR data.
+use \fB\-\-autotag\-create\fR, \fB\-\-autotag\-create\-single\fR,
+or \fB\-\-autotag\-create\-multi [prefix]\fR because it's a LOT
+faster that way, and you don't have to find the file. These 
+file builders also preserve existing \fBREPLAYGAIN\fR and 
+\fBWAVEFORMATEXTENSIBLE_CHANNEL_MASK\fR data found in the track
+file.
 
 Notes on \fBIMAGE\fR: Avoid using large images, and as far as I can 
 tell, there's no point in using anything other than the standard 
@@ -125,19 +156,35 @@ file as a way to store large high resolution images as a general
 rule, it just makes the entire collection pointlessly bloated.
 
 .TP
-.B \-C\fR, \fB\-\-autotag\-create\fR
+.B \-\-autotag\-create\fR, \fB\-C\fR
 Creates the \fBauto.tag\fR file in the directory, and populates it
 with field names, and per track blocks that include the track file
 name so you can just fill out the fields you want. Will also 
 populate the \fBTRACKNUMBER\fR and \fBTRACKTOTAL\fR fields if you 
-use the \fB\-\-autotag\-create\-single\fR option instead.
+use the \fB\-\-autotag\-create\-single\fR or 
+\fB\-\-autotag\-create\-multi\fR options instead.
 
 All existing \fBREPLAYGAIN\fR tags for the audio files are preserved
 and used in the auto.tag file. If want to remove those, use the 
 \fB\-\-no\-replaygain\fR option. 
 
 .TP
-.B \-S\fR, \fB\-\-autotag\-create\-single\fR
+.B \-\-autotag\-create\-multi [file prefix]\fR, \fB\-M [file prefix]\fR 
+Similar to \fBautotag\-create\-single\fR except it includes a prefix
+argument which is the unique per disk track file name ID. Uses %
+to indicate a number between 1 and 9.
+
+Samples: \fB\-M d%\fR [d1track02.flac]; \fB\-M d%\-\fR [d2\-track04.flac];\n";
+\fB\-m %\fR [112.flac]; \fB-M 2015-03-21.d%.\fR [2015-03-21.d1.track03.flac]
+
+This will create prepopulated \fBDISCTOTAL\fR, per disk 
+\fBDISCNUMBER\fR and \fBTRACKTOTAL\fR, and per track \fBTRACKNUMBER\fR 
+fields. This saves a lot of time when tagging multi disk sets.
+
+Caveat: does not work with per disk subfolders, sorry.
+
+.TP
+.B \-\-autotag\-create\-single\fR, \fB\-S\fR
 When creating \fBauto.tag\fR file, as well as populating the per track
 file names, it also fills in the \fBTRACKTOTAL\fR and \fBTRACKNUMBER\fR
 fields.
@@ -153,7 +200,7 @@ Single line per operation screen output, default value for acxi.
 Same as \fB\-\-log 1\fR
 
 .TP
-.B \-\-checksum\fR
+.B \-\-checksum\fR, \fB\-K\fR
 Create \fB.ffp\fR and \fB.md5\fR checksum files in your source directory.
 Checksum files are only created inside directories where flac
 files are found. Use \fB\-\-checksum\-delete\fR if you also want to delete 
@@ -168,7 +215,7 @@ code.
 Do not use together with other cleaning/syncing options!
 
 .TP
-.B \-\-checksum\-delete\fR
+.B \-\-checksum\-delete\fR, \fB\-D\fR
 Will first delete all \fB.md5\fR, \fB.md5.txt\fR, \fB.ffp\fR, and 
 \fB.ffp.txt\fR files before creating new checksum files. Note that some 
 audio processing tools add \fB.txt\fR to the checksum file name, 
@@ -179,6 +226,17 @@ extension added on.
 I can think of very few reasons to want to preserve \fB.ffp\fR or 
 \fB.md5\fR files, since they should in general reflect what the actual 
 files you have are.
+
+.TP
+.B \-\-checksum\-verify\fR, \fB\-V\fR
+Will read existing .md5 files and compare md5 hash of files 
+listed in the md5 file with the actual checksums of those files.
+Also will verify FLAC integrity (this is pretty slow, so be patient).
+
+Note that when reading md5s, it does not matter if they are windows or 
+*nix path styles (/ or \/), it translates them to the one on your 
+system. It also ignores line endings, which makes reading windows 
+generated md5 files on *nix systems a breeze.
 
 .TP
 .B \-\-clean\fR
@@ -203,7 +261,7 @@ It can be enabled using the CLEAN configuration option below so that
 acxi always cleans up before it starts syncing.
 
 .TP
-.B \-c [extensions]\fR, \fB\-\-copy [extensions]\fR
+.B \-\-copy [extensions]\fR, \fB\-c [extensions]\fR
 Comma separated list of extensions for file types you want to sync to your
 lossy music directory. Overrides default values. Use lowercase, but it's
 case insensitive internally. Do not include the period in the extension.
@@ -220,18 +278,18 @@ All output available, including debugger data for some events.
 Same as \fB\-\-log 4\fR
 
 .TP
-.B \-d [path]\fR, \fB\-\-destination [path]\fR
+.B \-\-destination [path]\fR, \fB\-d [path]\fR
 Full path to the directory where you want the processed lossy
 (eg, ogg) files to go.
 
 .TP
-.B \-f\fR, \fB\-\-force\fR
+.B \-\-force\fR, \fB\-f\fR
 Overwrites all the mp3/ogg/opus/jpg/txt etc. files, even if they already 
 exist. This is useful if you for example want to change compression
 quality on existing files.
 
 .TP
-.B \-F\fR, \fB\-\-fork [0-xx]\fR
+.B \-\-fork [0-xx]\fR, \fB\-F\fR
 Uses Perl module \fBParallel::ForkManager\fR to allow for forking of audio
 file conversions actions. This can speed up your syncing a lot depending on how 
 many threads your CPU can support and how many you assign with this option.
@@ -254,11 +312,11 @@ Full screen output, including full verbosity of flac / oggenc / opusenc / lame
 conversion tools for flac, mp3, ogg, or opus output. Same as \fB\-\-log 3\fR
 
 .TP
-.B \-h\fR, \fB\-\-help\fR
+.B \-\-help\fR, \fB\-h\fR
 This help menu.
 
 .TP
-.B \-i [flac|raw|shn|wav]\fR, \fB\-\-input [flac|raw|shn|wav]\fR
+.B \-\-input [flac|raw|shn|wav]\fR, \fB\-i [flac|raw|shn|wav]\fR
 Input type. Supported types: flac, wav, raw, shn. 
 
 \fBraw/shn\fR \- only support flac output. 
@@ -302,11 +360,12 @@ See \fB\-\-nlink\fR for details.
 
 .TP
 .B \-\-no\-replaygain\fR
-Remove any existing \fBREPLAYGAIN\fR tags when creating a new \fBauto.tag\fR
+Remove any existing \fBREPLAYGAIN\fR and 
+\fBWAVEFORMATEXTENSIBLE_CHANNEL_MASK\fR tags when creating a new \fBauto.tag\fR
 file. See \fB\-\-autotag\-create\fR for details.
 
 .TP
-.B \-o [flac|mp3|ogg|opus]\fR, \fB\-\-output [flac|mp3|ogg|opus]\fR
+.B \-\-output [flac|mp3|ogg|opus]\fR, \fB\-o [flac|mp3|ogg|opus]\fR
 Output type. Supported types: flac, ogg, opus, mp3
 
 \fBmp3\fR \- only supports flac input type
@@ -314,7 +373,7 @@ Output type. Supported types: flac, ogg, opus, mp3
 \fBflac\fR \- only supports shn, or raw input types.
 
 .TP
-.B \-q [number]\fR, \fB\-\-quality [number]\fR
+.B \-\-quality [number]\fR, \fB\-q [number]\fR
 Set compression quality level.
 
 \fBmp3\fR \- n can be an integer between 0\-9 (variable bit rate), 0 is 
@@ -349,7 +408,7 @@ Failure to use \fB\-\-dont\-use\-padding\fR leaves the file size unchanged.
 \fBmetaflac \-\-remove \-\-block\-type=PICTURE,PADDING \-\-dont\-use\-padding file.flac\fR
 
 .TP
-.B \-s [path]\fR, \fB\-\-source [path]\fR
+.B \-\-source [path]\fR, \fB\-s [path]\fR
 Path to the top-most directory containing your source files (eg, flac).
 
 .TP
@@ -359,7 +418,7 @@ without actually doing the operations. Activates \fB \-\-full\fR
 as well for more complete output.
 
 .TP
-.B \-U\fR, \fB\-\-update\fR
+.B \-\-update\fR, \fB\-U\fR
 Self updater, will update acxi and its man page. Non GNU/LInux 
 will probably require changing the default values, which are set 
 in \fBUSER VARIABLES\fR for curl, acxi and man page acxi.1. 
@@ -372,7 +431,7 @@ ogg, or opus conversion process screen output, but more verbose than
 default. Same as \fB\-\-log 2\fR
 
 .TP
-.B \-v\fR, \fB\-\-version\fR
+.B \-\-version\fR, \fB\-v\fR
 Show acxi version.
 
 .SH CONFIGURATION FILE
@@ -414,9 +473,9 @@ in the top comment header of acxi.
 .B APPLICATION PATHS
 The following set your system path for the required applications:
 
-\fBCOMMAND_FLAC\fR \- Sample: \fBCOMMAND_FLAC=/usr/bin/flac\fR (default path)
+\fBCOMMAND_FFMPEG\fR \- Sample: \fBCOMMAND_FFMPEG=/usr/bin/ffmpeg\fR (default path)
 
-\fBCOMMAND_FLAC_OUT\fR \- Sample: \fBCOMMAND_FLAC_OUT=/usr/bin/ffmpeg\fR (default path)
+\fBCOMMAND_FLAC\fR \- Sample: \fBCOMMAND_FLAC=/usr/bin/flac\fR (default path)
 
 \fBCOMMAND_LAME\fR \- Sample: \fBCOMMAND_LAME=/usr/bin/lame\fR (default path)
 

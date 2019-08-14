@@ -75,8 +75,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.13';
-my $SELF_DATE = '2019-08-13';
+my $SELF_VERSION = '3.3.14';
+my $SELF_DATE = '2019-08-14';
 
 ## GLOBALS ##
 my %run;
@@ -1903,9 +1903,13 @@ sub print_help {
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
 	$output .= $line_small;
 	$output .= "Specialized options:\n";
-	$output .= "--aggregate, -G   Copy all existing $TAG_FILE files to the --destination directory.\n";
-	$output .= "                  With extra argument 'file' will create a single filename using.\n";
-	$output .= "                  the source directory name plus the tag file name.\n";
+	$output .= "--aggregate, -G   Copy all existing $TAG_FILE files to the --destination\n";
+	$output .= "                  directory.With extra argument 'file' will create a single\n";
+	$output .= "                  filename using the source directory name plus the tag\n";
+	$output .= "                  file name.\n";
+	$output .= "--alt-ag [file]   Use with --aggregate if you want to collect different file\n";   
+	$output .= "                  names in one location from your collection.\n";
+	$output .= "                  Sample: acxi -d ~/music/cdinfo --aggregate --alt-ag info.txt\n";
 	$output .= "--autotag, -A     Requires auto.tag formatted file in each directory. Flac only.\n";
 	$output .= "                  Deletes all existing tags, then creates a fully tagged set of\n";
 	$output .= "                  files.\n";
@@ -1917,7 +1921,7 @@ sub print_help {
 	$output .= "                  Required argument tells logic how to determine your disc\n";
 	$output .= "                  numbering method. The % is used to indicate the value\n";
 	$output .= "                  is a number between 1-9. Will complete TRACKTOTAL, DISCNUMBER,\n";
-	$output .= "                  TRACKNUMBER values in auto.tag file, which saves a lot of time.\n";
+	$output .= "                  TRACKNUMBER values in auto.tag file, which saves a time.\n";
 	$output .= "                  Samples: -M d% [d1track02.flac]; -M d%- [d2-track04.flac];\n";
 	$output .= "                  -m % [112.flac]-M 2015-03-21.d%. [2015-03-21.d1.track03.flac]\n";
 	$output .= "                  Flac input type only.\n";
@@ -1937,7 +1941,7 @@ sub print_help {
 	$output .= "                  directories where flac files are found.\n";
 	$output .= "--checksum-verify, -V\n";
 	$output .= "                  Verifies FLAC files and confirms MD5 file data matches actual\n";
-	$output .= "                  files found. Can be run alone or with other --checksum options.\n";
+	$output .= "                  files found. Can be run alone or with --checksum options.\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
