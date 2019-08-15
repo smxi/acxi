@@ -300,15 +300,18 @@ sub aggregate {
 		}
 		else {
 			$path = $DESTINATION_DIRECTORY . $path_separator . $dir;
-			#say 'path: ', $path;
+			
 			if (! -d $path){
 				File::Path::make_path($path) or die qq("Arg... can't make: $path\n") if !$b_test;
 			}
 			$path .= $path_separator . $extension;
+			#say 'path: ', $path;
 		}
-		
-		$file =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E||;
-		say $file;
+		my $file_print = $file;
+		$file_print =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E||;
+		$file = $SOURCE_DIRECTORY . $path_separator . $file;
+		say $file_print;
+		#say $file;
 		File::Copy::copy($file, $path) if !$b_test;
 		push @files, $file;
 		$path = '';
