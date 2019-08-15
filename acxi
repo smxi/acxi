@@ -76,7 +76,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.14';
-my $SELF_DATE = '2019-08-14';
+my $SELF_DATE = '2019-08-15';
 
 ## GLOBALS ##
 my %run;
@@ -282,36 +282,34 @@ sub run_tagger {
 }
 sub aggregate {
 	print $line_large;
-	my ($dir,$path,@files);
+	my ($path,@files);
+	my ($dir,$file,$file_working,$start_dir);
 	$extension = ($run{'alt-ag'}) ? $run{'alt-ag'} : $TAG_FILE;
 	$list_type = 'file';
 	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
-	my $start_dir = Cwd::getcwd();
+	$start_dir = Cwd::getcwd();
 	# my $abs_path = Cwd::abs_path($SOURCE_DIRECTORY);
 	chdir $start_dir; #$SOURCE_DIRECTORY;
 	print "Starting $extension file aggregator in " . main::sourcer("$SOURCE_DIRECTORY") . "\n";
 	print $line_small;
-	foreach my $file (sort @found_list) {
+	foreach $file (sort @found_list) {
 		$b_dest_changed = 1;
-		$file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
-		$dir = File::Basename::dirname($file);
+		$file_working = $file;
+		$file_working =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
+		$dir = File::Basename::dirname($file_working);
 		if ($run{'aggregate-file'}){
 			$path = $DESTINATION_DIRECTORY . $path_separator . $dir . '.' . $extension;
 		}
 		else {
 			$path = $DESTINATION_DIRECTORY . $path_separator . $dir;
-			
 			if (! -d $path){
 				File::Path::make_path($path) or die qq("Arg... can't make: $path\n") if !$b_test;
 			}
 			$path .= $path_separator . $extension;
 			#say 'path: ', $path;
 		}
-		my $file_print = $file;
-		$file_print =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E||;
-		$file = $SOURCE_DIRECTORY . $path_separator . $file;
-		say $file_print;
-		#say $file;
+		say $file_working;
+		say $file if $LOG_LEVEL > 3;
 		File::Copy::copy($file, $path) if !$b_test;
 		push @files, $file;
 		$path = '';
