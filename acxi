@@ -721,7 +721,7 @@ sub generate_checksums {
 		main::error_handler('application-error', $error_message,1);
 	}
 	else {
-		chomp (@output = grep {$_ !~ m^\.(ffp|md5)^} @output);
+		chomp (@output = grep {$_ !~ m^($TAG_FILE|\.ffp|\.md5)^} @output);
 		if (!$b_test){
 			main::writer("$MD5_FILE.md5",\@output);
 			print "created; " ;
