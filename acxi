@@ -755,7 +755,7 @@ sub generate_checksums {
 }
 sub verify_checksums {
 	my (@files) = @_;
-	verify_flacs() if $run{'no-ffp'} && grep -f, @files;
+	verify_flacs() if !$run{'no-ffp'} && grep -f, @files;
 	verify_md5();
 }
 # NOTE: something is wrong with how flac outputs to stderr and
