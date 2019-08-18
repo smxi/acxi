@@ -16,7 +16,7 @@ Tagging: \fBacxi\fR [\fB\-\-autotag\fR] [\fB\-\-autotag\-create\fR]
 [\fB\-\-no\-replaygain\fR] [\fB\-\-remove\-images\fR]
 .IP * 2
 Checksums: \fBacxi\fR [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] 
-[\fB\-\-checksum\-verify\fR] 
+[\fB\-\-checksum\-verify\fR] [\fB\-\-no\-ffp\fR] 
 .IP * 2
 Output Controls: \fBacxi\fR [\fB\-\-basic\fR] [\fB\-\-full\fR]
 [\fB\-\-log\fR {0-3}] [\fB\-\-quiet\fR] [\fB\-\-verbose\fR] 
@@ -352,6 +352,13 @@ github page.
 
 See this PerlMonks thread for an explanation: 
 \fIhttps://www.perlmonks.org/?node_id=1180606\fR
+
+.TP
+.B \-\-no\-ffp\fR
+Skips FLAC ffp checks and generation on \fB\-\-checksum\fR,
+\fB\-\-checksum\-delete\fR, and \fB\-\-checksum\-verify\fR. Useful
+if you have already verified or created ffp/flac data and only 
+want to check md5 sums.
 
 .TP
 .B \-\-no\-nlink\fR

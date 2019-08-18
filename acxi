@@ -75,8 +75,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.14';
-my $SELF_DATE = '2019-08-15';
+my $SELF_VERSION = '3.3.15';
+my $SELF_DATE = '2019-08-18';
 
 ## GLOBALS ##
 my %run;
@@ -731,26 +731,31 @@ sub generate_checksums {
 		}
 	}
 	print "$FFP_FILE.ffp: ";
-	#system("$COMMAND_METAFLAC --show-md5sum *.flac > $FFP_FILE.ffp");
-	@output = qx($COMMAND_METAFLAC --show-md5sum *.flac);
-	if ($? == -1 || $? > 0){
-		$error_message = "$COMMAND_METAFLAC returned error: $?";
-		main::error_handler('application-error', $error_message,1);
-	}
-	else {
-		chomp (@output);
-		if (!$b_test){
-			main::writer("$FFP_FILE.ffp",\@output);
-			say "created" ;
+	if (!$run{'no-ffp'}){
+		#system("$COMMAND_METAFLAC --show-md5sum *.flac > $FFP_FILE.ffp");
+		@output = qx($COMMAND_METAFLAC --show-md5sum *.flac);
+		if ($? == -1 || $? > 0){
+			$error_message = "$COMMAND_METAFLAC returned error: $?";
+			main::error_handler('application-error', $error_message,1);
 		}
 		else {
-			print "\n", join( "\n", @output),"\n";
+			chomp (@output);
+			if (!$b_test){
+				main::writer("$FFP_FILE.ffp",\@output);
+				say "created" ;
+			}
+			else {
+				print "\n", join( "\n", @output),"\n";
+			}
 		}
+	}
+	else {
+		say "skipped" ;
 	}
 }
 sub verify_checksums {
 	my (@files) = @_;
-	verify_flacs() if grep -f, @files;
+	verify_flacs() if $run{'no-ffp'} && grep -f, @files;
 	verify_md5();
 }
 # NOTE: something is wrong with how flac outputs to stderr and
@@ -1948,6 +1953,7 @@ sub print_help {
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
+	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";        
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
 	$output .= "--remove-images   Remove all embedded images and image padding from file\n";
 	$output .= "                  before autotagging.\n";
@@ -2279,6 +2285,8 @@ sub get_options{
 		$OUTPUT_TYPE = $arg;},
 	"nlink" => sub { 
 		$DONT_USE_NLINK = 0 },
+	"no-ffp" => sub { 
+		$run{'no-ffp'} = 1 },
 	"no-nlink" => sub { 
 		$DONT_USE_NLINK = 1 },
 	"no-replaygain" => sub { 
