@@ -1,4 +1,4 @@
-.TH ACXI 1 "2019\-08\-14" acxi "acxi manual"
+.TH ACXI 1 "2019\-08\-23" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -283,6 +283,28 @@ Full path to the directory where you want the processed lossy
 (eg, ogg) files to go.
 
 .TP
+.B \-\-exclude [items]\fR, \fB\-x [items]\fR
+Exclude a list of unique strings separated by ^^, or a full path to
+an exclude file whose name includes the value set in \fB$EXCLUDE_BASE\fR. 
+
+Excludes sync/copy action to destination directory. Replaces 
+\fBEXCLUDE\fR values if present. Anything matching in any part of the 
+source directory file path will be excluded or removed from the destination
+directory. 
+
+If it's a path to a file of excludes, use one exclude string per line.
+
+Sample: \fB\-\-exclude='artwork^^Daisy Queen^^Bon Jovi'\fR
+Sample: \fB\-\-exclude='/home/me/music/excludes/acxi-excludes-phone.txt\fR
+
+.TP
+.B \-\-exclude\-append [items]\fR, \fB\-X [items]\fR
+Append an item to the list of excludes or file. Only accepts string values,
+not a file path.
+
+Sample: \fB\-\-exclude\-append='My Sharona^^Dancing Queen'\fR
+
+.TP
 .B \-\-force\fR, \fB\-f\fR
 Overwrites all the mp3/ogg/opus/jpg/txt etc. files, even if they already 
 exist. This is useful if you for example want to change compression
@@ -511,6 +533,23 @@ This the original, working, like flac, wav, etc.
 This is the processed compressed music files, ie, ogg, opus, or mp3. Destination 
 cannot be the same as Source directory, although it can be inside of the source 
 directory.
+
+.TP
+.B EXCLUDE LISTS/FILES
+
+\fBEXCLUDE\fR \- Sample (if list): \fBEXCLUDE=artwork^^Daisy Queen^^Bon Jovi\fR
+
+Sample (if exclude file): \fBEXCLUDE=/home/me/music/excludes/acxi-excludes-phone.txt\fR
+
+Excludes these matches from destination directory in sync or clean operations.
+
+\fBEXCLUDE_BASE\fR \- Sample: \fBEXCLUDE_BASE=massive-exclude-list\fR 
+
+this is the part of the file name minus the .txt that will be matched to see if
+it's an exclude list or an exclude file. Default: \fBacxi-excludes\fR
+
+This lets you use multiple exclude files, as long as they all contain the value
+found in \fBEXCLUDE_BASE\fR acxi will know it's an exclude file, not a list.
 
 .TP
 .B INPUT/OUTPUT

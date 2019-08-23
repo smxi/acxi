@@ -75,8 +75,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.15';
-my $SELF_DATE = '2019-08-18';
+my $SELF_VERSION = '3.3.16';
+my $SELF_DATE = '2019-08-23';
 
 ## GLOBALS ##
 my %run;
@@ -85,7 +85,7 @@ my ($b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
 my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
 $silent_opus) = (7,'','','','','');
-my ($extension,@extension_list,@found_list,$list_type);
+my ($extension,$exclude_append,@excludes,@extension_list,@found_list,$list_type);
 my ($b_check_dest,$b_check_out) = (1,1);
 my $b_win = ($^O =~ /win/i) ? 1 : 0; # detect if $^O returns windows 
 my $path_separator = ($b_win) ? '\\' : '/';
@@ -147,6 +147,26 @@ my $COMMAND_METAFLAC = '/usr/bin/metaflac';
 # IMPORTANT: DESTINATION_DIRECTORY cannot be equal to SOURCE_DIRECTORY
 my $SOURCE_DIRECTORY = '/path/to/source/directory';
 my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
+
+#### -------------------------------------------------------------------
+#### EXCLUDES
+#### -------------------------------------------------------------------
+
+# this is the unique part of the exclude file name, not including the 
+# .txt. All exclude file names used must contain this string value.
+my $EXCLUDE_BASE = 'acxi-exclude';
+
+# Option: --exclude 
+# Takes a ^^ separated list of key words which will match terms in 
+# your source directory you do not want synced or copied over to 
+# destination. Separate items with ^^. Will match the entire path 
+# so be aware. Note you can exclude directory names like artwork too.
+# Sample: $EXCLUDE = 'millivanilli^^bonjovi^^artwork';
+# Can also use a file with one exclude item per line. File name 
+# must include the 'acxi-excludes' in it or it won't be used.
+# you can use various excluldes to create various collections.
+# Sample: $EXCLUDE = '/home/me/music/excludes/acxi-excludes-phone.txt';
+my $EXCLUDE = '';
 
 #### -------------------------------------------------------------------
 #### CHECKSUM DATA
@@ -1082,10 +1102,11 @@ sub update_files {
 		$dest_info = File::stat::stat("$dest_file");
 		if ( $dest_info ) {
 			$dest_mod_time = $dest_info->mtime;
-			# print "DEST_MOD: $dest_mod_time :: SRC_MOD: $src_mod_time :: FORCE: $force\n"; 
+			#  :: FORCE: $b_force
+# 			print "DEST_MOD: $dest_mod_time :: SRC_MOD: $src_mod_time\n"; 
 # 		} else {
-# 			print "NOT EXISTS: $destinationFile \n"; 
-# 			print "P1: $file ==> \n  $destinationFile\n"; 
+# 			print "NOT EXISTS: $dest_file \n"; 
+# 			print "P1: $file ==> \n  $dest_file\n"; 
 		}
 		# If the destination file does not exist, or the user specified force,
 		# or the srcfile is more recent then the dest file, we encode/copy.
@@ -1314,7 +1335,7 @@ sub sourcer {
 	($_[0] eq '.' ) ? Cwd::getcwd() : $_[0];
 }
 # arg: 1 - full file path, returns array of file lines.
-# 2 - optionsl, strip and clean data
+# 2 - 'strip': strip and clean data
 # note: chomp has to chomp the entire action, not just <$fh>
 sub reader {
 	my ($file,$strip) = @_;
@@ -1334,6 +1355,7 @@ sub wanted {
 	if ($list_type eq 'dir' || $list_type eq 'file'){
 		return if $File::Find::name =~ m/^\Q$DESTINATION_DIRECTORY\E/;
 		return if $File::Find::name =~ m/\/\./; # skip any dot files/directories
+		return if $run{'sync'} && @excludes && ( grep {$File::Find::name =~ /\Q$_\E/} @excludes );
 		if ($list_type eq 'dir'){
 			return if ! -d; # only directories
 		}
@@ -1354,7 +1376,7 @@ sub wanted {
 		$working =~ s|^\Q$DESTINATION_DIRECTORY\E|$SOURCE_DIRECTORY|;
 		$working =~ s/\.$OUTPUT_TYPE$/\.$INPUT_TYPE/i if $list_type eq 'file-clean';
 		#print '1: ', "$File::Find::name\n$working\n";
-		return unless ! -e $working && -e $File::Find::name;
+		return unless ! -e $working || (@excludes && (grep {$File::Find::name =~ /\Q$_\E/} @excludes) );
 		# print '2: ', "$File::Find::name\n";
 	}
 	# print $File::Find::name . "\n";
@@ -1481,6 +1503,7 @@ sub error_handler {
 	elsif ($error eq 'bad-level'){$error_no = 5;$b_valid=0;}
 	elsif ($error eq 'bad-fork'){$error_no = 9;$b_valid=0;}
 	elsif ($error eq 'bad-nlink'){$error_no = 9;$b_valid=0;}
+	elsif ($error eq 'bad-exclude-file'){$error_no = 19;$b_valid=0;}
 	elsif ($error eq 'self-updater'){$error_no = 17;}
 	elsif ($error eq 'open'){$error_no = 14;}
 	elsif ($error eq 'file-exists'){$error_no = 16;}
@@ -1520,6 +1543,7 @@ sub check_user_values {
 	check_log_level();
 	check_nlink();
 	check_fork();
+	check_excludes();
 	check_src_dest_directories();
 	check_in_out_types();
 	if ($b_valid_in_out){
@@ -1783,19 +1807,21 @@ sub check_log_level {
 }
 sub check_nlink {
 	my ($b_error,$error_message) = (0,'');
-	if ( $LOG_LEVEL > 0 ) {
-		print main::dotify("Checking DONT_USE_NLINK value");
-	}
-	if ( $DONT_USE_NLINK !~ m/^[01]$/ ) {
-		$b_error = 1;
-		$error_message .= "\n  DONT_USE_NLINK only supports 0-1. ";
-		$error_message .= "You used: $DONT_USE_NLINK";
-	}
-	if ( $b_error ) {
-		main::error_handler('bad-nlink',$error_message,0);
-	}
-	elsif ( $LOG_LEVEL > 0 ) {
-		print "Supported: $DONT_USE_NLINK\n";
+	if (defined $DONT_USE_NLINK && $DONT_USE_NLINK ne '0' ){
+		if ( $LOG_LEVEL > 0 ) {
+			print main::dotify("Checking DONT_USE_NLINK value");
+		}
+		if ( $DONT_USE_NLINK !~ m/^[01]$/ ) {
+			$b_error = 1;
+			$error_message .= "\n  DONT_USE_NLINK only supports 0-1. ";
+			$error_message .= "You used: $DONT_USE_NLINK";
+		}
+		if ( $b_error ) {
+			main::error_handler('bad-nlink',$error_message,0);
+		}
+		elsif ( $LOG_LEVEL > 0 ) {
+			print "Supported: $DONT_USE_NLINK\n";
+		}
 	}
 }
 sub check_fork {
@@ -1813,6 +1839,34 @@ sub check_fork {
 	}
 	elsif ( $LOG_LEVEL > 0 ) {
 		print "Supported: $FORK\n";
+	}
+}
+sub check_excludes {
+	my ($b_error,$error_message) = (0,'');
+	if ($EXCLUDE){
+		if ( $LOG_LEVEL > 0 ) {
+			print main::dotify("Checking EXCLUDE data");
+		}
+		if ( $EXCLUDE =~ /\Q$EXCLUDE_BASE\E/){
+			if ( ! -e $EXCLUDE){
+				$b_error = 1;
+				$error_message .= "\n  You must provide a valid exclude file path. ";
+				$error_message .= "You used: $EXCLUDE";
+			}
+		}
+		else {
+			if ($EXCLUDE =~ /\Q^^^^\E/ || $EXCLUDE =~ /\Q^^\E$/){
+				$b_error = 1;
+				$error_message .= "\n  You have an empty value in your EXCLUDE data. ";
+				$error_message .= "You used: $EXCLUDE";
+			}
+		}
+		if ( $b_error ) {
+			main::error_handler('bad-exclude-file',$error_message,0);
+		}
+		elsif ( $LOG_LEVEL > 0 ) {
+			print "Supported: $FORK\n";
+		}
 	}
 }
 # end Validation
@@ -1892,6 +1946,15 @@ sub print_help {
 	$output .= "--destination, -d Path to the directory where you want the processed\n";
 	$output .= "                  (eg, ogg) files to go.\n";
 	$output .= "                  Current value: $DESTINATION_DIRECTORY\n";
+	$output .= "--exclude, -x     Exclude a list of unique strings separated by ^^. Excludes\n";
+	$output .= "                  sync/copy action to destination directory. Replaces\n";
+	$output .= "                  \$EXCLUDE values if present. Anything matching in file path\n";
+	$output .= "                  will be excluded. Can also be path to a file of excludes.\n";
+	$output .= "                  Sample: --exclude='artwork^^Daisy Queen^^Bon Jovi'\n";
+	$output .= "                  Sample: --exclude='/home/me/music/excludes/$EXCLUDE_BASE.txt\n";
+	$output .= "--exclude-append, -X\n";
+	$output .= "                  Append an item to the list of excludes or file.\n";
+	$output .= "                  Sample: --exclude-append='My Sharona^^Dancing Queen'\n";
 	$output .= "--ffmpeg          Force flac to ogg/opus conversions to use ffmpeg. Useful if\n";
 	$output .= "                  you want to include embedded images to oggs (Experimental).\n";
 	$output .= "--force, -f       Force overwrite the mp3/ogg/opus/jpg/txt/etc. files, even\n"; 
@@ -2029,6 +2092,19 @@ sub set_basic_data {
 			import Parallel::ForkManager;
 			$b_fork = 1;
 		}
+	}
+	if ($EXCLUDE){
+		if ($EXCLUDE =~ /\Q$EXCLUDE_BASE\E/){
+			@excludes = reader($EXCLUDE, 'strip');
+		}
+		else {
+			@excludes = split /\Q^^\E/, $EXCLUDE;
+		}
+		if ($exclude_append){
+			my @temp = split /\Q^^\E/, $exclude_append;
+			@excludes = (@excludes,@temp);
+		}
+		# print Data::Dumper::Dumper \@excludes, "\n";
 	}
 }
 
@@ -2259,6 +2335,14 @@ sub get_options{
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
 		$DESTINATION_DIRECTORY = $arg },
+	"x|exclude:s" => sub { 
+		my ($opt,$arg) = @_;
+		error_handler('missing-arg',"$opt requires exclude list or file.",1) if ! $arg;
+		$EXCLUDE = $arg },
+	"exclude-append:s" => sub { 
+		my ($opt,$arg) = @_;
+		error_handler('missing-arg',"$opt requires exclude list.",1) if ! $arg;
+		$exclude_append = $arg },
 	"f|force" => sub { 
 		$b_force = 1 },
 	"ffmpeg" => sub { 
