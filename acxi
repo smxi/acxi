@@ -944,7 +944,7 @@ sub process_destination {
 	print $line_small;
 	print "Completed cleanup checks.\n";
 	print $line_large;
-	exit;
+	exit if !$run{'clean-sync'};
 }
 sub process_type {
 	my ($type) = @_;
@@ -1937,7 +1937,8 @@ sub print_help {
 	$output .= "--clean           Clean directories and files from destination not found in\n";
 	$output .= "                  source music directory. Will show you directories/files to\n";
 	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
-	$output .= "                  remove that set of files or directories.\n";
+	$output .= "                  remove that set of files or directories. Exits at end.\n";
+	$output .= "                  optional value 'sync' is used: --clean sync";
 	$output .= "--copy, -c        List of alternate data types to copy to Output type\n";
 	$output .= "                  directories. Comma separated, no spaces. See sample above.\n";
 	$output .= "                  Current copy types: ";
@@ -2323,7 +2324,9 @@ sub get_options{
 		$run{'autotag'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
-	"clean" => sub { 
+	"clean:s" => sub { 
+		my ($opt,$arg) = @_;
+		$run{'clean-sync'} = 1 if $arg && $arg eq 'sync';
 		$run{'clean'} = 1 },
 	# accepts null value so users can not copy anything
 	"c|copy:s" => sub { 

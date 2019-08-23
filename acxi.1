@@ -239,12 +239,13 @@ system. It also ignores line endings, which makes reading windows
 generated md5 files on *nix systems a breeze.
 
 .TP
-.B \-\-clean\fR
+.B \-\-clean [sync]\fR
 Clean directories and files from destination (compressed) directories 
 which are not present in the source music directories. Will show you the
 directories or files to be removed before deleting them, and you have to
 confirm the deletion of each set two times before it will actually delete
-it. Runs before the syncing starts.
+it. If used with optional value \fBsync\fR, will proceed to sync actions, 
+otherwise exits after cleaning.
 
 Take care with this one, if you have other compressed formats in your
 compressed directory than your default $OUTPUT_TYPE format, it will 
@@ -521,10 +522,10 @@ The following set your system path for the required applications:
 .B SOURCE/DESTINATION/CONFIGURATION DIRECTORIES
 NOTE: \fBDESTINATION_DIRECTORY\fR cannot be the same as \fBSOURCE_DIRECTORY\fR.
 
-\fBCLEAN\fR \- Sample: \fBCLEAN=true\fR Switches on/off \fB\-\-clean\fR to 
+\fBCLEAN\fR \- Sample: \fBCLEAN=true\fR Switches on/off \fB\-\-clean sync\fR to 
 apply cleaning action to your destination directories. Accepted
 values: \fB[enable|on|true|yes]\fR or \fB[disable|off|false|no]\fR. Default
-is false.
+is false. 
 
 \fBSOURCE_DIRECTORY\fR \- Sample: \fBSOURCE_DIRECTORY=/home/fred/music\fR 
 
