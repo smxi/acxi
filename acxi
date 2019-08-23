@@ -2189,7 +2189,10 @@ sub assign_value {
 	elsif ($var eq 'CLEAN'){
 		$value =~ s/^(yes|1|true|enable|on)$/1/;
 		$value =~ s/^(no|0|false|disable|off)$/0/;
-		$run{'clean'} = $value if $value =~ /^[10]$/;}
+		if ($value =~ /^[10]$/){
+			$run{'clean'} = $value;
+			$run{'clean-sync'} = $value;
+		}}
 	elsif ($var eq 'SOURCE_DIRECTORY' || $var eq 'DIR_PREFIX_SOURCE'){
 		$SOURCE_DIRECTORY = $value;}
 	elsif ($var eq 'DESTINATION_DIRECTORY' || $var eq 'DIR_PREFIX_DEST'){
@@ -2212,6 +2215,8 @@ sub assign_value {
 	elsif ($var eq 'FFP_FILE'){$FFP_FILE = $value}
 	elsif ($var eq 'MD5_FILE'){$MD5_FILE = $value}
 	elsif ($var eq 'TAG_FILE'){$TAG_FILE = $value}
+	elsif ($var eq 'EXCLUDE'){$EXCLUDE = $value}
+	elsif ($var eq 'EXCLUDE_BASE'){$EXCLUDE_BASE = $value}
 }
 # end ConfigData
 }
