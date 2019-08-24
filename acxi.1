@@ -1,18 +1,20 @@
-.TH ACXI 1 "2019\-08\-23" acxi "acxi manual"
+.TH ACXI 1 "2019\-08\-24" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
 .IP * 2
 Syncing: \fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-clean\fR] 
 [\fB\-c\fR extensions] 
-[\fB\-d\fR destination-path] [\fB\-f\fR] [\fB\-\-fork\fR 0-xx] 
+[\fB\-d\fR destination-path] [\fB\-\-exclude\fR] 
+[\fB\-\-exclude\-append {filename|extension}\fR] 
+[\fB\-f\fR] [\fB\-\-fork\fR 0-xx] 
 [\fB\-i\fR {flac|raw|shn|wave}] [\fB\-o\fR {flac|mp3|ogg|opus}] 
 [\fB\-q\fR NUMBER] [\fB\-s\fR source\-path] 
 .IP * 2
 Tagging: \fBacxi\fR [\fB\-\-autotag\fR] [\fB\-\-autotag\-create\fR] 
 [\fB\-\-autotag\-create\-single\fR] 
 [\fB\-\-autotag\-create\-multi {filename start ID}\fR]
-[\fB\-\-aggregate\fR] [\fB\-\-alt\-ag {file name}\fR] 
+[\fB\-\-aggregate {file name|extension}\fR] 
 [\fB\-\-no\-replaygain\fR] [\fB\-\-remove\-images\fR]
 .IP * 2
 Checksums: \fBacxi\fR [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] 
@@ -92,26 +94,28 @@ when available in examples in order to keep things simple.
 .SH OPTIONS
 
 .TP
-.B \-\-aggregate\fR
+.B \-\-aggregate [filename|extension]\fR
 Collect all the \fBauto.tag\fR files in a source directory and send to
-a target directory. Useful to collect data for a large collection:
+a target directory. Useful to collect data for a large collection.
+You can supply a list of comma separated items: jpg,info.txt,myart.png
 
-Sample: \fBacxi \-\-aggregate \-s my\-music -d music\-data\fR
+Creates the directories the files were found in in the destination 
+directory.
 
-Defaults to creating the directories the files were found in in 
-the destination directory, but with the added optional argument 
-\fB'file'\fR it will instead create files made out of the directory
-name and the file name. Only use that if it's a single level
-deep directory or it won't work.
+If no extra argument is supplied, it will default to collecting 
+all the \fBauto.tag\fR files in the source directory.
 
-.TP
-.B \-\-alt\-ag [file name]\fR
-When used with \fB\-\-aggregate\fR, will aggregate the file name or
-extension given instead of the default \fBauto.tag\fR file name.
+Sample 1 (collects all auto.tag files): 
+\fBacxi \-\-aggregate \-s my\-music -d music\-data\fR
 
-Sample: \fBacxi \-\-aggregate \-\-alt\-ag info.txt \-s my\-music -d music\-data\fR
+Sample 2 (collects all supplied filename): 
+\fBacxi \-\-aggregate info.txt \-s my\-music -d music\-data\fR
 
-Sample: \fBacxi \-\-aggregate \-\-alt\-ag jpg \-s my\-music -d music\-data\fR
+Sample 3 (collects all files of type jpg): 
+\fBacxi \-\-aggregate jpg \-s my\-music -d music\-data\fR
+
+Sampe 4 (collects multiple values):
+\fBacxi \-\-aggregate jpg,info.txt,png \-s my\-music -d music\-data\fR
 
 .TP
 .B \-\-append [extensions]\fR, \fB\-a [extensions]\fR
