@@ -310,6 +310,7 @@ sub aggregate {
 	foreach (@files){
 		aggregate_file($_);
 	}
+	print $line_small;
 	print "Completed file aggregation.\n";
 	print $line_large;
 	exit;
