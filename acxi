@@ -348,6 +348,9 @@ sub aggregate_file {
 		push @files, $file;
 		$path = '';
 	}
+	if (!@found_list){
+		print "No $extension type files found.\n";
+	}
 	print $line_small;
 	# print Data::Dumper::Dumper \@files;
 	print "Finished copying over $extension type files to " . main::sourcer("$DESTINATION_DIRECTORY" . "\n");
