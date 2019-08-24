@@ -1981,7 +1981,8 @@ sub print_help {
 	$output .= "                  filename using the source directory name plus the tag\n";
 	$output .= "                  file name.\n";
 	$output .= "--alt-ag [file]   Use with --aggregate if you want to collect different file\n";   
-	$output .= "                  names in one location from your collection.\n";
+	$output .= "                  names in one location from your collection. Supply file name\n";
+	$output .= "                  or extension (do not use . in extension: jpg, not .jpg)\n"
 	$output .= "                  Sample: acxi -d ~/music/cdinfo --aggregate --alt-ag info.txt\n";
 	$output .= "--autotag, -A     Requires auto.tag formatted file in each directory. Flac only.\n";
 	$output .= "                  Deletes all existing tags, then creates a fully tagged set of\n";
