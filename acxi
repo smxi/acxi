@@ -76,7 +76,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.16';
-my $SELF_DATE = '2019-08-24';
+my $SELF_DATE = '2019-08-29';
 
 ## GLOBALS ##
 my %run;
@@ -199,7 +199,8 @@ my $OUTPUT_TYPE = 'ogg';
 # For ogg: n can be between -1 and 10. Fractions allowed. 10 is the largest file 
 # size / highest quality. 
 # For opus: n can be 6-256. 256 is the largest file size / highest quality / 
-# maximum bitrate. For flac 0-8 [0 biggest size, fastest]
+# maximum bitrate. For flac 0-8 [0 biggest size, fastest], set to 4 because
+# there is almost no size decrease with flac 5-8 but big cpu time increase.
 my $QUALITY_FLAC = 4;
 my $QUALITY_MP3 = 3;
 my $QUALITY_OGG = 7;
@@ -208,11 +209,11 @@ my $QUALITY_OPUS = 144; # 128 claimed to be stereo transparent, 160 very good
 # Option: -c/--copy and -a/--append (to append extension types to existing list.
 ## NOTE: if you want to override $COPY_TYPES in your config files, you
 # must use this syntax:
-# COPY_TYPES=doc,docx,bmp,jpg,jpeg
+# COPY_TYPES=doc,docx,bmp,png,doc,docx,jpg,jpeg,tif
 # Add or remove types to copy over to ogg directories, do not include
 # the input/output audio file types, only extra data types like txt.
 # If you want no copying done, simply change to: $COPY_TYPES = 'none';
-my $COPY_TYPES = 'bmp,doc,docx,gif,jpg,jpeg,odt,pdf,png,tif,txt';
+my $COPY_TYPES = 'gif,jpg,jpeg,png,txt';
 
 #### -------------------------------------------------------------------
 #### PRINT OUTPUT
@@ -1201,7 +1202,7 @@ sub convert_file {
 	if ( $OUTPUT_TYPE eq 'flac' ){
 		$action = 'To flac';
 		if (!$b_test){
-			qx($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" "$dest_file" );
+			qx($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" -aq $quality "$dest_file" );
 			$result = $?;
 		}
 	}
@@ -1983,7 +1984,8 @@ sub print_help {
 	$output .= "                  Current value: $INPUT_TYPE\n";
 	$output .= "--output, -o      Output type: mp3, ogg, opus. mp3 requires input type flac.\n";
 	$output .= "                  Current value: $OUTPUT_TYPE\n";
-	$output .= "--quality n, -q n ogg: n between -1 and 10. Fractions ok. 10 best quality.\n";
+	$output .= "--quality n, -q n flac: n between 0 and 8. 8 best, but > 4 generally pointless.\n";
+	$output .= "                  ogg: n between -1 and 10. Fractions ok. 10 best quality.\n";
 	$output .= "                  opus: n between 6-256. Variable bit rate. 256 best quality.\n";
 	$output .= "                  mp3: n between 0-9. Variable bit rate, 0 best quality.\n";
 	$output .= "                  Current values: $QUALITY_MP3 (mp3); $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
@@ -2155,6 +2157,7 @@ sub set_display_data {
 		$print_line_small = 'print $line_small';
 	}
 }
+
 # get defaults from user config files if present
 ## Package UserConfigs
 {

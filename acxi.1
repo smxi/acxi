@@ -415,6 +415,10 @@ Output type. Supported types: flac, ogg, opus, mp3
 .B \-\-quality [number]\fR, \fB\-q [number]\fR
 Set compression quality level.
 
+\fBflac\fR \- n can be an integer between 0\-8, 0 is 
+largest file / fastest conversion time, 8 is smallest file, longest time. 
+Note that tests show there is very little point in using anything over 4.
+
 \fBmp3\fR \- n can be an integer between 0\-9 (variable bit rate), 0 is 
 largest file / highest quality.
 
@@ -579,7 +583,9 @@ if you only want to sync the music files, not copy over images, text files,
 etc.
 
 \fBQUALITY_FLAC\fR \- Sample: \fBQUALITY_FLAC=5\fR Supported values: 0\-8. 0 is 
-the largest file size / fastest to run. NOTE: this is not currently used.
+the largest file size / fastest to run. 5 to 8 shows only a tiny decrease in
+file size but a huge increase in time to process, so 4 is a good balance
+in general.
 
 \fBQUALITY_MP3\fR \- Sample: \fBQUALITY_MP3=2\fR Supported values: 0\-9. 0 is 
 the largest file size / highest quality.
