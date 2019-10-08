@@ -1,4 +1,4 @@
-.TH ACXI 1 "2019\-08\-30" acxi "acxi manual"
+.TH ACXI 1 "2019\-10\-08" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -161,6 +161,9 @@ attention to the main image, and only one of them. Don't use a flac
 file as a way to store large high resolution images as a general
 rule, it just makes the entire collection pointlessly bloated.
 
+Can be used with \fB\-K\fR or \fB\-D\fR for all in one tag checksum
+actions.
+
 .TP
 .B \-\-autotag\-create\fR, \fB\-C\fR
 Creates the \fBauto.tag\fR file in the directory, and populates it
@@ -218,7 +221,8 @@ do not contain flac files, because that creates a very complicated
 logical puzzle which is hard to accurately or reliably resolve in
 code.
 
-Do not use together with other cleaning/syncing options!
+Do not use together with other cleaning/syncing options. Can be used with
+\fB\-A\fR.
 
 .TP
 .B \-\-checksum\-delete\fR, \fB\-D\fR
@@ -232,6 +236,9 @@ extension added on.
 I can think of very few reasons to want to preserve \fB.ffp\fR or 
 \fB.md5\fR files, since they should in general reflect what the actual 
 files you have are.
+
+Do not use together with other cleaning/syncing options. Can be used with
+\fB\-A\fR.
 
 .TP
 .B \-\-checksum\-verify\fR, \fB\-V\fR

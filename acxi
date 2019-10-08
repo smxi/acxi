@@ -1997,7 +1997,7 @@ sub print_help {
 	$output .= "Specialized options:\n";
 	$output .= "--aggregate, -G   [filename|extension] Copy file name or extension type to\n";
 	$output .= "                  --destination directory. If no argument given, copies over\n";
-	$output .= "                  $TAG_FILE. Do not use . in extension (jpg  good, .jpg bad)\n";
+	$output .= "                  $TAG_FILE. Do not use . in extension (jpg good, .jpg bad)\n";
 	$output .= "                  You can supply more than one filename or extension:\n";
 	$output .= "                  (file name): acxi -d ~/music/cdinfo --aggregate info.txt\n";
 	$output .= "                  (extension): acxi -d ~/music/cdinfo --aggregate jpg\n";
@@ -2026,7 +2026,7 @@ sub print_help {
 	$output .= "                  files are found. Use --checksum-delete if you also want\n";
 	$output .= "                  to delete existing checksum files. Only flac type\n";
 	$output .= "                  is supported.\n";
-	$output .= "                  Do not use together with other cleaning/syncing options!\n";
+	$output .= "                  Do not use together with cleaning/syncing options!\n";
 	$output .= "--checksum-delete, -D\n";
 	$output .= "                  Delete all existing .ffp, .md5, .ffp.txt, and md5.txt files\n";
 	$output .= "                  before creating the new checksum files. Files only deleted in\n";
