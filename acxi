@@ -2450,14 +2450,14 @@ sub get_options{
 		error_handler('unsupported-option', "Unsupported option: $opt",1); }
 	);
 	if (($run{'checksum'} || $run{'checksum-verify'}) && ($run{'sync'} || 
-	 $run{'clean'} || $run{'autotag-create'})){
+	 $run{'clean'} || $run{'autotag-create'} || $run{'autotag-aggregate'})){
 		error_handler('invalid-options', 
 		 "You cannot use --checksum with any clean, sync, or autotag options.",1);
 	}
 	if ($run{'autotag'} && ($run{'sync'} || $run{'clean'} || 
-	 $run{'checksum'} || $run{'checksum-verify'} || $run{'autotag-create'})){
+	 $run{'autotag-aggregate'} || $run{'autotag-create'})){
 		error_handler('invalid-options', 
-		 "You cannot use --autotag with autotag-generate, clean, sync, or checksum options.",1);
+		 "You cannot use --autotag with autotag-generate, clean, or sync options.",1);
 	}
 	if ($run{'autotag-create'} && ($run{'sync'} || $run{'clean'} || 
 	 $run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'})){
