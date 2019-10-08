@@ -1,4 +1,21 @@
 ===================================================================
+Date: 2019-10-08
+Version: 3.3.16
+-------------------------------------------------------------------
+Some fixes:
+
+1. Added backtick ` escape 
+2. Adjusted default copy values, removed some big file types, pdf,
+doc, tif, which a lossy collection probably does not need.
+3. Removed --alt-ag, which was awkward to use, now --aggregate 
+accepts a comma separated list of file names and types.
+4. Added --exclude, to let people exclude any string or strings 
+found in the value passed to it.
+5. Made it possible to do: acxi -AD [or -AK] -s ... so you don't
+have to type the stuff out twice when tagging then generating 
+checksum files.
+
+===================================================================
 Date: 2019-08-14
 Version: 3.3.14
 -------------------------------------------------------------------

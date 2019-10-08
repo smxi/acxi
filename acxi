@@ -76,7 +76,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.16';
-my $SELF_DATE = '2019-09-02';
+my $SELF_DATE = '2019-10-08';
 
 ## GLOBALS ##
 my %run;
@@ -2280,7 +2280,7 @@ sub get_options{
 		$run{'autotag-create'} = 0;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
-		$run{'checksum'} = 0;
+		# $run{'checksum'} = 0;
 		$run{'checksum-verify'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
@@ -2333,7 +2333,7 @@ sub get_options{
 		$run{'checksum'} = 1;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
-		$run{'autotag'} = 0;
+		# $run{'autotag'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	"D|checksum-delete" => sub { 
@@ -2343,7 +2343,7 @@ sub get_options{
 		$run{'checksum-delete'} = 1; 
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
-		$run{'autotag'} = 0;
+		# $run{'autotag'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	'V|checksum-verify' => sub { 
@@ -2450,7 +2450,7 @@ sub get_options{
 		error_handler('unsupported-option', "Unsupported option: $opt",1); }
 	);
 	if (($run{'checksum'} || $run{'checksum-verify'}) && ($run{'sync'} || 
-	 $run{'clean'} || $run{'autotag'} || $run{'autotag-create'})){
+	 $run{'clean'} || $run{'autotag-create'})){
 		error_handler('invalid-options', 
 		 "You cannot use --checksum with any clean, sync, or autotag options.",1);
 	}
