@@ -76,7 +76,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.16';
-my $SELF_DATE = '2019-10-08';
+my $SELF_DATE = '2019-10-13';
 
 ## GLOBALS ##
 my %run;
@@ -369,6 +369,7 @@ sub get_tag_files {
 	my ($item,$print_file,$result,$working_dir);
 	$list_type = 'file';
 	$extension = $TAG_FILE;
+	@found_list = ();
 	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
 	my $start_dir = Cwd::getcwd();
 	foreach $item (sort @found_list) {
@@ -540,6 +541,7 @@ sub make_file {
 	print "Creating $TAG_FILE file... ";
 	$extension = $INPUT_TYPE;
 	$list_type = 'file';
+	@found_list = ();
 	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 	print "\n" if $LOG_LEVEL > 2;
 	foreach $file (sort @found_list) {
@@ -712,6 +714,7 @@ sub process_directories {
 	$list_type = 'dir';
 	print $line_small;
 	print "Checking directories...\n";
+	@found_list = ();
 	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 	my $start_dir = Cwd::getcwd();
 	say 'start dir: ', $start_dir if $LOG_LEVEL > 3;
@@ -967,9 +970,9 @@ sub process_type {
 	my ($type) = @_;
 	my ($b_deleted,$item,$result);
 	$list_type = ($type eq 'directory') ? 'dir-clean': 'file-clean';
-	@found_list = ();
 	print $line_small;
 	print "Checking $type removal...\n";
+	@found_list = ();
 	File::Find::find( \&main::wanted, $DESTINATION_DIRECTORY);
 	if (@found_list && confirm_deletion($type)){
 		foreach $item (sort @found_list) {
