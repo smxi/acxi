@@ -75,8 +75,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.16';
-my $SELF_DATE = '2019-10-13';
+my $SELF_VERSION = '3.3.17';
+my $SELF_DATE = '2019-10-24';
 
 ## GLOBALS ##
 my %run;
@@ -609,9 +609,10 @@ sub populate_file {
 	}
 	if ($run{'autotag-multi'} && @$files){
 		$autotag_multi =~ s/%/[1-9]/g;
-		#print "$autotag_multi\n";
+		$autotag_multi =~ s/@/[A-Z]/g;
+		# print "$autotag_multi\n";
 		foreach (@$files){
-			if (/^($autotag_multi)/){
+			if (/^($autotag_multi)/i){
 				$starter = $1;
 				$counter++;
 			}
@@ -646,7 +647,7 @@ sub populate_file {
 		$counter++;
 		my @track_working = @track;
 		if ($run{'autotag-multi'} && scalar @multi > 1){
-			if (/^($autotag_multi)/){
+			if (/^($autotag_multi)/i){
 				$starter = $1;
 			}
 			if ($holder ne $starter){
@@ -2014,11 +2015,13 @@ sub print_help {
 	$output .= "                  track listing. Preserves existing REPLAYGAIN values.\n";
 	$output .= "--autotag-create-multi, -M [disc ID]\n";
 	$output .= "                  Required argument tells logic how to determine your disc\n";
-	$output .= "                  numbering method. The % is used to indicate the value\n";
-	$output .= "                  is a number between 1-9. Will complete TRACKTOTAL, DISCNUMBER,\n";
-	$output .= "                  TRACKNUMBER values in auto.tag file, which saves a time.\n";
+	$output .= "                  numbering method. % is used to indicate the value is a number\n";
+	$output .= "                  between 1-9. @ is used to indicate a letter between A-Z. \n";
+	$output .= "                  Will complete TRACKTOTAL, DISCNUMBER, TRACKNUMBER values\n";
+	$output .= "                  in auto.tag file, which saves a time.\n";
 	$output .= "                  Samples: -M d% [d1track02.flac]; -M d%- [d2-track04.flac];\n";
-	$output .= "                  -m % [112.flac]-M 2015-03-21.d%. [2015-03-21.d1.track03.flac]\n";
+	$output .= "                  -M % [112.flac]; -M 2015-03-21.d%. [2015-03-21.d1.track03.flac]\n";
+	$output .= "                  -M @ [A12.flac]; -M d@- [da-track02.flac];\n";
 	$output .= "                  Flac input type only.\n";
 	$output .= "--autotag-create-single, -S\n";
 	$output .= "                  For single disc recordings, will also add TRACKTOTAL and\n";
@@ -2300,7 +2303,7 @@ sub get_options{
 		},
 	"M|autotag-create-multi:s" => sub { 
 		my ($opt,$arg) = @_;
-		if (!$arg || $arg !~ /%/){
+		if (!$arg || $arg !~ /%|@/){
 			$msg = "$opt requires multidisk file name identifier. See -h.";
 			error_handler('missing-arg',$msg,1);
 		}

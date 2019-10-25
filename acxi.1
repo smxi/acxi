@@ -1,4 +1,4 @@
-.TH ACXI 1 "2019\-10\-08" acxi "acxi manual"
+.TH ACXI 1 "2019\-10\-24" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -180,11 +180,16 @@ and used in the auto.tag file. If want to remove those, use the
 .TP
 .B \-\-autotag\-create\-multi [file prefix]\fR, \fB\-M [file prefix]\fR 
 Similar to \fBautotag\-create\-single\fR except it includes a prefix
-argument which is the unique per disk track file name ID. Uses %
-to indicate a number between 1 and 9.
+argument which is the unique per disk track file name ID. Uses \fB%\fR
+to indicate a number between 1 and 9, or \fB@\fR to indicate an upper/lower 
+case letter from A to Z.
 
-Samples: \fB\-M d%\fR [d1track02.flac]; \fB\-M d%\-\fR [d2\-track04.flac];\n";
-\fB\-m %\fR [112.flac]; \fB-M 2015-03-21.d%.\fR [2015-03-21.d1.track03.flac]
+Samples: 
+\fB\-M d%\fR [d1track02.flac]; \fB\-M d%\-\fR [d2\-track04.flac];
+\fB\-M %\fR [112.flac]; \fB-M 2015-03-21.d%.\fR [2015-03-21.d1.track03.flac]
+
+\fB\-M d@\-\fR [dAtrack02.flac]; \fB\-M d@\-\fR [dB\-track04.flac];\n";
+\fB\-M @\fR [a12.flac]; \fB-M 2015-03-21.d@.\fR [2015-03-21.da.track03.flac]
 
 This will create prepopulated \fBDISCTOTAL\fR, per disk 
 \fBDISCNUMBER\fR and \fBTRACKTOTAL\fR, and per track \fBTRACKNUMBER\fR 
