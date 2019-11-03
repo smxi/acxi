@@ -76,7 +76,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.17';
-my $SELF_DATE = '2019-10-24';
+my $SELF_DATE = '2019-11-03';
 
 ## GLOBALS ##
 my %run;
@@ -232,6 +232,10 @@ my $LOG_LEVEL = 1;
 #### -------------------------------------------------------------------
 #### ADVANCED
 #### -------------------------------------------------------------------
+
+# For clean actions, do not clean items that are symbolic links in destination
+my $CLEAN_INCLUDE_LINKS = 0;
+
 # Options: --nlink --no-nlink
 # Only change to 0 if you encounter file tree failures. This is for File::Find
 # values:  0 - use nlink; 1 - don't use nlink [default, only change if you know
@@ -975,6 +979,7 @@ sub process_type {
 	print "Checking $type removal...\n";
 	@found_list = ();
 	File::Find::find( \&main::wanted, $DESTINATION_DIRECTORY);
+	@found_list = map { ! -l $_; $_} @found_list if !$CLEAN_INCLUDE_LINKS;
 	if (@found_list && confirm_deletion($type)){
 		foreach $item (sort @found_list) {
 			$result = 'UNSET';
@@ -2220,6 +2225,11 @@ sub assign_value {
 			$run{'clean'} = $value;
 			$run{'clean-sync'} = $value;
 		}}
+	elsif ($var eq 'CLEAN_INCLUDE_LINKS'){
+		$value =~ s/^(yes|1|true|enable|on)$/1/;
+		$value =~ s/^(no|0|false|disable|off)$/0/;
+		$CLEAN_INCLUDE_LINKS = $value if $value =~ /^[10]$/;
+	}
 	elsif ($var eq 'SOURCE_DIRECTORY' || $var eq 'DIR_PREFIX_SOURCE'){
 		$SOURCE_DIRECTORY = $value;}
 	elsif ($var eq 'DESTINATION_DIRECTORY' || $var eq 'DIR_PREFIX_DEST'){
@@ -2365,6 +2375,10 @@ sub get_options{
 		my ($opt,$arg) = @_;
 		$run{'clean-sync'} = 1 if $arg && $arg eq 'sync';
 		$run{'clean'} = 1 },
+	"clean-include-links" => sub { 
+		$CLEAN_INCLUDE_LINKS = 1 },
+	"clean-skip-links" => sub { 
+		$CLEAN_INCLUDE_LINKS = 0 },
 	# accepts null value so users can not copy anything
 	"c|copy:s" => sub { 
 		my ($opt,$arg) = @_;
