@@ -2377,7 +2377,7 @@ sub get_options{
 		$run{'clean'} = 1 },
 	"clean-include-links" => sub { 
 		$CLEAN_INCLUDE_LINKS = 1 },
-	"clean-skip-links" => sub { 
+	"clean-exclude-links" => sub { 
 		$CLEAN_INCLUDE_LINKS = 0 },
 	# accepts null value so users can not copy anything
 	"c|copy:s" => sub { 
