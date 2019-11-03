@@ -979,7 +979,7 @@ sub process_type {
 	print "Checking $type removal...\n";
 	@found_list = ();
 	File::Find::find( \&main::wanted, $DESTINATION_DIRECTORY);
-	@found_list = grep { ! -l $_; $_} @found_list if ! $CLEAN_INCLUDE_LINKS;
+	@found_list = grep { ! -l $_ } @found_list if ! $CLEAN_INCLUDE_LINKS;
 	if (@found_list && confirm_deletion($type)){
 		foreach $item (sort @found_list) {
 			$result = 'UNSET';
