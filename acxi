@@ -1394,11 +1394,14 @@ sub wanted {
 		}
 		else {
 			return if -d; # skip non directories
-			# we want to exclude files that are themselves contained in a sym linked directory
-			return if -l File::Basename::dirname($File::Find::name);
+			
 		}
 		my $working = $File::Find::name;
 		$working =~ s|^\Q$DESTINATION_DIRECTORY\E|$SOURCE_DIRECTORY|;
+		# we want to exclude files that are themselves contained in a sym linked directory
+		if ($list_type eq 'file-clean') {
+			return if -l File::Basename::dirname($working);
+		}
 		$working =~ s/\.$OUTPUT_TYPE$/\.$INPUT_TYPE/i if $list_type eq 'file-clean';
 		#print '1: ', "$File::Find::name\n$working\n";
 		return unless ! -e $working || (@excludes && (grep {$File::Find::name =~ /\Q$_\E/} @excludes) );
