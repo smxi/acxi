@@ -975,8 +975,6 @@ sub process_type {
 	print "Checking $type removal...\n";
 	@found_list = ();
 	File::Find::find( \&main::wanted, $DESTINATION_DIRECTORY);
-	# we want to exclude files that are themselves contained in a sym linked directory
-	@found_list = grep {! -l File::Basename::dirname($_)} @found_list if $type eq 'file';
 	if (@found_list && confirm_deletion($type)){
 		foreach $item (sort @found_list) {
 			$result = 'UNSET';
@@ -1396,6 +1394,8 @@ sub wanted {
 		}
 		else {
 			return if -d; # skip non directories
+			# we want to exclude files that are themselves contained in a sym linked directory
+			return if -l File::Basename::dirname($File::Find::name);
 		}
 		my $working = $File::Find::name;
 		$working =~ s|^\Q$DESTINATION_DIRECTORY\E|$SOURCE_DIRECTORY|;
