@@ -76,7 +76,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.17';
-my $SELF_DATE = '2019-10-24';
+my $SELF_DATE = '2019-11-06';
 
 ## GLOBALS ##
 my %run;
@@ -975,6 +975,8 @@ sub process_type {
 	print "Checking $type removal...\n";
 	@found_list = ();
 	File::Find::find( \&main::wanted, $DESTINATION_DIRECTORY);
+	# we want to exclude files that are themselves contained in a sym linked directory
+	@found_list = grep {! -l File::Basename::dirname($_)} @found_list if $type eq 'file';
 	if (@found_list && confirm_deletion($type)){
 		foreach $item (sort @found_list) {
 			$result = 'UNSET';
