@@ -1955,7 +1955,7 @@ sub print_not_found {
 	}
 }
 
-sub print_help {
+sub print_options {
 	# so it shows the user config data if present
 	UserConfigs::set(); 
 	# but this should override the config data so follows
@@ -1996,8 +1996,8 @@ sub print_help {
 	$output .= "                  if they already exist.\n";
 	$output .= "--fork, -F        [0-x] - Number of forks/threads to use. 0 default, disables.\n";
 	$output .= "                  Requires Perl module: Parallel::ForkManager. Current: $FORK\n";
-	$output .= "--input, -i       Input type: flac, wav, raw, shn. shn requires codec shorten. \n";
-	$output .= "                  raw, shn only output to flac.\n";
+	$output .= "--input, -i       Input type: flac,raw,shn,wav. shn requires codec shorten. \n";
+	$output .= "                  raw,shn only output to flac.\n";
 	$output .= "                  Current value: $INPUT_TYPE\n";
 	$output .= "--output, -o      Output type: mp3, ogg, opus. mp3 requires input type flac.\n";
 	$output .= "                  Current value: $OUTPUT_TYPE\n";
@@ -2406,7 +2406,7 @@ sub get_options{
 	"full" => sub { 
 		$LOG_LEVEL = 3 },
 	"h|help|?" => sub { 
-		print_help();},
+		print_options();},
 	"i|input:s" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires type.",1) if ! $arg;
