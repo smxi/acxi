@@ -75,8 +75,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.17';
-my $SELF_DATE = '2019-11-06';
+my $SELF_VERSION = '3.3.18';
+my $SELF_DATE = '2019-11-25';
 
 ## GLOBALS ##
 my %run;
@@ -1208,7 +1208,11 @@ sub convert_file {
 	if ( $OUTPUT_TYPE eq 'flac' ){
 		$action = 'To flac';
 		if (!$b_test){
-			qx($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" -aq $quality "$dest_file" );
+			# note: sample depth is taken usually from originating file, like shn or wav, but 
+			# mp3 does not seem to do this in my tests, and outputs to 24 bit
+			# note that -aq / -q:a does not seem to do anything, and ffmpeg reverts to default 5 level
+			my $sample_depth = ($INPUT_TYPE eq 'mp3') ? '-sample_fmt s16' : '';
+			qx($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" -compression_level $quality $sample_depth "$dest_file" );
 			$result = $?;
 		}
 	}
@@ -1217,12 +1221,15 @@ sub convert_file {
 		$action = 'To ogg';
 		# ffmpeg -i 'file.flac'  -map_metadata:s:a 0:g 'file.ogg'
 		# my $meta_data = '--map_metadata:s:a 0:g';
-		if (!$run{'ffmpeg'} && !$b_test){
-			qx($COMMAND_OGG $silent_flac -q $quality -o "$dest_file" "$src_file");
-			$result = $?;
-		}
-		if ($run{'ffmpeg'} && !$b_test){
-			qx($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" -map_metadata:s:a 0:s -aq $quality "$dest_file")
+		if (!$b_test){
+			if (!$run{'ffmpeg'}){
+				qx($COMMAND_OGG $silent_flac -q $quality -o "$dest_file" "$src_file");
+				$result = $?;
+			}
+			else {
+				qx($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" -map_metadata:s:a 0:s -aq $quality "$dest_file");
+				$result = $?;
+			}
 		}
 	}
 	elsif ( $OUTPUT_TYPE eq 'opus' ){
@@ -1394,7 +1401,6 @@ sub wanted {
 		}
 		else {
 			return if -d; # skip non directories
-			
 		}
 		my $working = $File::Find::name;
 		$working =~ s|^\Q$DESTINATION_DIRECTORY\E|$SOURCE_DIRECTORY|;
@@ -1598,7 +1604,7 @@ sub check_in_out_types {
 		$error_message .= "in: $INPUT_TYPE out: $OUTPUT_TYPE";
 	}
 	if ((!$run{'checksum'} && !$run{'checksum-verify'} && 
-	 $INPUT_TYPE !~ m/^(flac|raw|shn|wav)$/i) ||
+	 $INPUT_TYPE !~ m/^(flac|mp3|raw|shn|wav)$/i) ||
 	 (($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'}) && 
 	 $INPUT_TYPE !~ m/^(flac)$/i)){
 		$b_error = 1;
@@ -1615,7 +1621,7 @@ sub check_in_out_types {
 		$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
 		$error_message .= "only supports input type: flac";
 	}
-	if ($b_check_out && $INPUT_TYPE =~ m/^(raw|shn)$/ && $OUTPUT_TYPE ne lc('flac')){
+	if ($b_check_out && $INPUT_TYPE =~ m/^(mp3|raw|shn)$/i && $OUTPUT_TYPE ne lc('flac')){
 		$b_error = 1;
 		$error_message .= "\n  The input type $INPUT_TYPE you entered ";
 		$error_message .= "only supports output type: flac";
