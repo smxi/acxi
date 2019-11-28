@@ -76,7 +76,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.18';
-my $SELF_DATE = '2019-11-25';
+my $SELF_DATE = '2019-11-27';
 
 ## GLOBALS ##
 my %run;
@@ -326,7 +326,7 @@ sub aggregate_file {
 	print $line_small;
 	print "Aggregating file type $extension...\n";
 	print $line_small;
-	foreach $file (sort @found_list) {
+	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list) {
 		$b_dest_changed = 1;
 		$file_working = $file;
 		$file_working =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
@@ -372,7 +372,7 @@ sub get_tag_files {
 	@found_list = ();
 	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
 	my $start_dir = Cwd::getcwd();
-	foreach $item (sort @found_list) {
+	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list) {
 		$print_file = $working_dir = $item;
 		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
 		# $working_dir =~ s/[^\/]+$//;
@@ -544,7 +544,7 @@ sub make_file {
 	@found_list = ();
 	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 	print "\n" if $LOG_LEVEL > 2;
-	foreach $file (sort @found_list) {
+	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list) {
 		$b_dest_changed = 1;
 		$file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
 		say $file if $LOG_LEVEL > 2;
@@ -719,7 +719,7 @@ sub process_directories {
 	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 	my $start_dir = Cwd::getcwd();
 	say 'start dir: ', $start_dir if $LOG_LEVEL > 3;
-	foreach $item (sort @found_list) {
+	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list) {
 		my $b_valid;
 		$print_src = $item;
 		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
@@ -976,7 +976,7 @@ sub process_type {
 	@found_list = ();
 	File::Find::find( \&main::wanted, $DESTINATION_DIRECTORY);
 	if (@found_list && confirm_deletion($type)){
-		foreach $item (sort @found_list) {
+		foreach $item (sort { "\L$a" cmp "\L$b" } @found_list) {
 			$result = 'UNSET';
 			print "Deleting $type: $item\n";
 			$result = File::Path::rmtree("$item") if !$b_test;
@@ -1065,7 +1065,7 @@ sub update_directories {
 	elsif ( $LOG_LEVEL > 0 ) {
 		print main::dotify("Updating destination directories");
 	}
-	foreach $dir (sort @found_list) {
+	foreach $dir (sort { "\L$a" cmp "\L$b" } @found_list) {
 		#print "\nd1:$dir\n";
 		$result = 'UNSET';
 		next if $dir eq $SOURCE_DIRECTORY || $dir eq $DESTINATION_DIRECTORY;
@@ -1098,7 +1098,7 @@ sub update_files {
 	my ($dest_file,$file,$result,$action,$src_file) = ('','','','','');
 	my ($dest_info,$dest_mod_time,$src_info, $src_mod_time) = ('',0,'',0);
 	my $pm = new Parallel::ForkManager($FORK) if $b_fork;
-	foreach $file (sort @found_list) {
+	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list) {
 		next if ! $file;
 		$dest_file = $src_file = $file;
 		#print "\nIF: $src_file\n";
