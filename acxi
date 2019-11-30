@@ -76,7 +76,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.18';
-my $SELF_DATE = '2019-11-27';
+my $SELF_DATE = '2019-11-30';
 
 ## GLOBALS ##
 my %run;
@@ -569,9 +569,10 @@ sub populate_file {
 	'ALBUM','# Name to sort under','ALBUMSORT',
 	'ARTIST','# Multi-Artist only','ALBUMARTIST',
 	'COMPOSER','# Classical fields','CONDUCTOR','OPUS',
-	'# Band members, etc.', 'PERFORMER','PERFORMER','PERFORMER','PERFORMER',
+	'# Band members, etc.', 'PERFORMER','PERFORMER','PERFORMER',
+	'PERFORMER','PERFORMER','PERFORMER',
 	'## RECORDING COMMENTS. Note: COMMENT preferred over DESCRIPTION ##',
-	'COMMENT','COMMENT','COMMENT','COMMENT',
+	'COMMENT','COMMENT','COMMENT','COMMENT','COMMENT',
 	 '## DISPLAY IMAGES ##',
 	 '# Please see sample auto.tag file for more information on IMAGE',
 	 '# Path to image file from where auto.tag file is located. Will be',
