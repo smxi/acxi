@@ -76,7 +76,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.18';
-my $SELF_DATE = '2019-11-30';
+my $SELF_DATE = '2019-12-09';
 
 ## GLOBALS ##
 my %run;
@@ -1973,7 +1973,7 @@ sub print_options {
 	$output .= "                  source music directory. Will show you directories/files to\n";
 	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
 	$output .= "                  remove that set of files or directories. Exits at end.\n";
-	$output .= "                  optional value 'sync' is used: --clean sync";
+	$output .= "                  optional value 'sync' is used: --clean sync\n";
 	$output .= "--copy, -c        List of alternate data types to copy to Output type\n";
 	$output .= "                  directories. Comma separated, no spaces. See sample above.\n";
 	$output .= "                  Current copy types: ";
