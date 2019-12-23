@@ -935,7 +935,7 @@ sub delete_checksums {
 	# note: some checksum generators tack on a .txt to the filename.
 	# seen case like: "verbose stuff md5.txt
 	my @checksums = main::globber("*{., ,-,_}{ffp,ffp.txt,md5,md5.txt}");
-	 print Data::Dumper::Dumper @checksums, "\n";
+	# print Data::Dumper::Dumper @checksums, "\n";
 	foreach my $file (@checksums){
 		print " Deleting $file: ";
 		if ($b_test){
