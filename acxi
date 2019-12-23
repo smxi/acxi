@@ -76,7 +76,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.18';
-my $SELF_DATE = '2019-12-09';
+my $SELF_DATE = '2019-12-23';
 
 ## GLOBALS ##
 my %run;
@@ -933,8 +933,9 @@ sub verify_md5 {
 sub delete_checksums {
 	my $error_message = '';
 	# note: some checksum generators tack on a .txt to the filename.
-	my @checksums = main::globber("*.{ffp,ffp.txt,md5,md5.txt}");
-	# print Data::Dumper::Dumper @checksums, "\n";
+	# seen case like: "verbose stuff md5.txt
+	my @checksums = main::globber("*{., ,-,_}{ffp,ffp.txt,md5,md5.txt}");
+	 print Data::Dumper::Dumper @checksums, "\n";
 	foreach my $file (@checksums){
 		print " Deleting $file: ";
 		if ($b_test){
@@ -1382,7 +1383,7 @@ sub reader {
 # NOTE: File::Find will not follow symbolic links
 sub wanted {
 	return if -l; # skip symbolic links
-	return if $File::Find::name =~ m/\Qlost+found\E/;
+	return if $File::Find::dir =~ m/\Qlost+found\E/;
 	if ($list_type eq 'dir' || $list_type eq 'file'){
 		return if $File::Find::name =~ m/^\Q$DESTINATION_DIRECTORY\E/;
 		return if $File::Find::name =~ m/\/\./; # skip any dot files/directories
