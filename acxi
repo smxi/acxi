@@ -68,6 +68,8 @@ use Data::Dumper;
 # use open qw(:std :utf8); # don't use
 # only use for debugging, some distros do not ship with core modules.
 #use Data::Dumper qw(Dumper);
+## if can't find any other way to get rid of lost+found errors, enable this:
+# no warnings 'File::Find';
 
 #### -------------------------------------------------------------------
 #### PROGRAM GLOBALS - DO NOT TOUCH THESE!
@@ -76,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.18';
-my $SELF_DATE = '2019-12-23';
+my $SELF_DATE = '2019-12-24';
 
 ## GLOBALS ##
 my %run;
@@ -1383,7 +1385,11 @@ sub reader {
 # NOTE: File::Find will not follow symbolic links
 sub wanted {
 	return if -l; # skip symbolic links
-	return if $File::Find::dir =~ m/\Qlost+found\E/;
+	# https://www.perlmonks.org/?node_id=358502 more on prune and exclude diretortories
+	if ($File::Find::name =~ m/\Qlost+found\E/){
+		$File::Find::prune = 1;
+		return;
+	}
 	if ($list_type eq 'dir' || $list_type eq 'file'){
 		return if $File::Find::name =~ m/^\Q$DESTINATION_DIRECTORY\E/;
 		return if $File::Find::name =~ m/\/\./; # skip any dot files/directories
