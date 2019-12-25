@@ -87,7 +87,8 @@ my ($b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
 my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
 $silent_opus) = (7,'','','','','');
-my ($extension,$exclude_append,@excludes,@extension_list,@found_list,$list_type);
+my ($embed_image,$extension,$exclude_append,@excludes,@extension_list,
+@found_list,$list_type);
 my ($b_check_dest,$b_check_out) = (1,1);
 my $b_win = ($^O =~ /win/i) ? 1 : 0; # detect if $^O returns windows 
 my $path_separator = ($b_win) ? '\\' : '/';
@@ -297,10 +298,18 @@ sub main {
 package AutoTag;
 sub run_tagger {
 	print $line_large;
-	print "Starting auto-tagging in " . main::sourcer($SOURCE_DIRECTORY) . "...\n";
-	get_tag_files();
-	print $line_small;
-	print "Completed auto-tagging.\n";
+	if ($run{'embed-image'}){
+		print "Starting image embedding in " . main::sourcer($SOURCE_DIRECTORY) . "...\n";
+		image_embedder();
+		print $line_small;
+		print "Completed image embeddingg.\n";
+	}
+	else {
+		print "Starting auto-tagging in " . main::sourcer($SOURCE_DIRECTORY) . "...\n";
+		get_tag_files();
+		print $line_small;
+		print "Completed auto-tagging.\n";
+	}
 	print $line_large;
 }
 sub aggregate {
@@ -453,16 +462,7 @@ sub process_tags {
 				}
 			}
 			if ($run{'remove-images'}){
-				print "Removing images... ";
-				$cmd = qq($COMMAND_METAFLAC --remove --block-type=PICTURE,PADDING --dont-use-padding "$working[1]");
-				if (!$b_test){
-					qx($cmd);
-					if ($? > 0){
-						$error_message = "$COMMAND_METAFLAC returned error: $?";
-						main::error_handler('application-error', $error_message,1);
-					}
-				}
-				print "\n", $cmd, "\n" if $LOG_LEVEL > 3;
+				image_remover("$working[1]");
 			}
 			#say File::stat::stat("$working[1]")->size;
 			# disable for now, the test for type isn't working, metaflac is making types
@@ -491,12 +491,73 @@ sub process_tags {
 		}
 	}
 }
+sub image_embedder{
+	my ($args,$cmd,$error_message,@image_args,$item,$print_file,
+	$result,$working_dir);
+	$list_type = 'file';
+	$extension = $INPUT_TYPE;
+	@found_list = ();
+	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
+	chdir "$SOURCE_DIRECTORY";
+	my $start_dir = Cwd::getcwd();
+	if ($embed_image ne 'remove' && ! -e $embed_image){
+		$error_message = "Embed image $embed_image could not be located!\n";
+		$error_message .= "Source directory: $SOURCE_DIRECTORY\n";
+		$error_message .= "Please make sure your embed image file name or path is correct.\n";
+		main::error_handler('file-missing', $error_message,1);
+	}
+	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list) {
+		$print_file = $working_dir = $item;
+		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
+		print "Processing: $print_file...";
+		if ($run{'remove-images'}){
+			image_remover("$item");
+		}
+		if ($embed_image ne 'remove'){
+			@image_args = image_handler("$item",("$embed_image"));
+			$args = join ' ', @image_args;
+			$cmd = qq($COMMAND_METAFLAC $args "$item");
+			print "\n", $cmd, "\n" if $LOG_LEVEL > 3;
+			if (!$b_test){
+				qx($cmd);
+				if ($? > 0){
+					$error_message = "$COMMAND_METAFLAC returned error: $?";
+					main::error_handler('application-error', $error_message,1);
+				}
+				say 'Image embedded';
+			}
+			else {
+				say 'Test mode only';
+			}
+		}
+		else {
+			say 'Image and padding data removed';
+		}
+		$b_dest_changed = 1;
+	}
+	if (!@found_list) {
+		print "No $INPUT_TYPE files found.\n";
+	}
+}
+sub image_remover {
+	my ($file) = @_;
+	my ($cmd,$error_message) = ('','');
+	print "Removing images... ";
+	$cmd = qq($COMMAND_METAFLAC --remove --block-type=PICTURE,PADDING --dont-use-padding "$file");
+	if (!$b_test){
+		qx($cmd);
+		if ($? > 0){
+			$error_message = "$COMMAND_METAFLAC returned error: $?";
+			main::error_handler('application-error', $error_message,1);
+		}
+	}
+	print "\n", $cmd, "\n" if $LOG_LEVEL > 3;
+}
 # note: metaflac is ignring type integer and assigning 3, not sure why
 sub image_handler {
 	my ($file,@images) = @_;
 	my ($size,@args,@result,$working);
 	my $cmd = qq($COMMAND_METAFLAC --list --block-type=PICTURE "$file");
-	
 	@result = qx($cmd);
 	@result = grep {/type:.*\(PICTURE\)/} @result if @result;
 	# filename: type: 6 (PICTURE) 3||||images/cover.jpg
@@ -2059,6 +2120,9 @@ sub print_options {
 	$output .= "--checksum-verify, -V\n";
 	$output .= "                  Verifies FLAC files and confirms MD5 file data matches actual\n";
 	$output .= "                  files found. Can be run alone or with --checksum options.\n";
+	$output .= "--image, -I [jpg,png image file name|remove]\n";
+	$output .= "                  Embed image file into single recording directory. 'remove' value\n";
+	$output .= "                  only removes images.\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
@@ -2415,6 +2479,24 @@ sub get_options{
 		$LOG_LEVEL = 3 },
 	"h|help|?" => sub { 
 		print_options();},
+	"I|image:s" => sub { 
+		my ($opt,$arg) = @_;
+		if (!$arg || $arg !~ /(\.png|\.jpe?g|^remove)$/i){
+			$msg = "$opt requires a cover image file name. See -h.";
+			error_handler('missing-arg',$msg,1);
+		}
+		$embed_image = $arg;
+		$run{'remove-images'} = 1 if $embed_image eq 'remove';
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		$run{'embed-image'} = 1;
+		$run{'autotag'} = 1;
+		$run{'autotag-create'} = 0;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		# $run{'checksum'} = 0;
+		$run{'checksum-verify'} = 0;
+		$OUTPUT_TYPE = 'UNSET';},
 	"i|input:s" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires type.",1) if ! $arg;
