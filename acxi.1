@@ -1,4 +1,4 @@
-.TH ACXI 1 "2019\-12\-24" acxi "acxi manual"
+.TH ACXI 1 "2019\-12\-25" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -360,7 +360,7 @@ conversion tools for flac, mp3, ogg, or opus output. Same as \fB\-\-log 3\fR
 This help menu.
 
 .TP
-.B \-\-image [cover image file name]\fR
+.B \-\-image [cover image file name|remove]\fR
 Flac only. Use only on a single directory. Takes the supplied cover image
 file and embeds it into the existing flac files. Use with \fB\-\-remove-images\fR 
 if you want to remove existing embedded images. If this option is not used, it 
@@ -375,6 +375,12 @@ inconsistent. If you use the value '\fBremove\fR' all embedded images and
 their padding will be removed.
 
 Only run this in a single recording directory, do not use globally!!
+
+Sample: \fBacxi \-s ./ \-\-image='cover.jpg'\fR
+
+Sample: \fBacxi \-s ./ \-\-image remove\fR
+
+Sample: \fBacxi \-s ./ \-\-I cover.jpg \-\-remove\-images\fR
 
 .TP
 .B \-\-input [flac|raw|shn|wav]\fR, \fB\-i [flac|raw|shn|wav]\fR
