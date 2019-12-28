@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.18';
-my $SELF_DATE = '2019-12-24';
+my $SELF_DATE = '2019-12-28';
 
 ## GLOBALS ##
 my %run;
@@ -1447,7 +1447,13 @@ sub reader {
 sub wanted {
 	return if -l; # skip symbolic links
 	# https://www.perlmonks.org/?node_id=358502 more on prune and exclude diretortories
-	if ($File::Find::name =~ m/\Qlost+found\E/){
+	# make test more general, only prune from results when actually not readable
+	# since on rare occasions, the non readable file might be a file, not a directory, 
+	# no test for -d
+	#if ($File::Find::name =~ m/\Qlost+found\E/){
+	if ( ! -r $File::Find::name ){
+		print $line_small;
+		print "Skipping non-readable: $File::Find::name\n";
 		$File::Find::prune = 1;
 		return;
 	}
