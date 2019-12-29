@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.18';
-my $SELF_DATE = '2019-12-28';
+my $SELF_DATE = '2019-12-29';
 
 ## GLOBALS ##
 my %run;
@@ -2139,7 +2139,8 @@ sub print_options {
 	$output .= "                  Expert use only.\n";
 	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";        
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
-	$output .= "--remove-images   Remove all embedded images and image padding from file\n";
+	$output .= "--remove-images, -R\n";
+	$output .= "                  Remove all embedded images and image padding from file\n";
 	$output .= "                  before autotagging.\n";
 	if ($ALLOW_UPDATES){
 		$output .= "--update, -U      Update $SELF_NAME and man page. Set paths if not Linux.\n";
@@ -2543,7 +2544,7 @@ sub get_options{
 	"quiet|silent" => sub { 
 		$b_quiet = 1; 
 		$LOG_LEVEL = 0 },
-	"remove-images" => sub { 
+	"R|remove-images" => sub { 
 		$run{'remove-images'} = 1 },
 	"test" => sub { 
 		$LOG_LEVEL = 3;
