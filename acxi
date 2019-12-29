@@ -648,6 +648,8 @@ sub populate_file {
 	# note: VENUE and LABEL better handled by xiph spec: LOCATION and ORGANIZATION
 	# Include YEAR to make conversion to mp3 tagging cleaner
 	'GENRE','RATING','DATE','YEAR','LOCATION','PRODUCER','PUBLISHER',
+	# cddb ID, like: d711670e
+	'CDDB',
 	'# e.g. record label, taper group,, etc. ','ORGANIZATION',
 	'## TECHNICAL INFORMATION ##',
 	'ENCODING',
