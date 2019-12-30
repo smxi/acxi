@@ -1,4 +1,4 @@
-.TH ACXI 1 "2019\-12\-29" acxi "acxi manual"
+.TH ACXI 1 "2019\-12\-30" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -16,6 +16,7 @@ Tagging: \fBacxi\fR [\fB\-\-autotag\fR] [\fB\-\-autotag\-create\fR]
 [\fB\-\-autotag\-create\-multi {filename start ID}\fR]
 [\fB\-\-aggregate {file name|extension}\fR] [\fB\-\-image {cover image filename}\fR]
 [\fB\-\-no\-replaygain\fR] [\fB\-\-remove\-images\fR]
+[\fB\-\-tag {"TAG1%:tag value^:TAG2%:tag value"}\fR]
 .IP * 2
 Checksums: \fBacxi\fR [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] 
 [\fB\-\-checksum\-verify\fR] [\fB\-\-no\-ffp\fR] 
@@ -492,6 +493,20 @@ Failure to use \fB\-\-dont\-use\-padding\fR leaves the file size unchanged.
 .TP
 .B \-\-source [path]\fR, \fB\-s [path]\fR
 Path to the top-most directory containing your source files (eg, flac).
+
+.TP
+.B \-\-tag\fR, \fB\-T {"TAG1%:tag value^:TAG2%:tag value"}\fR
+Modify one or more tags in a single recording or group of recordings.
+FLAC only, use standard FLAC Comment values for best results.
+Separate \fBTAG\fR and \fBtag value\fR with \fB%:\fR, and separate 
+tag/value sets with \fB^:\fR. This lets you retag entire blocks of
+artist/recordings at once if you only want to modify (or create)
+one or two FLAC COMMENT fields.
+
+Removes all existing COMMENT fields of that type before updating since 
+FLAC just adds them to existing by default.
+
+Sample: \fBacxi \-s ./ \-\-tag "GENRE%:Heavy Metal^:ARTIST%:Black Sabbath"\fR
 
 .TP
 .B \-\-test\fR
