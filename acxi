@@ -504,7 +504,8 @@ sub process_tags {
 sub tag_updater {
 	my ($args,$cmd,$error_message,$file,$print_file,
 	$result,%tag_data,@working,$working_dir);
-	my ($print_tags,$remove,$tag) = ('','','');
+	my ($print_padding,$print_tags,$remove,$tag) = ('','','','');
+	$print_padding = ' and padding' if $padding;
 	foreach (@tags){
 		@working = split /%:/, $_;
 		$tag .= qq( --set-tag=$working[0]="$working[1]");
@@ -520,7 +521,7 @@ sub tag_updater {
 	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list) {
 		$print_file = $working_dir = $file;
 		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
-		print "Processing: $print_file...\n Tags and padding ";
+		print "Processing: $print_file...\n Tags$print_padding ";
 		$file = main::escape_file("$file");
 		# 
 		$cmd = qq($COMMAND_METAFLAC $remove "$file");
