@@ -89,6 +89,7 @@ my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
 $silent_opus) = (7,'','','','','');
 my ($embed_image,$extension,$exclude_append,@excludes,@extension_list,
 @found_list,$list_type,@tags);
+my ($padding) = ('');
 my ($b_check_dest,$b_check_out) = (1,1);
 my $b_win = ($^O =~ /win/i) ? 1 : 0; # detect if $^O returns windows 
 my $path_separator = ($b_win) ? '\\' : '/';
@@ -461,7 +462,7 @@ sub process_tags {
 			# note: must be set here, not in qx to avoid quote errors
 			# single quotes, in case contains $ symbol
 			#say File::stat::stat("$working[1]")->size;
-			$cmd = qq($COMMAND_METAFLAC --remove-all-tags --dont-use-padding "$working[1]");
+			$cmd = qq($COMMAND_METAFLAC --remove-all-tags $padding "$working[1]");
 			print "\n", $cmd, "\n" if $LOG_LEVEL > 3;
 			if (!$b_test){
 				qx($cmd);
@@ -521,11 +522,12 @@ sub tag_updater {
 		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
 		print "Processing: $print_file...\n Tags and padding ";
 		$file = main::escape_file("$file");
-		$cmd = qq($COMMAND_METAFLAC $remove --dont-use-padding "$file");
+		# 
+		$cmd = qq($COMMAND_METAFLAC $remove "$file");
 		if (!$b_test){
 			qx($cmd);
 			if ($? > 0){
-				$error_message = "$COMMAND_METAFLAC returned error: $?";
+				$error_message = "$COMMAND_METAFLAC $padding returned error: $?";
 				main::error_handler('application-error', $error_message,1);
 			}
 			print 'removed... ';
@@ -2219,6 +2221,9 @@ sub print_options {
 	$output .= "--remove-images, -R\n";
 	$output .= "                  Remove all embedded images and image padding from file\n";
 	$output .= "                  before autotagging.\n";
+	$output .= "--remove-padding, -P\n";
+	$output .= "                  For --autotag and --tag also removes block padding. Slows.\n";
+	$output .= "                  tagging down significantly.\n";
 	$output .= "--tag, -T         [\"TAG1%:tag value^:TAG2%:tag value]\n";
 	$output .= "                  Updates one or more recordings with the supplied FLAC\n";
 	$output .= "                  COMMENT tag/tag value pairs. Removes existing COMMENT\n";
@@ -2627,6 +2632,8 @@ sub get_options{
 		$LOG_LEVEL = 0 },
 	"R|remove-images" => sub { 
 		$run{'remove-images'} = 1 },
+	"P|remove-padding" => sub { 
+		$padding = ' --dont-use-padding' },
 	"T|tag:s" => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /%:/){

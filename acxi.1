@@ -15,7 +15,7 @@ Tagging: \fBacxi\fR [\fB\-\-autotag\fR] [\fB\-\-autotag\-create\fR]
 [\fB\-\-autotag\-create\-single\fR] 
 [\fB\-\-autotag\-create\-multi {filename start ID}\fR]
 [\fB\-\-aggregate {file name|extension}\fR] [\fB\-\-image {cover image filename}\fR]
-[\fB\-\-no\-replaygain\fR] [\fB\-\-remove\-images\fR]
+[\fB\-\-no\-replaygain\fR] [\fB\-\-remove\-images\fR] [\fB\-\-remove\-padding\fR]
 [\fB\-\-tag {"TAG1%:tag value^:TAG2%:tag value"}\fR]
 .IP * 2
 Checksums: \fBacxi\fR [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] 
@@ -480,15 +480,22 @@ Same as \fB\-\-log 0\fR
 
 .TP
 .B \-\-remove\-images\fR, \fB\-R\fR
-Use with \fB\-\-autotag\fR. Will remove all embedded image data, and the
-associated padding, prior to tagging (and adding new image if applicable)
-audio file. Note that simply removing image data will leave the padding
-in place. 
+Use with \fB\-\-autotag\fR or \-\-image\fR. Will remove all embedded image 
+data, and the associated padding, prior to tagging (and adding new image 
+if applicable) audio file. Note that simply removing image data will leave 
+the padding in place, which makes the file get bigger each time a new image
+is added. 
 
 This is the full command required to fully restore a flac file size. 
 Failure to use \fB\-\-dont\-use\-padding\fR leaves the file size unchanged.
 
 \fBmetaflac \-\-remove \-\-block\-type=PICTURE,PADDING \-\-dont\-use\-padding file.flac\fR
+
+.TP
+.B \-\-remove\-padding\fR, \fB\-P\fR
+Use with \fB\-\-autotag\fR and \fB\-\-tag\fR if you want to remove padding.
+My tests showed inconclusive results with this, and it slows down the tagging
+a lot, especially over network connections.
 
 .TP
 .B \-\-source [path]\fR, \fB\-s [path]\fR
