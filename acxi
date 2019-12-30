@@ -2211,7 +2211,7 @@ sub print_options {
 	$output .= "                  Verifies FLAC files and confirms MD5 file data matches actual\n";
 	$output .= "                  files found. Can be run alone or with --checksum options.\n";
 	$output .= "--image, -I [jpg,png image file name|remove]\n";
-	$output .= "                  Embed image file into single recording directory. 'remove'\n"
+	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
