@@ -1529,7 +1529,7 @@ sub wanted {
 	# since on rare occasions, the non readable file might be a file, not a directory, 
 	# no test for -d
 	#if ($File::Find::name =~ m/\Qlost+found\E/){
-	if ( ! -r $File::Find::name ){
+	if ( -d $File::Find::name && ! -r $File::Find::name ){
 		if (! grep { $_ eq $File::Find::name } @pruned){
 			print $line_small;
 			print "Skipping non-readable: $File::Find::name\n";
