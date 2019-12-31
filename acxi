@@ -2228,7 +2228,8 @@ sub print_options {
 	$output .= "--tag, -T         [\"TAG1%:tag value^^TAG2%:tag value]\n";
 	$output .= "                  Updates one or more recordings with the supplied FLAC\n";
 	$output .= "                  COMMENT tag/tag value pairs. Removes existing COMMENT\n";
-	$output .= "                  sets of the given type\n";
+	$output .= "                  sets of the given type. Use ^^ to separate tag key/value\n";
+	$output .= "                  pairs, and %: to separate the tag name and its value.\n";
 	if ($ALLOW_UPDATES){
 		$output .= "--update, -U      Update $SELF_NAME and man page. Set paths if not Linux.\n";
 		$output .= "                  Current values: $SELF_NAME: $SELF_DIRECTORY\n";
