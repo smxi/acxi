@@ -2225,7 +2225,7 @@ sub print_options {
 	$output .= "--remove-padding, -P\n";
 	$output .= "                  For --autotag and --tag also removes block padding. Slows.\n";
 	$output .= "                  tagging down significantly.\n";
-	$output .= "--tag, -T         [\"TAG1%:tag value^:TAG2%:tag value]\n";
+	$output .= "--tag, -T         [\"TAG1%:tag value^^TAG2%:tag value]\n";
 	$output .= "                  Updates one or more recordings with the supplied FLAC\n";
 	$output .= "                  COMMENT tag/tag value pairs. Removes existing COMMENT\n";
 	$output .= "                  sets of the given type\n";
@@ -2641,7 +2641,7 @@ sub get_options{
 			$msg = "$opt requires TAG%:value sets. See -h.";
 			error_handler('missing-arg',$msg,1);
 		}
-		@tags = split /\^:/, $arg;
+		@tags = split /\Q^^\E/, $arg;
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'update-tag'} = 1;
