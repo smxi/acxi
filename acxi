@@ -715,7 +715,7 @@ sub populate_file {
 	'# e.g. record label, taper group,, etc. ','ORGANIZATION',
 	'## TECHNICAL INFORMATION ##',
 	'ENCODING',
-	'# Useful for tapers etc','SOURCE','SOURCE','SOURCE',
+	'# Useful for tapers etc','SOURCE','SOURCE','SOURCE','SOURCE',
 	'# Media recording taken from, eg, cassette, tape, dat, vinyl','SOURCEMEDIA',
 	);
 	my @discs = ('DISCNUMBER','DISCSUBTITLE','TRACKTOTAL');
