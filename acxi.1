@@ -1,4 +1,4 @@
-.TH ACXI 1 "2019\-12\-30" acxi "acxi manual"
+.TH ACXI 1 "2019\-12\-31" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -68,7 +68,8 @@ MP3 encoding does not support wav or raw input formats.
 .IP * 2
 \fBSHN \-> \fBFLAC\fR conversion requires the codec \fBshorten\fR and \fBffmpeg\fR.
 .IP * 2
-\fB\-\-autotag\fR requires \fBmetaflac\fR for \fBVORBIS\fR tagging.
+\fB\-\-autotag\fR, \fB\-\-tag\fR, and \fB\-\-image\fR require
+\fBmetaflac\fR for \fBVORBIS\fR tagging.
 .IP * 2
 \fB\-\-checksum\fR and \fB\-\-checksum\-delete\fR require \fBffmpeg\fR 
 and \fBmd5sum\fR (or any comparable program that generates md5sums). 
@@ -164,6 +165,9 @@ rule, it just makes the entire collection pointlessly bloated.
 
 Can be used with \fB\-K\fR or \fB\-D\fR for all in one tag checksum
 actions.
+s
+See \fB\-\-tag\fR or \fB\-\-image\fR for updating/modifying existing 
+FLAC comment values, or adding images to your FLAC files.
 
 .TP
 .B \-\-autotag\-create\fR, \fB\-C\fR
