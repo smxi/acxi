@@ -1532,6 +1532,7 @@ sub wanted {
 	# since on rare occasions, the non readable file might be a file, not a directory, 
 	# no test for -d
 	#if ($File::Find::name =~ m/\Qlost+found\E/){
+	#print $File::Find::name, "\n";
 	if ( -d $File::Find::name && ! -r $File::Find::name ){
 		if (! grep { $_ eq $File::Find::name } @pruned){
 			print $line_small;
@@ -2126,7 +2127,7 @@ sub print_options {
 	$output .= "$SELF_NAME --copy doc,docx,bmp\n";
 	$output .= $line_small;
 	$output .= "Syncing options:\n";
-	$output .= "--append, -a      Add extenssion type(s) to existing extension copy list.\n";
+	$output .= "--append, -a      Add extension type(s) to existing extension copy list.\n";
 	$output .= "                  1 or more, comma separated, no spaces.\n";
 	$output .= "--clean           Clean directories and files from destination not found in\n";
 	$output .= "                  source music directory. Will show you directories/files to\n";
