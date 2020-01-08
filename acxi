@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.19';
-my $SELF_DATE = '2019-12-31';
+my $SELF_DATE = '2020-01-08';
 
 ## GLOBALS ##
 my %run;
@@ -1525,7 +1525,7 @@ sub unescape_file {
 }
 # NOTE: File::Find will not follow symbolic links
 sub wanted {
-	state @pruned = ();
+	state @pruned;
 	return if -l; # skip symbolic links
 	# https://www.perlmonks.org/?node_id=358502 more on prune and exclude diretortories
 	# make test more general, only prune from results when actually not readable
