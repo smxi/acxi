@@ -1,4 +1,4 @@
-.TH ACXI 1 "2019\-12\-31" acxi "acxi manual"
+.TH ACXI 1 "2020\-01\-08" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -31,23 +31,24 @@ Debugging: \fBacxi\fR [\fB\-\-debug\fR]  [\fB\-\-nlink\fR]
 
 
 .SH DESCRIPTION
-\fBacxi\fR is a command line audio conversion program. It converts 
-and syncs all desired source lossless files to the desired output 
-format, and to adifferent directory location. 
+\fBacxi\fR is a command line audio conversion program and audio processing
+program. It converts and syncs all desired source lossless files to the 
+desired output format, and to adifferent directory location. 
 
 Supports lossless input formats flac/raw/shn/wav. Output formats are flac, 
 ogg, opus, or mp3. raw/shn can only output to flac. mp3 can only have 
 flac as input format.
 
-By default, it will also copy over most common filetypes like gif, jpg, png, 
-txt, pdf, doc, docx, and a few others. You can change the defaults using 
-a configuration file, or the \fB\-c\fR or \fB\-a\fR options..
+By default, it will also copy over most common filetypes like .gif, .jpg, .png, 
+and .txt. You can change the defaults using a configuration file, or the 
+\fB\-c\fR or \fB\-a\fR options..
 
 The destination directory cannot be the same as the source directory, but
 it can be inside of the source directory.
 
-It can also generate md5 and ffp checksum files if required, as well
-as tag using \fBauto.tag\fR method.
+It can also generate or verify md5 and ffp checksum files if required, 
+as well as tag/embed images using \fBauto.tag\fR or \fB\-\-tag\fR / 
+\fB\-\-image [filename]\fR methods.
 
 \fBacxi\fR runs pretests on each start to make sure input and output
 directories are valid, conversion programs for input and output formatting
