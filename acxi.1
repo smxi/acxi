@@ -1,4 +1,4 @@
-.TH ACXI 1 "2020\-01\-08" acxi "acxi manual"
+.TH ACXI 1 "2020\-01\-22" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -35,8 +35,8 @@ Debugging: \fBacxi\fR [\fB\-\-debug\fR]  [\fB\-\-nlink\fR]
 program. It converts and syncs all desired source lossless files to the 
 desired output format, and to adifferent directory location. 
 
-Supports lossless input formats flac/raw/shn/wav. Output formats are flac, 
-ogg, opus, or mp3. raw/shn can only output to flac. mp3 can only have 
+Supports lossless input formats aiff/flac/raw/shn/wav. Output formats are flac, 
+ogg, opus, or mp3. aif/raw/shn can only output to flac. mp3 can only have 
 flac as input format.
 
 By default, it will also copy over most common filetypes like .gif, .jpg, .png, 
@@ -389,10 +389,10 @@ Sample: \fBacxi \-s ./ \-\-image remove\fR
 Sample: \fBacxi \-s ./ \-I cover.jpg \-\-remove\-images\fR
 
 .TP
-.B \-\-input [flac|raw|shn|wav]\fR, \fB\-i [flac|raw|shn|wav]\fR
+.B \-\-input [aif|flac|raw|shn|wav]\fR, \fB\-i [flac|raw|shn|wav]\fR
 Input type. Supported types: flac, wav, raw, shn. 
 
-\fBraw/shn\fR \- only support flac output. 
+\fBaif/raw/shn\fR \- only support flac output. 
 
 \fBshn\fR \- requires the shorten codec, which you usually have to build yourself 
 unless you can find a package for it. Use \fB\-\-log 3\fR to test the 
@@ -401,6 +401,8 @@ first time to make sure you have shorten codec installed.
 Some other input types may be active for testing purposes occasionally,
 but acxi does not promote, advocate, or officially support those types
 (like mp3 to flac).
+
+Tags transfer from AIF files that are tagged to FLAC files in my tests.
 
 .TP
 .B \-\-log [0-4]\fR

@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.20';
-my $SELF_DATE = '2020-01-15';
+my $SELF_DATE = '2020-01-22';
 
 ## GLOBALS ##
 my %run;
@@ -1773,7 +1773,7 @@ sub check_in_out_types {
 		$error_message .= "in: $INPUT_TYPE out: $OUTPUT_TYPE";
 	}
 	if ((!$run{'checksum'} && !$run{'checksum-verify'} && 
-	 $INPUT_TYPE !~ m/^(flac|mp3|raw|shn|wav)$/i) ||
+	 $INPUT_TYPE !~ m/^(aiff?|flac|mp3|raw|shn|wav)$/i) ||
 	 (($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'}) && 
 	 $INPUT_TYPE !~ m/^(flac)$/i)){
 		$b_error = 1;
@@ -1790,7 +1790,7 @@ sub check_in_out_types {
 		$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
 		$error_message .= "only supports input type: flac";
 	}
-	if ($b_check_out && $INPUT_TYPE =~ m/^(mp3|raw|shn)$/i && $OUTPUT_TYPE ne lc('flac')){
+	if ($b_check_out && $INPUT_TYPE =~ m/^(aiff?|mp3|raw|shn)$/i && $OUTPUT_TYPE ne lc('flac')){
 		$b_error = 1;
 		$error_message .= "\n  The input type $INPUT_TYPE you entered ";
 		$error_message .= "only supports output type: flac";
@@ -2165,7 +2165,7 @@ sub print_options {
 	$output .= "                  if they already exist.\n";
 	$output .= "--fork, -F        [0-x] - Number of forks/threads to use. 0 default, disables.\n";
 	$output .= "                  Requires Perl module: Parallel::ForkManager. Current: $FORK\n";
-	$output .= "--input, -i       Input type: flac,raw,shn,wav. shn requires codec shorten. \n";
+	$output .= "--input, -i       Input type: aif,flac,raw,shn,wav. shn requires codec shorten. \n";
 	$output .= "                  raw,shn only output to flac.\n";
 	$output .= "                  Current value: $INPUT_TYPE\n";
 	$output .= "--output, -o      Output type: mp3, ogg, opus. mp3 requires input type flac.\n";
