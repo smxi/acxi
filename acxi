@@ -78,12 +78,12 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.21';
-my $SELF_DATE = '2020-01-23';
+my $SELF_DATE = '2020-02-01';
 
 ## GLOBALS ##
 my %run;
 $run{'sync'} = 1;
-my ($b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test);
+my ($b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test,$b_zero);
 my ($print_line_heavy,$print_line_large,$print_line_small);
 my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
 $silent_opus) = (7,'','','','','');
@@ -772,7 +772,8 @@ sub populate_file {
 	@track = map {$_ .= '%:' if /^[A-Z]/; $_;} @track;
 	my @disc_working;
 	foreach (@$files){
-		$counter++;
+		# standard track numbering starting at 1
+		$counter++ if !$b_zero;
 		my @track_working = @track;
 		if ($run{'autotag-multi'} && scalar @multi > 1){
 			if (/^($autotag_multi)/i){
@@ -782,7 +783,7 @@ sub populate_file {
 				$holder = $starter;
 				# say "$starter";
 				if (!$b_first){
-					$counter = 1;
+					$counter = (!$b_zero) ? 1 : 0;
 					$j++;
 					@disc_working = @discs;
 					$disc_working[0] .= $j+1;
@@ -802,6 +803,8 @@ sub populate_file {
 			splice (@track_working, 5, 0, @replaygain) if @replaygain;
 		}
 		@tags = (@tags,@track_working);
+		# this allows for 0 track numbers
+		$counter++ if $b_zero;
 	}
 	if ($b_test){
 		print join "\n", @tags, "\n";
@@ -2239,6 +2242,7 @@ sub print_options {
 	$output .= "                  COMMENT tag/tag value pairs. Removes existing COMMENT\n";
 	$output .= "                  sets of the given type. Use ^^ to separate tag key/value\n";
 	$output .= "                  pairs, and %: to separate the tag name and its value.\n";
+	$output .= "--zero, -Z        For auto.tag, starts numbering of tracks at 0, not 1.\n";
 	if ($ALLOW_UPDATES){
 		$output .= "--update, -U      Update $SELF_NAME and man page. Set paths if not Linux.\n";
 		$output .= "                  Current values: $SELF_NAME: $SELF_DIRECTORY\n";
@@ -2680,6 +2684,8 @@ sub get_options{
 		$LOG_LEVEL = 2 },
 	"v|version" => sub { 
 		print_version(); },
+	"Z|zero" => sub { 
+		$b_zero = 1 },
 	'<>' => sub {
 		my ($opt) = @_;
 		error_handler('unsupported-option', "Unsupported option: $opt",1); }
