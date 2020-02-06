@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.21';
-my $SELF_DATE = '2020-02-01';
+my $SELF_DATE = '2020-02-06';
 
 ## GLOBALS ##
 my %run;
@@ -887,7 +887,7 @@ sub generate_checksums {
 	print " Generating checksums: ";
 	print "$MD5_FILE.md5: ";
 	# system("$COMMAND_MD5 *.* > $MD5_FILE.md5");
-	@output = qx($COMMAND_MD5 *.*);
+	@output = qx($COMMAND_MD5 -b *.*);
 	if ($? == -1 || $? > 0){
 		$error_message = "$COMMAND_MD5 returned error: $?";
 		main::error_handler('application-error', $error_message,1);
