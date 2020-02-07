@@ -1,4 +1,121 @@
 ===================================================================
+Date: 2020-01-22-31
+Version: 3.3.21
+-------------------------------------------------------------------
+
+Several bug fixes in the 20/21 releases:
+
+1. Small bug introduced that made acxi not start on older Perls 
+due to accidental use of a Perl 5.028 and newer feature.
+
+2. acxi was not properly escaping the tag data for MP3 files, which 
+led to failures in some cases of strange character use. 
+
+3. Added support for AIF lossless type.
+
+===================================================================
+Date: 2019-12-31
+Version: 3.3.19
+-------------------------------------------------------------------
+This turned into a big release, lots of new features, mostly around 
+making tagging and image embedding faster and easier. Also some bug 
+fixes that matter in corner cases.
+
+1. Expanded auto.tag to have 8 PERFORMER, 5 COMMENT, 4 SOURCE, items, 
+and added CDDB and ISRC in case you want to add or preserve those 
+CD database ID values. This should be enough lines to handle most 
+common situations.
+
+2. Fixed -D checksum delete, better handling of weird ffp.txt and 
+md5.txt type file names, now it will catch and delete more than before.
+    
+3. Finally figured out how to fix an annoying error that would pop 
+up when File::Find was trying to read files in a root only readable 
+directory, like lost+found, now correctly using File::Find::prune 
+for all non readable directories. Could not use this for non-readable 
+files because I found cases of readable files tripping the non 
+readable input warning message. Only shows the message for each 
+directory once per update to avoid redundant messages.
+    
+4. New feature! --image/-I takes file name, or full path, to image 
+file to embed into flac files. This is a flac only feature. Note 
+that I urge moving to opus if you like embedded album art, opus 
+supports natively getting the meta data, including image blocks, 
+from flac files, but ogg only supports the comment block, doing 
+images with ogg is a pain and is probably never going to happen 
+in acxi, unless someone provides a neat and clean patch.
+   
+5. Another new feature, --tag/-T, which takes an argument of 
+structure: "TAG1%:value^^TAG2%:value", where TAGx is the name of 
+the FLAC comment field you want to replace or update or add. This 
+lets you update for example all the files in a folder to have the 
+same GENRE, or update artist/album name, or dates, whatever.
+
+6. Found an oversight, file name escaping was not being done on 
+tagging, only syncing, so I made new escape_file and unescape_file 
+subroutines, and now everything escapes and unescapes as expected. 
+Tested on worst case file names i use for testing purposes.
+    
+7. Added -R as shortcut for --remove-images now that --images is 
+running, that can be useful. Note that --autotag and --image will 
+never add images if the flac file already has image blocks in it, 
+so -R is required to force the removal there.
+    
+8. Added --remove-padding/-P option, to force attempt at padding 
+removal on tagging updates. This really slows tagging down, and as 
+far as I could tell, repeated tagging does not appear to change 
+padding, so I made this a non default action for -A and -T actions.
+
+===================================================================
+Date: 2019-12-19
+Version: 3.3.18
+-------------------------------------------------------------------
+
+Maintenance release. None massive, but they add up to a nice package 
+of improvements and enhancements
+
+1. fixed bug with ffmpeg based shn/wav/ to flac conversion. The 
+flac quality was not being used, and it would always default to 
+the ffmpeg default (5, I think). Technically, this was the 
+cause: -aq / -q:a do not actually do anything, ffmpeg reverts to 
+default quality 5 always. This is fixed by using -compression_level 
+instead, which works as expected
+
+2. added a really silly but on rare occasion useful feature, now 
+acxi will let you convert mp3 to flac. Why? don't do it, there's 
+only a tiny handful of cases where this makes any sense at all. 
+But now you can.
+
+3.  Added 2 more PERFORMER%: items and 1 more COMMENT%: to 
+default auto.tag, that avoids having to manually add them if 
+you needed more, 6 performers seems to cover most cases.
+
+4. Added case insensitive sorts, no idea how I missed that one, 
+now as acxi chugs through your collection, the sorts will be a 
+more intuitive case insensitive as the syncs etc run.
+
+5. Fixed missing linebreak in help menu, that made the output after 
+last line for --clean fail to wrap, now it's all hunky-dory.
+
+
+===================================================================
+Date: 2019-10-19
+Version: 3.3.17
+-------------------------------------------------------------------
+This is just a small point release.
+
+1. The main new feature is adding -M @ for alphabetical pattern 
+matching, for cases where you want to use letters for disk numbers, 
+like A-01.flac for example. There are cases where this makes sense, 
+not often, but sometimes. This extends -M, which previously only 
+supported the % ([0-9]) item, to support pretty much any real 
+world multidisc indicator scenario in a file name.
+
+2. Also a few more small bug fixes, I'd neglected to reset the list 
+of found files each time file find was used, which led to glitches 
+when using the new -AD / -AK combination option.
+
+===================================================================
 Date: 2019-10-08
 Version: 3.3.16
 -------------------------------------------------------------------
