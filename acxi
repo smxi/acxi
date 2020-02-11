@@ -78,18 +78,19 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.21';
-my $SELF_DATE = '2020-02-06';
+my $SELF_DATE = '2020-02-11';
 
 ## GLOBALS ##
 my %run;
 $run{'sync'} = 1;
-my ($b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test,$b_zero);
+my ($b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
 my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
 $silent_opus) = (7,'','','','','');
 my ($embed_image,$extension,$exclude_append,@excludes,@extension_list,
 @found_list,$list_type,@tags);
-my ($padding) = ('');
+# default: recurse infinite for File::Find; start tag list track numbers at 1
+my ($padding,$recurse,$start) = ('',-1,1);
 my ($b_check_dest,$b_check_out) = (1,1);
 my $b_win = ($^O =~ /win/i) ? 1 : 0; # detect if $^O returns windows 
 my $path_separator = ($b_win) ? '\\' : '/';
@@ -688,8 +689,8 @@ sub make_file {
 sub populate_file {
 	my ($files) = @_;
 	my (@multi,@replaygain,@tags);
-	my ($b_first,$j,$holder,$starter) = (1,0,'','');
-	my $counter=0;
+	my ($b_first,$j,$holder,$starter,$total) = (1,0,'','',0);
+	my $counter=$start;
 	my @collection = (
 	'## RECORDING NAME/CREATORS ##',
 	'ALBUM','# Name to sort under','ALBUMSORT',
@@ -733,7 +734,8 @@ sub populate_file {
 	@disc = map {$_ .= '%:' if /^[A-Z]/; $_;} @disc;
 	@discs = map {$_ .= '%:' if /^[A-Z]/; $_;} @discs;
 	if ($run{'autotag-single'} && @$files){
-		@disc = map {$_ .= scalar (@$files) if $_ eq 'TRACKTOTAL%:'; $_;} @disc;
+		$total = create_track_total(scalar (@$files));
+		@disc = map {$_ .= $total if $_ eq 'TRACKTOTAL%:'; $_;} @disc;
 	}
 	if ($run{'autotag-multi'} && @$files){
 		$autotag_multi =~ s/%/[1-9]/g;
@@ -742,7 +744,7 @@ sub populate_file {
 		foreach (@$files){
 			if (/^($autotag_multi)/i){
 				$starter = $1;
-				$counter++;
+				#$counter++;
 			}
 			else {
 				main::error_handler('autotag-multi',
@@ -752,7 +754,7 @@ sub populate_file {
 				$j++;
 				$holder = $starter;
 				$multi[$j] = 1;
-				$counter = 0;
+				#$counter = $start;
 				#say "$starter $j";
 			}
 			else {
@@ -760,9 +762,10 @@ sub populate_file {
 			}
 		}
 		shift @multi;# get rid of first element
-		($counter,$j,$holder,$starter) = (0,0,'','');
+		($counter,$j,$holder,$starter) = ($start,0,'','');
 		if (scalar @multi > 1){
-			@disc = map {$_ .= scalar (@multi) if $_ eq 'DISCTOTAL%:'; $_;} @disc;
+			$total = create_track_total(scalar (@multi));
+			@disc = map {$_ .= $total if $_ eq 'DISCTOTAL%:'; $_;} @disc;
 			@disc = map {$_ .= $multi[0] if $_ eq 'TRACKTOTAL%:'; $_;} @disc;
 			@disc = map {$_ .= 1 if $_ eq 'DISCNUMBER%:'; $_;} @disc;
 		}
@@ -772,8 +775,6 @@ sub populate_file {
 	@track = map {$_ .= '%:' if /^[A-Z]/; $_;} @track;
 	my @disc_working;
 	foreach (@$files){
-		# standard track numbering starting at 1
-		$counter++ if !$b_zero;
 		my @track_working = @track;
 		if ($run{'autotag-multi'} && scalar @multi > 1){
 			if (/^($autotag_multi)/i){
@@ -783,7 +784,7 @@ sub populate_file {
 				$holder = $starter;
 				# say "$starter";
 				if (!$b_first){
-					$counter = (!$b_zero) ? 1 : 0;
+					$counter = $start;
 					$j++;
 					@disc_working = @discs;
 					$disc_working[0] .= $j+1;
@@ -804,7 +805,7 @@ sub populate_file {
 		}
 		@tags = (@tags,@track_working);
 		# this allows for 0 track numbers
-		$counter++ if $b_zero;
+		$counter++;
 	}
 	if ($b_test){
 		print join "\n", @tags, "\n";
@@ -812,6 +813,25 @@ sub populate_file {
 	else {
 		main::writer($TAG_FILE,\@tags);
 	}
+}
+# The idea here is that the track total will show the full number including
+# removed strart tracks. Not a common situation, but odes happen
+sub create_track_total {
+	my $working = $_[0];
+	# note: 0 start, track number to 14, 15 tracks, would show 14/15, so make shwo 14/14
+	my ($total) = (0);
+	if ($start == 0 ){
+		$total = $working - 1;
+	}
+	# the normal, simple scalar of the found files. Default behavior
+	elsif ($start == 1 ){
+		$total = $working;
+	}
+	# ex: 15 original tracks, first 2 removed, real file numbering starts at 03
+	else {
+		$total = $working + $start;
+	}
+	return $total;
 }
 sub get_replaygain {
 	my ($input_file) = @_;
@@ -1537,6 +1557,7 @@ sub unescape_item {
 # NOTE: File::Find will not follow symbolic links
 sub wanted {
 	state @pruned;
+	state $b_first;
 	return if -l; # skip symbolic links
 	# https://www.perlmonks.org/?node_id=358502 more on prune and exclude diretortories
 	# make test more general, only prune from results when actually not readable
@@ -1544,15 +1565,29 @@ sub wanted {
 	# no test for -d
 	#if ($File::Find::name =~ m/\Qlost+found\E/){
 	#print $File::Find::name, "\n";
-	if ( -d $File::Find::name && ! -r $File::Find::name ){
-		if (! grep { $_ eq $File::Find::name } @pruned){
-			print $line_small;
-			print "Skipping non-readable: $File::Find::name\n";
-			print $line_small;
-			push @pruned, $File::Find::name;
+	# run the recursion level tests
+	if ( -d $File::Find::name ){
+		my $b_skip = 0;
+		if ($recurse > -1){
+			my $working = $File::Find::name;
+			$working =~ s|^\Q$SOURCE_DIRECTORY\E$path_separator?||;
+			#my $count = $working =~ tr/$path_separator//;
+			my $count = scalar(split (m|$path_separator|, $working));
+			$b_skip = 1 if $count > $recurse;
+			# print "$working :: $path_separator :: re: $recurse c: $count\n";
 		}
-		$File::Find::prune = 1;
-		return;
+		if (! -r $File::Find::name || $b_skip){
+			if (! grep { $_ eq $File::Find::name } @pruned){
+				print $line_small if !$b_first;
+				$b_first = 1;
+				my $message = ($b_skip) ? 'recursion': 'unreadable';
+				print "SKIPPING ($message):\n $File::Find::name\n";
+				#print $line_small;
+				push @pruned, $File::Find::name;
+			}
+			$File::Find::prune = 1;
+			return;
+		}
 	}
 	if ($list_type eq 'dir' || $list_type eq 'file'){
 		return if $File::Find::name =~ m/^\Q$DESTINATION_DIRECTORY\E/;
@@ -2231,18 +2266,22 @@ sub print_options {
 	$output .= "                  Expert use only.\n";
 	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";        
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
+	$output .= "--recurse [0-xx]  Set directory recursion levels. Default infinite. Useful\n";
+	$output .= "                  for having syncing or checksum tools ignore sub directories.\n";
 	$output .= "--remove-images, -R\n";
 	$output .= "                  Remove all embedded images and image padding from file\n";
 	$output .= "                  before autotagging.\n";
 	$output .= "--remove-padding, -P\n";
 	$output .= "                  For --autotag and --tag also removes block padding. Slows.\n";
 	$output .= "                  tagging down significantly.\n";
+	$output .= "--start [0-xx]    For auto.tag, starts tag numbering of tracks at supplied\n";
+	$output .= "                  integer value. Useful if tracks start at 00.flac or 07.flac\n";
 	$output .= "--tag, -T         [\"TAG1%:tag value^^TAG2%:tag value]\n";
 	$output .= "                  Updates one or more recordings with the supplied FLAC\n";
 	$output .= "                  COMMENT tag/tag value pairs. Removes existing COMMENT\n";
 	$output .= "                  sets of the given type. Use ^^ to separate tag key/value\n";
 	$output .= "                  pairs, and %: to separate the tag name and its value.\n";
-	$output .= "--zero, -Z        For auto.tag, starts numbering of tracks at 0, not 1.\n";
+	
 	if ($ALLOW_UPDATES){
 		$output .= "--update, -U      Update $SELF_NAME and man page. Set paths if not Linux.\n";
 		$output .= "                  Current values: $SELF_NAME: $SELF_DIRECTORY\n";
@@ -2645,10 +2684,24 @@ sub get_options{
 	"quiet|silent" => sub { 
 		$b_quiet = 1; 
 		$LOG_LEVEL = 0 },
+	"recurse:i" => sub { 
+		my ($opt,$arg) = @_;
+		if (! defined $arg){
+			$msg = "$opt requires directory recursion level value. See -h.";
+			error_handler('missing-arg',$msg,1);
+		}
+		$recurse = $arg},
 	"R|remove-images" => sub { 
 		$run{'remove-images'} = 1 },
 	"P|remove-padding" => sub { 
 		$padding = ' --dont-use-padding' },
+	"start:i" => sub { 
+		my ($opt,$arg) = @_;
+		if (! defined $arg || $start < 0){
+			$msg = "$opt requires track number start value. See -h.";
+			error_handler('missing-arg',$msg,1);
+		}
+		$start = $arg},
 	"T|tag:s" => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /%:/){
@@ -2684,8 +2737,6 @@ sub get_options{
 		$LOG_LEVEL = 2 },
 	"v|version" => sub { 
 		print_version(); },
-	"Z|zero" => sub { 
-		$b_zero = 1 },
 	'<>' => sub {
 		my ($opt) = @_;
 		error_handler('unsupported-option', "Unsupported option: $opt",1); }

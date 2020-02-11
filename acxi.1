@@ -1,4 +1,4 @@
-.TH ACXI 1 "2020\-01\-23" acxi "acxi manual"
+.TH ACXI 1 "2020\-02\-11" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -16,7 +16,8 @@ Tagging: \fBacxi\fR [\fB\-\-autotag\fR] [\fB\-\-autotag\-create\fR]
 [\fB\-\-autotag\-create\-multi {filename start ID}\fR]
 [\fB\-\-aggregate {file name|extension}\fR] [\fB\-\-image {cover image filename}\fR]
 [\fB\-\-no\-replaygain\fR] [\fB\-\-remove\-images\fR] [\fB\-\-remove\-padding\fR]
-[\fB\-\-tag {"TAG1%:tag value^^TAG2%:tag value"}\fR]
+[\fB\-\-tag {"TAG1%:tag value^^TAG2%:tag value"}\fR] [\fB\-\-recurse\fR -1-xx]
+[\fB\-\-start\fR 0-xx]
 .IP * 2
 Checksums: \fBacxi\fR [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] 
 [\fB\-\-checksum\-verify\fR] [\fB\-\-no\-ffp\fR] 
@@ -486,6 +487,19 @@ Turns off all screen output, except for error messages.
 Same as \fB\-\-log 0\fR
 
 .TP
+.B \-\-recurse [number]\fR
+There may be cases where you want a certain action to NOT recurse beyond 
+the number of steps you supply as an argument for this option. Default 
+recursion level is infinite (-1). If you use 0, it will only return 
+files for the current directory.
+
+This can be useful if you for example do not want to create ffp or md5,
+or sync files in a sub directory.
+
+In general, use the \fB\-\-test\fR option to verify the results are what
+you expected before actually proceeding with this option for real.
+
+.TP
 .B \-\-remove\-images\fR, \fB\-R\fR
 Use with \fB\-\-autotag\fR or \-\-image\fR. Will remove all embedded image 
 data, and the associated padding, prior to tagging (and adding new image 
@@ -521,6 +535,35 @@ Removes all existing COMMENT fields of that type before updating since
 FLAC just adds them to existing by default.
 
 Sample: \fBacxi \-s ./ \-\-tag "GENRE%:Heavy Metal^^ARTIST%:Black Sabbath"\fR
+
+.TP
+.B \-\-start [number]\fR
+This option is ONLY used with the \fBauto.tag\fR file creation options:
+\fB\-M\fR, \fB\-S\fR and \fB\-C\fR.
+
+For creating the track number tag, start \fBauto.tag\fR track numbering at a 
+different value than default 1. This lets you handle cases where there 
+was for example:
+
+\fB00.intro.flac\fR
+
+This will subtract 1 from track totals, so output is as expected, say for 
+0 start, then 1-14 tracks, you will see 14/14 when your media player shows 
+x/yy counts for track listings.
+
+For values greater than 1, will add that number to the real found track totals, 
+so that, for example, if first track is 03.flac, you will see 15/15 for track
+15.flac as you'd expect.
+
+These are not normal circumstances, but they do happen, so now you can handle 
+those. Check your work carefully, check the uato.tag file 
+
+Note: some media players get confused by the track tag number 0, I beileve they
+are doing a top of if not test, and the 0 registers in some cases as not, so the
+player may show no track number, not the expected 0.
+
+In general, use the \fB\-\-test\fR option to verify the results are what
+you expected before actually proceeding with this option for real.
 
 .TP
 .B \-\-test\fR
