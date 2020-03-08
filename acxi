@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.21';
-my $SELF_DATE = '2020-03-06';
+my $SELF_DATE = '2020-03-07';
 
 ## GLOBALS ##
 my %run;
@@ -1591,7 +1591,7 @@ sub wanted {
 	}
 	if ($list_type eq 'dir' || $list_type eq 'file'){
 		return if $File::Find::name =~ m/^\Q$DESTINATION_DIRECTORY\E/;
-		return if !$run{'hidden'} && $File::Find::name =~ m/\/\./; # skip any dot files/directories
+		return if !$run{'dot'} && $File::Find::name =~ m/\/\./; # skip any dot files/directories
 		return if $run{'sync'} && @excludes && ( grep {$File::Find::name =~ /\Q$_\E/} @excludes );
 		if ($list_type eq 'dir'){
 			return if ! -d; # only directories
@@ -2188,6 +2188,8 @@ sub print_options {
 	$output .= "--destination, -d Path to the directory where you want the processed\n";
 	$output .= "                  (eg, ogg) files to go.\n";
 	$output .= "                  Current value: $DESTINATION_DIRECTORY\n";
+	$output .= "--dot             Also sync files and directories starting with a '.'. Don't blame\n";
+	$output .= "                  $SELF_NAME if this creates unintended consequences!!\n";
 	$output .= "--exclude, -x     Exclude a list of unique strings separated by ^^. Excludes\n";
 	$output .= "                  sync/copy action to destination directory. Replaces\n";
 	$output .= "                  \$EXCLUDE values if present. Anything matching in file path\n";
@@ -2203,8 +2205,6 @@ sub print_options {
 	$output .= "                  if they already exist.\n";
 	$output .= "--fork, -F        [0-x] - Number of forks/threads to use. 0 default, disables.\n";
 	$output .= "                  Requires Perl module: Parallel::ForkManager. Current: $FORK\n";
-	$output .= "--hidden          Also sync files and directories starting with a '.'. Don't blame\n";
-	$output .= "                  $SELF_NAME if this creates unintended consequences!!\n";
 	$output .= "--input, -i       Input type: aif,flac,raw,shn,wav. shn requires codec shorten. \n";
 	$output .= "                  raw,shn only output to flac.\n";
 	$output .= "                  Current value: $INPUT_TYPE\n";
@@ -2612,6 +2612,8 @@ sub get_options{
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
 		$DESTINATION_DIRECTORY = $arg },
+	"dot" => sub { 
+		$run{'dot'} = 1;},
 	"x|exclude:s" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires exclude list or file.",1) if ! $arg;
@@ -2633,8 +2635,6 @@ sub get_options{
 		$LOG_LEVEL = 3 },
 	"h|help|?" => sub { 
 		print_options();},
-	"hidden" => sub { 
-		$run{'hidden'} = 1;},
 	"I|image:s" => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /(\.png|\.jpe?g|^remove)$/i){
