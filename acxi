@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.21';
-my $SELF_DATE = '2020-03-07';
+my $SELF_DATE = '2020-03-09';
 
 ## GLOBALS ##
 my %run;
@@ -2188,8 +2188,6 @@ sub print_options {
 	$output .= "--destination, -d Path to the directory where you want the processed\n";
 	$output .= "                  (eg, ogg) files to go.\n";
 	$output .= "                  Current value: $DESTINATION_DIRECTORY\n";
-	$output .= "--dot             Also sync files and directories starting with a '.'. Don't blame\n";
-	$output .= "                  $SELF_NAME if this creates unintended consequences!!\n";
 	$output .= "--exclude, -x     Exclude a list of unique strings separated by ^^. Excludes\n";
 	$output .= "                  sync/copy action to destination directory. Replaces\n";
 	$output .= "                  \$EXCLUDE values if present. Anything matching in file path\n";
@@ -2260,13 +2258,17 @@ sub print_options {
 	$output .= "--checksum-verify, -V\n";
 	$output .= "                  Verifies FLAC files and confirms MD5 file data matches actual\n";
 	$output .= "                  files found. Can be run alone or with --checksum options.\n";
+	$output .= "--dot             Also sync files and directories starting with a '.'. Don't blame\n";
+	$output .= "                  $SELF_NAME if this creates unintended consequences!!\n";
 	$output .= "--image, -I [jpg,png image file name|remove]\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
+	$output .= "--no-dot          Override user configuration setting for DOT (--dot) [default].\n";
+	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";      
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
-	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";        
+
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
 	$output .= "--recurse [0-xx]  Set directory recursion levels. Default infinite. Useful\n";
 	$output .= "                  for having syncing or checksum tools ignore sub directories.\n";
@@ -2451,8 +2453,7 @@ sub assign_value {
 	elsif ($var eq 'COMMAND_OGG'){$COMMAND_OGG = $value;}
 	elsif ($var eq 'COMMAND_OPUS'){$COMMAND_OPUS = $value;}
 	elsif ($var eq 'CLEAN'){
-		$value =~ s/^(yes|1|true|enable|on)$/1/;
-		$value =~ s/^(no|0|false|disable|off)$/0/;
+		$value = get_boolean($value);
 		if ($value =~ /^[10]$/){
 			$run{'clean'} = $value;
 			$run{'clean-sync'} = $value;
@@ -2461,6 +2462,7 @@ sub assign_value {
 		$SOURCE_DIRECTORY = $value;}
 	elsif ($var eq 'DESTINATION_DIRECTORY' || $var eq 'DIR_PREFIX_DEST'){
 		$DESTINATION_DIRECTORY = $value;}
+	
 	elsif ($var eq 'MAN_DIRECTORY'){$MAN_DIRECTORY = $value}
 	elsif ($var eq 'SELF_DIRECTORY'){$SELF_DIRECTORY = $value}
 	elsif ($var eq 'INPUT_TYPE'){$INPUT_TYPE = $value;}
@@ -2475,12 +2477,21 @@ sub assign_value {
 	elsif ($var eq 'COPY_TYPES' || $var eq 'USER_TYPES'){
 		$COPY_TYPES = $value;}
 	elsif ($var eq 'DONT_USE_NLINK'){$DONT_USE_NLINK = $value}
+	elsif ($var eq 'DOT'){
+		$value = get_boolean($value);
+		$run{'dot'} = $value if $value =~ /^[10]$/;}
 	elsif ($var eq 'FORK'){$FORK = $value}
 	elsif ($var eq 'FFP_FILE'){$FFP_FILE = $value}
 	elsif ($var eq 'MD5_FILE'){$MD5_FILE = $value}
 	elsif ($var eq 'TAG_FILE'){$TAG_FILE = $value}
 	elsif ($var eq 'EXCLUDE'){$EXCLUDE = $value}
 	elsif ($var eq 'EXCLUDE_BASE'){$EXCLUDE_BASE = $value}
+}
+sub get_boolean {
+	my ($value) = @_;
+	$value =~ s/^(yes|1|true|enable|on)$/1/;
+	$value =~ s/^(no|0|false|disable|off)$/0/;
+	return $value;
 }
 # end ConfigData
 }
@@ -2667,6 +2678,8 @@ sub get_options{
 		$OUTPUT_TYPE = $arg;},
 	"nlink" => sub { 
 		$DONT_USE_NLINK = 0 },
+	"no-dot" => sub { 
+		$run{'dot'} = 0;},
 	"no-ffp" => sub { 
 		$run{'no-ffp'} = 1 },
 	"no-nlink" => sub { 

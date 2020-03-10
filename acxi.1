@@ -1,11 +1,11 @@
-.TH ACXI 1 "2020\-03\-07" acxi "acxi manual"
+.TH ACXI 1 "2020\-03\-09" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
 .IP * 2
 Syncing: \fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-clean\fR] 
 [\fB\-c\fR extensions] 
-[\fB\-d\fR destination-path]  [\fB\-\-dot\fR] [\fB\-\-exclude\fR] 
+[\fB\-d\fR destination-path]  [\fB\-\-exclude\fR] 
 [\fB\-\-exclude\-append {filename|extension}\fR] 
 [\fB\-f\fR] [\fB\-\-fork\fR 0-xx]
 [\fB\-i\fR {flac|raw|shn|wave}] [\fB\-o\fR {flac|mp3|ogg|opus}] 
@@ -25,7 +25,8 @@ Checksums: \fBacxi\fR [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR]
 Output Controls: \fBacxi\fR [\fB\-\-basic\fR] [\fB\-\-full\fR]
 [\fB\-\-log\fR {0-3}] [\fB\-\-quiet\fR] [\fB\-\-verbose\fR] 
 .IP * 2
-Miscellaneous:  [\fB\-h\fR] [\fB\-U\fR] [\fB\-v\fR]
+Miscellaneous:  [\fB\-h\fR] [\fB\-U\fR] [\fB\-v\fR] 
+[\fB\-\-dot\fR] [\fB\-\-no\-dot\fR] 
 .IP * 2
 Debugging: \fBacxi\fR [\fB\-\-debug\fR]  [\fB\-\-nlink\fR] 
 [\fB\-\-no\-nlink\fR] [\fB\-\-test\fR] 
@@ -442,6 +443,12 @@ See this PerlMonks thread for an explanation:
 \fIhttps://www.perlmonks.org/?node_id=1180606\fR
 
 .TP
+.B \-\-no\-dot\fR
+Overrides user configuration \fBDOT\fR. Basically restores default behavior for acxi
+in terms of skipping all dot files. Only useful if you have set \fBDOT\fR to true
+in your configuration file and want to do a one time override of that setting.
+
+.TP
 .B \-\-no\-ffp\fR
 Skips FLAC ffp checks and generation on \fB\-\-checksum\fR,
 \fB\-\-checksum\-delete\fR, and \fB\-\-checksum\-verify\fR. Useful
@@ -669,6 +676,9 @@ directory.
 
 .TP
 .B EXCLUDE LISTS/FILES
+
+\fBDOT\fR \- Disables default behavior of skipping all files starting with a '.'. Takes
+values true or false. Note that false is the acxi default so there's no point in using that.
 
 \fBEXCLUDE\fR \- Sample (if list): \fBEXCLUDE=artwork^^Daisy Queen^^Bon Jovi\fR
 
