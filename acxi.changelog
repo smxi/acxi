@@ -1,5 +1,18 @@
 ===================================================================
-Date: 2020-01-22-31
+Date: 2020-03-09
+Version: 3.3.21
+-------------------------------------------------------------------
+
+Some small and convenient updates:
+
+1. Added --start [integer] to let you make tag file generation numbering start from 0 to any integer. This lets you match your tagged track numbers to file track numbers, say, starting at 00.flac, or starting at 05.flac, now the acxi generated auto.tag will reflect that as long as you use the --start [integer] when generating the test file. Note that if you forget, you can just run acxi -Ss./ --test --start 0 for example which will print out the disk/track numbers to terminal and you can just copy that into your auto.tag file if you already had started it.
+
+2. Another corner case feature, --recurse [integer], let's you run acxi only on the directory you want, going in from 0 to x levels. This has various utility, for instance, if you don't want to include a subdirectory of flacs, you would use -Ss./ --recurse 0 and it will only generate auto.tag data for the level you are in.
+
+3. Issue #8 requested a way to override default behavior to skip all '.' dot files, added --dot, --no-dot [override for if you use DOT=true in configuration file], and configuration item DOT, which takes true/false value. Since false is the default acxi behavior, the only value that makes sense to use there is true, otherwise don't use that configuration item.
+
+===================================================================
+Date: 2020-01-22
 Version: 3.3.21
 -------------------------------------------------------------------
 
