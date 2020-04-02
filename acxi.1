@@ -538,24 +538,6 @@ a lot, especially over network connections.
 Path to the top-most directory containing your source files (eg, flac).
 
 .TP
-.B \-\-tag\fR, \fB\-T {"TAG1%:tag value^^TAG2%:tag value"}\fR
-Modify one or more tags in a single recording or group of recordings.
-FLAC only, use standard FLAC Comment values for best results.
-Separate \fBTAG\fR and \fBtag value\fR with \fB%:\fR, and separate 
-tag/value sets with \fB^^\fR. This lets you retag entire blocks of
-artist/recordings at once if you only want to modify (or create)
-one or two FLAC COMMENT fields.
-
-Removes all existing COMMENT fields of that type before updating since 
-FLAC just adds them to existing by default.
-
-Sample: \fBacxi \-s ./ \-\-tag "GENRE%:Heavy Metal^^ARTIST%:Black Sabbath"\fR
-
-If tag value is \fBUNSET\fR it will just remove that tag and its contents.
-
-Sample: \fBacxi \-s ./ \-\-tag "COMMENT%:UNSET^^ARTIST%:Black Sabbath"\fR
-
-.TP
 .B \-\-start [number]\fR
 This option is ONLY used with the \fBauto.tag\fR file creation options:
 \fB\-M\fR, \fB\-S\fR and \fB\-C\fR.
@@ -583,6 +565,24 @@ player may show no track number, not the expected 0.
 
 In general, use the \fB\-\-test\fR option to verify the results are what
 you expected before actually proceeding with this option for real.
+
+.TP
+.B \-\-tag\fR, \fB\-T {"TAG1%:tag value^^TAG2%:tag value"}\fR
+Modify one or more tags in a single recording or group of recordings.
+FLAC only, use standard FLAC tag values for best results.
+Separate \fBTAG\fR and \fBtag value\fR with \fB%:\fR, and separate 
+tag/value sets with \fB^^\fR. This lets you retag entire blocks of
+artist/recordings at once if you only want to modify (or create)
+one or more FLAC tags.
+
+Removes all existing tags of that type before updating since 
+FLAC just adds the new tag to the already existing set of tags by default.
+
+Sample: \fBacxi \-s ./ \-\-tag "GENRE%:Heavy Metal^^ARTIST%:Black Sabbath"\fR
+
+If tag value is \fBUNSET\fR it will just remove that tag and its contents.
+
+Sample: \fBacxi \-s ./ \-\-tag "COMMENT%:UNSET^^ARTIST%:Black Sabbath"\fR
 
 .TP
 .B \-\-test\fR

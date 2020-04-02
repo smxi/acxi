@@ -2285,10 +2285,9 @@ sub print_options {
 	$output .= "                  integer value. Useful if tracks start at 00.flac or 07.flac\n";
 	$output .= "--tag, -T         [\"TAG1%:tag value^^TAG2%:tag value]\n";
 	$output .= "                  Updates one or more recordings with the supplied FLAC\n";
-	$output .= "                  COMMENT tag/tag value pairs. Removes existing COMMENT\n";
-	$output .= "                  sets of the given type. Use ^^ to separate tag key/value\n";
-	$output .= "                  pairs, and %: to separate the tag name and its value.\n";
-	
+	$output .= "                  tag/value pairs. Removes existing sets of the given type.\n";
+	$output .= "                  Use ^^ to separate tag key/value pairs, and %: to separate\n";
+	$output .= "                  the tag name and its value. Value 'UNSET' removes the tag.\n";
 	if ($ALLOW_UPDATES){
 		$output .= "--update, -U      Update $SELF_NAME and man page. Set paths if not Linux.\n";
 		$output .= "                  Current values: $SELF_NAME: $SELF_DIRECTORY\n";
