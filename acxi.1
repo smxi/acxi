@@ -1,4 +1,4 @@
-.TH ACXI 1 "2020\-03\-09" acxi "acxi manual"
+.TH ACXI 1 "2020\-043\-02" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -550,6 +550,10 @@ Removes all existing COMMENT fields of that type before updating since
 FLAC just adds them to existing by default.
 
 Sample: \fBacxi \-s ./ \-\-tag "GENRE%:Heavy Metal^^ARTIST%:Black Sabbath"\fR
+
+If tag value is \fBUNSET\fR it will just remove that tag and its contents.
+
+Sample: \fBacxi \-s ./ \-\-tag "COMMENT%:UNSET^^ARTIST%:Black Sabbath"\fR
 
 .TP
 .B \-\-start [number]\fR

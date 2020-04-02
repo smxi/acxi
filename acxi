@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.22';
-my $SELF_DATE = '2020-03-09';
+my $SELF_DATE = '2020-04-02';
 
 ## GLOBALS ##
 my %run;
@@ -509,7 +509,7 @@ sub tag_updater {
 	$print_padding = ' and padding' if $padding;
 	foreach (@tags){
 		@working = split /%:/, $_;
-		$tag .= qq( --set-tag=$working[0]="$working[1]");
+		$tag .= qq( --set-tag=$working[0]="$working[1]") if $working[1] ne 'UNSET';
 		$remove .= qq( --remove-tag=$working[0]);
 		$print_tags .= qq( $working[0])
 	}
@@ -539,10 +539,13 @@ sub tag_updater {
 		}
 		$cmd = qq($COMMAND_METAFLAC $tag "$file");
 		if (!$b_test){
-			qx($cmd);
-			if ($? > 0){
-				$error_message = "$COMMAND_METAFLAC returned error: $?";
-				main::error_handler('application-error', $error_message,1);
+			# if the only action is to UNSET the tag, $tag will be empty
+			if ($tag){
+				qx($cmd);
+				if ($? > 0){
+					$error_message = "$COMMAND_METAFLAC returned error: $?";
+					main::error_handler('application-error', $error_message,1);
+				}
 			}
 			say 'Tags updated.';
 		}
