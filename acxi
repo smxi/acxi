@@ -2375,8 +2375,8 @@ sub set_basic_data {
 			@excludes = (@excludes,@temp);
 		}
 		@excludes_stripped = map { my $temp = $_;$temp =~ s|/$||;$temp} @excludes if @excludes;
-		print Data::Dumper::Dumper \@excludes, "\n";
-		print Data::Dumper::Dumper \@excludes_stripped, "\n";
+		#print Data::Dumper::Dumper \@excludes, "\n";
+		#print Data::Dumper::Dumper \@excludes_stripped, "\n";
 	}
 }
 
