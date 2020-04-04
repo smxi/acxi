@@ -87,8 +87,8 @@ my ($b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
 my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
 $silent_opus) = (7,'','','','','');
-my ($embed_image,$extension,$exclude_append,@excludes,@extension_list,
-@found_list,$list_type,@tags);
+my ($embed_image,$extension,$exclude_append,@excludes,@excludes_stripped,
+@extension_list,@found_list,$list_type,@tags);
 # default: recurse infinite for File::Find; start tag list track numbers at 1
 my ($padding,$recurse,$start) = ('',-1,1);
 my ($b_check_dest,$b_check_out) = (1,1);
@@ -1596,8 +1596,9 @@ sub wanted {
 		return if $list_type eq 'file' &&  -d; # skip directories
 		return if $File::Find::name =~ m/^\Q$DESTINATION_DIRECTORY\E/;
 		return if !$run{'dot'} && $File::Find::name =~ m/\/\./; # skip any dot files/directories
-		return if $run{'sync'} && ( @excludes && ( grep {$File::Find::name =~ /\Q$_\E/} @excludes ) ||
-		( $list_type eq 'dir' && (grep {my $temp = $_; $temp =~ s|/$||; $File::Find::name =~ /\Q$temp\E$/} @excludes) ) );
+		return if $run{'sync'} && ( (@excludes && ( grep {$File::Find::name =~ /\Q$_\E/} @excludes ) ) ||
+		( $list_type eq 'dir' && @excludes_stripped && 
+		(grep {$File::Find::name =~ /\Q$_\E$/} @excludes_stripped) ) );
 		if ($list_type eq 'file') {
 			# extension can be either a full file name, or extension
 			return if $File::Find::name !~ /(\.|\/)$extension$/i;
@@ -1620,8 +1621,8 @@ sub wanted {
 		# NOTE: if we modify $_, that modification goes back into the array, who would have thunk?
 		return unless ! -e $working || (@excludes && 
 		(grep {$File::Find::name =~ /\Q$_\E/} @excludes) ||
-		( $list_type eq 'dir-clean' && 
-		(grep {my $temp = $_; $temp =~ s|/$||; $File::Find::name =~ /\Q$temp\E$/} @excludes) ) );
+		( $list_type eq 'dir-clean' && @excludes_stripped &&
+		(grep {$File::Find::name =~ /\Q$_\E$/} @excludes_stripped) ) );
 		# print '2: ', "$File::Find::name\n"; print "$_ ::";
 	}
 	# print $File::Find::name . "\n";
@@ -2373,7 +2374,9 @@ sub set_basic_data {
 			my @temp = split /\Q^^\E/, $exclude_append;
 			@excludes = (@excludes,@temp);
 		}
-		#print Data::Dumper::Dumper \@excludes, "\n";
+		@excludes_stripped = map { my $temp = $_;$temp =~ s|/$||;$temp} @excludes if @excludes;
+		print Data::Dumper::Dumper \@excludes, "\n";
+		print Data::Dumper::Dumper \@excludes_stripped, "\n";
 	}
 }
 
