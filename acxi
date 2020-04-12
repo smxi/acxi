@@ -2634,7 +2634,7 @@ sub get_options{
 	"x|exclude:s" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires exclude list or file.",1) if ! $arg;
-		$arg = '' if $arg eq 'unset';
+		$arg = '' if uc($arg) eq 'UNSET';
 		$EXCLUDE = $arg },
 	"exclude-append:s" => sub { 
 		my ($opt,$arg) = @_;
