@@ -1,6 +1,21 @@
 ===================================================================
+Date: 2020-04-11
+Version: 3.3.23
+-------------------------------------------------------------------
+
+Two small fixes, to make things a bit more consistent and intuitive.
+
+1. Added 'UNSET' value to --tag, so you can remove a single or more 
+tags and their content, not just modify or add them.
+
+2. A slightly complicated logical puzzle, now --clean also removes
+excluded directories / files as expected, and subsequent sync acfions
+will not create the excluded directories, which was the case before
+this correction. 
+
+===================================================================
 Date: 2020-03-09
-Version: 3.3.21
+Version: 3.3.22
 -------------------------------------------------------------------
 
 Some small and convenient updates:
