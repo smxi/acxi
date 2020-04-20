@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.23';
-my $SELF_DATE = '2020-04-11';
+my $SELF_DATE = '2020-04-20';
 
 ## GLOBALS ##
 my %run;
@@ -2506,7 +2506,7 @@ sub get_boolean {
 # from top globals and config files
 sub get_options{
 	my (@args) = @_;
-	my ($msg);
+	my ($b_source,$msg);
 	GetOptions (
 	"G|aggregate:s" => sub { 
 		my ($opt,$arg) = @_;
@@ -2700,10 +2700,6 @@ sub get_options{
 		$QUALITY_MP3 = $arg;
 		$QUALITY_OGG = $arg;
 		$QUALITY_OPUS = $arg;}, 
-	"s|source:s" => sub { 
-		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
-		$SOURCE_DIRECTORY = $arg;},
 	"quiet|silent" => sub { 
 		$b_quiet = 1; 
 		$LOG_LEVEL = 0 },
@@ -2718,6 +2714,11 @@ sub get_options{
 		$run{'remove-images'} = 1 },
 	"P|remove-padding" => sub { 
 		$padding = ' --dont-use-padding' },
+	"s|source:s" => sub { 
+		my ($opt,$arg) = @_;
+		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
+		$b_source = 1;
+		$SOURCE_DIRECTORY = $arg;},
 	"start:i" => sub { 
 		my ($opt,$arg) = @_;
 		if (! defined $arg || $start < 0){
@@ -2764,6 +2765,12 @@ sub get_options{
 		my ($opt) = @_;
 		error_handler('unsupported-option', "Unsupported option: $opt",1); }
 	);
+	if (!$b_source && ($run{'autotag'} || 	$run{'autotag-aggregate'} ||
+	$run{'autotag-create'} || $run{'checksum'} || $run{'checksum-verify'} ||
+	$run{'embed-image'} || $run{'remove-images'} || 	$run{'update-tag'} )){
+		error_handler('invalid-options', 
+		 "You must supply an explicit --source for all tagging and checksum options.",1);
+	}
 	if (($run{'checksum'} || $run{'checksum-verify'}) && ($run{'sync'} || 
 	 $run{'clean'} || $run{'autotag-create'} || $run{'autotag-aggregate'})){
 		error_handler('invalid-options', 
@@ -2772,12 +2779,12 @@ sub get_options{
 	if ($run{'autotag'} && ($run{'sync'} || $run{'clean'} || 
 	 $run{'autotag-aggregate'} || $run{'autotag-create'})){
 		error_handler('invalid-options', 
-		 "You cannot use --autotag with autotag-generate, clean, or sync options.",1);
+		 "You cannot use --autotag with autotag create/aggregate, clean, or sync options.",1);
 	}
 	if ($run{'autotag-create'} && ($run{'sync'} || $run{'clean'} || 
 	 $run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'})){
 		error_handler('invalid-options', 
-		 "You cannot use --autotag-generate with autotag, clean, sync, or checksum options.",1);
+		 "You cannot use --autotag-create with autotag, clean, sync, or checksum options.",1);
 	}
 	if (!$run{'sync'} && $run{'ffmpeg'}){
 		error_handler('invalid-options', 
