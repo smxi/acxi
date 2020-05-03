@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.24';
-my $SELF_DATE = '2020-04-24';
+my $SELF_DATE = '2020-05-03';
 
 ## GLOBALS ##
 my %run;
@@ -692,7 +692,7 @@ sub make_file {
 sub populate_file {
 	my ($files) = @_;
 	my (@multi,@replaygain,@tags);
-	my ($b_first,$j,$holder,$starter,$total) = (1,0,'','',0);
+	my ($b_first,$j,$holder,$starter) = (1,0,'','');
 	my $counter=$start;
 	my @collection = (
 	'## RECORDING NAME/CREATORS ##',
@@ -737,8 +737,7 @@ sub populate_file {
 	@disc = map {$_ .= '%:' if /^[A-Z]/; $_;} @disc;
 	@discs = map {$_ .= '%:' if /^[A-Z]/; $_;} @discs;
 	if ($run{'autotag-single'} && @$files){
-		$total = create_track_total(scalar (@$files));
-		@disc = map {$_ .= $total if $_ eq 'TRACKTOTAL%:'; $_;} @disc;
+		@disc = map {$_ .= create_track_total(scalar (@$files)) if $_ eq 'TRACKTOTAL%:'; $_;} @disc;
 	}
 	if ($run{'autotag-multi'} && @$files){
 		$autotag_multi =~ s/%/[1-9]/g;
@@ -758,7 +757,7 @@ sub populate_file {
 				$holder = $starter;
 				$multi[$j] = 1;
 				#$counter = $start;
-				#say "$starter $j";
+				# say "$starter $j";
 			}
 			else {
 				$multi[$j]++;
@@ -766,10 +765,11 @@ sub populate_file {
 		}
 		shift @multi;# get rid of first element
 		($counter,$j,$holder,$starter) = ($start,0,'','');
+		# this handles the first block of DISC info
 		if (scalar @multi > 1){
-			$total = create_track_total(scalar (@multi));
-			@disc = map {$_ .= $total if $_ eq 'DISCTOTAL%:'; $_;} @disc;
-			@disc = map {$_ .= $multi[0] if $_ eq 'TRACKTOTAL%:'; $_;} @disc;
+			#print 'm:', $multi[0], ' sm: ', scalar @multi, "\n";
+			@disc = map {$_ .= scalar @multi if $_ eq 'DISCTOTAL%:'; $_;} @disc;
+			@disc = map {$_ .= create_track_total($multi[0]) if $_ eq 'TRACKTOTAL%:'; $_;} @disc;
 			@disc = map {$_ .= 1 if $_ eq 'DISCNUMBER%:'; $_;} @disc;
 		}
 	}
@@ -790,8 +790,11 @@ sub populate_file {
 					$counter = $start;
 					$j++;
 					@disc_working = @discs;
-					$disc_working[0] .= $j+1;
-					$disc_working[2] .= $multi[$j];
+					# and this handles all subsequent new disc/set block
+					$disc_working[0] .= $j+1; # disc number
+					$disc_working[2] .= create_track_total($multi[$j]); # track total
+					# then we add in the tracks for the previous disk/set, and start
+					# the next block
 					@tags = (@tags,'',@disc_working);
 				}
 				$b_first = 0;
@@ -818,7 +821,7 @@ sub populate_file {
 	}
 }
 # The idea here is that the track total will show the full number including
-# removed strart tracks. Not a common situation, but odes happen
+# removed strart tracks. Not a common situation, but does happen
 sub create_track_total {
 	my $working = $_[0];
 	# note: 0 start, track number to 14, 15 tracks, would show 14/15, so make shwo 14/14
@@ -834,6 +837,7 @@ sub create_track_total {
 	else {
 		$total = $working + $start;
 	}
+	#print "ctt: $start $total\n";
 	return $total;
 }
 sub get_replaygain {
