@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.25';
-my $SELF_DATE = '2020-05-03';
+my $SELF_DATE = '2020-08-13';
 
 ## GLOBALS ##
 my %run;
@@ -1814,7 +1814,7 @@ sub check_in_out_types {
 		eval $print_line_large;
 		print main::dotify("Checking input and output types");
 	}
-	if ($run{'ffmpeg'} && ($INPUT_TYPE !~ /^(flac)$/ || $OUTPUT_TYPE !~ m/^(ogg)$/i) ){
+	if ($run{'ffmpeg'} && ($INPUT_TYPE !~ /^(flac)$/ || $OUTPUT_TYPE !~ m/^(flac|ogg)$/i) ){
 		$b_error = 1;
 		$error_message .= "\n  The input/output type combination you entered is not supported: ";
 		$error_message .= "in: $INPUT_TYPE out: $OUTPUT_TYPE";
@@ -1837,7 +1837,7 @@ sub check_in_out_types {
 		$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
 		$error_message .= "only supports input type: flac";
 	}
-	if ($b_check_out && $INPUT_TYPE =~ m/^(aiff?|mp3|raw|shn)$/i && $OUTPUT_TYPE ne lc('flac')){
+	if ($b_check_out && $INPUT_TYPE =~ m/^(aiff?|flac|mp3|raw|shn)$/i && $OUTPUT_TYPE ne lc('flac')){
 		$b_error = 1;
 		$error_message .= "\n  The input type $INPUT_TYPE you entered ";
 		$error_message .= "only supports output type: flac";
@@ -2215,7 +2215,7 @@ sub print_options {
 	$output .= "--input, -i       Input type: aif,flac,raw,shn,wav. shn requires codec shorten. \n";
 	$output .= "                  raw,shn only output to flac.\n";
 	$output .= "                  Current value: $INPUT_TYPE\n";
-	$output .= "--output, -o      Output type: mp3, ogg, opus. mp3 requires input type flac.\n";
+	$output .= "--output, -o      Output type: mp3, ogg, opus, flac. mp3 requires input type flac.\n";
 	$output .= "                  Current value: $OUTPUT_TYPE\n";
 	$output .= "--quality n, -q n flac: n between 0 and 8. 8 best, but > 4 generally pointless.\n";
 	$output .= "                  ogg: n between -1 and 10. Fractions ok. 10 best quality.\n";
