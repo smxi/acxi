@@ -77,8 +77,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.25';
-my $SELF_DATE = '2020-08-13';
+my $SELF_VERSION = '3.3.26';
+my $SELF_DATE = '2020-08-16';
 
 ## GLOBALS ##
 my %run;

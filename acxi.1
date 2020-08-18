@@ -1,4 +1,4 @@
-.TH ACXI 1 "2020\-05\-03" acxi "acxi manual"
+.TH ACXI 1 "2020\-08\-18" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -415,7 +415,11 @@ first time to make sure you have shorten codec installed.
 
 Some other input types may be active for testing purposes occasionally,
 but acxi does not promote, advocate, or officially support those types
-(like mp3 to flac).
+(like mp3 to flac). 
+
+Supports flac to flac for cases where you might want
+to redo flac files to known quality/compression levels, or redo them
+using current flac codecs.
 
 Tags transfer from AIF files that are tagged to FLAC files in my tests.
 
@@ -477,7 +481,7 @@ Output type. Supported types: flac, ogg, opus, mp3
 
 \fBmp3\fR \- only supports flac input type
 
-\fBflac\fR \- only supports shn, or raw input types.
+\fBflac\fR \- only supports flac, shn, or raw input types.
 
 .TP
 .B \-\-quality [number]\fR, \fB\-q [number]\fR
