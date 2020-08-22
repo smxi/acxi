@@ -77,8 +77,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.26';
-my $SELF_DATE = '2020-08-16';
+my $SELF_VERSION = '3.3.27';
+my $SELF_DATE = '2020-08-22';
 
 ## GLOBALS ##
 my %run;
@@ -1814,33 +1814,38 @@ sub check_in_out_types {
 		eval $print_line_large;
 		print main::dotify("Checking input and output types");
 	}
-	if ($run{'ffmpeg'} && ($INPUT_TYPE !~ /^(flac)$/ || $OUTPUT_TYPE !~ m/^(flac|ogg)$/i) ){
+	if ($run{'ffmpeg'} && ($INPUT_TYPE !~ /^(flac)$/ || $OUTPUT_TYPE !~ m/^(flac|ogg|opus)$/i) ){
 		$b_error = 1;
-		$error_message .= "\n  The input/output type combination you entered is not supported: ";
+		$error_message .= "\n  The --ffmpeg input/output type combination you entered is not supported: ";
 		$error_message .= "in: $INPUT_TYPE out: $OUTPUT_TYPE";
 	}
-	if ((!$run{'checksum'} && !$run{'checksum-verify'} && 
-	 $INPUT_TYPE !~ m/^(aiff?|flac|mp3|raw|shn|wav)$/i) ||
-	 (($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'}) && 
-	 $INPUT_TYPE !~ m/^(flac)$/i)){
+	if ($INPUT_TYPE !~ m/^(aiff?|flac|mp3|raw|shn|wav)$/i ){
 		$b_error = 1;
 		$error_message .= "\n  The input type you entered is not supported: ";
 		$error_message .= "$INPUT_TYPE";
 	}
-	if ( $b_check_out && $OUTPUT_TYPE !~ m/^(flac|mp3|ogg|opus)$/i ){
+	if (($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'}) && 
+	 $INPUT_TYPE !~ m/^(flac)$/i){
 		$b_error = 1;
-		$error_message .= "\n  The output type you entered is not supported: ";
-		$error_message .= "$OUTPUT_TYPE";
+		$error_message .= "\n  The input type you entered is not supported for checksum/tagging operations: ";
+		$error_message .= "$INPUT_TYPE";
 	}
-	if ( $b_check_out && $OUTPUT_TYPE eq lc('mp3') && $INPUT_TYPE ne lc('flac') ){
-		$b_error = 1;
-		$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
-		$error_message .= "only supports input type: flac";
-	}
-	if ($b_check_out && $INPUT_TYPE =~ m/^(aiff?|flac|mp3|raw|shn)$/i && $OUTPUT_TYPE ne lc('flac')){
-		$b_error = 1;
-		$error_message .= "\n  The input type $INPUT_TYPE you entered ";
-		$error_message .= "only supports output type: flac";
+	if ($b_check_out){
+		if ($OUTPUT_TYPE !~ m/^(flac|mp3|ogg|opus)$/i ){
+			$b_error = 1;
+			$error_message .= "\n  The output type you entered is not supported: ";
+			$error_message .= "$OUTPUT_TYPE";
+		}
+		if ($OUTPUT_TYPE eq lc('mp3') && $INPUT_TYPE ne lc('flac') ){
+			$b_error = 1;
+			$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
+			$error_message .= "only supports input type: flac";
+		}
+		if ($INPUT_TYPE =~ m/^(aiff?|mp3|raw|shn)$/i && $OUTPUT_TYPE ne lc('flac')){
+			$b_error = 1;
+			$error_message .= "\n  The input type $INPUT_TYPE you entered ";
+			$error_message .= "only supports output type: flac";
+		}
 	}
 	if ( $b_error ){
 		main::error_handler('unsupported-type',$error_message,0);
@@ -1887,93 +1892,98 @@ sub check_application_paths {
 	if ( $LOG_LEVEL > 0 ) {
 		print main::dotify("Checking required tools paths");
 	}
-	if ($b_check_out && $OUTPUT_TYPE eq 'flac') {
-		$app_paths .= "$COMMAND_FFMPEG";
-		if ( ! -x "$COMMAND_FFMPEG" ) {
-			$b_error = 1;
-			$error_message .= "\n  Encoding application not available: $COMMAND_FFMPEG";
-		}
-	}
-	elsif ($b_check_out && ($OUTPUT_TYPE eq 'ogg' || $OUTPUT_TYPE eq 'opus' ) ) {
-		if (!$run{'ffmpeg'}){
-			if ($OUTPUT_TYPE eq 'ogg'){
-				$app_paths .= "\n $COMMAND_OGG";
-				if ( ! -x "$COMMAND_OGG" ) {
-					$b_error = 1;
-					$error_message .= "\n  Encoding application not available: $COMMAND_OGG";
-				}
-			}
-			elsif ($OUTPUT_TYPE eq 'opus'){
-				$app_paths .= "\n $COMMAND_OPUS";
-				if (!$run{'ffmpeg'}){
-					if ( ! -x "$COMMAND_OPUS" ) {
-						$b_error = 1;
-						$error_message .= "\n  Encoding application not available: $COMMAND_OPUS";
-					}
-				}
-			}
-		}
-		else {
-			$app_paths .= "\n $COMMAND_FFMPEG";
+	if ($b_check_out){
+		if ($OUTPUT_TYPE eq 'flac') {
+			$app_paths .= "$COMMAND_FFMPEG";
 			if ( ! -x "$COMMAND_FFMPEG" ) {
 				$b_error = 1;
 				$error_message .= "\n  Encoding application not available: $COMMAND_FFMPEG";
 			}
 		}
-	}
-	elsif ($b_check_out && $OUTPUT_TYPE eq 'mp3' ) {
-		$app_paths .= "\n $COMMAND_LAME ";
-		if ( ! -x "$COMMAND_LAME" ) {
-			$b_error = 1;
-			$error_message .= "\n  Encoding application not available: $COMMAND_LAME";
+		elsif ($OUTPUT_TYPE eq 'ogg' || $OUTPUT_TYPE eq 'opus' ) {
+			if (!$run{'ffmpeg'}){
+				if ($OUTPUT_TYPE eq 'ogg'){
+					$app_paths .= "\n $COMMAND_OGG";
+					if ( ! -x "$COMMAND_OGG" ) {
+						$b_error = 1;
+						$error_message .= "\n  Encoding application not available: $COMMAND_OGG";
+					}
+				}
+				elsif ($OUTPUT_TYPE eq 'opus'){
+					$app_paths .= "\n $COMMAND_OPUS";
+					if (!$run{'ffmpeg'}){
+						if ( ! -x "$COMMAND_OPUS" ) {
+							$b_error = 1;
+							$error_message .= "\n  Encoding application not available: $COMMAND_OPUS";
+						}
+					}
+				}
+			}
+			else {
+				$app_paths .= "\n $COMMAND_FFMPEG";
+				if ( ! -x "$COMMAND_FFMPEG" ) {
+					$b_error = 1;
+					$error_message .= "\n  Encoding application not available: $COMMAND_FFMPEG";
+				}
+			}
 		}
-		$app_paths .= "$COMMAND_FLAC ";
-		if ( ! -x "$COMMAND_FLAC" ) {
-			$b_error = 1;
-			$error_message .= "\n  Input processor $COMMAND_FLAC needed by lame ";
-			$error_message .= "not available.";
-		}
-		$app_paths .= "$COMMAND_METAFLAC ";
-		# Added: Odd @2011-03-23 01:55:28
-		if ( ! -x "$COMMAND_METAFLAC" ) {
-			$b_error = 1;
-			$error_message .= "\n  $COMMAND_METAFLAC not found. Required to copy ";
-			$error_message .= "ID3 tags from Flac to MP3.";
-		}
-	}
-	elsif ($run{'checksum'} || $run{'checksum-verify'}){
-		$app_paths .= "$COMMAND_MD5 ";
-		# Added: Odd @2011-03-23 01:55:28
-		if ( ! -x "$COMMAND_MD5" ) {
-			$b_error = 1;
-			$error_message .= "\n  $COMMAND_MD5 not found. Required to generate ";
-			$error_message .= "md5 checksum files.";
-		}
-		if ($run{'checksum'}){
+		elsif ($OUTPUT_TYPE eq 'mp3' ) {
+			$app_paths .= "\n $COMMAND_LAME ";
+			if ( ! -x "$COMMAND_LAME" ) {
+				$b_error = 1;
+				$error_message .= "\n  Encoding application not available: $COMMAND_LAME";
+			}
+			$app_paths .= "$COMMAND_FLAC ";
+			if ( ! -x "$COMMAND_FLAC" ) {
+				$b_error = 1;
+				$error_message .= "\n  Input processor $COMMAND_FLAC needed by lame ";
+				$error_message .= "not available.";
+			}
 			$app_paths .= "$COMMAND_METAFLAC ";
 			# Added: Odd @2011-03-23 01:55:28
 			if ( ! -x "$COMMAND_METAFLAC" ) {
 				$b_error = 1;
-				$error_message .= "\n  $COMMAND_METAFLAC not found. Required to generate ";
-				$error_message .= "ffp checksum files.";
-			}
-		}
-		if ($run{'checsum-verify'}){
-			$app_paths .= "$COMMAND_FLAC ";
-			if (! -x "$COMMAND_FLAC"){
-				$b_error = 1;
-				$error_message .= "\n  $COMMAND_FLAC not found. Required to verify ";
-				$error_message .= "$INPUT_TYPE files.";
+				$error_message .= "\n  $COMMAND_METAFLAC not found. Required to copy ";
+				$error_message .= "ID3 tags from Flac to MP3.";
 			}
 		}
 	}
-	elsif ($run{'autotag'}){
-		$app_paths .= "$COMMAND_METAFLAC ";
-		# Added: Odd @2011-03-23 01:55:28
-		if ( ! -x "$COMMAND_METAFLAC" ) {
-			$b_error = 1;
-			$error_message .= "\n  $COMMAND_METAFLAC not found. Required to auto-tag ";
-			$error_message .= "collection files.";
+	else {
+		# Note: -AK but not -AV
+		if ($run{'checksum'} || $run{'checksum-verify'}){
+			$app_paths .= "$COMMAND_MD5 ";
+			# Added: Odd @2011-03-23 01:55:28
+			if ( ! -x "$COMMAND_MD5" ) {
+				$b_error = 1;
+				$error_message .= "\n  $COMMAND_MD5 not found. Required to generate ";
+				$error_message .= "md5 checksum files.";
+			}
+			if ($run{'checksum'}){
+				$app_paths .= "$COMMAND_METAFLAC ";
+				# Added: Odd @2011-03-23 01:55:28
+				if ( ! -x "$COMMAND_METAFLAC" ) {
+					$b_error = 1;
+					$error_message .= "\n  $COMMAND_METAFLAC not found. Required to generate ";
+					$error_message .= "ffp checksum files.";
+				}
+			}
+			if ($run{'checsum-verify'}){
+				$app_paths .= "$COMMAND_FLAC ";
+				if (! -x "$COMMAND_FLAC"){
+					$b_error = 1;
+					$error_message .= "\n  $COMMAND_FLAC not found. Required to verify ";
+					$error_message .= "$INPUT_TYPE files.";
+				}
+			}
+		}
+		if ($run{'autotag'}){
+			$app_paths .= "$COMMAND_METAFLAC ";
+			# Added: Odd @2011-03-23 01:55:28
+			if ( ! -x "$COMMAND_METAFLAC" ) {
+				$b_error = 1;
+				$error_message .= "\n  $COMMAND_METAFLAC not found. Required to auto-tag ";
+				$error_message .= "collection files.";
+			}
 		}
 	}
 	if ( $b_error ) {

@@ -1,4 +1,4 @@
-.TH ACXI 1 "2020\-08\-18" acxi "acxi manual"
+.TH ACXI 1 "2020\-08\-22" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -354,7 +354,7 @@ exist. This is useful if you for example want to change compression
 quality on existing files.
 
 .TP
-.B \-\-fork [0-xx]\fR, \fB\-F\fR
+.B \-\-fork [0-xx]\fR, \fB\-F [0-xx]\fR
 Uses Perl module \fBParallel::ForkManager\fR to allow for forking of audio
 file conversions actions. This can speed up your syncing a lot depending on how 
 many threads your CPU can support and how many you assign with this option.
@@ -381,7 +381,7 @@ conversion tools for flac, mp3, ogg, or opus output. Same as \fB\-\-log 3\fR
 This help menu.
 
 .TP
-.B \-\-image [cover image file name|remove]\fR
+.B \-\-image [cover image file name|remove]\fR, \fB\-I [cover image file name|remove]\fR
 Flac only. Use only on a single directory. Takes the supplied cover image
 file and embeds it into the existing flac files. Use with \fB\-\-remove-images\fR 
 if you want to remove existing embedded images. If this option is not used, it 
@@ -404,7 +404,7 @@ Sample: \fBacxi \-s ./ \-\-image remove\fR
 Sample: \fBacxi \-s ./ \-I cover.jpg \-\-remove\-images\fR
 
 .TP
-.B \-\-input [aif|flac|raw|shn|wav]\fR, \fB\-i [flac|raw|shn|wav]\fR
+.B \-\-input [aif|flac|raw|shn|wav]\fR, \fB\-i [aif|flac|raw|shn|wav]\fR
 Input type. Supported types: flac, wav, raw, shn. 
 
 \fBaif/raw/shn\fR \- only support flac output. 
@@ -839,7 +839,7 @@ You can also visit
 .B acxi
 is a fork and full rewrite of flac2ogg.pl.
 
-Copyright (c) Harald Hope, 2010\-2019
+Copyright (c) Harald Hope, 2010\-2020
 
 Forking logic:  prupert. 2019-07
 
