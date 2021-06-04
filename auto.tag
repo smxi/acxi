@@ -12,6 +12,9 @@
 ## values, like DISCNUMBER%:, PERFORMER%:, DATE%:, YEAR%:
 ## Check tags: metaflac --list --block-type=VORBIS_COMMENT *.flac
 ## Check images: metaflac --list --block-type=PICTURE *.flac | grep -A8 -i metadata
+## Use -E option to prefill ARTIST, DATE, YEAR, PERFORMER, TITLE fields 
+## automatically. Requires specially formatted info.txt file. See man page for
+## details.
 
 ## COLLECTION/RECORDING NAME/CREATORS ##
 ALBUM%:

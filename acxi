@@ -697,11 +697,69 @@ sub make_file {
 		print "No files found to process.\n";
 	}
 }
+sub prefill_data {
+	my ($b_performer,@data,%info);
+	# no blank lines in band/location/date block, stop after first blank line.
+	my ($b_top_block) = (1);
+	print "Checking for $INFO_FILE... ";
+	main::error_handler('open',"$INFO_FILE not readable!") if  !-r $INFO_FILE;
+	open(my $fh, '<', $INFO_FILE) or 
+	 main::error_handler('open', "Failed to open: $INFO_FILE with error:\n:$!");
+	
+	chomp(@data = <$fh>);
+	close $fh if $fh;
+	print "File found and read\n";
+	my $count = scalar @data;
+	if ($count < 15){
+		main::error_handler('info-file',"$INFO_FILE only had $count lines");
+	}
+	foreach (@data){
+		$_ =~ s/[\r\n]//g;
+	}
+	my $counter = 0;
+	foreach (@data){
+		$counter++;
+		$_ = main::trimmer($_);
+		$b_top_block = 0 if !$_;
+		if ($counter == 1){
+			$info{'artist'} = $_;
+		}
+		elsif ($b_top_block && $counter < 6 && $_ !~ /^(19|20)[0-9]{2}-/){
+			$_ =~ s/,$//;
+			$info{'location'} .= ', ' . $_ if $info{'location'};
+			$info{'location'} = $_ if !$info{'location'};
+		}
+		elsif ($b_top_block && $counter < 6 && $_ =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
+			$info{'date-print'} = $1;
+			$info{'date-print'} .= $4 if $4;
+			$info{'date'} = $1;
+			$info{'year'} = $2;
+		}
+		elsif (!$b_top_block && $counter > 6 && $_ =~ /^[0-9]{1,2}\.\s(.*?)(\s+[\[\(][0-9:]+[\]\)])?$/){
+			push(@{$info{'tracks'}},$1);
+		}
+		elsif ($counter > 15 && /^(Band|Lineup):/){
+			$b_performer = 1;
+			next;
+		}
+		if ($b_performer && $_){
+			push(@{$info{'performers'}},$_);
+		}
+		elsif ($b_performer && !$_){
+			$b_performer = 0;
+		}
+	}
+	$info{'location'} =~ s/,\s*$// if $info{'location'};
+	# print Data::Dumper::Dumper \%info;
+	return %info;
+}
 sub populate_file {
 	my ($files) = @_;
-	my (@multi,@replaygain,@tags);
+	my (@multi,@replaygain,@tags,%info);
 	my ($b_first,$j,$holder,$starter) = (1,0,'','');
 	my $counter=$start;
+	%info = prefill_data() if $run{'prefill'};
+	print Data::Dumper::Dumper \%info if $b_test;
 	my @collection = (
 	'## RECORDING NAME/CREATORS ##',
 	'ALBUM','# Name to sort under','ALBUMSORT',
@@ -742,6 +800,34 @@ sub populate_file {
 	'# TRACKNUMBER and FILE required, title not known?: suggest TITLE%:Unknown ');
 	my @track = ('','TRACKNUMBER','TITLE','VERSION','PART','FILE');
 	@collection = map {$_ .= '%:' if /^[A-Z]/; $_;} @collection;
+	if (%info && @collection){
+		my @working;
+		foreach my $item (@collection){
+			if ($item =~ /^ARTIST%:/ && $info{'artist'}){
+				$item .= $info{'artist'};
+			}
+			elsif ($item =~ /^ALBUM%:/ && ($info{'date-print'} || $info{'location'})){
+				$item .= $info{'date-print'} . ', ' if $info{'date-print'};
+				$item .= $info{'location'} if $info{'location'};
+				$item =~ s/,\s*$//;
+			}
+			elsif ($item =~ /^DATE%:/ && $info{'date'}){
+				$item .= $info{'date'};
+			}
+			elsif ($item =~ /^YEAR%:/ && $info{'year'}){
+				$item .= $info{'year'};
+			}
+			elsif ($item =~ /^LOCATION%:/ && $info{'location'}){
+				$item .= $info{'location'};
+			}
+			elsif ($item =~ /^PERFORMER%:/ && $info{'performers'}){
+				$item .= shift @{$info{'performers'}} if @{$info{'performers'}};
+			}
+			push(@working,$item);
+		}
+		@collection = @working if @working;
+	}
+	# print Data::Dumper::Dumper \@collection;
 	@disc = map {$_ .= '%:' if /^[A-Z]/; $_;} @disc;
 	@discs = map {$_ .= '%:' if /^[A-Z]/; $_;} @discs;
 	if ($run{'autotag-single'} && @$files){
@@ -784,7 +870,16 @@ sub populate_file {
 	#print Data::Dumper::Dumper \@multi, "\n";
 	@tags = (@collection,@disc);
 	@track = map {$_ .= '%:' if /^[A-Z]/; $_;} @track;
-	my @disc_working;
+	my (@disc_working,@info_working);
+	if ($info{'tracks'}){
+		if (scalar(@{$info{'tracks'}}) == scalar(@$files)){
+			@info_working = @{$info{'tracks'}};
+		}
+		else {
+			main::error_handler('track-counts',"Prefill track count mismatch: Files: " . scalar(@$files) . 
+			 ' Info Tracks: ' . scalar(@{$info{'tracks'}}),1);
+		}
+	}
 	foreach (@$files){
 		my @track_working = @track;
 		if ($run{'autotag-multi'} && scalar @multi > 1){
@@ -812,6 +907,7 @@ sub populate_file {
 			$track_working[1] = $track[1] . $counter;
 		}
 		$track_working[5] = $track[5] . $_;
+		$track_working[2] = $track[2] . shift(@info_working) if @info_working;
 		if (!$run{'no-replaygain'}){
 			@replaygain = get_replaygain(main::escape_item("$_"));
 			# we want the replaygain data right before FILE
@@ -1571,6 +1667,12 @@ sub reader {
 sub sourcer {
 	($_[0] eq '.' ) ? Cwd::getcwd() : $_[0];
 }
+sub trimmer {
+	my ($str) = @_;
+	$str =~ s/^\s+|\s+$//g; 
+	return $str;
+}
+
 sub unescape_item {
 	my ($file) = @_;
 	$file =~ s/\\\"/"/g;
@@ -1784,6 +1886,7 @@ sub error_handler {
 	elsif ($error eq 'invalid-options'){$error_no = 13;$br=''}
 	elsif ($error eq 'unsupported-option'){$error_no = 8;$br=''}
 	elsif ($error eq 'autotag-multi'){$error_no = 18;}
+	elsif ($error eq 'track-counts'){$error_no = 30;}
 	elsif ($error eq 'missing-perl-module'){$error_no = 10;
 		$message = "Perl Module not found in system: $message";}
 	if ($error eq 'validation-errors'){
@@ -2349,7 +2452,8 @@ sub print_options {
 	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";      
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
-	$output .= "--prefill, -E     Attempt to prefill auto.tag file using info.txt.\n";
+	$output .= "--prefill, -E     Attempt to prefill auto.tag file using info.txt. See man for\n";
+	$output .= "                  required syntax and structure of data in info file.\n";
 	$output .= "--prefill-file [file name]\n";
 	$output .= "                  Alternate file name to use for --prefill.\n";
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";

@@ -499,7 +499,28 @@ you want to preserve flac tags in your aac audio file.
 .TP
 .B \-\-prefill\fR, \fB\-E\fR
 Will attempt to populate \fBauto.tag\fR file using data from \fBinfo.txt\fR file 
-located in flac directory. 
+located in flac directory. Note that the data must have an extremely specific
+syntax for the prefill feature to work:
+
+* Band name must be first line in file. 
+
+* Date must be iso YYYY-MM-DD formatted, and must be the first thing on its 
+line, and must be in first 5 lines of file. 
+
+* Location can be 1 or more lines not starting with 19|20XX on lines 2-5. 
+
+* No non Band name, Date, Location info can be on first lines of file before 
+first blank line.
+
+* Performers must be preceded by a line starting with Band: or Lineup: and must 
+be followed by a blank line, with no empty lines between performers. 
+
+* Track numbers must start with X. or XX. where X is a number. The number of 
+tracks listed must correspoond to the total number of actual track files 
+present. If they do not match in counts, acxi will exit with an error.
+
+Use the  \fB\-\-test\fR option to make sure the data will prefill as expected
+before actually creating the \fBauto.tag\fR file.
 
 .TP
 .B \-\-prefill\-file [file name]\fR
