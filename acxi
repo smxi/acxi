@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #########################################################################
 # acxi - audio conversion program
 #########################################################################
@@ -77,8 +77,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.27';
-my $SELF_DATE = '2020-08-22';
+my $SELF_VERSION = '3.3.28';
+my $SELF_DATE = '2021-06-03';
 
 ## GLOBALS ##
 my %run;
@@ -87,7 +87,7 @@ my ($b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
 my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
 $silent_opus) = (7,'','','','','');
-my ($embed_image,$extension,$exclude_append,@excludes,@excludes_stripped,
+my ($codec,$embed_image,$extension,$exclude_append,@excludes,@excludes_stripped,
 @extension_list,@found_list,$list_type,@tags);
 # default: recurse infinite for File::Find; start tag list track numbers at 1
 my ($padding,$recurse,$start) = ('',-1,1);
@@ -183,9 +183,12 @@ my $MD5_FILE='md5sums';
 #### -------------------------------------------------------------------
 #### AUTO TAGGING
 #### -------------------------------------------------------------------
+# For -P/--prefill, can be overridden with config or --prefill-file []
+my $INFO_FILE='info.txt';
 # This is the file that contains the syntax found in auto.tag file. But
 # you can call it something else if you prefer.
 my $TAG_FILE='auto.tag';
+
 
 #### -------------------------------------------------------------------
 #### INPUT/OUTPUT
@@ -206,10 +209,15 @@ my $OUTPUT_TYPE = 'ogg';
 # For opus: n can be 6-256. 256 is the largest file size / highest quality / 
 # maximum bitrate. For flac 0-8 [0 biggest size, fastest], set to 4 because
 # there is almost no size decrease with flac 5-8 but big cpu time increase.
+my $QUALITY_AAC = 160;
 my $QUALITY_FLAC = 4;
 my $QUALITY_MP3 = 3;
 my $QUALITY_OGG = 7;
 my $QUALITY_OPUS = 144; # 128 claimed to be stereo transparent, 160 very good
+
+# Frauenhofer codec considered best, but ffmeg native 'aac' will usually be 
+# there.
+my $CODEC_AAC = 'libfdk_aac';
 
 # Option: -c/--copy and -a/--append (to append extension types to existing list.
 ## NOTE: if you want to override $COPY_TYPES in your config files, you
@@ -1367,7 +1375,18 @@ sub convert_file {
 			print main::dotify("\nEncoding $src_print to $OUTPUT_TYPE");
 		}
 	}
-	if ( $OUTPUT_TYPE eq 'flac' ){
+	if ( $OUTPUT_TYPE eq 'aac' || $OUTPUT_TYPE eq 'm4a' ){
+		$action = "To $OUTPUT_TYPE";
+		if (!$b_test){
+			# note: sample depth is taken usually from originating file, like shn or wav, but 
+			# mp3 does not seem to do this in my tests, and outputs to 24 bit
+			# note that -aq / -q:a does not seem to do anything, and ffmpeg reverts to default 5 level
+			my $sample_depth = ($INPUT_TYPE eq 'mp3') ? '-sample_fmt s16' : '';
+			qx($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" -b:a ${quality}k -c:a $codec $sample_depth "$dest_file" );
+			$result = $?;
+		}
+	}
+	elsif ( $OUTPUT_TYPE eq 'flac' ){
 		$action = 'To flac';
 		if (!$b_test){
 			# note: sample depth is taken usually from originating file, like shn or wav, but 
@@ -1378,7 +1397,15 @@ sub convert_file {
 			$result = $?;
 		}
 	}
-	
+	elsif ( $OUTPUT_TYPE eq 'mp3' ){
+		$action = 'To mp3';
+		if (!$b_test){
+			# Modified: Odd @2011-03-23 01:51:26 - Include ID3 copying
+			$cmd = main::flac2mp3_cmd("$src_file","$dest_file");
+			qx($cmd);
+			$result = $?;
+		}
+	}
 	elsif ( $OUTPUT_TYPE eq 'ogg' ){
 		$action = 'To ogg';
 		# ffmpeg -i 'file.flac'  -map_metadata:s:a 0:g 'file.ogg'
@@ -1398,15 +1425,6 @@ sub convert_file {
 		$action = 'To opus';
 		if (!$b_test){
 			qx($COMMAND_OPUS $silent_opus --bitrate $quality "$src_file" "$dest_file");
-			$result = $?;
-		}
-	}
-	elsif ( $OUTPUT_TYPE eq 'mp3' ){
-		$action = 'To mp3';
-		if (!$b_test){
-			# Modified: Odd @2011-03-23 01:51:26 - Include ID3 copying
-			$cmd = main::flac2mp3_cmd("$src_file","$dest_file");
-			qx($cmd);
 			$result = $?;
 		}
 	}
@@ -1796,6 +1814,7 @@ sub check_user_values {
 	check_excludes();
 	check_src_dest_directories();
 	check_in_out_types();
+	check_codecs();
 	if ($b_valid_in_out){
 		check_quality() if $b_check_out;
 		check_application_paths();
@@ -1831,17 +1850,17 @@ sub check_in_out_types {
 		$error_message .= "$INPUT_TYPE";
 	}
 	if ($b_check_out){
-		if ($OUTPUT_TYPE !~ m/^(flac|mp3|ogg|opus)$/i ){
+		if ($OUTPUT_TYPE !~ m/^(aac|flac|m4a|mp3|ogg|opus)$/i ){
 			$b_error = 1;
 			$error_message .= "\n  The output type you entered is not supported: ";
 			$error_message .= "$OUTPUT_TYPE";
 		}
-		if ($OUTPUT_TYPE eq lc('mp3') && $INPUT_TYPE ne lc('flac') ){
+		if ($OUTPUT_TYPE =~ /^(m4a|mp3|aac)$/i && $INPUT_TYPE ne lc('flac') ){
 			$b_error = 1;
 			$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
 			$error_message .= "only supports input type: flac";
 		}
-		if ($INPUT_TYPE =~ m/^(aiff?|mp3|raw|shn)$/i && $OUTPUT_TYPE ne lc('flac')){
+		if ($INPUT_TYPE =~ m/^(aac|aiff?|m4a|mp3|raw|shn)$/i && $OUTPUT_TYPE ne lc('flac')){
 			$b_error = 1;
 			$error_message .= "\n  The input type $INPUT_TYPE you entered ";
 			$error_message .= "only supports output type: flac";
@@ -1854,6 +1873,34 @@ sub check_in_out_types {
 		$b_valid_in_out = 1;
 		if ( $LOG_LEVEL > 0 ) {
 			print "Valid: $INPUT_TYPE(in) $OUTPUT_TYPE(out)\n";
+		}
+	}
+}
+sub check_codecs {
+	my ($b_error,$error_message) = (0,'');
+	if ( $LOG_LEVEL > 0 ) {
+		eval $print_line_large;
+		print main::dotify("Checking codecs");
+	}
+	if ($codec && $OUTPUT_TYPE !~ /^(aac|m4a)$/i){
+		$b_error = 1;
+		$error_message .= "--codec only is supported for output types aac/m4a.\n";
+	}
+	if ($OUTPUT_TYPE =~ /^(aac|m4a)$/i){
+		if (!$codec){
+			$codec = $CODEC_AAC;
+		}
+		if (!$codec || ($codec && $codec !~ /^(libfdk_aac|aac)$/)){
+			$b_error = 1;
+			$error_message .= "Only libfdk_aac or aac codecs supported for $OUTPUT_TYPE.\n";
+		}
+	}
+	if ($b_error){
+		main::error_handler('unsupported-type',$error_message,0);
+	}
+	else {
+		if ( $LOG_LEVEL > 0 ) {
+			print "Valid\n";
 		}
 	}
 }
@@ -2018,6 +2065,16 @@ sub check_quality{
 		}
 		else {
 			$quality = $QUALITY_OGG;
+		}
+	}
+	if ( lc($OUTPUT_TYPE) eq 'aac' || lc($OUTPUT_TYPE) eq 'm4a') {
+		if ($QUALITY_AAC !~ m/^[0-9]+$/ || $QUALITY_AAC < 10 || $QUALITY_AAC > 500 ) {
+			$b_error = 1;
+			$error_message .= "\n  $OUTPUT_TYPE only supports ";
+			$error_message .= "10 to 500 quality levels. You entered: $QUALITY_AAC";
+		}
+		else {
+			$quality = $QUALITY_AAC;
 		}
 	}
 	# supports fractional quality levels
@@ -2199,6 +2256,8 @@ sub print_options {
 	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
 	$output .= "                  remove that set of files or directories. Exits at end.\n";
 	$output .= "                  optional value 'sync' is used: --clean sync\n";
+	$output .= "--codec [codec]   [libfdk-aac|aac] -o aac/m4a only, if you want to use alternate\n";
+	$output .= "                  codec.\n";
 	$output .= "--copy, -c        List of alternate data types to copy to Output type\n";
 	$output .= "                  directories. Comma separated, no spaces. See sample above.\n";
 	$output .= "                  Current copy types: ";
@@ -2225,13 +2284,15 @@ sub print_options {
 	$output .= "--input, -i       Input type: aif,flac,raw,shn,wav. shn requires codec shorten. \n";
 	$output .= "                  raw,shn only output to flac.\n";
 	$output .= "                  Current value: $INPUT_TYPE\n";
-	$output .= "--output, -o      Output type: mp3, ogg, opus, flac. mp3 requires input type flac.\n";
+	$output .= "--output, -o      Output type: aac, flac. mp3, ogg, opus, mp3 requires input type flac.\n";
 	$output .= "                  Current value: $OUTPUT_TYPE\n";
 	$output .= "--quality n, -q n flac: n between 0 and 8. 8 best, but > 4 generally pointless.\n";
+	$output .= "                  aac/m4a: n between 10 and 500.\n";           
 	$output .= "                  ogg: n between -1 and 10. Fractions ok. 10 best quality.\n";
 	$output .= "                  opus: n between 6-256. Variable bit rate. 256 best quality.\n";
 	$output .= "                  mp3: n between 0-9. Variable bit rate, 0 best quality.\n";
-	$output .= "                  Current values: $QUALITY_MP3 (mp3); $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
+	$output .= "                  Current values: $QUALITY_AAC (aac/m4a); $QUALITY_MP3 (mp3); \n";
+	$output .= "                  $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
 	$output .= "--source, -s      Path to the top-most directory containing your source files.\n";
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
 	$output .= $line_small;
@@ -2287,8 +2348,11 @@ sub print_options {
 	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";      
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
-
+	$output .= "--prefill, -E       Attempt to prefill auto.tag file using info.txt";
+	$output .= "--prefill-file [file name]\n";
+	$output .= "                  Alternate file name to use for --prefill.";
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
+	
 	$output .= "--recurse [0-xx]  Set directory recursion levels. Default infinite. Useful\n";
 	$output .= "                  for having syncing or checksum tools ignore sub directories.\n";
 	$output .= "--remove-images, -R\n";
@@ -2403,6 +2467,9 @@ sub set_display_data {
 		elsif ( !$run{'ffmpeg'} && $OUTPUT_TYPE eq 'ogg' ) {
 			$silent_flac = '--quiet'; # for oggenc output
 		}
+		elsif ( $OUTPUT_TYPE =~ /^(aac|m4a)$/ ) {
+			$silent_ffmpeg = '-v quiet'; # for ffmpeg output
+		}
 		elsif ( ($run{'ffmpeg'} && $OUTPUT_TYPE =~ /^(ogg)$/ ) || $OUTPUT_TYPE eq 'flac' ) {
 			# -nostats -loglevel 0
 			# -hide_banner -loglevel panic
@@ -2488,8 +2555,10 @@ sub assign_value {
 	elsif ($var eq 'INPUT_TYPE'){$INPUT_TYPE = $value;}
 	elsif ($var eq 'LOG_LEVEL'){$LOG_LEVEL = $value;}
 	elsif ($var eq 'OUTPUT_TYPE'){$OUTPUT_TYPE = $value;}
+	elsif ($var eq 'CODEC_AAC'){$CODEC_AAC = $value;}
 	# legacy configs, sets both
 	elsif ($var eq 'QUALITY'){$QUALITY_OGG = $value;$QUALITY_MP3 = $value}
+	elsif ($var eq 'QUALITY_AAC'){$QUALITY_AAC = $value}
 	elsif ($var eq 'QUALITY_FLAC'){$QUALITY_FLAC = $value}
 	elsif ($var eq 'QUALITY_MP3'){$QUALITY_MP3 = $value}
 	elsif ($var eq 'QUALITY_OGG'){$QUALITY_OGG = $value;}
@@ -2502,6 +2571,7 @@ sub assign_value {
 		$run{'dot'} = $value if $value =~ /^[10]$/;}
 	elsif ($var eq 'FORK'){$FORK = $value}
 	elsif ($var eq 'FFP_FILE'){$FFP_FILE = $value}
+	elsif ($var eq 'INFO_FILE'){$INFO_FILE = $value}
 	elsif ($var eq 'MD5_FILE'){$MD5_FILE = $value}
 	elsif ($var eq 'TAG_FILE'){$TAG_FILE = $value}
 	elsif ($var eq 'EXCLUDE'){$EXCLUDE = $value}
@@ -2633,6 +2703,10 @@ sub get_options{
 		my ($opt,$arg) = @_;
 		$run{'clean-sync'} = 1 if $arg && $arg eq 'sync';
 		$run{'clean'} = 1 },
+	"codec:s" => sub { 
+		my ($opt,$arg) = @_;
+		error_handler('missing-arg',"$opt requires codec.",1) if !$arg;
+		$codec = $arg;},
 	# accepts null value so users can not copy anything
 	"c|copy:s" => sub { 
 		my ($opt,$arg) = @_;
@@ -2706,10 +2780,17 @@ sub get_options{
 		$DONT_USE_NLINK = 1 },
 	"no-replaygain" => sub { 
 		$run{'no-replaygain'} = 1 },
+	"E|prefill" => sub { 
+		$run{'prefill'} = 1 },
+	"prefill-file:s" => sub { 
+		my ($opt,$arg) = @_;
+		error_handler('missing-arg',"$opt requires file name.",1) if ! $arg;
+		$INFO_FILE = $arg },
 	"q|quality:f" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires number.",1) if ! defined $arg || $arg !~ /^-?[0-9\.]+$/;
 		# validate these later
+		$QUALITY_AAC = $arg;
 		$QUALITY_FLAC = $arg;
 		$QUALITY_MP3 = $arg;
 		$QUALITY_OGG = $arg;
@@ -2781,7 +2862,8 @@ sub get_options{
 	);
 	if (!$b_source && ($run{'autotag'} || 	$run{'autotag-aggregate'} ||
 	$run{'autotag-create'} || $run{'checksum'} || $run{'checksum-verify'} ||
-	$run{'embed-image'} || $run{'remove-images'} || 	$run{'update-tag'} )){
+	$run{'embed-image'} || $run{'prefill'} || $run{'remove-images'} || 
+	$run{'update-tag'} )){
 		error_handler('invalid-options', 
 		 "You must supply an explicit --source for all tagging and checksum options.",1);
 	}
@@ -2799,6 +2881,10 @@ sub get_options{
 	 $run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'})){
 		error_handler('invalid-options', 
 		 "You cannot use --autotag-create with autotag, clean, sync, or checksum options.",1);
+	}
+	if ($run{'prefill'} && !($run{'autotag-multi'} || $run{'autotag-single'})){
+		error_handler('invalid-options', 
+		 "Prefill requires either --autotag-create-multi or --autotag-create-single.",1);
 	}
 	if (!$run{'sync'} && $run{'ffmpeg'}){
 		error_handler('invalid-options', 

@@ -1,4 +1,4 @@
-.TH ACXI 1 "2020\-08\-22" acxi "acxi manual"
+.TH ACXI 1 "2021\-06\-03" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -14,7 +14,9 @@ Syncing: \fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-clean\fR]
 Tagging: \fBacxi\fR [\fB\-\-autotag\fR] [\fB\-\-autotag\-create\fR] 
 [\fB\-\-autotag\-create\-single\fR] 
 [\fB\-\-autotag\-create\-multi {filename start ID}\fR]
-[\fB\-\-aggregate {file name|extension}\fR] [\fB\-\-image {cover image filename}\fR]
+[\fB\-\-aggregate {file name|extension}\fR] 
+[\fB\-\-image {cover image filename}\fR]
+[\fB\-\prefill\fR] [\fB\-\prefill\-file {release info file name}\fR] 
 [\fB\-\-no\-replaygain\fR] [\fB\-\-recurse\fR -1-xx] [\fB\-\-remove\-images\fR] 
 [\fB\-\-remove\-padding\fR] [\fB\-\-start\fR 0-xx]
 [\fB\-\-tag {"TAG1%:tag value^^TAG2%:tag value"}\fR] 
@@ -62,6 +64,9 @@ so it should run on anything. Several features (copy, make directory,
 find files) were moved from *nix commands to Perl native commands in
 version 3, which should make acxi fully platform agnostic.
 .IP * 2
+\fBAAC\fR encoding requires \fBffmepg\fR with either \fBlibfdk_aac\fR) or 
+native \fBffmepg aac\fR codec.
+.IP * 2
 \fBOgg\fR encoding requires \fBoggenc\fR (Debian/Ubuntu package: \fBvorbis-tools\fR).
 .IP * 2
 \fBOpus\fR encoding requires \fBopusenc\fR (Debian/Ubuntu package: \fBopus-tools\fR).
@@ -96,10 +101,10 @@ For example:
 Note that some options have long and short forms. The short form is used
 when available in examples in order to keep things simple.
 
-All tagging or checksum options (\fB\-A\fR, \fB\-C\fR, \fB\-D\fR, \fB\-G\fR, 
-\fB\-I\fR, \fB\-K\fR, \fB\-M\fR, \fB\-P\fR, \fB\-R\fR, \fB\-S\fR, \fB\-T\fR, 
-\fB\-V\fR) must have an explicit source (\fB\-s\fR) location supplied to 
-avoid errors.
+All tagging or checksum options (\fB\-A\fR, \fB\-C\fR, \fB\-D\fR, \fB\-E\fR, 
+\fB\-G\fR, \fB\-I\fR, \fB\-K\fR, \fB\-M\fR, \fB\-P\fR, \fB\-R\fR, \fB\-S\fR, 
+\fB\-T\fR, \fB\-V\fR) must have an explicit source (\fB\-s\fR) location 
+supplied to avoid errors.
 
 .SH OPTIONS
 
@@ -293,6 +298,10 @@ It can be enabled using the CLEAN configuration option below so that
 acxi always cleans up before it starts syncing.
 
 .TP
+.B \-\-codec [libfdk_aac|aac]\fR, \fB\-d [libfdk_aac|aac]\fR
+Current only supported for aac/m4a output using ffmpeg.
+
+.TP
 .B \-\-copy [extensions]\fR, \fB\-c [extensions]\fR
 Comma separated list of extensions for file types you want to sync to your
 lossy music directory. Overrides default values. Use lowercase, but it's
@@ -409,17 +418,16 @@ Input type. Supported types: flac, wav, raw, shn.
 
 \fBaif/raw/shn\fR \- only support flac output. 
 
-\fBshn\fR \- requires the shorten codec, which you usually have to build yourself 
-unless you can find a package for it. Use \fB\-\-log 3\fR to test the 
+\fBshn\fR \- requires the shorten codec, which you usually have to build 
+yourself unless you can find a package for it. Use \fB\-\-log 3\fR to test the 
 first time to make sure you have shorten codec installed.
 
-Some other input types may be active for testing purposes occasionally,
-but acxi does not promote, advocate, or officially support those types
-(like mp3 to flac). 
+Some other input types may be active for testing purposes occasionally, but acxi 
+does not promote, advocate, or officially support those types (like mp3 to 
+flac). 
 
-Supports flac to flac for cases where you might want
-to redo flac files to known quality/compression levels, or redo them
-using current flac codecs.
+Supports flac to flac for cases where you might want to redo flac files to known 
+quality/compression levels, or redo them using current flac codecs.
 
 Tags transfer from AIF files that are tagged to FLAC files in my tests.
 
@@ -477,15 +485,31 @@ file. See \fB\-\-autotag\-create\fR for details.
 
 .TP
 .B \-\-output [flac|mp3|ogg|opus]\fR, \fB\-o [flac|mp3|ogg|opus]\fR
-Output type. Supported types: flac, ogg, opus, mp3
+Output type. Supported types: aac/m4a, flac, ogg, opus, mp3
+
+\fBaac\fR \- only supports flac input type, can be output to m4a or aac.
+
+\fBflac\fR \- only supports flac, shn, or raw input types.
 
 \fBmp3\fR \- only supports flac input type
 
-\fBflac\fR \- only supports flac, shn, or raw input types.
+.TP
+.B \-\-prefill\fR, \fB\-E\fR
+Will attempt to populate \fBauto.tag\fR file using data from \fBinfo.txt\fR file 
+located in flac directory. 
+
+.TP
+.B \-\-prefill\-file [file name]\fR
+An alternate file name to use for prefill. Note that file MUST be .txt, and
+should not be anything other than  ASCII or UTF8, otherwise you will get ungood
+results.
 
 .TP
 .B \-\-quality [number]\fR, \fB\-q [number]\fR
 Set compression quality level.
+
+\fBaac\fR \-  n can be an integer between 6\-256 (bitrate). 256 is largest file/highest
+quality.
 
 \fBflac\fR \- n can be an integer between 0\-8, 0 is 
 largest file / fastest conversion time, 8 is smallest file, longest time. 

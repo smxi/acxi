@@ -105,12 +105,15 @@ so it should run on anything. Several features (copy, make directory,
 find files) were moved from *nix commands to Perl native commands in
 version 3, which should make acxi fully platform agnostic.
 
-* Ogg encoding requires oggenc (Debian/Ubuntu package: vorbis-tools).
-
-* Opus encoding requires opusenc (Debian/Ubuntu package: opus-tools).
+* AAC/M4A encoding requires: ffmpeg with either native aac codec, or 
+  libfdk_aac (best) (Debian/Ubuntu package libfdk-aac2).
 
 * MP3 encoding requires: lame and flac (if source file is a flac, MP3
   encoding does not support wav or raw formats).
+  
+* Ogg encoding requires oggenc (Debian/Ubuntu package: vorbis-tools).
+
+* Opus encoding requires opusenc (Debian/Ubuntu package: opus-tools).
   
 * SHN -> FLAC conversion requires the codec 'shorten' and ffmpeg.
 
@@ -160,6 +163,8 @@ configuration file.
 acxi defaults to flac for input, and defaults to the following quality 
 levels for output:
 
+* aac/m4a: 160
+
 * flac: 4
 
 * ogg: 7
@@ -195,6 +200,14 @@ You can change the screen output from:
 (--debug, --log 4)
 
 These values can also be set in configuration files using LOG_LEVEL=[0-4].
+
+========================================================================
+AAC
+------------------------------------------------------------------------
+
+You can usually find the Frauenhofer libfdk_aac codec if you use the proper
+non-free repositories. Otherwise you can use the ffmpeg native aac codec,
+but it has been tested as good as the fdk_aac codec. Your call.
 
 ========================================================================
 SHN SHORTEN
