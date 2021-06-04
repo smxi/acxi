@@ -491,8 +491,8 @@ Output type. Supported types: aac, flac, ogg, opus, m4a, mp3
 
 \fBflac\fR \- only supports flac, shn, or raw input types.
 
-\fBm4a\fR \- only supports flac input type, Container around aac data. 
-Use if you want to preserve flac tags in your aac audio file.
+\fBm4a\fR \- only supports flac input type, Container around aac data. Use if 
+you want to preserve flac tags in your aac audio file.
 
 \fBmp3\fR \- only supports flac input type
 
@@ -511,8 +511,8 @@ results.
 .B \-\-quality [number]\fR, \fB\-q [number]\fR
 Set compression quality level.
 
-\fBaac\fR \-  n can be an integer between 6\-256 (bitrate). 256 is largest file/highest
-quality.
+\fBaac/m4a\fR \-  n can be an integer between 10\-500 (bitrate). 500 is largest 
+file/highest quality.
 
 \fBflac\fR \- n can be an integer between 0\-8, 0 is 
 largest file / fastest conversion time, 8 is smallest file, longest time. 
@@ -524,8 +524,8 @@ largest file / highest quality.
 \fBogg\fR \- n can be between \-1 and 10. 10 is the largest file/highest quality. 
 Fractions are allowed, e.g. \fB\-o ogg \-q 7.54\fR
 
-\fBopus\fR \-  n can be an integer between 6\-256 (bitrate). 256 is largest file/highest
-quality.
+\fBopus\fR \-  n can be an integer between 6\-256 (bitrate). 256 is largest 
+file/highest quality.
 
 Note that using a higher or lower quality than you used to create
 the compressed files will not result in redoing those files unless 
