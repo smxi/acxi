@@ -2284,9 +2284,9 @@ sub print_options {
 	$output .= "--input, -i       Input type: aif,flac,raw,shn,wav. shn requires codec shorten. \n";
 	$output .= "                  raw,shn only output to flac.\n";
 	$output .= "                  Current value: $INPUT_TYPE\n";
-	$output .= "--output, -o      Output type: aac, flac. m4a, mp3, ogg, opus, mp3 requires\n";
-	$output .= "                  input type flac. To preserve flac tags for aac, use m4a.\n";
-	$output .= "                  Current value: $OUTPUT_TYPE\n";
+	$output .= "--output, -o      Output type: aac, flac. m4a, mp3, ogg, opus. aac/m4a/mp3\n";
+	$output .= "                  require input type flac. To preserve flac tags for aac, use\n";
+	$output .= "                  m4a. Current value: $OUTPUT_TYPE\n";
 	$output .= "--quality n, -q n flac: n between 0 and 8. 8 best, but > 4 generally pointless.\n";
 	$output .= "                  aac/m4a: n between 10 and 500.\n";           
 	$output .= "                  ogg: n between -1 and 10. Fractions ok. 10 best quality.\n";
