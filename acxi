@@ -2288,7 +2288,7 @@ sub print_options {
 	$output .= "                  require input type flac. To preserve flac tags for aac, use\n";
 	$output .= "                  m4a. Current value: $OUTPUT_TYPE\n";
 	$output .= "--quality n, -q n flac: n between 0 and 8. 8 best, but > 4 generally pointless.\n";
-	$output .= "                  aac/m4a: n between 10 and 500.\n";           
+	$output .= "                  aac/m4a: n between 10 and 500. 500 best quality.\n";           
 	$output .= "                  ogg: n between -1 and 10. Fractions ok. 10 best quality.\n";
 	$output .= "                  opus: n between 6-256. Variable bit rate. 256 best quality.\n";
 	$output .= "                  mp3: n between 0-9. Variable bit rate, 0 best quality.\n";
