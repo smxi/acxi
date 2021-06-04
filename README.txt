@@ -101,7 +101,7 @@ moved from *nix commands to Perl native commands in version 3, which should make
 acxi fully platform agnostic.
 
 * AAC/M4A encoding requires: ffmpeg with either native aac codec, or libfdk_aac 
-  (best) (Debian/Ubuntu package libfdk-aac2). If you want to preserve tags, use 
+  (best, Debian/Ubuntu package libfdk-aac2). If you want to preserve tags, use 
   m4a, if you use aac they will not transfer.
 
 * MP3 encoding requires: lame and flac (if source file is a flac, MP3 encoding 
@@ -196,7 +196,7 @@ AAC
 --------------------------------------------------------------------------------
 
 You can usually install the Frauenhofer libfdk_aac codec if you use the proper 
-non-free repositories. In Debian/Ubuntu, the package is libfdk_aac. Otherwise 
+non-free repositories. In Debian/Ubuntu, the package is libfdk_aac2. Otherwise 
 you can use the ffmpeg native aac codec, but it has been tested and found less 
 good than the fdk_aac codec. Your call. 
 
