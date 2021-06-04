@@ -16,7 +16,7 @@ Tagging: \fBacxi\fR [\fB\-\-autotag\fR] [\fB\-\-autotag\-create\fR]
 [\fB\-\-autotag\-create\-multi {filename start ID}\fR]
 [\fB\-\-aggregate {file name|extension}\fR] 
 [\fB\-\-image {cover image filename}\fR]
-[\fB\-\prefill\fR] [\fB\-\prefill\-file {release info file name}\fR] 
+[\fB\-\-prefill\fR] [\fB\-\-prefill\-file {release info file name}\fR] 
 [\fB\-\-no\-replaygain\fR] [\fB\-\-recurse\fR -1-xx] [\fB\-\-remove\-images\fR] 
 [\fB\-\-remove\-padding\fR] [\fB\-\-start\fR 0-xx]
 [\fB\-\-tag {"TAG1%:tag value^^TAG2%:tag value"}\fR] 
@@ -64,8 +64,9 @@ so it should run on anything. Several features (copy, make directory,
 find files) were moved from *nix commands to Perl native commands in
 version 3, which should make acxi fully platform agnostic.
 .IP * 2
-\fBAAC\fR encoding requires \fBffmepg\fR with either \fBlibfdk_aac\fR) or 
-native \fBffmepg aac\fR codec.
+\fBAAC/M4A\fR encoding requires \fBffmepg\fR with either \fBlibfdk_aac\fR) or 
+native \fBffmepg aac\fR codec. Source file must be flac. To transfer tags, m4a 
+must be used.
 .IP * 2
 \fBOgg\fR encoding requires \fBoggenc\fR (Debian/Ubuntu package: \fBvorbis-tools\fR).
 .IP * 2
@@ -299,7 +300,7 @@ acxi always cleans up before it starts syncing.
 
 .TP
 .B \-\-codec [libfdk_aac|aac]\fR, \fB\-d [libfdk_aac|aac]\fR
-Current only supported for aac/m4a output using ffmpeg.
+Currently only supported for aac/m4a output using ffmpeg.
 
 .TP
 .B \-\-copy [extensions]\fR, \fB\-c [extensions]\fR
@@ -763,6 +764,8 @@ internally.
 
 Changing quality levels will not redo existing files.
 
+\fBCODEC_AAC\fR \- Sample (default value): \fBCODEC_AAC=libfdk_aac\fR 
+
 \fBINPUT_TYPE\fR \- Sample: \fBINPUT_TYPE=flac\fR 
 
 \fBOUTPUT_TYPE\fR \- Sample: \fBOUTPUT_TYPE=mp3\fR 
@@ -791,6 +794,11 @@ the largest file size / highest quality.
 These only apply to the \fB\-\-autotag\fR option, and set a different name 
 for the default auto.tag filename. The filename must be unique and never 
 occur in any other context in your music collection files.
+
+\fBINFO_FILE\fR \- Sample (default value): \fBINFO_FILE=info.txt\fR 
+
+\fBinfo.txt\fR \- The filename in the flac directory being processed that will
+be used to populate the \fBauto.tag\fR fields.
 
 \fBTAG_FILE\fR \- Sample: \fBTAG_FILE=autotags.tag\fR 
 
