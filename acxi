@@ -1940,7 +1940,7 @@ sub check_application_paths {
 		print main::dotify("Checking required tools paths");
 	}
 	if ($b_check_out){
-		if ($OUTPUT_TYPE eq 'flac') {
+		if ($OUTPUT_TYPE =~ /^(aac|flac|m4a)$/) {
 			$app_paths .= "$COMMAND_FFMPEG";
 			if ( ! -x "$COMMAND_FFMPEG" ) {
 				$b_error = 1;
@@ -2256,8 +2256,8 @@ sub print_options {
 	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
 	$output .= "                  remove that set of files or directories. Exits at end.\n";
 	$output .= "                  optional value 'sync' is used: --clean sync\n";
-	$output .= "--codec [codec]   [libfdk-aac|aac] -o aac/m4a only, if you want to use alternate\n";
-	$output .= "                  codec.\n";
+	$output .= "--codec [codec]   [libfdk-aac|aac] -o aac/m4a only, if you want to use\n";
+	$output .= "                  alternate codec.\n";
 	$output .= "--copy, -c        List of alternate data types to copy to Output type\n";
 	$output .= "                  directories. Comma separated, no spaces. See sample above.\n";
 	$output .= "                  Current copy types: ";
@@ -2284,7 +2284,8 @@ sub print_options {
 	$output .= "--input, -i       Input type: aif,flac,raw,shn,wav. shn requires codec shorten. \n";
 	$output .= "                  raw,shn only output to flac.\n";
 	$output .= "                  Current value: $INPUT_TYPE\n";
-	$output .= "--output, -o      Output type: aac, flac. mp3, ogg, opus, mp3 requires input type flac.\n";
+	$output .= "--output, -o      Output type: aac, flac. m4a, mp3, ogg, opus, mp3 requires\n";
+	$output .= "                  input type flac. To preserve flac tags for aac, use m4a.\n";
 	$output .= "                  Current value: $OUTPUT_TYPE\n";
 	$output .= "--quality n, -q n flac: n between 0 and 8. 8 best, but > 4 generally pointless.\n";
 	$output .= "                  aac/m4a: n between 10 and 500.\n";           
@@ -2338,8 +2339,8 @@ sub print_options {
 	$output .= "--checksum-verify, -V\n";
 	$output .= "                  Verifies FLAC files and confirms MD5 file data matches actual\n";
 	$output .= "                  files found. Can be run alone or with --checksum options.\n";
-	$output .= "--dot             Also sync files and directories starting with a '.'. Don't blame\n";
-	$output .= "                  $SELF_NAME if this creates unintended consequences!!\n";
+	$output .= "--dot             Also sync files and directories starting with a '.'. Don't\n";
+	$output .= "                  blame $SELF_NAME if this creates unintended consequences!!\n";
 	$output .= "--image, -I [jpg,png image file name|remove]\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
@@ -2348,9 +2349,9 @@ sub print_options {
 	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";      
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
-	$output .= "--prefill, -E       Attempt to prefill auto.tag file using info.txt";
+	$output .= "--prefill, -E     Attempt to prefill auto.tag file using info.txt.\n";
 	$output .= "--prefill-file [file name]\n";
-	$output .= "                  Alternate file name to use for --prefill.";
+	$output .= "                  Alternate file name to use for --prefill.\n";
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
 	
 	$output .= "--recurse [0-xx]  Set directory recursion levels. Default infinite. Useful\n";

@@ -484,12 +484,15 @@ Remove any existing \fBREPLAYGAIN\fR and
 file. See \fB\-\-autotag\-create\fR for details.
 
 .TP
-.B \-\-output [flac|mp3|ogg|opus]\fR, \fB\-o [flac|mp3|ogg|opus]\fR
-Output type. Supported types: aac/m4a, flac, ogg, opus, mp3
+.B \-\-output [aac|flac|m4a|mp3|ogg|opus]\fR, \fB\-o [aac|flac|m4a|mp3|ogg|opus]\fR
+Output type. Supported types: aac, flac, ogg, opus, m4a, mp3
 
-\fBaac\fR \- only supports flac input type, can be output to m4a or aac.
+\fBaac\fR \- only supports flac input type, To preserve flac tags, use m4a.
 
 \fBflac\fR \- only supports flac, shn, or raw input types.
+
+\fBm4a\fR \- only supports flac input type, Container around aac data. 
+Use if you want to preserve flac tags in your aac audio file.
 
 \fBmp3\fR \- only supports flac input type
 
