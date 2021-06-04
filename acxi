@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.28';
-my $SELF_DATE = '2021-06-03';
+my $SELF_DATE = '2021-06-04';
 
 ## GLOBALS ##
 my %run;
@@ -702,16 +702,15 @@ sub prefill_data {
 	# no blank lines in band/location/date block, stop after first blank line.
 	my ($b_top_block) = (1);
 	print "Checking for $INFO_FILE... ";
-	main::error_handler('open',"$INFO_FILE not readable!") if  !-r $INFO_FILE;
+	main::error_handler('open',"$INFO_FILE not readable!",1) if  ! -r $INFO_FILE;
 	open(my $fh, '<', $INFO_FILE) or 
-	 main::error_handler('open', "Failed to open: $INFO_FILE with error:\n:$!");
-	
+	 main::error_handler('open', "Failed to open: $INFO_FILE with error:\n:$!",1);
 	chomp(@data = <$fh>);
 	close $fh if $fh;
 	print "File found and read\n";
 	my $count = scalar @data;
 	if ($count < 15){
-		main::error_handler('info-file',"$INFO_FILE only had $count lines");
+		main::error_handler('info-file',"$INFO_FILE only had $count lines",1);
 	}
 	foreach (@data){
 		$_ =~ s/[\r\n]//g;
@@ -844,7 +843,7 @@ sub populate_file {
 			}
 			else {
 				main::error_handler('autotag-multi',
-				 "$autotag_multi filename start pattern not found in file!!",'');
+				 "$autotag_multi filename start pattern not found in file:\n$_!!",1);
 			}
 			if ($holder ne $starter){
 				$j++;
