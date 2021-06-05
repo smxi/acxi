@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.28';
-my $SELF_DATE = '2021-06-04';
+my $SELF_DATE = '2021-06-05';
 
 ## GLOBALS ##
 my %run;
@@ -2413,13 +2413,15 @@ sub print_options {
 	$output .= "--autotag-create, -C\n";
 	$output .= "                  Create $TAG_FILE template in source directory. Will be\n";
 	$output .= "                  populated with file names for recording filled in already in\n";
-	$output .= "                  track listing. Preserves existing REPLAYGAIN values.\n";
+	$output .= "                  track listing. Preserves existing REPLAYGAIN values. Not\n";
+	$output .= "                  recommended, use -S or -M instead.\n"
 	$output .= "--autotag-create-multi, -M [disc ID]\n";
 	$output .= "                  Required argument tells logic how to determine your disc\n";
 	$output .= "                  numbering method. % is used to indicate the value is a number\n";
 	$output .= "                  between 1-9. @ is used to indicate a letter between A-Z. \n";
 	$output .= "                  Will complete TRACKTOTAL, DISCNUMBER, TRACKNUMBER values\n";
-	$output .= "                  in auto.tag file, which saves a time.\n";
+	$output .= "                  in auto.tag file, which saves a time. See -E for more prefill\n";
+	$output .= "                  options.\n";
 	$output .= "                  Samples: -M d% [d1track02.flac]; -M d%- [d2-track04.flac];\n";
 	$output .= "                  -M % [112.flac]; -M 2015-03-21.d%. [2015-03-21.d1.t03.flac]\n";
 	$output .= "                  -M @ [A12.flac]; -M d@- [da-track02.flac];\n";
@@ -2427,7 +2429,7 @@ sub print_options {
 	$output .= "--autotag-create-single, -S\n";
 	$output .= "                  For single disc recordings, will also add TRACKTOTAL and\n";
 	$output .= "                  TRACKNUMBER counts when creating and populating the\n";
-	$output .= "                  $TAG_FILE file.\n";
+	$output .= "                  $TAG_FILE file. See -E for more prefill options.\n";
 	$output .= "--checksum, -K    Create .ffp and .md5 checksum files in your source directory.\n";
 	$output .= "                  Checksum files are only created inside directories where flac\n";
 	$output .= "                  files are found. Use --checksum-delete if you also want\n";
@@ -2451,8 +2453,8 @@ sub print_options {
 	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";      
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
-	$output .= "--prefill, -E     Attempt to prefill auto.tag file using info.txt. See man for\n";
-	$output .= "                  required syntax and structure of data in info file.\n";
+	$output .= "--prefill, -E     Attempt to prefill auto.tag file using info.txt data. See man\n";
+	$output .= "                  for required syntax and structure of data in info file.\n";
 	$output .= "--prefill-file [file name]\n";
 	$output .= "                  Alternate file name to use for --prefill.\n";
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";

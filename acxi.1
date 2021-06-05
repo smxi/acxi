@@ -1,25 +1,25 @@
-.TH ACXI 1 "2021\-06\-04" acxi "acxi manual"
+.TH ACXI 1 "2021\-06\-05" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
 .IP * 2
-Syncing: \fBacxi\fR [\fB\-a\fR extensions] [\fB\-\-clean\fR] 
-[\fB\-c\fR extensions] 
-[\fB\-d\fR destination-path]  [\fB\-\-exclude\fR] 
-[\fB\-\-exclude\-append {filename|extension}\fR] 
-[\fB\-f\fR] [\fB\-\-fork\fR 0-xx]
+Syncing: \fBacxi\fR [\fB\-a\fR {extensions}] [\fB\-\-clean\fR] 
+[\fB\-\-codec\fR {aac|libfdk_aac2}] [\fB\-\-copy\fR {extensions}] 
+[\fB\-d\fR {destination-path}]  [\fB\-\-exclude\fR] 
+[\fB\-\-exclude\-append\fR {filename|extension}] 
+[\fB\-f\fR] [\fB\-\-fork\fR {0-xx}]
 [\fB\-i\fR {flac|raw|shn|wave}] [\fB\-o\fR {flac|mp3|ogg|opus}] 
-[\fB\-q\fR NUMBER] [\fB\-s\fR source\-path] 
+[\fB\-q\fR {NUMBER]} [\fB\-s\fR {source\-path}] 
 .IP * 2
 Tagging: \fBacxi\fR [\fB\-\-autotag\fR] [\fB\-\-autotag\-create\fR] 
 [\fB\-\-autotag\-create\-single\fR] 
-[\fB\-\-autotag\-create\-multi {filename start ID}\fR]
-[\fB\-\-aggregate {file name|extension}\fR] 
-[\fB\-\-image {cover image filename}\fR]
-[\fB\-\-prefill\fR] [\fB\-\-prefill\-file {release info file name}\fR] 
-[\fB\-\-no\-replaygain\fR] [\fB\-\-recurse\fR -1-xx] [\fB\-\-remove\-images\fR] 
-[\fB\-\-remove\-padding\fR] [\fB\-\-start\fR 0-xx]
-[\fB\-\-tag {"TAG1%:tag value^^TAG2%:tag value"}\fR] 
+[\fB\-\-autotag\-create\-multi\fR {filename start ID}]
+[\fB\-\-aggregate\fR {file name|extension}] 
+[\fB\-\-image\fR {cover image filename}]
+[\fB\-\-prefill\fR] [\fB\-\-prefill\-file\fR {release info file name}] 
+[\fB\-\-no\-replaygain\fR] [\fB\-\-recurse\fR {-1-xx}] [\fB\-\-remove\-images\fR] 
+[\fB\-\-remove\-padding\fR] [\fB\-\-start\fR {0-xx}]
+[\fB\-\-tag\fR {"TAG1%:tag value^^TAG2%:tag value"}] 
 .IP * 2
 Checksums: \fBacxi\fR [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] 
 [\fB\-\-checksum\-verify\fR] [\fB\-\-no\-ffp\fR] 
@@ -35,91 +35,92 @@ Debugging: \fBacxi\fR [\fB\-\-debug\fR]  [\fB\-\-nlink\fR]
 
 
 .SH DESCRIPTION
-\fBacxi\fR is a command line audio conversion program and audio processing
-program. It converts and syncs all desired source lossless files to the 
-desired output format, and to adifferent directory location. 
+\fBacxi\fR is a command line audio conversion program and audio processing 
+program. It converts and syncs all desired source lossless files to the desired 
+output format, and to adifferent directory location. 
 
 Supports lossless input formats aiff/flac/raw/shn/wav. Output formats are flac, 
-ogg, opus, or mp3. aif/raw/shn can only output to flac. mp3 can only have 
-flac as input format.
+ogg, opus, or mp3. aif/raw/shn can only output to flac. mp3 can only have flac 
+as input format.
 
 By default, it will also copy over most common filetypes like .gif, .jpg, .png, 
 and .txt. You can change the defaults using a configuration file, or the 
 \fB\-c\fR or \fB\-a\fR options..
 
-The destination directory cannot be the same as the source directory, but
-it can be inside of the source directory.
+The destination directory cannot be the same as the source directory, but it can 
+be inside of the source directory.
 
-It can also generate or verify md5 and ffp checksum files if required, 
-as well as tag/embed images using \fBauto.tag\fR or \fB\-\-tag\fR / 
-\fB\-\-image [filename]\fR methods.
+It can also generate or verify md5 and ffp checksum files if required, as well 
+as tag/embed images using \fBauto.tag\fR or \fB\-\-tag\fR / \fB\-\-image 
+[filename]\fR methods.
 
-\fBacxi\fR runs pretests on each start to make sure input and output
-directories are valid, conversion programs for input and output formatting
-programs are present, and other user values are correct.
+\fBacxi\fR runs pretests on each start to make sure input and output directories 
+are valid, conversion programs for input and output formatting programs are 
+present, and other user values are correct.
 
 .SH DEPENDENCIES
-For backward compatibility, acxi requires only Perl 5.010 (or newer), 
-so it should run on anything. Several features (copy, make directory, 
-find files) were moved from *nix commands to Perl native commands in
-version 3, which should make acxi fully platform agnostic.
+For backward compatibility, acxi requires only Perl 5.010 (or newer), so it 
+should run on anything. Several features (copy, make directory, find files) were 
+moved from *nix commands to Perl native commands in version 3, which should make 
+acxi fully platform agnostic.
 .IP * 2
-\fBAAC/M4A\fR encoding requires \fBffmepg\fR with either \fBlibfdk_aac\fR) or 
-native \fBffmepg aac\fR codec. Source file must be flac. To transfer tags, m4a 
-must be used.
+\fBAAC/M4A\fR encoding requires \fBffmepg\fR with either \fBlibfdk_aac\fR 
+(Debian/Ubuntu package: \fBlibfdk_aac2\fR) or native \fBffmepg aac\fR codec. 
+Source file must be flac. To transfer tags, m4a must be used.
 .IP * 2
-\fBOgg\fR encoding requires \fBoggenc\fR (Debian/Ubuntu package: \fBvorbis-tools\fR).
+\fBOgg\fR encoding requires \fBoggenc\fR (Debian/Ubuntu package: 
+\fBvorbis-tools\fR).
 .IP * 2
-\fBOpus\fR encoding requires \fBopusenc\fR (Debian/Ubuntu package: \fBopus-tools\fR).
+\fBOpus\fR encoding requires \fBopusenc\fR (Debian/Ubuntu package: 
+\fBopus-tools\fR).
 .IP * 2
-\fBMP3\fR encoding requires: \fBlame\fR and \fBflac\fR. Source file must be flac. 
-MP3 encoding does not support wav or raw input formats.
+\fBMP3\fR encoding requires: \fBlame\fR and \fBflac\fR. Source file must be 
+flac. MP3 encoding does not support wav or raw input formats.
 .IP * 2
-\fBSHN \-> \fBFLAC\fR conversion requires the codec \fBshorten\fR and \fBffmpeg\fR.
+\fBSHN \-> \fBFLAC\fR conversion requires the codec \fBshorten\fR and 
+\fBffmpeg\fR.
 .IP * 2
-\fB\-\-autotag\fR, \fB\-\-tag\fR, and \fB\-\-image\fR require
-\fBmetaflac\fR for \fBVORBIS\fR tagging.
+\fB\-\-autotag\fR, \fB\-\-tag\fR, and \fB\-\-image\fR require \fBmetaflac\fR for 
+\fBVORBIS\fR tagging.
 .IP * 2
-\fB\-\-checksum\fR and \fB\-\-checksum\-delete\fR require \fBffmpeg\fR 
-and \fBmd5sum\fR (or any comparable program that generates md5sums). 
-Md5 generating logic may be moved to straight Perl to remove the md5 
-program requirement.
+\fB\-\-checksum\fR and \fB\-\-checksum\-delete\fR require \fBffmpeg\fR and 
+\fBmd5sum\fR (or any comparable program that generates md5sums). Md5 generating 
+logic may be moved to straight Perl to remove the md5 program requirement.
 .IP * 2
-\fB\-\-checksum\-verify\fR require \fBflac\fR executable and 
-\fBmd5sum\fR (or any comparable program that generates md5 hashes). 
+\fB\-\-checksum\-verify\fR require \fBflac\fR executable and \fBmd5sum\fR (or 
+any comparable program that generates md5 hashes). 
 .IP * 2
 \fB\-U\fR Self-updater requires \fBcurl\fR. 
 .PP
-In theory, acxi 3.x should run on Windows and Macs, but I have not
-tested that, but as long as the source/destination directory paths and
-the application/configuration paths are correct, it should 'just work'.
+In theory, acxi 3.x should run on Windows and Macs, but I have not tested that, 
+but as long as the source/destination directory paths and the 
+application/configuration paths are correct, it should 'just work'.
 
 .SH USING OPTIONS
 For example:
 .B acxi
 \fB\-o mp3\fR or \fBacxi \-fo opus\fR or \fBacxi \-d /home/you/music\fR
 
-Note that some options have long and short forms. The short form is used
-when available in examples in order to keep things simple.
+Note that some options have long and short forms. The short form is used when 
+available in examples in order to keep things simple.
 
 All tagging or checksum options (\fB\-A\fR, \fB\-C\fR, \fB\-D\fR, \fB\-E\fR, 
 \fB\-G\fR, \fB\-I\fR, \fB\-K\fR, \fB\-M\fR, \fB\-P\fR, \fB\-R\fR, \fB\-S\fR, 
-\fB\-T\fR, \fB\-V\fR) must have an explicit source (\fB\-s\fR) location 
-supplied to avoid errors.
+\fB\-T\fR, \fB\-V\fR) must have an explicit source (\fB\-s\fR) location supplied 
+to avoid errors.
 
 .SH OPTIONS
 
 .TP
 .B \-\-aggregate [filename|extension]\fR
-Collect all the \fBauto.tag\fR files in a source directory and send to
-a target directory. Useful to collect data for a large collection.
-You can supply a list of comma separated items: jpg,info.txt,myart.png
+Collect all the \fBauto.tag\fR files in a source directory and send to a target 
+directory. Useful to collect data for a large collection. You can supply a list 
+of comma separated items: jpg,info.txt,myart.png
 
-Creates the directories the files were found in in the destination 
-directory.
+Creates the directories the files were found in in the destination directory.
 
-If no extra argument is supplied, it will default to collecting 
-all the \fBauto.tag\fR files in the source directory.
+If no extra argument is supplied, it will default to collecting all the 
+\fBauto.tag\fR files in the source directory.
 
 Sample 1 (collects all auto.tag files): 
 \fBacxi \-\-aggregate \-s my\-music -d music\-data\fR
@@ -134,74 +135,75 @@ Sampe 4 (collects multiple values):
 \fBacxi \-\-aggregate jpg,info.txt,png \-s my\-music -d music\-data\fR
 
 .TP
-.B \-\-append [extensions]\fR, \fB\-a [extensions]\fR
-Takes one or more comma separated extensions. Do not use whitespaces
-in this list. These will be appended on to the current list being 
-used on a one time basis. This can be useful if you want to copy 
-over a specific file type for one sync action without
-having to make a full list with \fB\-c\fR.
+.B \-\-append, \fB\-a  {extensions}\fR
+Takes one or more comma separated extensions. Do not use whitespaces in this 
+list. These will be appended on to the current list being used on a one time 
+basis. This can be useful if you want to copy over a specific file type for one 
+sync action without having to make a full list with \fB\-c\fR.
 
 Sample: \fBacxi \-a md5\fR will add md5 file type to copy list.
 
 .TP
 .B \-\-autotag\fR, \fB\-A\fR
-Requires specially formatted file, default name \fBauto.tag\fR, 
-to be put into each music collection directory. See the file for 
-explanations.
+Requires specially formatted file, default name \fBauto.tag\fR, to be put into 
+each music collection directory. See the file for explanations.
 
-FLAC input files only. OGG/Opus may be added. Will search source 
-directory for \fBauto.tag\fR and update each collection/album that
-has that file present with the tagging information contained in it.
+FLAC input files only. OGG/Opus may be added. Will search source directory for 
+\fBauto.tag\fR and update each collection/album that has that file present with 
+the tagging information contained in it.
 
-Note that all existing tags are removed. Default is to preserve
-the existing \fBREPLAYGAIN\fR tags in the \fBauto.tag\fR file
-since the assumption is those were generated for a reason.
+Note that all existing tags are removed. Default is to preserve the existing 
+\fBREPLAYGAIN\fR tags in the \fBauto.tag\fR file since the assumption is those 
+were generated for a reason.
 
-See github acxi page for a blank sample file, but make sure to
-use \fB\-\-autotag\-create\fR, \fB\-\-autotag\-create\-single\fR,
-or \fB\-\-autotag\-create\-multi [prefix]\fR because it's a LOT
-faster that way, and you don't have to find the file. These 
-file builders also preserve existing \fBREPLAYGAIN\fR and 
-\fBWAVEFORMATEXTENSIBLE_CHANNEL_MASK\fR data found in the track
-file.
+See github acxi page for a blank sample file, but make sure to use 
+\fB\-\-autotag\-create\fR, \fB\-\-autotag\-create\-single\fR, or 
+\fB\-\-autotag\-create\-multi [prefix]\fR because it's a LOT faster that way, 
+and you don't have to find the file. These file builders also preserve existing 
+\fBREPLAYGAIN\fR and \fBWAVEFORMATEXTENSIBLE_CHANNEL_MASK\fR data found in the 
+track file.
 
-Notes on \fBIMAGE\fR: Avoid using large images, and as far as I can 
-tell, there's no point in using anything other than the standard 
-'cover' type image (type 3). Keep sizes down by optimizing the 
-image down to around 30\-60 KiB, 300\-400 pixel width. If you 
-make a mistake, or want to undo the 
-images, use \fB\-\-remove\-images \-\-autotag\fR after updating the 
-\fBauto.tag\fR file by either removing the value for \fBIMAGE\fR
-or changing the value. Most media players I tested on only pay 
-attention to the main image, and only one of them. Don't use a flac
-file as a way to store large high resolution images as a general
-rule, it just makes the entire collection pointlessly bloated.
+Notes on \fBIMAGE\fR: Avoid using large images, and as far as I can tell, 
+there's no point in using anything other than the standard 'cover' type image 
+(type 3). Keep sizes down by optimizing the image down to around 30\-60 KiB, 
+300\-400 pixel width. 
 
-Can be used with \fB\-K\fR or \fB\-D\fR for all in one tag checksum
-actions.
-s
-See \fB\-\-tag\fR or \fB\-\-image\fR for updating/modifying existing 
-FLAC comment values, or adding images to your FLAC files.
+If you make a mistake, or want to undo the images, use \fB\-\-remove\-images 
+\-\-autotag\fR after updating the \fBauto.tag\fR file by either removing the 
+value for \fBIMAGE\fR or changing the value. Most media players I tested on only 
+pay attention to the main image, and only one of them. Don't use a flac file as 
+a way to store large high resolution images as a general rule, it just makes the 
+entire collection pointlessly bloated.
+
+Can be used with \fB\-K\fR or \fB\-D\fR for all in one tag checksum actions.
+
+See \fB\-\-tag\fR or \fB\-\-image\fR for updating/modifying existing FLAC 
+comment values, or adding images to your FLAC files.
 
 .TP
 .B \-\-autotag\-create\fR, \fB\-C\fR
-Creates the \fBauto.tag\fR file in the directory, and populates it
-with field names, and per track blocks that include the track file
-name so you can just fill out the fields you want. Will also 
-populate the \fBTRACKNUMBER\fR and \fBTRACKTOTAL\fR fields if you 
-use the \fB\-\-autotag\-create\-single\fR or 
-\fB\-\-autotag\-create\-multi\fR options instead.
+Creates the \fBauto.tag\fR file in the directory, and populates it with field 
+names, and per track blocks that include the track file name so you can just 
+fill out the fields you want. Not recommended.
 
-All existing \fBREPLAYGAIN\fR tags for the audio files are preserved
-and used in the auto.tag file. If want to remove those, use the 
-\fB\-\-no\-replaygain\fR option. 
+if you use the \fB\-\-autotag\-create\-single\fR or 
+\fB\-\-autotag\-create\-multi\fR options instead Will also populate the 
+\fBTRACKNUMBER\fR and \fBTRACKTOTAL\fR fields.
+
+All existing \fBREPLAYGAIN\fR tags for the audio files are preserved and used in 
+the auto.tag file. If want to remove those, use the \fB\-\-no\-replaygain\fR 
+option. 
 
 .TP
-.B \-\-autotag\-create\-multi [file prefix]\fR, \fB\-M [file prefix]\fR 
-Similar to \fBautotag\-create\-single\fR except it includes a prefix
-argument which is the unique per disk track file name ID. Uses \fB%\fR
-to indicate a number between 1 and 9, or \fB@\fR to indicate an upper/lower 
-case letter from A to Z.
+.B \-\-autotag\-create\-multi\fR, \fB\-M {file prefix}\fR
+Similar to \fBautotag\-create\-single\fR except it includes a prefix argument 
+which is the unique per disk track file name ID. Uses \fB%\fR to indicate a 
+number between 1 and 9, or \fB@\fR to indicate an upper/lower case letter from A 
+to Z. 
+
+Use together with \fB\-E\fR (\fB\-\-prefill\fR) To prepopulate the \fBALBUM,\fR 
+\fBARTIST\fR, \fBPERFORMER\fR, \fBDATE\fR, \fBYEAR\fR, and \fBTITLE\fR fields as 
+well. 
 
 Samples: 
 \fB\-M d%\fR [d1track02.flac]; \fB\-M d%\-\fR [d2\-track04.flac];
@@ -211,102 +213,100 @@ Samples:
 \fB\-M @\fR [a12.flac]; \fB-M 2015-03-21.d@.\fR [2015-03-21.da.track03.flac]
 
 This will create prepopulated \fBDISCTOTAL\fR, per disk 
-\fBDISCNUMBER\fR and \fBTRACKTOTAL\fR, and per track \fBTRACKNUMBER\fR 
-fields. This saves a lot of time when tagging multi disk sets.
+\fBDISCNUMBER\fR and \fBTRACKTOTAL\fR, and per track \fBTRACKNUMBER\fR fields. 
+This saves a lot of time when tagging multi disk sets.
 
 Caveat: does not work with per disk subfolders, sorry.
 
 .TP
 .B \-\-autotag\-create\-single\fR, \fB\-S\fR
-When creating \fBauto.tag\fR file, as well as populating the per track
-file names, it also fills in the \fBTRACKTOTAL\fR and \fBTRACKNUMBER\fR
-fields.
+When creating \fBauto.tag\fR file, as well as populating the per track file 
+names, it also fills in the \fBTRACKTOTAL\fR and \fBTRACKNUMBER\fR fields.
 
-Do not use for multidisk recordings since the totals per disk and
-the track numbering for the second or more disks will be wrong, but
-for single disks, it will speed up slightly the time required to 
-manually populate the \fBauto.tag\fR file.
+Do not use for multidisk recordings since the totals per disk and the track 
+numbering for the second or more disks will be wrong, but for single disks, it 
+will speed up slightly the time required to manually populate the \fBauto.tag\fR 
+file.
+
+Use together with \fB\-E\fR (\fB\-\-prefill\fR) To prepopulate the \fBALBUM,\fR 
+\fBARTIST\fR, \fBPERFORMER\fR, \fBDATE\fR, \fBYEAR\fR, and \fBTITLE\fR fields as 
+well. 
 
 .TP
 .B \-\-basic\fR
-Single line per operation screen output, default value for acxi.
-Same as \fB\-\-log 1\fR
+Single line per operation screen output, default value for acxi. Same as 
+\fB\-\-log 1\fR
 
 .TP
 .B \-\-checksum\fR, \fB\-K\fR
-Create \fB.ffp\fR and \fB.md5\fR checksum files in your source directory.
-Checksum files are only created inside directories where flac
-files are found. Use \fB\-\-checksum\-delete\fR if you also want to delete 
-existing checksum files before creating new ones. 
-Only flac input type is supported.
+Create \fB.ffp\fR and \fB.md5\fR checksum files in your source directory. 
+Checksum files are only created inside directories where flac files are found. 
+Use \fB\-\-checksum\-delete\fR if you also want to delete existing checksum 
+files before creating new ones. Only flac input type is supported.
 
-This will not create md5 sums for for files in directories that 
-do not contain flac files, because that creates a very complicated 
-logical puzzle which is hard to accurately or reliably resolve in
-code.
+This will not create md5 sums for for files in directories that do not contain 
+flac files, because that creates a very complicated logical puzzle which is hard 
+to accurately or reliably resolve in code.
 
-Do not use together with other cleaning/syncing options. Can be used with
+Do not use together with other cleaning/syncing options. Can be used with 
 \fB\-A\fR.
 
 .TP
 .B \-\-checksum\-delete\fR, \fB\-D\fR
-Will first delete all \fB.md5\fR, \fB.md5.txt\fR, \fB.ffp\fR, and 
-\fB.ffp.txt\fR files before creating new checksum files. Note that some 
-audio processing tools add \fB.txt\fR to the checksum file name, 
-which creates undesirable outcomes since some tools that use \fB.ffp\fR 
-or \fB.md5\fR files don't recognize the files if they have the \fB.txt\fR 
-extension added on.
+Will first delete all \fB.md5\fR, \fB.md5.txt\fR, \fB.ffp\fR, and \fB.ffp.txt\fR 
+files before creating new checksum files. Note that some audio processing tools 
+add \fB.txt\fR to the checksum file name, which creates undesirable outcomes 
+since some tools that use \fB.ffp\fR or \fB.md5\fR files don't recognize the 
+files if they have the \fB.txt\fR extension added on.
 
-I can think of very few reasons to want to preserve \fB.ffp\fR or 
-\fB.md5\fR files, since they should in general reflect what the actual 
-files you have are.
+I can think of very few reasons to want to preserve \fB.ffp\fR or \fB.md5\fR 
+files, since they should in general reflect what the actual files you have are.
 
-Do not use together with other cleaning/syncing options. Can be used with
+Do not use together with other cleaning/syncing options. Can be used with 
 \fB\-A\fR.
 
 .TP
 .B \-\-checksum\-verify\fR, \fB\-V\fR
-Will read existing .md5 files and compare md5 hash of files 
-listed in the md5 file with the actual checksums of those files.
-Also will verify FLAC integrity (this is pretty slow, so be patient).
+Will read existing .md5 files and compare md5 hash of files listed in the md5 
+file with the actual checksums of those files. Also will verify FLAC integrity 
+(this is pretty slow, so be patient).
 
-Note that when reading md5s, it does not matter if they are windows or 
-*nix path styles (/ or \/), it translates them to the one on your 
-system. It also ignores line endings, which makes reading windows 
-generated md5 files on *nix systems a breeze.
+Note that when reading md5s, it does not matter if they are windows or *nix path 
+styles (/ or \/), it translates them to the one on your system. It also ignores 
+line endings, which makes reading windows generated md5 files on *nix systems a 
+breeze.
 
 .TP
 .B \-\-clean [sync]\fR
-Clean directories and files from destination (compressed) directories 
-which are not present in the source music directories. Will show you the
-directories or files to be removed before deleting them, and you have to
-confirm the deletion of each set two times before it will actually delete
-it. If used with optional value \fBsync\fR, will proceed to sync actions, 
-otherwise exits after cleaning.
+Clean directories and files from destination (compressed) directories which are 
+not present in the source music directories. Will show you the directories or 
+files to be removed before deleting them, and you have to confirm the deletion 
+of each set two times before it will actually delete it. If used with optional 
+value \fBsync\fR, will proceed to sync actions, otherwise exits after cleaning.
 
-Take care with this one, if you have other compressed formats in your
-compressed directory than your default $OUTPUT_TYPE format, it will 
-want to delete all those, so do not use this option unless your compressed
-directories are literal true copies of your source directories.
+Take care with this one, if you have other compressed formats in your compressed 
+directory than your default $OUTPUT_TYPE format, it will want to delete all 
+those, so do not use this option unless your compressed directories are literal 
+true copies of your source directories.
 
-To confirm deletion of each group, you must first type 'delete' then
-hit enter, then type 'yes' to confirm the deletion. This should avoid
-errors and unintended deletions.
+To confirm deletion of each group, you must first type 'delete' then hit enter, 
+then type 'yes' to confirm the deletion. This should avoid errors and unintended 
+deletions.
 
-Note that this feature does not run in silent/quiet mode because it should
-never be used automatically, or without explicit confirmation by the user.
-It can be enabled using the CLEAN configuration option below so that 
-acxi always cleans up before it starts syncing.
+Note that this feature does not run in silent/quiet mode because it should never 
+be used automatically, or without explicit confirmation by the user. It can be 
+enabled using the CLEAN configuration option below so that acxi always cleans up 
+before it starts syncing.
 
 .TP
-.B \-\-codec [libfdk_aac|aac]\fR, \fB\-d [libfdk_aac|aac]\fR
+.B \-\-codec {libfdk_aac|aac}\fR
 Currently only supported for aac/m4a output using ffmpeg.
 
 .TP
-.B \-\-copy [extensions]\fR, \fB\-c [extensions]\fR
-Comma separated list of extensions for file types you want to sync to your
-lossy music directory. Overrides default values. Use lowercase, but it's
-case insensitive internally. Do not include the period in the extension.
+.B \-\-copy\fR, \fB\-c  {extensions}\fR
+Comma separated list of extensions for file types you want to sync to your lossy 
+music directory. Overrides default values. Use lowercase, but it's case 
+insensitive internally. Do not include the period in the extension.
 
 Default values are: bmp doc docx gif jpg jpeg odt pdf png tif txt
 
@@ -316,70 +316,71 @@ Sample: \fB\-c txt,pdf,png,jpg,jpeg,gif\fR
 
 .TP
 .B \-\-debug\fR
-All output available, including debugger data for some events.
-Same as \fB\-\-log 4\fR
+All output available, including debugger data for some events. Same as 
+\fB\-\-log 4\fR
 
 .TP
-.B \-\-destination [path]\fR, \fB\-d [path]\fR
-Full path to the directory where you want the processed lossy
-(eg, ogg) files to go.
+.B \-\-destination, \fB\-d {path}\fR
+Full path to the directory where you want the processed lossy (eg, ogg) files to 
+go.
 
 .TP
 .B \-\-dot\fR
 Disables the default behavior when creating file/directory syncing/action lists 
 of excluding dot files and directories (like \fB/home/user/.config\fR). Added by 
 request, but use at your own risk, I take NO responsibility for any unintended 
-consequences. Note that if you do find unintended consequences, you should be able 
-to filter those out using additional \fB\-\-exclude\fR lists.
+consequences. Note that if you do find unintended consequences, you should be 
+able to filter those out using additional \fB\-\-exclude\fR lists.
 
 .TP
-.B \-\-exclude [items]\fR, \fB\-x [items]\fR
-Exclude a list of unique strings separated by ^^, or a full path to
-an exclude file whose name includes the value set in \fB$EXCLUDE_BASE\fR. 
+.B \-\-exclude\fR, \fB\-x  {items}\fR
+Exclude a list of unique strings separated by ^^, or a full path to an exclude 
+file whose name includes the value set in \fB$EXCLUDE_BASE\fR. 
 
-Excludes sync/copy action to destination directory. Replaces 
-\fBEXCLUDE\fR values if present. Anything matching in any part of the 
-source directory file path will be excluded or removed from the destination
-directory. 
+Excludes sync/copy action to destination directory. Replaces \fBEXCLUDE\fR 
+values if present. Anything matching in any part of the source directory file 
+path will be excluded or removed from the destination directory. 
 
 If it's a path to a file of excludes, use one exclude string per line.
 
 Sample: \fB\-\-exclude='artwork^^Daisy Queen^^Bon Jovi'\fR
+
 Sample: \fB\-\-exclude='/home/me/music/excludes/acxi-excludes-phone.txt\fR
 
 If you want to temporarily suspend exclude actions one time, use: 
 \fB\-\-exclude='UNSET'\fR
 
 .TP
-.B \-\-exclude\-append [items]\fR, \fB\-X [items]\fR
-Append an item to the list of excludes or file. Only accepts string values,
-not a file path.
+.B \-\-exclude\-append\fR, \fB\-X  {items}\fR
+Append an item to the list of excludes or file. Only accepts string values, not 
+a file path.
 
 Sample: \fB\-\-exclude\-append='My Sharona^^Dancing Queen'\fR
 
 .TP
 .B \-\-force\fR, \fB\-f\fR
-Overwrites all the mp3/ogg/opus/jpg/txt etc. files, even if they already 
-exist. This is useful if you for example want to change compression
-quality on existing files.
+Overwrites all the mp3/ogg/opus/jpg/txt etc. files, even if they already exist. 
+This is useful if you for example want to change compression quality on existing 
+files.
 
 .TP
-.B \-\-fork [0-xx]\fR, \fB\-F [0-xx]\fR
-Uses Perl module \fBParallel::ForkManager\fR to allow for forking of audio
-file conversions actions. This can speed up your syncing a lot depending on how 
-many threads your CPU can support and how many you assign with this option.
+.B \-\-fork\fR, \fB\-F {0-xx}\fR
+Uses Perl module \fBParallel::ForkManager\fR to allow for forking of audio file 
+conversions actions. This can speed up your syncing a lot depending on how many 
+threads your CPU can support and how many you assign with this option.
 
-Supports integer values \fB0\fR or greater, but tests show 1 is slower than 
-not using forking at all. \fB0\fR is default, and disables forking.
+Supports integer values \fB0\fR or greater, but tests show 1 is slower than not 
+using forking at all. \fB0\fR is default, and disables forking.
 
-Some debugging features will be slightly distorted if fork is used,
-but it is only cosmetic.
+Some debugging features will be slightly distorted if fork is used, but it is 
+only cosmetic.
 
-See also configuration file option \fBFORK\fR if you want to set this permanently.
+See also configuration file option \fBFORK\fR if you want to set this 
+permanently.
 
-Please note that this can have strange consequences if you run it on a huge
-job, even if you use only half your threads, the system can still act strange
-as a result of running it with multiple forks.
+Please note that this can have strange consequences if you run it on a huge job, 
+even if you use only half your threads, the system can still act strange as a 
+result of running it with multiple forks.
 
 .TP
 .B \-\-full\fR
@@ -391,19 +392,19 @@ conversion tools for flac, mp3, ogg, or opus output. Same as \fB\-\-log 3\fR
 This help menu.
 
 .TP
-.B \-\-image [cover image file name|remove]\fR, \fB\-I [cover image file name|remove]\fR
-Flac only. Use only on a single directory. Takes the supplied cover image
-file and embeds it into the existing flac files. Use with \fB\-\-remove-images\fR 
-if you want to remove existing embedded images. If this option is not used, it 
-will not add images to the file if images are found in it (image embedding is 
+.B \-\-image\fR, \fB\-I {cover image file name|remove}\fR
+Flac only. Use only on a single directory. Takes the supplied cover image file 
+and embeds it into the existing flac files. Use with \fB\-\-remove-images\fR if 
+you want to remove existing embedded images. If this option is not used, it will 
+not add images to the file if images are found in it (image embedding is 
 cumulative in FLAC files). 
 
-Do not use if you are using an \fBauto.tag\fR file, thise is is intended
-only to add an image to an already tagged .flac file without retagging it.
+Do not use if you are using an \fBauto.tag\fR file, thise is is intended only to 
+add an image to an already tagged .flac file without retagging it.
 
 Only use \fB.png\fR or \fB.jpg\fR image types, otherwise the results may be 
-inconsistent. If you use the value '\fBremove\fR' all embedded images and 
-their padding will be removed.
+inconsistent. If you use the value '\fBremove\fR' all embedded images and their 
+padding will be removed.
 
 Only run this in a single recording directory, do not use globally!!
 
@@ -414,7 +415,7 @@ Sample: \fBacxi \-s ./ \-\-image remove\fR
 Sample: \fBacxi \-s ./ \-I cover.jpg \-\-remove\-images\fR
 
 .TP
-.B \-\-input [aif|flac|raw|shn|wav]\fR, \fB\-i [aif|flac|raw|shn|wav]\fR
+.B \-\-input\fR, \fB\-i {aif|flac|raw|shn|wav}\fR
 Input type. Supported types: flac, wav, raw, shn. 
 
 \fBaif/raw/shn\fR \- only support flac output. 
@@ -433,10 +434,10 @@ quality/compression levels, or redo them using current flac codecs.
 Tags transfer from AIF files that are tagged to FLAC files in my tests.
 
 .TP
-.B \-\-log [0-4]\fR
-Dynamically set LOG_LEVEL. Helps for debugging certain types of issues
-where you might want to see the full level 3 debugging information from
-audio codec conversions for example. 
+.B \-\-log {0-4}\fR
+Dynamically set LOG_LEVEL. Helps for debugging certain types of issues where you 
+might want to see the full level 3 debugging information from audio codec 
+conversions for example. 
 
 \fB0\fR \- shuts off all output except errors. Same as \fB\-\-quiet\fR.
 
@@ -444,48 +445,49 @@ audio codec conversions for example.
 
 \fB2\fR \- more verbose output. Same as \fB\-\-verbose\fR.
 
-\fB3\fR \- full output, incuding all conversion tool output. Same as \fB\-\-full\fR.
+\fB3\fR \- full output, incuding all conversion tool output. Same as 
+\fB\-\-full\fR.
 
-\fB4\fR \- debug output, includes some extra debugging data. Don't use in general.
-Same as \fB\-\-debug\fR.
+\fB4\fR \- debug output, includes some extra debugging data. Don't use in 
+general. Same as \fB\-\-debug\fR.
 
 .TP
 .B \-\-nlink\fR
 Set \fB$File::Find::dont_use_nlink = 0\fR. Default is \fB1\fR. Only change this 
 if you have a reason to do so. Setting value to \fB0\fR may make \fBcifs\fR type 
 file system reads fail, on a \fBsamba\fR network share for example. If you 
-encounter issues with the default value, please post an issue on the acxi 
-github page.
+encounter issues with the default value, please post an issue on the acxi github 
+page.
 
 See this PerlMonks thread for an explanation: 
 \fIhttps://www.perlmonks.org/?node_id=1180606\fR
 
 .TP
 .B \-\-no\-dot\fR
-Overrides user configuration \fBDOT\fR. Basically restores default behavior for acxi
-in terms of skipping all dot files. Only useful if you have set \fBDOT\fR to true
-in your configuration file and want to do a one time override of that setting.
+Overrides user configuration \fBDOT\fR. Basically restores default behavior for 
+acxi in terms of skipping all dot files. Only useful if you have set \fBDOT\fR 
+to true in your configuration file and want to do a one time override of that 
+setting.
 
 .TP
 .B \-\-no\-ffp\fR
-Skips FLAC ffp checks and generation on \fB\-\-checksum\fR,
-\fB\-\-checksum\-delete\fR, and \fB\-\-checksum\-verify\fR. Useful
-if you have already verified or created ffp/flac data and only 
-want to check md5 sums.
+Skips FLAC ffp checks and generation on \fB\-\-checksum\fR, 
+\fB\-\-checksum\-delete\fR, and \fB\-\-checksum\-verify\fR. Useful if you have 
+already verified or created ffp/flac data and only want to check md5 sums.
 
 .TP
 .B \-\-no\-nlink\fR
-Set \fB$File::Find::dont_use_nlink = 1\fR. This is the default value. 
-See \fB\-\-nlink\fR for details.
+Set \fB$File::Find::dont_use_nlink = 1\fR. This is the default value. See 
+\fB\-\-nlink\fR for details.
 
 .TP
 .B \-\-no\-replaygain\fR
-Remove any existing \fBREPLAYGAIN\fR and 
-\fBWAVEFORMATEXTENSIBLE_CHANNEL_MASK\fR tags when creating a new \fBauto.tag\fR
-file. See \fB\-\-autotag\-create\fR for details.
+Remove any existing \fBREPLAYGAIN\fR and \fBWAVEFORMATEXTENSIBLE_CHANNEL_MASK\fR 
+tags when creating a new \fBauto.tag\fR file. See \fB\-\-autotag\-create\fR for 
+details.
 
 .TP
-.B \-\-output [aac|flac|m4a|mp3|ogg|opus]\fR, \fB\-o [aac|flac|m4a|mp3|ogg|opus]\fR
+.B \-\-output\fR, \fB\-o {aac|flac|m4a|mp3|ogg|opus}\fR
 Output type. Supported types: aac, flac, ogg, opus, m4a, mp3
 
 \fBaac\fR \- only supports flac input type, To preserve flac tags, use m4a.
@@ -500,7 +502,7 @@ you want to preserve flac tags in your aac audio file.
 .TP
 .B \-\-prefill\fR, \fB\-E\fR
 Will attempt to populate \fBauto.tag\fR file using data from \fBinfo.txt\fR file 
-located in flac directory. Note that the data must have an extremely specific
+located in flac directory. Note that the data must have an extremely specific 
 syntax for the prefill feature to work:
 
 * Band name must be first line in file. 
@@ -520,121 +522,125 @@ be followed by a blank line, with no empty lines between performers.
 tracks listed must correspoond to the total number of actual track files 
 present. If they do not match in counts, acxi will exit with an error.
 
+Should always be run in the flac folder with \fB\-s./\fR or unexpected results 
+could occur.
+
 Use the  \fB\-\-test\fR option to make sure the data will prefill as expected
 before actually creating the \fBauto.tag\fR file.
 
+Samples: 
+\fBacxi \-s./ \-ES\fR; \fBacxi \-s./ \-EM d%\-\fR [d2\-track04.flac];
+
 .TP
-.B \-\-prefill\-file [file name]\fR
-An alternate file name to use for prefill. Note that file MUST be .txt, and
-should not be anything other than  ASCII or UTF8, otherwise you will get ungood
+.B \-\-prefill\-file {file name}\fR
+An alternate file name to use for prefill. Note that file MUST be .txt, and 
+should not be anything other than  ASCII or UTF8, otherwise you will get ungood 
 results.
 
 .TP
-.B \-\-quality [number]\fR, \fB\-q [number]\fR
+.B \-\-quality\fR, \fB\-q {number}\fR
 Set compression quality level.
 
 \fBaac/m4a\fR \-  n can be an integer between 10\-500 (bitrate). 500 is largest 
 file/highest quality.
 
-\fBflac\fR \- n can be an integer between 0\-8, 0 is 
-largest file / fastest conversion time, 8 is smallest file, longest time. 
-Note that tests show there is very little point in using anything over 4.
+\fBflac\fR \- n can be an integer between 0\-8, 0 is largest file / fastest 
+conversion time, 8 is smallest file, longest time. Note that tests show there is 
+very little point in using anything over 4.
 
-\fBmp3\fR \- n can be an integer between 0\-9 (variable bit rate), 0 is 
-largest file / highest quality.
+\fBmp3\fR \- n can be an integer between 0\-9 (variable bit rate), 0 is largest 
+file / highest quality.
 
-\fBogg\fR \- n can be between \-1 and 10. 10 is the largest file/highest quality. 
-Fractions are allowed, e.g. \fB\-o ogg \-q 7.54\fR
+\fBogg\fR \- n can be between \-1 and 10. 10 is the largest file/highest 
+quality. Fractions are allowed, e.g. \fB\-o ogg \-q 7.54\fR
 
 \fBopus\fR \-  n can be an integer between 6\-256 (bitrate). 256 is largest 
 file/highest quality.
 
-Note that using a higher or lower quality than you used to create
-the compressed files will not result in redoing those files unless 
-you use the \fB\-f\fR / \fB\-\-force\fR option to force the overwrite 
-of the existing files.
+Note that using a higher or lower quality than you used to create the compressed 
+files will not result in redoing those files unless you use the \fB\-f\fR / 
+\fB\-\-force\fR option to force the overwrite of the existing files.
 
 .TP
 .B \-\-quiet\fR, \fB\-\-silent\fR
-Turns off all screen output, except for error messages. 
-Same as \fB\-\-log 0\fR
+Turns off all screen output, except for error messages. Same as \fB\-\-log 0\fR
 
 .TP
-.B \-\-recurse [number]\fR
-There may be cases where you want a certain action to NOT recurse beyond 
-the number of steps you supply as an argument for this option. Default 
-recursion level is infinite (-1). If you use 0, it will only return 
-files for the current directory.
+.B \-\-recurse {number}\fR
+There may be cases where you want a certain action to NOT recurse beyond the 
+number of steps you supply as an argument for this option. Default recursion 
+level is infinite (-1). If you use 0, it will only return files for the current 
+directory.
 
-This can be useful if you for example do not want to create ffp or md5,
-or sync files in a sub directory.
+This can be useful if you for example do not want to create ffp or md5, or sync 
+files in a sub directory.
 
-In general, use the \fB\-\-test\fR option to verify the results are what
-you expected before actually proceeding with this option for real.
+In general, use the \fB\-\-test\fR option to verify the results are what you 
+expected before actually proceeding with this option for real.
 
 .TP
 .B \-\-remove\-images\fR, \fB\-R\fR
-Use with \fB\-\-autotag\fR or \-\-image\fR. Will remove all embedded image 
-data, and the associated padding, prior to tagging (and adding new image 
-if applicable) audio file. Note that simply removing image data will leave 
-the padding in place, which makes the file get bigger each time a new image
-is added. 
+Use with \fB\-\-autotag\fR or \-\-image\fR. Will remove all embedded image data, 
+and the associated padding, prior to tagging (and adding new image if 
+applicable) audio file. Note that simply removing image data will leave the 
+padding in place, which makes the file get bigger each time a new image is 
+added. 
 
-This is the full command required to fully restore a flac file size. 
-Failure to use \fB\-\-dont\-use\-padding\fR leaves the file size unchanged.
+This is the full command required to fully restore a flac file size. Failure to 
+use \fB\-\-dont\-use\-padding\fR leaves the file size unchanged.
 
-\fBmetaflac \-\-remove \-\-block\-type=PICTURE,PADDING \-\-dont\-use\-padding file.flac\fR
+\fBmetaflac \-\-remove \-\-block\-type=PICTURE,PADDING \-\-dont\-use\-padding 
+file.flac\fR
 
 .TP
 .B \-\-remove\-padding\fR, \fB\-P\fR
-Use with \fB\-\-autotag\fR and \fB\-\-tag\fR if you want to remove padding.
-My tests showed inconclusive results with this, and it slows down the tagging
-a lot, especially over network connections.
+Use with \fB\-\-autotag\fR and \fB\-\-tag\fR if you want to remove padding. My 
+tests showed inconclusive results with this, and it slows down the tagging a 
+lot, especially over network connections.
 
 .TP
-.B \-\-source [path]\fR, \fB\-s [path]\fR
+.B \-\-source\fR, \fB\-s {path}\fR
 Path to the top-most directory containing your source files (eg, flac).
 
 .TP
-.B \-\-start [number]\fR
-This option is ONLY used with the \fBauto.tag\fR file creation options:
+.B \-\-start {number}\fR
+This option is ONLY used with the \fBauto.tag\fR file creation options: 
 \fB\-M\fR, \fB\-S\fR and \fB\-C\fR.
 
 For creating the track number tag, start \fBauto.tag\fR track numbering at a 
-different value than default 1. This lets you handle cases where there 
-was for example:
+different value than default 1. This lets you handle cases where there was for 
+example:
 
 \fB00.intro.flac\fR
 
-This will subtract 1 from track totals, so output is as expected, say for 
-0 start, then 1-14 tracks, you will see 14/14 when your media player shows 
-x/yy counts for track listings.
+This will subtract 1 from track totals, so output is as expected, say for 0 
+start, then 1-14 tracks, you will see 14/14 when your media player shows x/yy 
+counts for track listings.
 
 For values greater than 1, will add that number to the real found track totals, 
-so that, for example, if first track is 03.flac, you will see 15/15 for track
+so that, for example, if first track is 03.flac, you will see 15/15 for track 
 15.flac as you'd expect.
 
 These are not normal circumstances, but they do happen, so now you can handle 
 those. Check your work carefully, check the auto.tag file 
 
-Note: some media players get confused by the track tag number 0, I beileve they
-are doing a top of if not test, and the 0 registers in some cases as not, so the
+Note: some media players get confused by the track tag number 0, I beileve they 
+are doing a top of if not test, and the 0 registers in some cases as not, so the 
 player may show no track number, not the expected 0.
 
-In general, use the \fB\-\-test\fR option to verify the results are what
-you expected before actually proceeding with this option for real.
+In general, use the \fB\-\-test\fR option to verify the results are what you 
+expected before actually proceeding with this option for real.
 
 .TP
 .B \-\-tag\fR, \fB\-T {"TAG1%:tag value^^TAG2%:tag value"}\fR
-Modify one or more tags in a single recording or group of recordings.
-FLAC only, use standard FLAC tag values for best results.
-Separate \fBTAG\fR and \fBtag value\fR with \fB%:\fR, and separate 
-tag/value sets with \fB^^\fR. This lets you retag entire blocks of
-artist/recordings at once if you only want to modify (or create)
-one or more FLAC tags.
+Modify one or more tags in a single recording or group of recordings. FLAC only, 
+use standard FLAC tag values for best results. Separate \fBTAG\fR and \fBtag 
+value\fR with \fB%:\fR, and separate tag/value sets with \fB^^\fR. This lets you 
+retag entire blocks of artist/recordings at once if you only want to modify (or 
+create) one or more FLAC tags.
 
-Removes all existing tags of that type before updating since 
-FLAC just adds the new tag to the already existing set of tags by default.
+Removes all existing tags of that type before updating since FLAC just adds the 
+new tag to the already existing set of tags by default.
 
 Sample: \fBacxi \-s ./ \-\-tag "GENRE%:Heavy Metal^^ARTIST%:Black Sabbath"\fR
 
@@ -644,22 +650,21 @@ Sample: \fBacxi \-s ./ \-\-tag "COMMENT%:UNSET^^ARTIST%:Black Sabbath"\fR
 
 .TP
 .B \-\-test\fR
-Test your configurations, copy, sync, checksum, and tagging actions 
-without actually doing the operations. Activates \fB \-\-full\fR 
-as well for more complete output.
+Test your configurations, copy, sync, checksum, and tagging actions without 
+actually doing the operations. Activates \fB \-\-full\fR as well for more 
+complete output.
 
 .TP
 .B \-\-update\fR, \fB\-U\fR
-Self updater, will update acxi and its man page. Non GNU/LInux 
-will probably require changing the default values, which are set 
-in \fBUSER VARIABLES\fR for curl, acxi and man page acxi.1. 
-Requires \fBcurl\fR.
+Self updater, will update acxi and its man page. Non GNU/LInux will probably 
+require changing the default values, which are set in \fBUSER VARIABLES\fR for 
+curl, acxi and man page acxi.1. Requires \fBcurl\fR.
                   
 .TP
 .B  \-\-verbose\fR
-Without full verbosity of full, no flac/oggenc/opusenc/lame for mp3,
-ogg, or opus conversion process screen output, but more verbose than
-default. Same as \fB\-\-log 2\fR
+Without full verbosity of full, no flac/oggenc/opusenc/lame for mp3, ogg, or 
+opus conversion process screen output, but more verbose than default. Same as 
+\fB\-\-log 2\fR
 
 .TP
 .B \-\-version\fR, \fB\-v\fR
@@ -668,16 +673,15 @@ Show acxi version.
 .SH CONFIGURATION FILE
 You can see by running \fBacxi \-h\fR the configuration file locations.
 
-acxi will read its configuration/initialization files in the
-following order.
+acxi will read its configuration/initialization files in the following order.
 
 .TP
 .B STANDARD DETECTION
 \fB/etc/acxi.conf\fR contains the default configurations. These can be 
-overridden by user configurations found in one of the following locations.
- If \fB$XDG_CONFIG_HOME/acxi.conf\fR exists, it use it, else if
-\fB$HOME/.conf/acxi.conf\fR exists, it will use it, and as a last default,
-the legacy location \fB$HOME/.acxi.conf\fR is used, i.e.:
+overridden by user configurations found in one of the following locations. If 
+\fB$XDG_CONFIG_HOME/acxi.conf\fR exists, it use it, else if 
+\fB$HOME/.conf/acxi.conf\fR exists, it will use it, and as a last default, the 
+legacy location \fB$HOME/.acxi.conf\fR is used, i.e.:
 
 \fB$XDG_CONFIG_HOME/acxi.conf\fR > \fB$HOME/.conf/acxi.conf\fR >
 \fB$HOME/.acxi.conf\fR
@@ -688,23 +692,24 @@ the legacy location \fB$HOME/.acxi.conf\fR is used, i.e.:
 \fB$CONFIG_DIRECTORY='/path/to/configuration/directory'\fR
 
 NOTE: only use this method if you are running Windows, or any OS without 
-\fB$HOME\fR or \fB$XDG_CONFIG_HOME\fR environmental variables, or
-if you want the configuration file to be located somewhere else. 
+\fB$HOME\fR or \fB$XDG_CONFIG_HOME\fR environmental variables, or if you want 
+the configuration file to be located somewhere else. 
 
-This value must be set on top of acxi in the \fBUSER MODIFIABLE VALUES\fR
-section because that is what it will use to locate the configuration file. 
-acxi will look for acxi.conf inside that directory. This path value will
+This value must be set on top of acxi in the \fBUSER MODIFIABLE VALUES\fR 
+section because that is what it will use to locate the configuration file. acxi 
+will look for acxi.conf inside that directory. This path value will 
 override/ignore all other configuration files.
 
 .SH CONFIGURATION OPTIONS
-The following corresponds to the \fBUSER MODIFIABLE VALUES\fR section
-in the top comment header of acxi.
+The following corresponds to the \fBUSER MODIFIABLE VALUES\fR section in the top 
+comment header of acxi.
 
 .TP
 .B APPLICATION PATHS
 The following set your system path for the required applications:
 
-\fBCOMMAND_FFMPEG\fR \- Sample: \fBCOMMAND_FFMPEG=/usr/bin/ffmpeg\fR (default path)
+\fBCOMMAND_FFMPEG\fR \- Sample: \fBCOMMAND_FFMPEG=/usr/bin/ffmpeg\fR (default 
+path)
 
 \fBCOMMAND_FLAC\fR \- Sample: \fBCOMMAND_FLAC=/usr/bin/flac\fR (default path)
 
@@ -721,9 +726,8 @@ The following set your system path for the required applications:
 NOTE: \fBDESTINATION_DIRECTORY\fR cannot be the same as \fBSOURCE_DIRECTORY\fR.
 
 \fBCLEAN\fR \- Sample: \fBCLEAN=true\fR Switches on/off \fB\-\-clean sync\fR to 
-apply cleaning action to your destination directories. Accepted
-values: \fB[enable|on|true|yes]\fR or \fB[disable|off|false|no]\fR. Default
-is false. 
+apply cleaning action to your destination directories. Accepted values: 
+\fB[enable|on|true|yes]\fR or \fB[disable|off|false|no]\fR. Default is false. 
 
 \fBSOURCE_DIRECTORY\fR \- Sample: \fBSOURCE_DIRECTORY=/home/fred/music\fR 
 
@@ -739,18 +743,20 @@ directory.
 .TP
 .B EXCLUDE LISTS/FILES
 
-\fBDOT\fR \- Disables default behavior of skipping all files starting with a '.'. Takes
-values true or false. Note that false is the acxi default so there's no point in using that.
+\fBDOT\fR \- Disables default behavior of skipping all files starting with a 
+'.'. Takes values true or false. Note that false is the acxi default so there's 
+no point in using that.
 
 \fBEXCLUDE\fR \- Sample (if list): \fBEXCLUDE=artwork^^Daisy Queen^^Bon Jovi\fR
 
-Sample (if exclude file): \fBEXCLUDE=/home/me/music/excludes/acxi-excludes-phone.txt\fR
+Sample (if exclude file): 
+\fBEXCLUDE=/home/me/music/excludes/acxi-excludes-phone.txt\fR
 
 Excludes these matches from destination directory in sync or clean operations.
 
 \fBEXCLUDE_BASE\fR \- Sample: \fBEXCLUDE_BASE=massive-exclude-list\fR 
 
-this is the part of the file name minus the .txt that will be matched to see if
+This is the part of the file name minus the .txt that will be matched to see if 
 it's an exclude list or an exclude file. Default: \fBacxi-excludes\fR
 
 This lets you use multiple exclude files, as long as they all contain the value
@@ -758,9 +764,8 @@ found in \fBEXCLUDE_BASE\fR acxi will know it's an exclude file, not a list.
 
 .TP
 .B INPUT/OUTPUT
-The following are NOT case sensitive,ie flac/FLAC, txt/TXT will be 
-found. INPUT_TYPE and OUTPUT_TYPE will be forced to lower case 
-internally.
+The following are NOT case sensitive,ie flac/FLAC, txt/TXT will be found. 
+INPUT_TYPE and OUTPUT_TYPE will be forced to lower case internally.
 
 Changing quality levels will not redo existing files.
 
@@ -770,33 +775,32 @@ Changing quality levels will not redo existing files.
 
 \fBOUTPUT_TYPE\fR \- Sample: \fBOUTPUT_TYPE=mp3\fR 
 
-\fBCOPY_TYPES\fR \- Sample: \fBCOPY_TYPES=doc,docx,bmp,jpg,jpeg\fR Use this
-to override the default file types acxi will sync. Set to 'none', 
-if you only want to sync the music files, not copy over images, text files,
-etc.
+\fBCOPY_TYPES\fR \- Sample: \fBCOPY_TYPES=doc,docx,bmp,jpg,jpeg\fR Use this to 
+override the default file types acxi will sync. Set to 'none', if you only want 
+to sync the music files, not copy over images, text files, etc.
 
 \fBQUALITY_AAC\fR \- Sample: \fBQUALITY_AAC=320\fR Supported values: 10 to 500. 
-500 is the largest file size / highest quality. 
+500 is the largest file size / highest quality. Applies to aac and m4a.
 
 \fBQUALITY_FLAC\fR \- Sample: \fBQUALITY_FLAC=5\fR Supported values: 0\-8. 0 is 
-the largest file size / fastest to run. 5 to 8 shows only a tiny decrease in
-file size but a huge increase in time to process, so 4 is a good balance
-in general.
+the largest file size / fastest to run. 5 to 8 shows only a tiny decrease in 
+file size but a huge increase in time to process, so 4 is a good balance in 
+general.
 
 \fBQUALITY_MP3\fR \- Sample: \fBQUALITY_MP3=2\fR Supported values: 0\-9. 0 is 
 the largest file size / highest quality.
 
-\fBQUALITY_OGG\fR \- Sample: \fBQUALITY_OGG=8.25q\fR Supported values: \-1 to 10. 
-10 is the largest file size / highest quality. Supports fractions.
+\fBQUALITY_OGG\fR \- Sample: \fBQUALITY_OGG=8.25q\fR Supported values: \-1 to 
+10. 10 is the largest file size / highest quality. Supports fractions.
 
 \fBQUALITY_OPUS\fR \- Sample: \fBQUALITY_OPUS=256\fR Supported values: 6\-256. 
 256 is the largest file size / highest quality / best bitrate.
 
 .TP
 .B AUTO\-TAGGING
-These only apply to the \fB\-\-autotag\fR option, and set a different name 
-for the default auto.tag filename. The filename must be unique and never 
-occur in any other context in your music collection files.
+These only apply to the \fB\-\-autotag\fR option, and set a different name for 
+the default auto.tag filename. The filename must be unique and never occur in 
+any other context in your music collection files.
 
 \fBINFO_FILE\fR \- Sample (default value): \fBINFO_FILE=info.txt\fR 
 
@@ -805,39 +809,39 @@ be used to populate the \fBauto.tag\fR fields.
 
 \fBTAG_FILE\fR \- Sample: \fBTAG_FILE=autotags.tag\fR 
 
-\fBauto.tag\fR \- The filename to be used to autotag. Default is \fBauto.tag\fR.
-Filename must be unique, and not be found anywhere else in your collection. Do
+\fBauto.tag\fR \- The filename to be used to autotag. Default is \fBauto.tag\fR. 
+Filename must be unique, and not be found anywhere else in your collection. Do 
 not change unless you have a very good reason to.
 
 .TP
 .B CHECKSUMS
-These only apply to the \fB\-\-checksum\fR option, and set a different name 
-than the default file names used in the top section of acxi. Note that the
-names should not include an extension, since that is added on automatically.
+These only apply to the \fB\-\-checksum\fR option, and set a different name than 
+the default file names used in the top section of acxi. Note that the names 
+should not include an extension, since that is added on automatically.
 
 \fBFFP_FILE\fR \- Sample: \fBFPP_FILE=fingerprint\fR This is the name of the 
-generated .ffp file, not including the .ffp extension, you want your flac ffp
+generated .ffp file, not including the .ffp extension, you want your flac ffp 
 files to have. 
 
 \fBMD5_FILE\fR \- Sample: \fBMD5_FILE=checksum\fR This is the name of the 
-generated .md5 file, not including the .md5 extension, you want your md5
+generated .md5 file, not including the .md5 extension, you want your md5 
 checksum files to have.
 
 .TP
 .B ADVANCED
-The following are advanced options which should only be used if you know
-what you are doing:
+The following are advanced options which should only be used if you know what 
+you are doing:
 
 \fBDONT_USE_NLINK\fR \- Sample: \fBDONT_USE_NLINK=0\fR 
 This sets \fBFile::Find::dont_use_nlink to \fB0\fR or \fB1\fR. \fB1\fR is 
-default. Generally you should be using \fB1\fR, but in certain cases \fB0\fR 
-may be faster. Test using the \fB\-\-nlink\fR option to disable nlink, and 
-see that option for more information.
+default. Generally you should be using \fB1\fR, but in certain cases \fB0\fR may 
+be faster. Test using the \fB\-\-nlink\fR option to disable nlink, and see that 
+option for more information.
 
 \fBFORK\fR \- Sample: \fBFORK=4\fR 
-This uses Perl's \fBParallel::ForkManager\fR and accepts values of 0 or more.
-Note that 0 will not create a fork. See \fB\-\-fork\fR for details.
-Using this will speed up your syncing a lot if you have more than a 1 core CPU.
+This uses Perl's \fBParallel::ForkManager\fR and accepts values of 0 or more. 
+Note that 0 will not create a fork. See \fB\-\-fork\fR for details. Using this 
+will speed up your syncing a lot if you have more than a 1 core CPU.
 
 .TP
 .B SCREEN/DEBUGGING OUTPUT
@@ -849,29 +853,29 @@ Sample: \fBLOG_LEVEL=3\fR
 
 \fB0\fR \- quiet/silent \- no output at all (except for errors).
 
-\fB1\fR \- basic \- single line per operation. This is the default, so you don't need 
-to change it.
+\fB1\fR \- basic \- single line per operation. This is the default, so you don't 
+need to change it.
 
 \fB2\fR \- verbose \- but without the actual conversion data from codecs
 
-\fB3\fR \- full \-  all available information. Note: with \fB\-F\fR / \fB\-\-fork\fR 
-conversion output may be ordered somewhat randomly since it shows each thread's results 
-as it completes as well as when it started.
+\fB3\fR \- full \-  all available information. Note: with \fB\-F\fR / 
+\fB\-\-fork\fR conversion output may be ordered somewhat randomly since it shows 
+each thread's results as it completes as well as when it started.
 
 \fB4\fR \- debug \-  all available plus some specialized debugging information.
 
 .TP
 .B SELF UPDATER
-These are only for the \fB\-U\fR self updater feature. The path defaults must be
+These are only for the \fB\-U\fR self updater feature. The path defaults must be 
 changed for non\-GNU/Linux systems in most cases.
 
 \fBCOMMAND_CURL\fR \- Sample: \fBCOMMAND_CURL=/usr/local/bin\fR
 
-\fBMAN_DIRECTORY\fR \- Sample: \fBSELF_DIRECTORY=/usr/share/man/man1\fR This is the 
-directory the man page is in.
+\fBMAN_DIRECTORY\fR \- Sample: \fBSELF_DIRECTORY=/usr/share/man/man1\fR This is 
+the directory the man page is in.
 
-\fBSELF_DIRECTORY\fR \- Sample: \fBSELF_DIRECTORY=/usr/bin\fR This is the directory that
-\fBacxi\fR is in.
+\fBSELF_DIRECTORY\fR \- Sample: \fBSELF_DIRECTORY=/usr/bin\fR This is the 
+directory that \fBacxi\fR is in.
 
 .SH BUGS
 Please report bugs using the following resources.
@@ -902,8 +906,8 @@ Copyright (c) Harald Hope, 2010\-2021
 
 Forking logic:  prupert. 2019-07
 
-MP3 tagging: Odd Eivind Ebbesen \- \fIwww.oddware.net\fR \- 
-<oddebb at gmail dot com>
+MP3 tagging: Odd Eivind Ebbesen \- \fIwww.oddware.net\fR \- <oddebb at gmail dot 
+com>
 
 Copyright (c) (flac2ogg.pl) 2004 \- Jason L. Buberel \- jason@buberel.org
 
