@@ -2414,7 +2414,7 @@ sub print_options {
 	$output .= "                  Create $TAG_FILE template in source directory. Will be\n";
 	$output .= "                  populated with file names for recording filled in already in\n";
 	$output .= "                  track listing. Preserves existing REPLAYGAIN values. Not\n";
-	$output .= "                  recommended, use -S or -M instead.\n"
+	$output .= "                  recommended, use -S or -M instead.\n";
 	$output .= "--autotag-create-multi, -M [disc ID]\n";
 	$output .= "                  Required argument tells logic how to determine your disc\n";
 	$output .= "                  numbering method. % is used to indicate the value is a number\n";
