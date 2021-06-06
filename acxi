@@ -734,8 +734,8 @@ sub prefill_data {
 			$info{'date'} = $1;
 			$info{'year'} = $2;
 		}
-		elsif (!$b_top_block && $counter > 6 && $_ =~ /^[0-9]{1,2}\.\s(.*?)(\s+[\[\(][0-9:]+[\]\)])?$/){
-			push(@{$info{'tracks'}},$1);
+		elsif (!$b_top_block && $counter > 6 && $_ =~ /^([1-6]-[0-9]{1,2}|[0-9]{1,2})\.\s(.*?)(\s+[\[\(][0-9:]+[\]\)])?$/){
+			push(@{$info{'tracks'}},$2);
 		}
 		elsif ($counter > 15 && /^(Band|Lineup):/){
 			$b_performer = 1;
