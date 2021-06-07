@@ -737,7 +737,7 @@ sub prefill_data {
 		elsif (!$b_top_block && $counter > 6 && $_ =~ /^([1-6]-[0-9]{1,2}|[0-9]{1,2})\.\s(.*?)(\s+[\[\(][0-9:]+[\]\)]\s*)?$/){
 			push(@{$info{'tracks'}},$2);
 		}
-		elsif ($counter > 15 && /^(Band|Line[\s-]?up):/){
+		elsif ($counter > 15 && /^(Band|(Band\s)?Line[\s-]?up):/i){
 			$b_performer = 1;
 			next;
 		}
