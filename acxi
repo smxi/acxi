@@ -805,6 +805,9 @@ sub populate_file {
 			if ($item =~ /^ARTIST%:/ && $info{'artist'}){
 				$item .= $info{'artist'};
 			}
+			elsif ($item =~ /^ALBUMARTIST%:/ && $info{'artist'}){
+				$item .= $info{'artist'};
+			}
 			elsif ($item =~ /^ALBUM%:/ && ($info{'date-print'} || $info{'location'})){
 				$item .= $info{'date-print'} . ', ' if $info{'date-print'};
 				$item .= $info{'location'} if $info{'location'};
