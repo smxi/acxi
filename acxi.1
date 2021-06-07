@@ -202,8 +202,8 @@ number between 1 and 9, or \fB@\fR to indicate an upper/lower case letter from A
 to Z. 
 
 Use together with \fB\-E\fR (\fB\-\-prefill\fR) To prepopulate the \fBALBUM,\fR 
-\fBARTIST\fR, \fBPERFORMER\fR, \fBDATE\fR, \fBYEAR\fR, and \fBTITLE\fR fields as 
-well. 
+\fBARTIST\fR, \fBALBUMARTIST\fR, \fBPERFORMER\fR, \fBDATE\fR, \fBYEAR\fR, and 
+\fBTITLE\fR fields as well. 
 
 Samples: 
 \fB\-M d%\fR [d1track02.flac]; \fB\-M d%\-\fR [d2\-track04.flac];
@@ -229,8 +229,8 @@ will speed up slightly the time required to manually populate the \fBauto.tag\fR
 file.
 
 Use together with \fB\-E\fR (\fB\-\-prefill\fR) To prepopulate the \fBALBUM,\fR 
-\fBARTIST\fR, \fBPERFORMER\fR, \fBDATE\fR, \fBYEAR\fR, and \fBTITLE\fR fields as 
-well. 
+\fBARTIST\fR, \fBALBUMARTIST\fR, \fBPERFORMER\fR, \fBDATE\fR, \fBYEAR\fR, and 
+\fBTITLE\fR fields as well. 
 
 .TP
 .B \-\-basic\fR
@@ -525,6 +525,11 @@ exit with an error.
 
 Should always be run in the flac folder with \fB\-s./\fR or unexpected results 
 could occur.
+
+Use together with \fB\-M\fR or \fB\-S\fR to prepopulate the \fBALBUM,\fR 
+\fBARTIST\fR, \fBALBUMARTIST\fR, \fBPERFORMER\fR, \fBDATE\fR, \fBYEAR\fR, and 
+\fBTITLE\fR fields as well. Note that \fBALBUMARTIS\fRT is filled with 
+\fBARTIST\fR name.
 
 Use the  \fB\-\-test\fR option to make sure the data will prefill as expected
 before actually creating the \fBauto.tag\fR file.
