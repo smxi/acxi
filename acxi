@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.28';
-my $SELF_DATE = '2021-06-08';
+my $SELF_DATE = '2021-06-09';
 
 ## GLOBALS ##
 my %run;
@@ -1721,10 +1721,20 @@ sub wanted {
 		return if $list_type eq 'dir' && ! -d; # skip files
 		return if $list_type eq 'file' &&  -d; # skip directories
 		return if $File::Find::name =~ m/^\Q$DESTINATION_DIRECTORY\E/;
-		return if !$run{'dot'} && $File::Find::name =~ m/\/\./; # skip any dot files/directories
-		return if $run{'sync'} && ( (@excludes && ( grep {$File::Find::name =~ /\Q$_\E/} @excludes ) ) ||
-		( $list_type eq 'dir' && @excludes_stripped && 
-		(grep {$File::Find::name =~ /\Q$_\E$/} @excludes_stripped) ) );
+		# skip any dot files/directories
+		if (!$run{'dot'} && $File::Find::name =~ m/\/\./){
+			$File::Find::prune = 1;
+			return; 
+		}
+		# handle excludes
+		if ($run{'sync'} && ( 
+		 (@excludes && (grep {$File::Find::name =~ /\Q$_\E/} @excludes)) ||
+		 ($list_type eq 'dir' && @excludes_stripped && 
+		 (grep {$File::Find::name =~ /\Q$_\E$/} @excludes_stripped)))
+		 ){
+			$File::Find::prune = 1;
+			return;
+		}
 		if ($list_type eq 'file') {
 			# extension can be either a full file name, or extension
 			return if $File::Find::name !~ /(\.|\/)$extension$/i;
