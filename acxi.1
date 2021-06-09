@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-06\-06" acxi "acxi manual"
+.TH ACXI 1 "2021\-06\-08" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -507,22 +507,22 @@ syntax for the prefill feature to work:
 
 * Band name must be first line in file. 
 
-* Date must be iso YYYY-MM-DD formatted, and must be the first thing on its 
+* Date must be iso \fBYYYY-MM-DD\fR formatted, and must be the first thing on its 
 line, and must be in first 5 lines of file. 
 
-* Location can be 1 or more lines not starting with 19|20XX on lines 2-5. 
+* Location can be 1 or more lines not starting with \fB19|20XX\fR on lines 2-5. 
 
 * No non Band name, Date, Location info can be on first lines of file before 
 first blank line.
 
-* Performers list must be preceded by a line starting with Band:, 
-Lineup:/Line\-up, or Band Lineup/Linu\-up, and must be followed by a blank line, 
-with no empty lines between performers. 
+* Performers list must be preceded by a line starting with \fBBand:\fR, 
+\fBLineup:\fR, \fBLine\-up:\fR, or \fBBand Lineup\fR, \fBBand Line\-up\fR, and 
+must be followed by a blank line, with no empty lines between performers. 
 
-* Track numbers must start with either X-X., X-XX. (for multidisc), X. or XX. 
-where X is a number. The number of tracks listed must correspoond to the total 
-number of actual track files present. If they do not match in counts, acxi will 
-exit with an error.
+* Track numbers must start with either \fBX-X.\fR, \fBX-XX.\fR (for multidisc), 
+\fBX.\fR or \fBXX.\fR where \fBX\fR is a number. The number of tracks listed 
+must correspoond to the total number of actual track files present. If they do 
+not match in counts, acxi will exit with an error.
 
 Should always be run in the flac folder with \fB\-s./\fR or unexpected results 
 could occur.
@@ -587,7 +587,7 @@ expected before actually proceeding with this option for real.
 
 .TP
 .B \-\-remove\-images\fR, \fB\-R\fR
-Use with \fB\-\-autotag\fR or \-\-image\fR. Will remove all embedded image data, 
+Use with \fB\-\-autotag\fR or \fB\-\-image\fR. Will remove all embedded image data, 
 and the associated padding, prior to tagging (and adding new image if 
 applicable) audio file. Note that simply removing image data will leave the 
 padding in place, which makes the file get bigger each time a new image is 
@@ -632,7 +632,7 @@ These are not normal circumstances, but they do happen, so now you can handle
 those. Check your work carefully, check the auto.tag file 
 
 Note: some media players get confused by the track tag number 0, I beileve they 
-are doing a top of if not test, and the 0 registers in some cases as not, so the 
+are doing a type of if not test, and the 0 registers in some cases as not, so the 
 player may show no track number, not the expected 0.
 
 In general, use the \fB\-\-test\fR option to verify the results are what you 
@@ -751,7 +751,7 @@ directory.
 .B EXCLUDE LISTS/FILES
 
 \fBDOT\fR \- Disables default behavior of skipping all files starting with a 
-'.'. Takes values true or false. Note that false is the acxi default so there's 
+\fB.\fR. Takes values true or false. Note that false is the acxi default so there's 
 no point in using that.
 
 \fBEXCLUDE\fR \- Sample (if list): \fBEXCLUDE=artwork^^Daisy Queen^^Bon Jovi\fR
@@ -817,8 +817,8 @@ be used to populate the \fBauto.tag\fR fields.
 \fBTAG_FILE\fR \- Sample: \fBTAG_FILE=autotags.tag\fR 
 
 \fBauto.tag\fR \- The filename to be used to autotag. Default is \fBauto.tag\fR. 
-Filename must be unique, and not be found anywhere else in your collection. Do 
-not change unless you have a very good reason to.
+Filename must be unique, and must not be found anywhere else in your collection. 
+Do not change unless you have a very good reason to.
 
 .TP
 .B CHECKSUMS

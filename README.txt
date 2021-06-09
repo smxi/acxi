@@ -1,4 +1,4 @@
-README for acxi - a comand line audio file conversion tool
+README for acxi - a command line audio file conversion tool
 
 See acxi.changelog for changes.
 
@@ -204,7 +204,7 @@ Read more about the technical comparisons here:
 https://trac.ffmpeg.org/wiki/Encode/AAC
 
 FFMPEG does not transfer tags when the file format is aac, but it does when it's 
-m4a, so if you have tagged flac source files, then u se m4a instead of aac and 
+m4a, so if you have tagged flac source files, then use m4a instead of aac and 
 most of your tags will transfer fine automatically.
 
 ================================================================================

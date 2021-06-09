@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.28';
-my $SELF_DATE = '2021-06-06';
+my $SELF_DATE = '2021-06-08';
 
 ## GLOBALS ##
 my %run;
@@ -2295,7 +2295,7 @@ sub check_excludes {
 }
 
 #### -------------------------------------------------------------------
-#### PRINT HELP/VERSION/MESSAGES
+#### HELP/VERSION/MESSAGES
 #### -------------------------------------------------------------------
 sub print_completion_message {
 	eval $print_line_heavy;
@@ -2343,7 +2343,7 @@ sub print_not_found {
 	}
 }
 
-sub print_options {
+sub show_options {
 	# so it shows the user config data if present
 	UserConfigs::set(); 
 	# but this should override the config data so follows
@@ -2361,7 +2361,7 @@ sub print_options {
 	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
 	$output .= "                  remove that set of files or directories. Exits at end.\n";
 	$output .= "                  optional value 'sync' is used: --clean sync\n";
-	$output .= "--codec [codec]   [libfdk-aac|aac] -o aac/m4a only, if you want to use\n";
+	$output .= "--codec           [libfdk-aac|aac] -o aac/m4a only, if you want to use\n";
 	$output .= "                  alternate codec.\n";
 	$output .= "--copy, -c        List of alternate data types to copy to Output type\n";
 	$output .= "                  directories. Comma separated, no spaces. See sample above.\n";
@@ -2425,9 +2425,9 @@ sub print_options {
 	$output .= "                  Will complete TRACKTOTAL, DISCNUMBER, TRACKNUMBER values\n";
 	$output .= "                  in auto.tag file, which saves a time. See -E for more prefill\n";
 	$output .= "                  options.\n";
-	$output .= "                  Samples: -M d% [d1track02.flac]; -M d%- [d2-track04.flac];\n";
+	$output .= "                  Samples: -M d% [d1track02.flac]; -M d\%- [d2-track04.flac];\n";
 	$output .= "                  -M % [112.flac]; -M 2015-03-21.d%. [2015-03-21.d1.t03.flac]\n";
-	$output .= "                  -M @ [A12.flac]; -M d@- [da-track02.flac];\n";
+	$output .= "                  -M @ [A12.flac]; -M d\@- [da-track02.flac];\n";
 	$output .= "                  Flac input type only.\n";
 	$output .= "--autotag-create-single, -S\n";
 	$output .= "                  For single disc recordings, will also add TRACKTOTAL and\n";
@@ -2520,7 +2520,7 @@ sub print_options {
 	exit 0;
 }
 
-sub print_version {
+sub show_version {
 	print "$SELF_NAME version: $SELF_VERSION ($SELF_DATE)\n";
 	exit 0;
 }
@@ -2848,7 +2848,7 @@ sub get_options{
 	"full" => sub { 
 		$LOG_LEVEL = 3 },
 	"h|help|?" => sub { 
-		print_options();},
+		show_options();},
 	"I|image:s" => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /(\.png|\.jpe?g|^remove)$/i){
@@ -2964,7 +2964,7 @@ sub get_options{
 	"verbose" => sub { 
 		$LOG_LEVEL = 2 },
 	"v|version" => sub { 
-		print_version(); },
+		show_version(); },
 	'<>' => sub {
 		my ($opt) = @_;
 		error_handler('unsupported-option', "Unsupported option: $opt",1); }
