@@ -2984,12 +2984,13 @@ sub get_options{
 	$run{'embed-image'} || $run{'prefill'} || $run{'remove-images'} || 
 	$run{'update-tag'} )){
 		error_handler('invalid-options', 
-		 "You must supply an explicit --source for all tagging and checksum options.",1);
+		 "You must supply an explicit --source for all image/tagging and checksum options.",1);
 	}
 	if (($run{'checksum'} || $run{'checksum-verify'}) && ($run{'sync'} || 
-	 $run{'clean'} || $run{'autotag-create'} || $run{'autotag-aggregate'})){
+	 $run{'clean'} || $run{'autotag-create'} || $run{'update-tag'} ||
+	 $run{'embed-image'} || $run{'remove-images'} || $run{'autotag-aggregate'})){
 		error_handler('invalid-options', 
-		 "You cannot use --checksum with any clean, sync, or autotag options.",1);
+		 "You cannot use --checksum with any clean, sync, or image/tagging options.",1);
 	}
 	if ($run{'autotag'} && ($run{'sync'} || $run{'clean'} || 
 	 $run{'autotag-aggregate'} || $run{'autotag-create'})){
@@ -2997,9 +2998,10 @@ sub get_options{
 		 "You cannot use --autotag with autotag create/aggregate, clean, or sync options.",1);
 	}
 	if ($run{'autotag-create'} && ($run{'sync'} || $run{'clean'} || 
-	 $run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'})){
+	 $run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'} ||  
+	 $run{'embed-image'} || $run{'remove-images'})){
 		error_handler('invalid-options', 
-		 "You cannot use --autotag-create with autotag, clean, sync, or checksum options.",1);
+		 "You cannot use --autotag-create with autotag, image, clean, sync, or checksum options.",1);
 	}
 	if ($run{'prefill'} && !($run{'autotag-multi'} || $run{'autotag-single'})){
 		error_handler('invalid-options', 
