@@ -2709,7 +2709,7 @@ sub get_boolean {
 # from top globals and config files
 sub get_options{
 	my (@args) = @_;
-	my ($b_source,$msg);
+	my ($b_destination,$b_input,$b_output,$b_source,$msg);
 	GetOptions (
 	"G|aggregate:s" => sub { 
 		my ($opt,$arg) = @_;
@@ -2835,6 +2835,7 @@ sub get_options{
 	"d|destination:s" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
+		$b_destination = 1;
 		$DESTINATION_DIRECTORY = $arg },
 	"dot" => sub { 
 		$run{'dot'} = 1;},
@@ -2880,15 +2881,12 @@ sub get_options{
 	"i|input:s" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires type.",1) if ! $arg;
+		$b_input = 1;
 		$INPUT_TYPE = $arg },
 	"log:i" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt log level integer.",1) if not defined $arg;
 		$LOG_LEVEL = $arg; },
-	"o|output:s" => sub {
-		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires type.",1) if ! $arg;
-		$OUTPUT_TYPE = $arg;},
 	"nlink" => sub { 
 		$DONT_USE_NLINK = 0 },
 	"no-dot" => sub { 
@@ -2899,6 +2897,11 @@ sub get_options{
 		$DONT_USE_NLINK = 1 },
 	"no-replaygain" => sub { 
 		$run{'no-replaygain'} = 1 },
+	"o|output:s" => sub {
+		my ($opt,$arg) = @_;
+		error_handler('missing-arg',"$opt requires type.",1) if ! $arg;
+		$b_output = 1;
+		$OUTPUT_TYPE = $arg;},
 	"E|prefill" => sub { 
 		$run{'prefill'} = 1 },
 	"prefill-file:s" => sub { 
@@ -3002,6 +3005,13 @@ sub get_options{
 	 $run{'embed-image'} || $run{'remove-images'})){
 		error_handler('invalid-options', 
 		 "You cannot use --autotag-create with autotag, image, clean, sync, or checksum options.",1);
+	}
+	# prevent running any tagging options with syncing options
+	if (($run{'clean'} || $run{'sync'} || $b_destination || $b_input || $b_output) && 
+	($run{'autotag'} || $run{'autotag-create'} || $run{'checksum'} || 
+	$run{'checksum-verify'}) || $run{'autotag-aggregate'}){
+		error_handler('invalid-options', 
+		 "Tagging/Checksum options cannot be used with syncing options.",1);
 	}
 	if ($run{'prefill'} && !($run{'autotag-multi'} || $run{'autotag-single'})){
 		error_handler('invalid-options', 
