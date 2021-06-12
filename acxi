@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.28';
-my $SELF_DATE = '2021-06-11';
+my $SELF_DATE = '2021-06-12';
 
 ## GLOBALS ##
 my %run;
@@ -2850,7 +2850,6 @@ sub get_options{
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
 		$DESTINATION_DIRECTORY = $arg;
-		$test{'sync'} = 1;
 		$test{'destination'} = 1;
 		},
 	"dot" => sub { 
@@ -3031,7 +3030,7 @@ sub get_options{
 	}
 	# prevent running any tagging options with syncing options
 	if (($test{'clean'} || $test{'sync'}) && ($test{'tag'} || $test{'tag-create'} || 
-	$test{'prefill'} || $test{'checksum'} || $test{'aggregate'})){
+	$test{'prefill'} || $test{'checksum'})){
 		error_handler('invalid-options', 
 		 "Tagging/checksum options cannot be used with clean/sync options.",1);
 	}
@@ -3040,15 +3039,20 @@ sub get_options{
 		error_handler('invalid-options', 
 		 "Prefill requires either --autotag-create-multi or --autotag-create-single.",1);
 	}
+	# aggregate requires destination and cannot be used with any other action
+	if ($test{'aggregate'} && (!$test{'destination'} || ($test{'sync'} || 
+	$test{'tag'} || $test{'tag-create'} || $test{'prefill'} || $test{'checksum'}))){
+		error_handler('invalid-options', 
+		 "Aggregate requires destination and cannot be combined with any other actions.",1);
+	}
 	# checksum can only be run with tagging/image, like -AD -AK
 	if ($test{'checksum'} && ($test{'sync'} || $run{'test'} || $test{'tag-create'} || 
-	$test{'prefill'} || $test{'aggregate'})){
+	$test{'prefill'})){
 		error_handler('invalid-options', 
 		 "Checksum options cannot be used with clean/sync/image/tagging options.",1);
 	}
 	# tagging can only be used with checksum or other tagging options like -I, -R
-	if ($test{'tag'} && ($test{'sync'} || $test{'clean'} || $test{'aggregate'} || 
-	$test{'tag-create'})){
+	if ($test{'tag'} && ($test{'sync'} || $test{'clean'} || $test{'tag-create'})){
 		error_handler('invalid-options', 
 		 "Tagging cannot be used with tag-create/aggregate/clean/sync options.",1);
 	}
