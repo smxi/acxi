@@ -77,8 +77,8 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.28';
-my $SELF_DATE = '2021-06-12';
+my $SELF_VERSION = '3.3.29';
+my $SELF_DATE = '2021-06-23';
 
 ## GLOBALS ##
 my %run;
@@ -288,6 +288,7 @@ sub main {
 	set_basic_data();
 	AutoTag::aggregate() if $run{'autotag-aggregate'};
 	AutoTag::create_file() if $run{'autotag-create'};
+	AutoTag::info_fixes() if $run{'infofix'};
 	AutoTag::run_tagger() if $run{'autotag'};
 	CleanCollection::process_destination() if $run{'clean'};
 	SyncCollection::process_collection() if $run{'sync'};
@@ -697,24 +698,135 @@ sub make_file {
 		print "No files found to process.\n";
 	}
 }
+sub info_fixes {
+	my (@prepped);
+	my ($newlines) = (0);
+	print $line_small;
+	print "Working on file:\n$INFO_FILE\n";
+	my @data = open_info_file();
+	@data = date_fix(\@data) if $run{'infofix-date'};
+	# print Data::Dumper::Dumper \@data;
+	foreach my $row (@data){
+		if ($run{'infofix-upper'}){
+			foreach my $style (qw(highlight)) {
+				$row = Text::Autoformat::autoformat($row, {case => $style, left=>1, right=>1000});
+			}
+			# set back to upper common abbreviations, states, etc
+			# don't do Or or Me or Oh!
+			$row =~ s/\b(Aud|Cdr?|Sd?b|Ips|Eac|Ak|Az|Ca|Co|Ct|Dc|De|Dk|Fl|Flac|Hd|Hi|Il|Ma|Md|Mo|Nc|Nh|Nj|Nm|Nyc?|Pa|Ri|Sbd|Sf|Tn|Usa|Ut|Wa|Wav|Wi|Va|Vt)\b/\U$1/g;
+			$row =~ s/\bCD[\s-]?([1-6])/Disc $1/g;
+			$row =~ s/\bSB\b/SBD/g;
+		}
+		$row =~ s/[\r\n]+//g; # has to be AFTER autoformat
+		$row =~ s/\s\s+/ /g;
+		$row =~ s/\s+$//g;
+		$row =~ s/\(\s+/\(/g;
+		$row =~ s/\s+\)/\)/g;
+		$row =~ s/^\s+$//;
+		if ($row !~ /^$/){
+			$newlines = 0;
+		}
+		else {
+			$newlines++;
+		}
+		if (($run{'infofix-no'} || $run{'infofix-title'}) && 
+		 $row =~ /^(\s*([1-9]-)?([0-9]{1,2})(\.\s*|\s*-\s*|\s*\)\s*|:\s*))/){
+			#print "$1 '$3'\n";
+			if ($run{'infofix-no'}){
+				my $nu = sprintf('%02d',$3);
+				$nu = $2 . $nu if $2;
+				$row =~ s/^$1/$nu. /;
+			}
+			if ($run{'infofix-title'}){
+				foreach my $style (qw(highlight)) {
+					$row = Text::Autoformat::autoformat($row, { case => $style, left=>1, right=>1000 });
+					$row =~ s/[\r\n]+//g; # has to be AFTER autoformat
+				}
+			}
+		}
+		# $row =~ s//'/g;
+		# $row =~ s/�/'/g;
+		# print "$row\n";
+		push(@prepped,$row) if $newlines < 2;
+	}
+	print $line_small;
+	print "Processing completed. Results:\n";
+	if (!$run{'infofix-write'}){
+		print "Confirm changes made by infofix. Write to $INFO_FILE by adding 'w':\n";
+		print $line_small;
+		print "Fix: ";
+		print join("\nFix: ",@prepped),"\n";
+	}
+	else {
+		print $line_small;
+		print "Writing these changes back to file...\n";
+		print join("\n",@prepped);
+		print $line_small;
+		my $contents = join("\r\n",@prepped);
+		open(my $fh, '>', $INFO_FILE ) or die "failed to open for writing: $INFO_FILE";
+		print $fh $contents;;
+		close $fh if $fh;
+		print $line_small;
+		print "All done, hope it worked!!\n";
+	}
+}
+sub date_fix {
+	my ($ref) = @_;
+	my ($dd,$mm,$regex,$yyyy,@data);
+	foreach (@$ref){
+		($dd,$mm,$regex,$yyyy) =  ('','','','');
+		# fix D month, YY or month D, YY
+		if (/\b(((0?[1-9]|[12][0-9]|30|31)\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sept|oct|nov|dec)\S*?(\s+(0?[1-9]|[12][0-9]|30|31))?(nd|rd|st|th)?,?\s+((19)?[4-9][0-9]|(20)?[012][0-9]))\b/i){
+			# print "$4 $8\n";
+			$yyyy = $8;
+			$regex = $1;
+			my $month = lc($4);
+			if ($3) {$dd = sprintf('%02d',$3)}
+			elsif ($6) {$dd = sprintf('%02d',$6)}
+			if ($month eq 'jan'){$mm = '01';}
+			elsif ($month eq 'feb'){$mm = '02';}
+			elsif ($month eq 'mar'){$mm = '03';}
+			elsif ($month eq 'apr'){$mm = '04';}
+			elsif ($month eq 'may'){$mm = '05';}
+			elsif ($month eq 'jun'){$mm = '06';}
+			elsif ($month eq 'jul'){$mm = '07';}
+			elsif ($month eq 'aug'){$mm = '08';}
+			elsif ($month eq 'sept'){$mm = '09';}
+			elsif ($month eq 'oct'){$mm = '10';}
+			elsif ($month eq 'nov'){$mm = '11';}
+			elsif ($month eq 'dec'){$mm = '12';}
+		}
+		# Change m/d/yy or m-d-yy or m.d.yy to yyyy-mm-dd
+		elsif (/\b((0?[1-9]|1[0-2])[\/\.-](0?[1-9]|[12][0-9]|30|31)[\/\.-]((19)?[6-9][0-9]|(20)?[0-2][0-9]))\b/){
+			$regex = $1;
+			$mm = sprintf('%02d',$2);
+			$dd = sprintf('%02d',$3);
+			$yyyy = $4;
+		}
+		elsif (/\b((19[4-9][0-9]|20[0-2][0-9])[\._-]?(0?[1-9]|1[0-2])[\._-]?(0?[1-9]|[12][0-9]|30|31))\b/){
+			$regex = $1;
+			$yyyy = $2;
+			$mm = sprintf('%02d',$3);
+			$dd = sprintf('%02d',$4);
+		}
+		if ($yyyy =~ /^[4-9][0-9]$/){
+			$yyyy = '19' . $yyyy;
+		}
+		elsif ($yyyy =~ /^[0-2][0-9]$/){
+			$yyyy = '20' . $yyyy;
+		}
+		if ($mm && $dd && $yyyy) {
+			$_ =~ s/\Q$regex\E/$yyyy-$mm-$dd/i;
+		}
+		push(@data,$_);
+	}
+	return @data;
+}
 sub prefill_data {
-	my ($b_performer,@data,%info);
+	my ($b_performer,%info);
 	# no blank lines in band/location/date block, stop after first blank line.
 	my ($b_top_block) = (1);
-	print "Checking for $INFO_FILE... ";
-	main::error_handler('open',"$INFO_FILE not readable!",1) if  ! -r $INFO_FILE;
-	open(my $fh, '<', $INFO_FILE) or 
-	 main::error_handler('open', "Failed to open: $INFO_FILE with error:\n:$!",1);
-	chomp(@data = <$fh>);
-	close $fh if $fh;
-	print "File found and read\n";
-	my $count = scalar @data;
-	if ($count < 15){
-		main::error_handler('info-file',"$INFO_FILE only had $count lines",1);
-	}
-	foreach (@data){
-		$_ =~ s/[\r\n]//g;
-	}
+	my @data = open_info_file();
 	my $counter = 0;
 	foreach (@data){
 		$counter++;
@@ -751,6 +863,22 @@ sub prefill_data {
 	$info{'location'} =~ s/,\s*$// if $info{'location'};
 	# print Data::Dumper::Dumper \%info;
 	return %info;
+}
+sub open_info_file {
+	my (@data);
+	print "Checking for $INFO_FILE... ";
+	main::error_handler('open',"$INFO_FILE not readable!",1) if  ! -r $INFO_FILE;
+	open(my $fh, '<', $INFO_FILE) or 
+	 main::error_handler('open', "Failed to open: $INFO_FILE with error:\n:$!",1);
+	chomp(@data = <$fh>);
+	close $fh if $fh;
+	print "File found and read\n";
+	my $count = scalar @data;
+	if ($count < 15){
+		main::error_handler('info-file',"$INFO_FILE only had $count lines",1);
+	}
+	push(@data,'') if @data;
+	return @data;
 }
 sub populate_file {
 	my ($files) = @_;
@@ -1927,6 +2055,7 @@ sub check_user_values {
 	check_nlink();
 	check_fork();
 	check_excludes();
+	check_infofix();
 	check_src_dest_directories();
 	check_in_out_types();
 	check_codecs();
@@ -1940,6 +2069,14 @@ sub start_text {
 	if ( $LOG_LEVEL > 0 ) {
 		eval $print_line_heavy;
 		print "Running $SELF_NAME pretests.\n";
+	}
+}
+sub check_infofix {
+	if (!main::check_module('Text::Autoformat')){
+		main::error_handler('missing-perl-module', 'Text::Autoformat',1);
+	}
+	else {
+		import Text::Autoformat;
 	}
 }
 sub check_in_out_types {
@@ -2261,15 +2398,25 @@ sub check_fork {
 	if ( $LOG_LEVEL > 0 ) {
 		print main::dotify("Checking FORK value");
 	}
-	if ( $FORK !~ m/^[0-9]+$/) {
+	if ($FORK !~ m/^[0-9]+$/) {
 		$b_error = 1;
 		$error_message .= "\n  FORK requires value: 0 or more. ";
 		$error_message .= "You used: $FORK";
 	}
-	if ( $b_error ) {
+	# note: tests show fork == 1 slower than no forking!!
+	if (!$b_error && $FORK > 0){
+		if (!main::check_module('Parallel::ForkManager')){
+			main::error_handler('missing-perl-module', 'Parallel::ForkManager',1);
+		}
+		else {
+			import Parallel::ForkManager;
+			$b_fork = 1;
+		}
+	}
+	if ($b_error) {
 		main::error_handler('bad-fork',$error_message,0);
 	}
-	elsif ( $LOG_LEVEL > 0 ) {
+	elsif ($LOG_LEVEL > 0) {
 		print "Supported: $FORK\n";
 	}
 }
@@ -2461,6 +2608,12 @@ sub show_options {
 	$output .= "--image, -I [jpg,png image file name|remove]\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
+	$output .= "--infofix, -X [dntuw]\n";
+	$output .= "                  Fix info.txt files. Use any combination. d: make iso date:\n";
+	$output .= "                  YYYY-MM-DD from various random date formats; n: make track\n";
+	$output .= "                  numbering 'NN. ' (0 padded) or 'N-NN. '; t: fix upper/lower\n";
+	$output .= "                  case track titles; u: fix entire file upper/lower; w: write\n";
+	$output .= "                  changes to file. t and u use Title upper case 1st main words.\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-dot          Override user configuration setting for DOT (--dot) [default].\n";
 	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";      
@@ -2550,16 +2703,6 @@ sub set_basic_data {
 	$OUTPUT_TYPE = lc($OUTPUT_TYPE) if $OUTPUT_TYPE;
 	@extension_list = (@extension_list,$INPUT_TYPE);
 	$File::Find::dont_use_nlink = $DONT_USE_NLINK;
-	# note: tests show fork == 1 slower than no forking!!
-	if ( $FORK > 0 ){
-		if (!check_module('Parallel::ForkManager')){
-			error_handler('missing-perl-module', 'Parallel::ForkManager',1);
-		}
-		else {
-			import Parallel::ForkManager;
-			$b_fork = 1;
-		}
-	}
 	if ($EXCLUDE){
 		if ($EXCLUDE =~ /\Q$EXCLUDE_BASE\E/){
 			@excludes = reader($EXCLUDE, 'strip');
@@ -2899,6 +3042,31 @@ sub get_options{
 		$OUTPUT_TYPE = 'UNSET';
 		$test{'tag'} = 1;
 		},
+	"X|infofix:s" => sub { 
+		my ($opt,$arg) = @_;
+		$run{'infofix'} = 1;
+		if ($arg){
+			if ($arg =~ /^[dnutw]+$/i){
+				$run{'infofix-date'} = 1 if $arg =~ /d/i;
+				$run{'infofix-no'} = 1 if $arg =~ /n/i;
+				$run{'infofix-title'} = 1 if $arg =~ /t/i;
+				$run{'infofix-upper'} = 1 if $arg =~ /u/i;
+				$run{'infofix-write'} = 1 if $arg =~ /w/i;
+			}
+			else {
+				$msg = "For $opt use no arguments, or d n u t w. See -h.";
+				error_handler('missing-arg',$msg,1);
+			}
+		}
+		$run{'autotag'} = 0;
+		$run{'autotag-create'} = 0;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$run{'checksum'} = 0;
+		$run{'checksum-verify'} = 0;
+		$test{'info'} = 1;
+		$test{'infofix'} = 1;
+	},
 	"i|input:s" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires type.",1) if ! $arg;
@@ -2929,12 +3097,19 @@ sub get_options{
 		},
 	"E|prefill" => sub { 
 		$run{'prefill'} = 1;
+		$run{'autotag'} = 0;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$run{'checksum'} = 0;
+		$run{'checksum-verify'} = 0;
+		$test{'info'} = 1;
 		$test{'prefill'} = 1;
 		},
 	"prefill-file:s" => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires file name.",1) if ! $arg;
 		$INFO_FILE = $arg;
+		$test{'info'} = 1;
 		$test{'prefill'} = 1;
 		},
 	"q|quality:f" => sub { 
@@ -3024,15 +3199,19 @@ sub get_options{
 	);
 	# prevent tagging/checksum operations without explicitly set source
 	if (!$test{'source'} && ($test{'tag'} || $test{'tag-create'} || 
-	$test{'prefill'} || $test{'aggregate'} || $test{'checksum'})){
+	$test{'info'} || $test{'aggregate'} || $test{'checksum'})){
 		error_handler('invalid-options', 
 		 "Explicit --source is required for all tagging/checksum options.",1);
 	}
 	# prevent running any tagging options with syncing options
 	if (($test{'clean'} || $test{'sync'}) && ($test{'tag'} || $test{'tag-create'} || 
-	$test{'prefill'} || $test{'checksum'})){
+	$test{'info'} || $test{'checksum'})){
 		error_handler('invalid-options', 
 		 "Tagging/checksum options cannot be used with clean/sync options.",1);
+	}
+	if ($test{'infofix'} && ($test{'prefill'} && $test{'tag-create'})){
+		error_handler('invalid-options', 
+		 "Info Fix cannot be combined with any other option except --source.",1);
 	}
 	# prefill options require tag-create options
 	if ($test{'prefill'} && !$test{'tag-create'}){
@@ -3041,13 +3220,13 @@ sub get_options{
 	}
 	# aggregate requires destination and cannot be used with any other action
 	if ($test{'aggregate'} && (!$test{'destination'} || ($test{'sync'} || 
-	$test{'tag'} || $test{'tag-create'} || $test{'prefill'} || $test{'checksum'}))){
+	$test{'tag'} || $test{'tag-create'} || $test{'info'} || $test{'checksum'}))){
 		error_handler('invalid-options', 
 		 "Aggregate requires destination and cannot be combined with any other actions.",1);
 	}
 	# checksum can only be run with tagging/image, like -AD -AK
 	if ($test{'checksum'} && ($test{'sync'} || $run{'test'} || $test{'tag-create'} || 
-	$test{'prefill'})){
+	$test{'info'})){
 		error_handler('invalid-options', 
 		 "Checksum options cannot be used with clean/sync/image/tagging options.",1);
 	}

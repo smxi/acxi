@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-06\-12" acxi "acxi manual"
+.TH ACXI 1 "2021\-06\-23" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -413,6 +413,46 @@ Sample: \fBacxi \-s ./ \-\-image='cover.jpg'\fR
 Sample: \fBacxi \-s ./ \-\-image remove\fR
 
 Sample: \fBacxi \-s ./ \-I cover.jpg \-\-remove\-images\fR
+
+.TP
+.B \-\-infofix\fR, \fB\-X [d|n|u|rd|rdn|rdnu|]\fR
+Correct common corruptions to info.txt files. Only to correct these common 
+issues:
+
+* Entire file is uppercase (this happens surprisingly often). Applies smart
+fix for Uppercase first, not recommended if the file has a lot of text in it.
+
+* Track numbering is defective or inconsistent, and there is not too much extra 
+text.
+
+* Dates are non ISO YYYY\-MM\-DD, like May 23, 1983; 4/12/78; 2011-8-12;
+18.4.21. Always double check file to make sure they aren't using some really
+silly date format, and confirm with d option before using rd to make sure it
+is as expected.
+
+* Trim white spaces off line ends and get rid of extra new lines (default 
+action).
+
+Values:
+
+* d \- set date to ISO format YYYY\-MM\-DD
+
+* n \- fix track numbering to be consistent '0X. ' or 'Y-0X'
+
+* t \- smart upper case first track titles only. 
+
+* u \- run upper case first smart fix.  Requires Perl module 
+\fBText::Autoformat\fR.
+
+* w \- write changes to info file.
+
+With no \fBw\fR supplied, will just show what would have happened, with \fBw\fR, 
+writes fixes to file.
+
+Info file fixes would be used before running \fB\-E\fR, and not with any other 
+option. 
+
+See \fB\-\-prefill\-file\fR for using alternate info txt file names.
 
 .TP
 .B \-\-input\fR, \fB\-i {aif|flac|raw|shn|wav}\fR
