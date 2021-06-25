@@ -705,7 +705,7 @@ sub info_fixes {
 	print "Working on file:\n$INFO_FILE\n";
 	my @data = open_info_file();
 	@data = date_fix(\@data) if $run{'infofix-date'};
-	# print Data::Dumper::Dumper \@data;
+	 print Data::Dumper::Dumper \@data;
 	foreach my $row (@data){
 		if ($run{'infofix-upper'}){
 			foreach my $style (qw(highlight)) {
@@ -730,12 +730,14 @@ sub info_fixes {
 			$newlines++;
 		}
 		if (($run{'infofix-no'} || $run{'infofix-title'}) && 
-		 $row =~ /^(\s*([1-9]-)?([0-9]{1,2})(\.\s*|\s*-\s*|\s*\)\s*|:\s*))/){
-			#print "$1 '$3'\n";
+		 $row =~ /^(\s*(([1-9]-)([0-9]{1,2})|([0-9]{1,2}))(\.\s*|\s*-\s*|\s*\)\s*|:\s*|\s+))/){
+			# print "$1 '$6'\n";
 			if ($run{'infofix-no'}){
-				my $nu = sprintf('%02d',$3);
-				$nu = $2 . $nu if $2;
-				$row =~ s/^$1/$nu. /;
+				# print "$1 $2 $3\n";
+				my $nu = (defined $4) ? $4 : $5;
+				$nu = sprintf('%02d',$nu);
+				$nu = $3 . $nu if $3;
+				$row =~ s/^\Q$1\E/$nu. /;
 			}
 			if ($run{'infofix-title'}){
 				foreach my $style (qw(highlight)) {
