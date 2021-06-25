@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.29';
-my $SELF_DATE = '2021-06-23';
+my $SELF_DATE = '2021-06-24';
 
 ## GLOBALS ##
 my %run;
@@ -2074,7 +2074,7 @@ sub start_text {
 	}
 }
 sub check_infofix {
-	return if !$run{'infofix'};
+	return if (!$run{'infofix-title'} && !$run{'infofix-upper'});
 	if (!main::check_module('Text::Autoformat')){
 		main::error_handler('missing-perl-module', 'Text::Autoformat',1);
 	}

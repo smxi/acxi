@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-06\-23" acxi "acxi manual"
+.TH ACXI 1 "2021\-06\-24" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -439,9 +439,10 @@ Values:
 
 * n \- fix track numbering to be consistent '0X. ' or 'Y-0X'
 
-* t \- smart upper case first track titles only. 
+* t \- smart upper case first track titles only. Requires Perl module 
+\fBText::Autoformat\fR.
 
-* u \- run upper case first smart fix.  Requires Perl module 
+* u \- run upper case first smart fix. Requires Perl module 
 \fBText::Autoformat\fR.
 
 * w \- write changes to info file.
@@ -453,6 +454,8 @@ Info file fixes would be used before running \fB\-E\fR, and not with any other
 option. 
 
 See \fB\-\-prefill\-file\fR for using alternate info txt file names.
+
+Samples: \fBacxi \-s./ -X dtn\fR (to test) \fBacxi \-s./ -X dtnw\fR (to apply)
 
 .TP
 .B \-\-input\fR, \fB\-i {aif|flac|raw|shn|wav}\fR
