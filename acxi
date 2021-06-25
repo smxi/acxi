@@ -705,7 +705,7 @@ sub info_fixes {
 	print "Working on file:\n$INFO_FILE\n";
 	my @data = open_info_file();
 	@data = date_fix(\@data) if $run{'infofix-date'};
-	 print Data::Dumper::Dumper \@data;
+	# print Data::Dumper::Dumper \@data;
 	foreach my $row (@data){
 		if ($run{'infofix-upper'}){
 			foreach my $style (qw(highlight)) {
