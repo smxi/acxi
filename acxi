@@ -2074,6 +2074,7 @@ sub start_text {
 	}
 }
 sub check_infofix {
+	return if !$run{'infofix'};
 	if (!main::check_module('Text::Autoformat')){
 		main::error_handler('missing-perl-module', 'Text::Autoformat',1);
 	}
