@@ -1013,7 +1013,7 @@ sub populate_file {
 		}
 		else {
 			main::error_handler('track-counts',"Prefill track count mismatch: Files: " . scalar(@$files) . 
-			 ' Info Tracks: ' . scalar(@{$info{'tracks'}}),1);
+			 '; Info Tracks: ' . scalar(@{$info{'tracks'}}),1);
 		}
 	}
 	foreach (@$files){
