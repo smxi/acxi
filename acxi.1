@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-06\-24" acxi "acxi manual"
+.TH ACXI 1 "2021\-06\-29" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -11,11 +11,12 @@ Syncing: \fBacxi\fR [\fB\-a\fR {extensions}] [\fB\-\-clean\fR]
 [\fB\-i\fR {flac|raw|shn|wave}] [\fB\-o\fR {flac|mp3|ogg|opus}] 
 [\fB\-q\fR {NUMBER]} [\fB\-s\fR {source\-path}] 
 .IP * 2
-Tagging: \fBacxi\fR [\fB\-\-autotag\fR] [\fB\-\-autotag\-create\fR] 
+Tagging: \fBacxi\fR [\fB\-\-aggregate\fR [file name|extension]] 
+[\fB\-\-autotag\fR] [\fB\-\-autotag\-create\fR] 
 [\fB\-\-autotag\-create\-single\fR] 
 [\fB\-\-autotag\-create\-multi\fR {filename start ID}]
-[\fB\-\-aggregate\fR {file name|extension}] 
 [\fB\-\-image\fR {cover image filename}]
+[\fB\-\-infofix\fR [d|n|t|u|w]]
 [\fB\-\-prefill\fR] [\fB\-\-prefill\-file\fR {release info file name}] 
 [\fB\-\-no\-replaygain\fR] [\fB\-\-recurse\fR {-1-xx}] [\fB\-\-remove\-images\fR] 
 [\fB\-\-remove\-padding\fR] [\fB\-\-start\fR {0-xx}]
@@ -37,11 +38,11 @@ Debugging: \fBacxi\fR [\fB\-\-debug\fR]  [\fB\-\-nlink\fR]
 .SH DESCRIPTION
 \fBacxi\fR is a command line audio conversion program and audio processing 
 program. It converts and syncs all desired source lossless files to the desired 
-output format, and to adifferent directory location. 
+output format, and to a different directory location. 
 
 Supports lossless input formats aiff/flac/raw/shn/wav. Output formats are flac, 
-ogg, opus, or mp3. aif/raw/shn can only output to flac. mp3 can only have flac 
-as input format.
+ogg, opus, aac/m4a, or mp3. aif/raw/shn can only output to flac. aac, m4a, mp3 
+can only have flac as input format.
 
 By default, it will also copy over most common filetypes like .gif, .jpg, .png, 
 and .txt. You can change the defaults using a configuration file, or the 
@@ -64,9 +65,9 @@ should run on anything. Several features (copy, make directory, find files) were
 moved from *nix commands to Perl native commands in version 3, which should make 
 acxi fully platform agnostic.
 .IP * 2
-\fBAAC/M4A\fR encoding requires \fBffmepg\fR with either \fBlibfdk_aac\fR 
-(Debian/Ubuntu package: \fBlibfdk_aac2\fR) or native \fBffmepg aac\fR codec. 
-Source file must be flac. To transfer tags, m4a must be used.
+\fBAAC/M4A\fR encoding requires \fBffmpeg\fR with either \fBlibfdk_aac\fR 
+(Debian/Ubuntu package: \fBlibfdk_aac2\fR) or native \fBffmpeg aac\fR codec. 
+Source file must be flac. To transfer tags, \fBm4a\fR must be used.
 .IP * 2
 \fBOgg\fR encoding requires \fBoggenc\fR (Debian/Ubuntu package: 
 \fBvorbis-tools\fR).
@@ -89,6 +90,8 @@ logic may be moved to straight Perl to remove the md5 program requirement.
 .IP * 2
 \fB\-\-checksum\-verify\fR require \fBflac\fR executable and \fBmd5sum\fR (or 
 any comparable program that generates md5 hashes). 
+.IP * 2
+\fB\-\-infofix [t|u]\fR require Perl module \fBText::Autoformat\fR. 
 .IP * 2
 \fB\-U\fR Self-updater requires \fBcurl\fR. 
 .PP
@@ -415,25 +418,29 @@ Sample: \fBacxi \-s ./ \-\-image remove\fR
 Sample: \fBacxi \-s ./ \-I cover.jpg \-\-remove\-images\fR
 
 .TP
-.B \-\-infofix\fR, \fB\-X [d|n|u|rd|rdn|rdnu|]\fR
+.B \-\-infofix\fR, \fB\-X [d|n|t|u|w]\fR
 Correct common corruptions to info.txt files. Only to correct these common 
 issues:
 
-* Entire file is uppercase (this happens surprisingly often). Applies smart
-fix for Uppercase first, not recommended if the file has a lot of text in it.
+* Entire file is uppercase (this happens surprisingly often). Applies smart 
+Autoformat fix for Upper/lower case, not recommended if the file has a lot of 
+text in it. Perfect for titles and most standard values, but not for paragraghs
+of text.
 
 * Track numbering is defective or inconsistent, and there is not too much extra 
 text.
 
 * Dates are non ISO YYYY\-MM\-DD, like May 23, 1983; 4/12/78; 2011-8-12;
 18.4.21. Always double check file to make sure they aren't using some really
-silly date format, and confirm with d option before using rd to make sure it
+silly date format, and confirm with d option before using wd to make sure it
 is as expected.
 
 * Trim white spaces off line ends and get rid of extra new lines (default 
-action).
+action always).
 
-Values:
+Values (can be combined):
+
+* no option \- clean white space issues. Default action, always runs.
 
 * d \- set date to ISO format YYYY\-MM\-DD
 
@@ -559,8 +566,9 @@ line, and must be in first 6 lines of file.
 first blank line.
 
 * Performers list must be preceded by a line starting with \fBBand:\fR, 
-\fBLineup:\fR, \fBLine\-up:\fR, or \fBBand Lineup\fR, \fBBand Line\-up\fR, and 
-must be followed by a blank line, with no empty lines between performers. 
+\fBLineup:\fR, \fBLine\-up:\fR, or \fBBand Lineup\fR, \fBBand Line\-up\fR, 
+\fBMembers:\fR, or \fBBand Members\fR, and must be followed by a blank line, 
+with no empty lines between performers.
 
 * Track numbers must start with either \fBX-X.\fR, \fBX-XX.\fR (for multidisc), 
 \fBX.\fR or \fBXX.\fR where \fBX\fR is a number. The number of tracks listed 
@@ -572,14 +580,17 @@ could occur.
 
 Use together with \fB\-M\fR or \fB\-S\fR to prepopulate the \fBALBUM,\fR 
 \fBARTIST\fR, \fBALBUMARTIST\fR, \fBPERFORMER\fR, \fBDATE\fR, \fBYEAR\fR, and 
-\fBTITLE\fR fields as well. Note that \fBALBUMARTIS\fRT is filled with 
+\fBTITLE\fR fields as well. Note that \fBALBUMARTIST\fR is filled with 
 \fBARTIST\fR name.
 
 Use the  \fB\-\-test\fR option to make sure the data will prefill as expected
 before actually creating the \fBauto.tag\fR file.
 
 Samples: 
-\fBacxi \-s./ \-ES\fR; \fBacxi \-s./ \-EM d%\-\fR [d2\-track04.flac];
+
+\fBacxi \-s./ \-ES\fR [single disc]
+
+\fBacxi \-s./ \-EM d%\-\fR [multi disc, file name sample: d2\-track04.flac];
 
 .TP
 .B \-\-prefill\-file {file name}\fR

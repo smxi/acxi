@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.29';
-my $SELF_DATE = '2021-06-24';
+my $SELF_DATE = '2021-06-29';
 
 ## GLOBALS ##
 my %run;
@@ -2616,11 +2616,12 @@ sub show_options {
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
 	$output .= "--infofix, -X [dntuw]\n";
-	$output .= "                  Fix info.txt files. Use any combination. d: make iso date:\n";
-	$output .= "                  YYYY-MM-DD from various random date formats; n: make track\n";
-	$output .= "                  numbering 'NN. ' (0 padded) or 'N-NN. '; t: fix upper/lower\n";
-	$output .= "                  case track titles; u: fix entire file upper/lower; w: write\n";
-	$output .= "                  changes to file. t and u use Title upper case 1st main words.\n";
+	$output .= "                  Fix info.txt files. Use any combination. Always cleans white\n";
+	$output .= "                  space issues. d: make iso date:  YYYY-MM-DD from various\n";
+	$output .= "                  random date formats; n: make tracknumbering 'NN. ' (0 padded)\n";
+	$output .= "                  or 'N-NN. '; t: fix upper/lower case track titles; \n";
+	$output .= "                  u: fix entire file upper/lower; w: write changes to file. \n";
+	$output .= "                  t and u use Title upper case main words.\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-dot          Override user configuration setting for DOT (--dot) [default].\n";
 	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";      
@@ -2683,7 +2684,7 @@ sub show_options {
 	}
 	$output .= "Requires this syntax (any user modifiable variable can be used)\n";
 	$output .= "SOURCE_DIRECTORY=/home/me/music/flac\n";
-	$output .= "DESTINATION_DIRECTORY=/home/me/music/ogg\n";
+	$output .= "DESTINATION_DIRECTORY=/home/me/music/opus\n";
 	$output .= "Do not use \$, \", or \' in config options or values (except in path names).\n";
 	$output .= "\n";
 	print $output;
