@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.29';
-my $SELF_DATE = '2021-06-29';
+my $SELF_DATE = '2021-07-23';
 
 ## GLOBALS ##
 my %run;
@@ -354,7 +354,7 @@ sub aggregate_file {
 	print $line_small;
 	print "Aggregating file type $extension...\n";
 	print $line_small;
-	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list) {
+	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list){
 		$b_dest_changed = 1;
 		$file_working = $file;
 		$file_working =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
@@ -400,7 +400,7 @@ sub get_tag_files {
 	@found_list = ();
 	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
 	my $start_dir = Cwd::getcwd();
-	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list) {
+	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		$print_file = $working_dir = $item;
 		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
 		# $working_dir =~ s/[^\/]+$//;
@@ -415,7 +415,7 @@ sub get_tag_files {
 		process_tags();
 		$b_dest_changed = 1;
 	}
-	if (!@found_list) {
+	if (!@found_list){
 		print "No $TAG_FILE files found.\n";
 	}
 }
@@ -438,7 +438,7 @@ sub process_tags {
 			$tag = qq(--set-tag=$working[0]="$working[1]");
 			push @track_tags, $tag;
 		}
-		elsif ($working[0] ne 'FILE') {
+		elsif ($working[0] ne 'FILE'){
 			# delete all previous items for key, to avoid multi tagging
 			if ($b_tracks && (!$set{$working[0]} || $working[1] eq 'UNSET')){
 				if ($working[0] eq 'IMAGE'){
@@ -493,7 +493,7 @@ sub process_tags {
 			@track_tags = ();
 			@image_args = ();
 			# reset all detected @main items
-			foreach (keys %set) {
+			foreach (keys %set){
 				$set{$_} = 0;
 			}
 			$cmd = qq($COMMAND_METAFLAC $args "$working[1]");
@@ -528,7 +528,7 @@ sub tag_updater {
 	File::Find::find( \&main::wanted, "$SOURCE_DIRECTORY");
 	chdir "$SOURCE_DIRECTORY";
 	print "Updating tags:$print_tags... \n";
-	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list) {
+	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list){
 		$print_file = $working_dir = $file;
 		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
 		print "Processing: $print_file...\n Tags$print_padding ";
@@ -562,7 +562,7 @@ sub tag_updater {
 			say 'Tags update: skip';
 		}
 	}
-	if (!@found_list) {
+	if (!@found_list){
 		print "No $INPUT_TYPE files found.\n";
 	}
 }
@@ -581,7 +581,7 @@ sub image_embedder{
 		$error_message .= "Please make sure your embed image file name or path is correct.\n";
 		main::error_handler('file-missing', $error_message,1);
 	}
-	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list) {
+	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		$print_file = $working_dir = $item;
 		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
 		print "Processing: $print_file...";
@@ -611,7 +611,7 @@ sub image_embedder{
 		}
 		$b_dest_changed = 1;
 	}
-	if (!@found_list) {
+	if (!@found_list){
 		print "No $INPUT_TYPE files found.\n";
 	}
 }
@@ -683,7 +683,7 @@ sub make_file {
 	@found_list = ();
 	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 	print "\n" if $LOG_LEVEL > 2;
-	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list) {
+	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list){
 		$b_dest_changed = 1;
 		$file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
 		say $file if $LOG_LEVEL > 2;
@@ -712,7 +712,7 @@ sub info_fixes {
 	$upper .= 'Wav|Wi|Va|Vt';
 	foreach my $row (@data){
 		if ($run{'infofix-upper'}){
-			foreach my $style (qw(highlight)) {
+			foreach my $style (qw(highlight)){
 				$row = Text::Autoformat::autoformat($row, {case => $style, left=>1, right=>1000});
 			}
 			# set back to upper common abbreviations, states, etc
@@ -744,7 +744,7 @@ sub info_fixes {
 				$row =~ s/^\Q$1\E/$nu. /;
 			}
 			if ($run{'infofix-title'}){
-				foreach my $style (qw(highlight)) {
+				foreach my $style (qw(highlight)){
 					$row = Text::Autoformat::autoformat($row, { case => $style, left=>1, right=>1000 });
 					$row =~ s/[\r\n]+//g; # has to be AFTER autoformat
 				}
@@ -787,8 +787,8 @@ sub date_fix {
 			$yyyy = $8;
 			$regex = $1;
 			my $month = lc($4);
-			if ($3) {$dd = sprintf('%02d',$3)}
-			elsif ($6) {$dd = sprintf('%02d',$6)}
+			if ($3){$dd = sprintf('%02d',$3)}
+			elsif ($6){$dd = sprintf('%02d',$6)}
 			if ($month eq 'jan'){$mm = '01';}
 			elsif ($month eq 'feb'){$mm = '02';}
 			elsif ($month eq 'mar'){$mm = '03';}
@@ -821,7 +821,7 @@ sub date_fix {
 		elsif ($yyyy =~ /^[0-2][0-9]$/){
 			$yyyy = '20' . $yyyy;
 		}
-		if ($mm && $dd && $yyyy) {
+		if ($mm && $dd && $yyyy){
 			$_ =~ s/\Q$regex\E/$yyyy-$mm-$dd/i;
 		}
 		push(@data,$_);
@@ -986,7 +986,6 @@ sub populate_file {
 				$j++;
 				$holder = $starter;
 				$multi[$j] = 1;
-				#$counter = $start;
 				# say "$starter $j";
 			}
 			else {
@@ -1061,21 +1060,22 @@ sub populate_file {
 	}
 }
 # The idea here is that the track total will show the full number including
-# removed strart tracks. Not a common situation, but does happen
+# removed start tracks. Not a common situation, but does happen
 sub create_track_total {
 	my $working = $_[0];
 	# note: 0 start, track number to 14, 15 tracks, would show 14/15, so make shwo 14/14
 	my ($total) = (0);
-	if ($start == 0 ){
+	if ($start == 0){
 		$total = $working - 1;
 	}
 	# the normal, simple scalar of the found files. Default behavior
-	elsif ($start == 1 ){
+	elsif ($start == 1){
 		$total = $working;
 	}
-	# ex: 15 original tracks, first 2 removed, real file numbering starts at 03
+	# ex: 15 original tracks, first 2 removed, start, file numbering == 03
+	# 13 actual tracks, start 3, subtract 1.
 	else {
-		$total = $working + $start;
+		$total = $working + $start - 1;
 	}
 	#print "ctt: $start $total\n";
 	return $total;
@@ -1117,7 +1117,7 @@ sub process_directories {
 	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 	my $start_dir = Cwd::getcwd();
 	say 'start dir: ', $start_dir if $LOG_LEVEL > 3;
-	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list) {
+	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		my $b_valid;
 		$print_src = $item;
 		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
@@ -1206,7 +1206,7 @@ sub verify_flacs {
 	# NOTE: $_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
 	# shows the weird hidden text this command creates
 	#say 'cwd: ', Cwd::getcwd();
-	if ( ! (grep -f, main::globber("*.$INPUT_TYPE") ) ){
+	if ( ! (grep -f, main::globber("*.$INPUT_TYPE") )){
 		print "No $INPUT_TYPE files found.\n";
 		return;
 	}
@@ -1307,7 +1307,7 @@ sub verify_md5 {
 					$hash2 = 'missing';
 				}
 				if ($hash2){
-					if ( $hash eq $hash2) {
+					if ( $hash eq $hash2){
 						print "Matched\n" if $LOG_LEVEL > 1;
 					}
 					else {
@@ -1375,7 +1375,7 @@ sub process_type {
 	@found_list = ();
 	File::Find::find( \&main::wanted, $DESTINATION_DIRECTORY);
 	if (@found_list && confirm_deletion($type)){
-		foreach $item (sort { "\L$a" cmp "\L$b" } @found_list) {
+		foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 			$result = 'UNSET';
 			print "Deleting $type: $item\n";
 			$result = File::Path::rmtree("$item") if !$b_test;
@@ -1420,26 +1420,26 @@ package SyncCollection;
 sub process_collection {
 	my (@extension_files);
 	eval $print_line_heavy;
-	if ( $LOG_LEVEL > 1 ) {
+	if ( $LOG_LEVEL > 1){
 		print "Syncing " . main::sourcer("$DESTINATION_DIRECTORY") . " (destination) with\n";
 		print "  " . main::sourcer("$SOURCE_DIRECTORY") . " (source)...\n";
 	}
-	elsif ( $LOG_LEVEL > 0 ) {
+	elsif ( $LOG_LEVEL > 0){
 		print "Starting sync of " . main::sourcer("$SOURCE_DIRECTORY");
 		print "\n to " . main::sourcer("$DESTINATION_DIRECTORY") . "\n";
 	}
 	update_directories();
 	$list_type = 'file';
-	foreach (@extension_list) {
+	foreach (@extension_list){
 		eval $print_line_large;
 		$extension = $_;
 		@found_list = ();
 		File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 		# print Dumper \@found_list;
-		if ( $LOG_LEVEL > 1 ) {
+		if ( $LOG_LEVEL > 1){
 			print "PROCESSING DATA TYPE: $extension\n";
 		}
-		elsif ( $LOG_LEVEL > 0 ) {
+		elsif ( $LOG_LEVEL > 0){
 			print "\n" . main::dotify("Processing $extension data type");
 		}
 		if (@found_list){
@@ -1459,13 +1459,13 @@ sub update_directories {
 	File::Find::find( \&main::wanted, $SOURCE_DIRECTORY);
 	eval $print_line_large;
 	# print Dumper \@found_list;
-	if ( $LOG_LEVEL > 1 ) {
+	if ( $LOG_LEVEL > 1){
 		print "Checking if $SELF_NAME needs to create destination directories...\n";
 	}
-	elsif ( $LOG_LEVEL > 0 ) {
+	elsif ( $LOG_LEVEL > 0){
 		print main::dotify("Updating destination directories");
 	}
-	foreach $dir (sort { "\L$a" cmp "\L$b" } @found_list) {
+	foreach $dir (sort { "\L$a" cmp "\L$b" } @found_list){
 		#print "\nd1:$dir\n";
 		$result = 'UNSET';
 		next if $dir eq $SOURCE_DIRECTORY || $dir eq $DESTINATION_DIRECTORY;
@@ -1474,13 +1474,13 @@ sub update_directories {
 		$dest_dir = $DESTINATION_DIRECTORY . $path_separator . $dir;
 		#print "d2:$dir\n";
 		# check to see if the destination dir already exists
-		if ( ! stat("$dest_dir") ) {
+		if ( ! stat("$dest_dir")){
 			# stat failed so create the directory
 			eval $print_line_small;
-			if ( $LOG_LEVEL > 1 ) {
+			if ( $LOG_LEVEL > 1){
 				print "CREATING NEW DIRECTORY:\n $dest_dir\n";
 			}
-			elsif ( $LOG_LEVEL > 0 ) {
+			elsif ( $LOG_LEVEL > 0){
 				print "\nCreating new directory: $dest_dir";
 			}
 			$dest_dir =~ s/\`/\'/g; # get rid of weird characters
@@ -1498,7 +1498,7 @@ sub update_files {
 	my ($dest_file,$file,$result,$action,$src_file) = ('','','','','');
 	my ($dest_info,$dest_mod_time,$src_info, $src_mod_time) = ('',0,'',0);
 	my $pm = new Parallel::ForkManager($FORK) if $b_fork;
-	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list) {
+	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list){
 		next if ! $file;
 		$dest_file = $src_file = $file;
 		#print "\nIF: $src_file\n";
@@ -1509,7 +1509,7 @@ sub update_files {
 		# $src_file =~ s/\0//g; 
 		$dest_file =~ s/\0//g;
 		# Figure out what the destination file would be...
-		if ( lc($extension) eq $INPUT_TYPE ){
+		if ( lc($extension) eq $INPUT_TYPE){
 			$dest_file =~ s/\.$INPUT_TYPE$/\.$OUTPUT_TYPE/i;
 		}
 		#print "OF: $dest_file\n";
@@ -1521,7 +1521,7 @@ sub update_files {
 		  main::error_handler('stat-infile', "No $src_file: $!",1);
 		$src_mod_time = $src_info->mtime if $src_info;
 		$dest_info = File::stat::stat("$dest_file");
-		if ( $dest_info ) {
+		if ( $dest_info){
 			$dest_mod_time = $dest_info->mtime;
 			#  :: FORCE: $b_force
 # 			print "DEST_MOD: $dest_mod_time :: SRC_MOD: $src_mod_time\n"; 
@@ -1532,11 +1532,11 @@ sub update_files {
 		# If the destination file does not exist, or the user specified force,
 		# or the srcfile is more recent then the dest file, we encode/copy.
 		# print "src-mt: $src_mod_time dest-mt:$dest_mod_time\n";
-		if ( !$dest_info || $b_force || ( $src_mod_time > $dest_mod_time) ) {
+		if ( !$dest_info || $b_force || ( $src_mod_time > $dest_mod_time)){
 			# these have to be set before the forking
 			$b_created = 1;
 			$b_dest_changed = 1;
-			if ( lc($extension) eq $INPUT_TYPE ){
+			if ( lc($extension) eq $INPUT_TYPE){
 				$pm->start and next if $b_fork; # do the fork 
 				my @returns = convert_file($src_file, $dest_file);
 				$result = $returns[0];
@@ -1565,11 +1565,11 @@ sub copy_file {
 	$src_print =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
 	$dest_print =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
 	eval $print_line_small;
-	if ( $LOG_LEVEL > 1 ) {
+	if ( $LOG_LEVEL > 1){
 		print "COPY: $src_print ==> \n";
 		print "      $dest_print\n"; 
 	}
-	elsif ( $LOG_LEVEL > 0 ) {
+	elsif ( $LOG_LEVEL > 0){
 		print "\nCopying $src_print...";
 	}
 	if (!$b_test){
@@ -1598,16 +1598,16 @@ sub convert_file {
 	# just like this.
 	if (!$b_fork){
 		eval $print_line_small;
-		if ( $LOG_LEVEL > 1 ) {
+		if ( $LOG_LEVEL > 1){
 			print "ENCODE: $src_print ==> \n";
 			print "        $dest_print\n"; 
 		}
-		elsif ( $LOG_LEVEL > 0 ) {
+		elsif ( $LOG_LEVEL > 0){
 			# add line break only when file exists
 			print main::dotify("\nEncoding $src_print to $OUTPUT_TYPE");
 		}
 	}
-	if ( $OUTPUT_TYPE eq 'aac' || $OUTPUT_TYPE eq 'm4a' ){
+	if ( $OUTPUT_TYPE eq 'aac' || $OUTPUT_TYPE eq 'm4a'){
 		$action = "To $OUTPUT_TYPE";
 		if (!$b_test){
 			# note: sample depth is taken usually from originating file, like shn or wav, but 
@@ -1618,7 +1618,7 @@ sub convert_file {
 			$result = $?;
 		}
 	}
-	elsif ( $OUTPUT_TYPE eq 'flac' ){
+	elsif ( $OUTPUT_TYPE eq 'flac'){
 		$action = 'To flac';
 		if (!$b_test){
 			# note: sample depth is taken usually from originating file, like shn or wav, but 
@@ -1629,7 +1629,7 @@ sub convert_file {
 			$result = $?;
 		}
 	}
-	elsif ( $OUTPUT_TYPE eq 'mp3' ){
+	elsif ( $OUTPUT_TYPE eq 'mp3'){
 		$action = 'To mp3';
 		if (!$b_test){
 			# Modified: Odd @2011-03-23 01:51:26 - Include ID3 copying
@@ -1638,7 +1638,7 @@ sub convert_file {
 			$result = $?;
 		}
 	}
-	elsif ( $OUTPUT_TYPE eq 'ogg' ){
+	elsif ( $OUTPUT_TYPE eq 'ogg'){
 		$action = 'To ogg';
 		# ffmpeg -i 'file.flac'  -map_metadata:s:a 0:g 'file.ogg'
 		# my $meta_data = '--map_metadata:s:a 0:g';
@@ -1653,7 +1653,7 @@ sub convert_file {
 			}
 		}
 	}
-	elsif ( $OUTPUT_TYPE eq 'opus' ){
+	elsif ( $OUTPUT_TYPE eq 'opus'){
 		$action = 'To opus';
 		if (!$b_test){
 			qx($COMMAND_OPUS $silent_opus --bitrate $quality "$src_file" "$dest_file");
@@ -1662,12 +1662,12 @@ sub convert_file {
 	}
 	if ($b_fork){
 		eval $print_line_small;
-		if ( $LOG_LEVEL > 1 ) {
+		if ( $LOG_LEVEL > 1){
 			print "ENCODED: $src_print ==> \n";
 			print "        $dest_print\n"; 
 			print "$action result: $result\n";
 		}
-		elsif ( $LOG_LEVEL > 0 ) {
+		elsif ( $LOG_LEVEL > 0){
 			# add line break only when file exists
 			print main::dotify("\nEncoded $src_print to $OUTPUT_TYPE");
 		}
@@ -1732,7 +1732,7 @@ sub get_flac_tags {
 	}
 	my @orig_tags = qx($cmd);
 	chomp @orig_tags;
-	foreach (@orig_tags) {
+	foreach (@orig_tags){
 		@working = split /=/,$_;
 		$tag_list{$working[0]} = $working[1];
 	}
@@ -1828,7 +1828,7 @@ sub wanted {
 	#if ($File::Find::name =~ m/\Qlost+found\E/){
 	#print $File::Find::name, "\n";
 	# run the recursion level tests
-	if ( -d $File::Find::name ){
+	if ( -d $File::Find::name){
 		my $b_skip = 0;
 		if ($recurse > -1){
 			my $working = $File::Find::name;
@@ -1865,11 +1865,11 @@ sub wanted {
 		 (@excludes && (grep {$File::Find::name =~ /\Q$_\E/} @excludes)) ||
 		 ($list_type eq 'dir' && @excludes_stripped && 
 		 (grep {$File::Find::name =~ /\Q$_\E$/} @excludes_stripped)))
-		 ){
+		){
 			$File::Find::prune = 1;
 			return;
 		}
-		if ($list_type eq 'file') {
+		if ($list_type eq 'file'){
 			# extension can be either a full file name, or extension
 			return if $File::Find::name !~ /(\.|\/)$extension$/i;
 		}
@@ -1880,7 +1880,7 @@ sub wanted {
 		my $working = $File::Find::name;
 		$working =~ s|^\Q$DESTINATION_DIRECTORY\E|$SOURCE_DIRECTORY|;
 		# we want to exclude files that are themselves contained in a sym linked directory
-		if ($list_type eq 'file-clean') {
+		if ($list_type eq 'file-clean'){
 			return if -l File::Basename::dirname($working);
 		}
 		$working =~ s/\.$OUTPUT_TYPE$/\.$INPUT_TYPE/i if $list_type eq 'file-clean';
@@ -2036,7 +2036,7 @@ sub error_handler {
 	elsif ($error eq 'missing-perl-module'){$error_no = 10;
 		$message = "Perl Module not found in system: $message";}
 	if ($error eq 'validation-errors'){
-		if (!$b_valid ){
+		if (!$b_valid){
 			$message = "${br}Failed pretests. Please correct the listed errors.\n";
 		}
 		else {
@@ -2072,7 +2072,7 @@ sub check_user_values {
 	main::error_handler('validation-errors', '',1);
 }
 sub start_text {
-	if ( $LOG_LEVEL > 0 ) {
+	if ( $LOG_LEVEL > 0){
 		eval $print_line_heavy;
 		print "Running $SELF_NAME pretests.\n";
 	}
@@ -2088,16 +2088,16 @@ sub check_infofix {
 }
 sub check_in_out_types {
 	my ($b_error,$error_message) = (0,'');
-	if ( $LOG_LEVEL > 0 ) {
+	if ( $LOG_LEVEL > 0){
 		eval $print_line_large;
 		print main::dotify("Checking input and output types");
 	}
-	if ($run{'ffmpeg'} && ($INPUT_TYPE !~ /^(flac)$/ || $OUTPUT_TYPE !~ m/^(flac|ogg|opus)$/i) ){
+	if ($run{'ffmpeg'} && ($INPUT_TYPE !~ /^(flac)$/ || $OUTPUT_TYPE !~ m/^(flac|ogg|opus)$/i)){
 		$b_error = 1;
 		$error_message .= "\n  The --ffmpeg input/output type combination you entered is not supported: ";
 		$error_message .= "in: $INPUT_TYPE out: $OUTPUT_TYPE";
 	}
-	if ($INPUT_TYPE !~ m/^(aiff?|flac|mp3|raw|shn|wav)$/i ){
+	if ($INPUT_TYPE !~ m/^(aiff?|flac|mp3|raw|shn|wav)$/i){
 		$b_error = 1;
 		$error_message .= "\n  The input type you entered is not supported: ";
 		$error_message .= "$INPUT_TYPE";
@@ -2109,12 +2109,12 @@ sub check_in_out_types {
 		$error_message .= "$INPUT_TYPE";
 	}
 	if ($b_check_out){
-		if ($OUTPUT_TYPE !~ m/^(aac|flac|m4a|mp3|ogg|opus)$/i ){
+		if ($OUTPUT_TYPE !~ m/^(aac|flac|m4a|mp3|ogg|opus)$/i){
 			$b_error = 1;
 			$error_message .= "\n  The output type you entered is not supported: ";
 			$error_message .= "$OUTPUT_TYPE";
 		}
-		if ($OUTPUT_TYPE =~ /^(m4a|mp3|aac)$/i && $INPUT_TYPE ne lc('flac') ){
+		if ($OUTPUT_TYPE =~ /^(m4a|mp3|aac)$/i && $INPUT_TYPE ne lc('flac')){
 			$b_error = 1;
 			$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
 			$error_message .= "only supports input type: flac";
@@ -2125,19 +2125,19 @@ sub check_in_out_types {
 			$error_message .= "only supports output type: flac";
 		}
 	}
-	if ( $b_error ){
+	if ( $b_error){
 		main::error_handler('unsupported-type',$error_message,0);
 	}
 	else {
 		$b_valid_in_out = 1;
-		if ( $LOG_LEVEL > 0 ) {
+		if ( $LOG_LEVEL > 0){
 			print "Valid: $INPUT_TYPE(in) $OUTPUT_TYPE(out)\n";
 		}
 	}
 }
 sub check_codecs {
 	my ($b_error,$error_message) = (0,'');
-	if ( $LOG_LEVEL > 0 ) {
+	if ( $LOG_LEVEL > 0){
 		eval $print_line_large;
 		print main::dotify("Checking codecs");
 	}
@@ -2158,7 +2158,7 @@ sub check_codecs {
 		main::error_handler('unsupported-type',$error_message,0);
 	}
 	else {
-		if ( $LOG_LEVEL > 0 ) {
+		if ( $LOG_LEVEL > 0){
 			print "Valid\n";
 		}
 	}
@@ -2166,25 +2166,25 @@ sub check_codecs {
 sub check_src_dest_directories {
 	my $missing_dirs = '';
 	my ($b_error,$error_message) = (0,'');
-	if ( $LOG_LEVEL > 0 ) {
+	if ( $LOG_LEVEL > 0){
 		eval $print_line_large;
 		print main::dotify("Checking source / destination directories");
 	}
-	if ( ! -d $SOURCE_DIRECTORY ){
+	if ( ! -d $SOURCE_DIRECTORY){
 		$b_error = 1;
 		$missing_dirs .= "\n  Source Directory: $SOURCE_DIRECTORY";
 	}
-	if ( $b_check_dest && ! -d $DESTINATION_DIRECTORY ){
+	if ( $b_check_dest && ! -d $DESTINATION_DIRECTORY){
 		$b_error = 1;
 		$missing_dirs .= "\n  Destination Directory: $DESTINATION_DIRECTORY";
 	}
-	if ( $b_error ) {
+	if ( $b_error){
 		my $error_message = "The paths for the following directories are missing:";
 		$error_message .= "$missing_dirs";
 		$error_message .= "\nPlease check the directory paths you provided.";
 		main::error_handler('dest-dir',$error_message,0);
 	} 
-	elsif ( $LOG_LEVEL > 0 ) {
+	elsif ( $LOG_LEVEL > 0){
 		print "Directories: exist\n";
 	}
 	if ($b_check_dest && !$b_error && $DESTINATION_DIRECTORY eq $SOURCE_DIRECTORY){
@@ -2195,22 +2195,22 @@ sub check_src_dest_directories {
 sub check_application_paths {
 	my ($b_error,$error_message) = (0,'');
 	my $app_paths = ''; 
-	if ( $LOG_LEVEL > 0 ) {
+	if ( $LOG_LEVEL > 0){
 		print main::dotify("Checking required tools paths");
 	}
 	if ($b_check_out){
-		if ($OUTPUT_TYPE =~ /^(aac|flac|m4a)$/) {
+		if ($OUTPUT_TYPE =~ /^(aac|flac|m4a)$/){
 			$app_paths .= "$COMMAND_FFMPEG";
-			if ( ! -x "$COMMAND_FFMPEG" ) {
+			if ( ! -x "$COMMAND_FFMPEG"){
 				$b_error = 1;
 				$error_message .= "\n  Encoding application not available: $COMMAND_FFMPEG";
 			}
 		}
-		elsif ($OUTPUT_TYPE eq 'ogg' || $OUTPUT_TYPE eq 'opus' ) {
+		elsif ($OUTPUT_TYPE eq 'ogg' || $OUTPUT_TYPE eq 'opus'){
 			if (!$run{'ffmpeg'}){
 				if ($OUTPUT_TYPE eq 'ogg'){
 					$app_paths .= "\n $COMMAND_OGG";
-					if ( ! -x "$COMMAND_OGG" ) {
+					if ( ! -x "$COMMAND_OGG"){
 						$b_error = 1;
 						$error_message .= "\n  Encoding application not available: $COMMAND_OGG";
 					}
@@ -2218,7 +2218,7 @@ sub check_application_paths {
 				elsif ($OUTPUT_TYPE eq 'opus'){
 					$app_paths .= "\n $COMMAND_OPUS";
 					if (!$run{'ffmpeg'}){
-						if ( ! -x "$COMMAND_OPUS" ) {
+						if ( ! -x "$COMMAND_OPUS"){
 							$b_error = 1;
 							$error_message .= "\n  Encoding application not available: $COMMAND_OPUS";
 						}
@@ -2227,27 +2227,27 @@ sub check_application_paths {
 			}
 			else {
 				$app_paths .= "\n $COMMAND_FFMPEG";
-				if ( ! -x "$COMMAND_FFMPEG" ) {
+				if ( ! -x "$COMMAND_FFMPEG"){
 					$b_error = 1;
 					$error_message .= "\n  Encoding application not available: $COMMAND_FFMPEG";
 				}
 			}
 		}
-		elsif ($OUTPUT_TYPE eq 'mp3' ) {
+		elsif ($OUTPUT_TYPE eq 'mp3'){
 			$app_paths .= "\n $COMMAND_LAME ";
-			if ( ! -x "$COMMAND_LAME" ) {
+			if ( ! -x "$COMMAND_LAME"){
 				$b_error = 1;
 				$error_message .= "\n  Encoding application not available: $COMMAND_LAME";
 			}
 			$app_paths .= "$COMMAND_FLAC ";
-			if ( ! -x "$COMMAND_FLAC" ) {
+			if ( ! -x "$COMMAND_FLAC"){
 				$b_error = 1;
 				$error_message .= "\n  Input processor $COMMAND_FLAC needed by lame ";
 				$error_message .= "not available.";
 			}
 			$app_paths .= "$COMMAND_METAFLAC ";
 			# Added: Odd @2011-03-23 01:55:28
-			if ( ! -x "$COMMAND_METAFLAC" ) {
+			if ( ! -x "$COMMAND_METAFLAC"){
 				$b_error = 1;
 				$error_message .= "\n  $COMMAND_METAFLAC not found. Required to copy ";
 				$error_message .= "ID3 tags from Flac to MP3.";
@@ -2259,7 +2259,7 @@ sub check_application_paths {
 		if ($run{'checksum'} || $run{'checksum-verify'}){
 			$app_paths .= "$COMMAND_MD5 ";
 			# Added: Odd @2011-03-23 01:55:28
-			if ( ! -x "$COMMAND_MD5" ) {
+			if ( ! -x "$COMMAND_MD5"){
 				$b_error = 1;
 				$error_message .= "\n  $COMMAND_MD5 not found. Required to generate ";
 				$error_message .= "md5 checksum files.";
@@ -2267,7 +2267,7 @@ sub check_application_paths {
 			if ($run{'checksum'}){
 				$app_paths .= "$COMMAND_METAFLAC ";
 				# Added: Odd @2011-03-23 01:55:28
-				if ( ! -x "$COMMAND_METAFLAC" ) {
+				if ( ! -x "$COMMAND_METAFLAC"){
 					$b_error = 1;
 					$error_message .= "\n  $COMMAND_METAFLAC not found. Required to generate ";
 					$error_message .= "ffp checksum files.";
@@ -2285,28 +2285,28 @@ sub check_application_paths {
 		if ($run{'autotag'}){
 			$app_paths .= "$COMMAND_METAFLAC ";
 			# Added: Odd @2011-03-23 01:55:28
-			if ( ! -x "$COMMAND_METAFLAC" ) {
+			if ( ! -x "$COMMAND_METAFLAC"){
 				$b_error = 1;
 				$error_message .= "\n  $COMMAND_METAFLAC not found. Required to auto-tag ";
 				$error_message .= "collection files.";
 			}
 		}
 	}
-	if ( $b_error ) {
+	if ( $b_error){
 		main::error_handler('missing-app',$error_message,0);
 	}
-	elsif ( $LOG_LEVEL > 0 ) {
+	elsif ( $LOG_LEVEL > 0){
 		print "Available: $app_paths\n";
 	}
 }
 sub check_quality{
 	my ($b_error,$error_message) = (0,'');
-	if ( $LOG_LEVEL > 0 ) {
+	if ( $LOG_LEVEL > 0){
 		print main::dotify("Checking quality support for $OUTPUT_TYPE");
 	}
 	## NOTE: this is not used
-	if ( lc($OUTPUT_TYPE) eq 'flac') {
-		if ($QUALITY_FLAC !~ m/^[0-8]$/ ) {
+	if ( lc($OUTPUT_TYPE) eq 'flac'){
+		if ($QUALITY_FLAC !~ m/^[0-8]$/){
 			$b_error = 1;
 			$error_message .= "\n  $OUTPUT_TYPE only supports ";
 			$error_message .= "0 to 8 quality levels. You entered: $QUALITY_FLAC";
@@ -2315,9 +2315,9 @@ sub check_quality{
 			$quality = $QUALITY_FLAC;
 		}
 	}
-	if ( lc($OUTPUT_TYPE) eq 'ogg') {
+	if ( lc($OUTPUT_TYPE) eq 'ogg'){
 		if ($QUALITY_OGG !~ m/^-?[0-9]+(\.[0-9]+)?$/ || 
-		 $QUALITY_OGG < -1 || $QUALITY_OGG > 10 ) {
+		 $QUALITY_OGG < -1 || $QUALITY_OGG > 10){
 			$b_error = 1;
 			$error_message .= "\n  $OUTPUT_TYPE only supports ";
 			$error_message .= "-1 to 10 quality levels. You entered: $QUALITY_OGG";
@@ -2326,8 +2326,8 @@ sub check_quality{
 			$quality = $QUALITY_OGG;
 		}
 	}
-	if ( lc($OUTPUT_TYPE) eq 'aac' || lc($OUTPUT_TYPE) eq 'm4a') {
-		if ($QUALITY_AAC !~ m/^[0-9]+$/ || $QUALITY_AAC < 10 || $QUALITY_AAC > 500 ) {
+	if ( lc($OUTPUT_TYPE) eq 'aac' || lc($OUTPUT_TYPE) eq 'm4a'){
+		if ($QUALITY_AAC !~ m/^[0-9]+$/ || $QUALITY_AAC < 10 || $QUALITY_AAC > 500){
 			$b_error = 1;
 			$error_message .= "\n  $OUTPUT_TYPE only supports ";
 			$error_message .= "10 to 500 quality levels. You entered: $QUALITY_AAC";
@@ -2337,8 +2337,8 @@ sub check_quality{
 		}
 	}
 	# supports fractional quality levels
-	elsif ( lc($OUTPUT_TYPE) eq 'opus') {
-		if ($QUALITY_OPUS !~ m/^[0-9]+$/ || $QUALITY_OPUS < 6|| $QUALITY_OPUS > 256 ){
+	elsif ( lc($OUTPUT_TYPE) eq 'opus'){
+		if ($QUALITY_OPUS !~ m/^[0-9]+$/ || $QUALITY_OPUS < 6|| $QUALITY_OPUS > 256){
 			$b_error = 1;
 			$error_message .= "\n  $OUTPUT_TYPE only supports ";
 			$error_message .= "6 to 256 bitrate quality levels. You entered: $QUALITY_OPUS";
@@ -2347,8 +2347,8 @@ sub check_quality{
 			$quality = $QUALITY_OPUS;
 		}
 	}
-	elsif ( lc($OUTPUT_TYPE) eq 'mp3') {
-		if ( $QUALITY_MP3 !~ m/^[0-9]$/ ) {
+	elsif ( lc($OUTPUT_TYPE) eq 'mp3'){
+		if ( $QUALITY_MP3 !~ m/^[0-9]$/){
 			$b_error = 1;
 			$error_message .= "\n  $OUTPUT_TYPE only supports 0-9 quality levels. ";
 			$error_message .= "You entered: $QUALITY_MP3";
@@ -2357,55 +2357,55 @@ sub check_quality{
 			$quality = $QUALITY_MP3;
 		}
 	}
-	if ( $b_error ) {
+	if ( $b_error){
 		main::error_handler('quality-invalid',$error_message,0);
 	}
-	elsif ( $LOG_LEVEL > 0 ) {
+	elsif ( $LOG_LEVEL > 0){
 		print "Supported: $quality ($OUTPUT_TYPE)\n";
 	}
 }
 sub check_log_level {
 	my ($b_error,$error_message) = (0,'');
-	if ( $LOG_LEVEL > 0 ) {
+	if ( $LOG_LEVEL > 0){
 		print main::dotify("Checking log/screen output level");
 	}
-	if ( $LOG_LEVEL !~ m/^([0-4])$/ ) {
+	if ( $LOG_LEVEL !~ m/^([0-4])$/){
 		$b_error = 1;
 		$error_message .= "\n  LOG_LEVEL only supports 0-4. ";
 		$error_message .= "You used: $LOG_LEVEL";
 	}
-	if ( $b_error ) {
+	if ( $b_error){
 		main::error_handler('bad-level',$error_message,0);
 	}
-	elsif ( $LOG_LEVEL > 0 ) {
+	elsif ( $LOG_LEVEL > 0){
 		print "Supported: $LOG_LEVEL\n";
 	}
 }
 sub check_nlink {
 	my ($b_error,$error_message) = (0,'');
-	if (defined $DONT_USE_NLINK && $DONT_USE_NLINK ne '0' ){
-		if ( $LOG_LEVEL > 0 ) {
+	if (defined $DONT_USE_NLINK && $DONT_USE_NLINK ne '0'){
+		if ( $LOG_LEVEL > 0){
 			print main::dotify("Checking DONT_USE_NLINK value");
 		}
-		if ( $DONT_USE_NLINK !~ m/^[01]$/ ) {
+		if ( $DONT_USE_NLINK !~ m/^[01]$/){
 			$b_error = 1;
 			$error_message .= "\n  DONT_USE_NLINK only supports 0-1. ";
 			$error_message .= "You used: $DONT_USE_NLINK";
 		}
-		if ( $b_error ) {
+		if ( $b_error){
 			main::error_handler('bad-nlink',$error_message,0);
 		}
-		elsif ( $LOG_LEVEL > 0 ) {
+		elsif ( $LOG_LEVEL > 0){
 			print "Supported: $DONT_USE_NLINK\n";
 		}
 	}
 }
 sub check_fork {
 	my ($b_error,$error_message) = (0,'');
-	if ( $LOG_LEVEL > 0 ) {
+	if ( $LOG_LEVEL > 0){
 		print main::dotify("Checking FORK value");
 	}
-	if ($FORK !~ m/^[0-9]+$/) {
+	if ($FORK !~ m/^[0-9]+$/){
 		$b_error = 1;
 		$error_message .= "\n  FORK requires value: 0 or more. ";
 		$error_message .= "You used: $FORK";
@@ -2420,17 +2420,17 @@ sub check_fork {
 			$b_fork = 1;
 		}
 	}
-	if ($b_error) {
+	if ($b_error){
 		main::error_handler('bad-fork',$error_message,0);
 	}
-	elsif ($LOG_LEVEL > 0) {
+	elsif ($LOG_LEVEL > 0){
 		print "Supported: $FORK\n";
 	}
 }
 sub check_excludes {
 	my ($b_error,$error_message) = (0,'');
 	if ($EXCLUDE){
-		if ( $LOG_LEVEL > 0 ) {
+		if ( $LOG_LEVEL > 0){
 			print main::dotify("Checking EXCLUDE data");
 		}
 		if ( $EXCLUDE =~ /\Q$EXCLUDE_BASE\E/){
@@ -2447,10 +2447,10 @@ sub check_excludes {
 				$error_message .= "You used: $EXCLUDE";
 			}
 		}
-		if ( $b_error ) {
+		if ( $b_error){
 			main::error_handler('bad-exclude-file',$error_message,0);
 		}
-		elsif ( $LOG_LEVEL > 0 ) {
+		elsif ( $LOG_LEVEL > 0){
 			print "Supported: $FORK\n";
 		}
 	}
@@ -2463,15 +2463,15 @@ sub check_excludes {
 #### -------------------------------------------------------------------
 sub print_completion_message {
 	eval $print_line_heavy;
-	if ( $b_dest_changed ) {
-		if ( $LOG_LEVEL > 1 ) {
+	if ( $b_dest_changed){
+		if ( $LOG_LEVEL > 1){
 			print "All done updating. Enjoy your music!\n";
 		}
-		elsif ( $LOG_LEVEL > 0 ) {
+		elsif ( $LOG_LEVEL > 0){
 			print "\nUpdating completed. Enjoy your music!\n";
 		}
 	}
-	elsif ( $LOG_LEVEL > 0 ) {
+	elsif ( $LOG_LEVEL > 0){
 		print "\nThere was nothing to update today in your collection.\n";
 	}
 	exit 0;
@@ -2487,22 +2487,22 @@ sub print_not_found {
 		$message = "No files found of type: $extension\n";
 		$none = "None found";
 	}
-	elsif ($_[0] eq 'dirs') {
+	elsif ($_[0] eq 'dirs'){
 		$message = "No new directories required. Continuing...\n";
 		$none = "None required";
 	}
-	elsif ($_[0] eq 'directory-cleaned') {
+	elsif ($_[0] eq 'directory-cleaned'){
 		$message = "No directories to remove. Continuing...\n";
 		$none = "None to remove\n";
 	}
-	elsif ($_[0] eq 'file-cleaned') {
+	elsif ($_[0] eq 'file-cleaned'){
 		$message = "No files to remove. Continuing...\n";
 		$none = "None to remove\n";
 	}
-	if ( $LOG_LEVEL > 1 ) {
+	if ( $LOG_LEVEL > 1){
 		print $message;
 	}
-	elsif ( $LOG_LEVEL > 0 ) {
+	elsif ( $LOG_LEVEL > 0){
 		print $none;
 	}
 }
@@ -2701,7 +2701,7 @@ sub show_version {
 #### -------------------------------------------------------------------
 sub set_basic_data {
 	# if --copy/-c is set, then use that data instead of default copy types
-	if ( defined $COPY_TYPES ){
+	if ( defined $COPY_TYPES){
 		@extension_list = split( /,\s*/, $COPY_TYPES );
 	}
 	$DESTINATION_DIRECTORY =~ s|/$||;
@@ -2729,28 +2729,28 @@ sub set_basic_data {
 }
 
 sub set_display_data {
-	if ( $LOG_LEVEL < 3 ) {
-		if ( $OUTPUT_TYPE eq 'mp3' ) {
+	if ( $LOG_LEVEL < 3){
+		if ( $OUTPUT_TYPE eq 'mp3'){
 			$silent_flac = '--silent'; # flac output 
 			$silent_lame = '--silent'; # lame output
 		}
-		elsif ( !$run{'ffmpeg'} && $OUTPUT_TYPE eq 'ogg' ) {
+		elsif ( !$run{'ffmpeg'} && $OUTPUT_TYPE eq 'ogg'){
 			$silent_flac = '--quiet'; # for oggenc output
 		}
-		elsif ( $OUTPUT_TYPE =~ /^(aac|m4a)$/ ) {
+		elsif ( $OUTPUT_TYPE =~ /^(aac|m4a)$/){
 			$silent_ffmpeg = '-v quiet'; # for ffmpeg output
 		}
-		elsif ( ($run{'ffmpeg'} && $OUTPUT_TYPE =~ /^(ogg)$/ ) || $OUTPUT_TYPE eq 'flac' ) {
+		elsif ( ($run{'ffmpeg'} && $OUTPUT_TYPE =~ /^(ogg)$/ ) || $OUTPUT_TYPE eq 'flac'){
 			# -nostats -loglevel 0
 			# -hide_banner -loglevel panic
 			# -v quiet
 			$silent_ffmpeg = '-hide_banner -loglevel panic'; # 
 		}
-		elsif ( $OUTPUT_TYPE eq 'opus' ) {
+		elsif ( $OUTPUT_TYPE eq 'opus'){
 			$silent_opus = '--quiet'; # for oggenc output
 		}
 	}
-	if ( $LOG_LEVEL < 2 ) {
+	if ( $LOG_LEVEL < 2){
 		$print_line_heavy = '';
 		$print_line_large = '';
 		$print_line_small = '';
@@ -2784,9 +2784,9 @@ sub set {
 		$user_config = "$CONFIG_DIRECTORY/$SELF_NAME.conf";
 	}
 	@config_files = (@config_files,$user_config) if $user_config;
-	foreach $file (@config_files) {
+	foreach $file (@config_files){
 		next unless -r $file && open (my $fh,'<',$file);
-		while (<$fh>) {
+		while (<$fh>){
 			chomp;                  # no newline
 			s/#.*//;                # no comments
 			s/^\s+//;               # no leading white
@@ -2865,7 +2865,7 @@ sub get_options{
 	"G|aggregate:s" => sub { 
 		my ($opt,$arg) = @_;
 		$b_check_out = 0;
-		if ( $arg ){
+		if ( $arg){
 			if ($arg eq 'file'){
 				$run{'aggregate-file'} = 1;
 				$arg = $TAG_FILE;
@@ -3157,7 +3157,7 @@ sub get_options{
 		},
 	"start:i" => sub { 
 		my ($opt,$arg) = @_;
-		if (! defined $arg || $start < 0){
+		if (!defined $arg || $start < 0){
 			$msg = "$opt requires track number start value. See -h.";
 			error_handler('missing-arg',$msg,1);
 		}
