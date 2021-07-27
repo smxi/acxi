@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-06\-29" acxi "acxi manual"
+.TH ACXI 1 "2021\-07\-26" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -18,7 +18,8 @@ Tagging: \fBacxi\fR [\fB\-\-aggregate\fR [file name|extension]]
 [\fB\-\-image\fR {cover image filename}]
 [\fB\-\-infofix\fR [d|n|t|u|w]]
 [\fB\-\-prefill\fR] [\fB\-\-prefill\-file\fR {release info file name}] 
-[\fB\-\-no\-replaygain\fR] [\fB\-\-recurse\fR {-1-xx}] [\fB\-\-remove\-images\fR] 
+[\fB\-\-no\-ffp\fR] [\fB\-\-no\-md5\fR] [\fB\-\-no\-replaygain\fR] 
+[\fB\-\-recurse\fR {-1-xx}] [\fB\-\-remove\-images\fR] 
 [\fB\-\-remove\-padding\fR] [\fB\-\-start\fR {0-xx}]
 [\fB\-\-tag\fR {"TAG1%:tag value^^TAG2%:tag value"}] 
 .IP * 2
@@ -524,6 +525,13 @@ setting.
 Skips FLAC ffp checks and generation on \fB\-\-checksum\fR, 
 \fB\-\-checksum\-delete\fR, and \fB\-\-checksum\-verify\fR. Useful if you have 
 already verified or created ffp/flac data and only want to check md5 sums.
+
+.TP
+.B \-\-no\-md5\fR
+Skips md5 checks and generation on \fB\-\-checksum\fR, 
+\fB\-\-checksum\-delete\fR, and \fB\-\-checksum\-verify\fR. Useful if you only 
+want to check / create ffp data, which is much faster to generate than md5 
+checksums.
 
 .TP
 .B \-\-no\-nlink\fR

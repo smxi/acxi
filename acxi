@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.29';
-my $SELF_DATE = '2021-07-23';
+my $SELF_DATE = '2021-07-26';
 
 ## GLOBALS ##
 my %run;
@@ -304,7 +304,7 @@ sub main {
 #### AUTO-TAGGING
 #### -------------------------------------------------------------------
 
-## package AutoTag 
+## AutoTag 
 {
 package AutoTag;
 sub run_tagger {
@@ -1097,7 +1097,7 @@ sub get_replaygain {
 #### CHECKSUMS
 #### -------------------------------------------------------------------
 
-## package Checksums 
+## Checksums 
 {
 package Checksums;
 sub process {
@@ -1149,10 +1149,44 @@ sub process_directories {
 	}
 }
 sub generate_checksums {
-	my ($error_message,@output);
+	print " Generating checksums:\n";
+	print "  $FFP_FILE.ffp: ";
 	system('pwd') if $LOG_LEVEL > 3;
-	print " Generating checksums: ";
-	print "$MD5_FILE.md5: ";
+	if (!$run{'no-ffp'}){
+		generate_ffp() if !$run{'no-ffp'};
+	}
+	else {
+		say "skipped" ;
+	}
+	print "  $MD5_FILE.md5: ";
+	if (!$run{'no-md5'}){
+		generate_md5();
+	}
+	else {
+		say "skipped" ;
+	}
+}
+sub generate_ffp {
+	my ($error_message,@output);
+	#system("$COMMAND_METAFLAC --show-md5sum *.flac > $FFP_FILE.ffp");
+	@output = qx($COMMAND_METAFLAC --show-md5sum *.flac);
+	if ($? == -1 || $? > 0){
+		$error_message = "$COMMAND_METAFLAC returned error: $?";
+		main::error_handler('application-error', $error_message,1);
+	}
+	else {
+		chomp (@output);
+		if (!$b_test){
+			main::writer("$FFP_FILE.ffp",\@output);
+			say "created" ;
+		}
+		else {
+			print "\n", join( "\n", @output),"\n";
+		}
+	}
+}
+sub generate_md5 {
+	my ($error_message,@output);
 	# system("$COMMAND_MD5 *.* > $MD5_FILE.md5");
 	@output = qx($COMMAND_MD5 -b *.*);
 	if ($? == -1 || $? > 0){
@@ -1169,39 +1203,18 @@ sub generate_checksums {
 			print "\n", join( "\n", @output),"\n";
 		}
 	}
-	print "$FFP_FILE.ffp: ";
-	if (!$run{'no-ffp'}){
-		#system("$COMMAND_METAFLAC --show-md5sum *.flac > $FFP_FILE.ffp");
-		@output = qx($COMMAND_METAFLAC --show-md5sum *.flac);
-		if ($? == -1 || $? > 0){
-			$error_message = "$COMMAND_METAFLAC returned error: $?";
-			main::error_handler('application-error', $error_message,1);
-		}
-		else {
-			chomp (@output);
-			if (!$b_test){
-				main::writer("$FFP_FILE.ffp",\@output);
-				say "created" ;
-			}
-			else {
-				print "\n", join( "\n", @output),"\n";
-			}
-		}
-	}
-	else {
-		say "skipped" ;
-	}
 }
 sub verify_checksums {
 	my (@files) = @_;
+	print " Verifying checksums:\n";
 	verify_flacs() if !$run{'no-ffp'} && grep -f, @files;
-	verify_md5();
+	verify_md5() if !$run{'no-md5'};
 }
 # NOTE: something is wrong with how flac outputs to stderr and
 # creates invisible text strings, maybe unicode related
 sub verify_flacs {
 	my ($error_message,@errors);
-	print " Verifying $INPUT_TYPE files (be patient): ";
+	print "  Checking $INPUT_TYPE files (be patient): ";
 	# note, flac sends output to stderr
 	# NOTE: $_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
 	# shows the weird hidden text this command creates
@@ -1280,7 +1293,7 @@ sub verify_md5 {
 	my ($b_bad,$b_break,$cmd,$hash,$hash2,$error_message,$msg,$result);
 	my @checksums = main::globber("*.{md5,md5.txt}");
 	foreach my $file (@checksums){
-		print " Checking checksums in: $file: ";
+		print "  Checking checksums in: $file: ";
 		@data = main::reader("$file",'strip');
 		#print "data\n", join ("\n", @data), "\n";
 		$b_break = 0;
@@ -1352,7 +1365,7 @@ sub delete_checksums {
 #### CLEANING
 #### -------------------------------------------------------------------
 
-## package CleanCollection
+## CleanCollection
 {
 package CleanCollection;
 
@@ -1413,7 +1426,7 @@ sub confirm_deletion {
 #### SYNCING
 #### -------------------------------------------------------------------
 
-## package SyncCollection 
+## SyncCollection 
 {
 package SyncCollection; 
 
@@ -1923,7 +1936,7 @@ sub writer {
 #### SELF UPDATER
 #### -------------------------------------------------------------------
 
-## package SelfUpdater
+## SelfUpdater
 {
 package SelfUpdater;
 my $self_source = "$SELF_DIRECTORY$path_separator$SELF_NAME";
@@ -2051,7 +2064,7 @@ sub error_handler {
 	exit $error_no if $b_exit;
 }
 
-## package Validation 
+## Validation 
 {
 package Validation;
 my ($b_valid_in_out) = (0);
@@ -2624,7 +2637,8 @@ sub show_options {
 	$output .= "                  t and u use Title upper case main words.\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-dot          Override user configuration setting for DOT (--dot) [default].\n";
-	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";      
+	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";
+	$output .= "--no-md5          Skips md5 processing on --checksum or --checksum-verify.\n";
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
 	$output .= "--prefill, -E     Attempt to prefill auto.tag file using info.txt data. See man\n";
@@ -2763,7 +2777,7 @@ sub set_display_data {
 }
 
 # get defaults from user config files if present
-## Package UserConfigs
+## UserConfigs
 {
 package UserConfigs;
 
@@ -3092,6 +3106,8 @@ sub get_options{
 		$run{'dot'} = 0;},
 	"no-ffp" => sub { 
 		$run{'no-ffp'} = 1 },
+	"no-md5" => sub { 
+		$run{'no-md5'} = 1 },
 	"no-nlink" => sub { 
 		$DONT_USE_NLINK = 1 },
 	"no-replaygain" => sub { 
