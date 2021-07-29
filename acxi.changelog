@@ -1,7 +1,192 @@
-===================================================================
+================================================================================
+Date: 2021-??-??
+Version: 3.3.30
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+BUGS:
+
+1. --start had a bug when start > 1, it needed to subtract 1 from count to show
+correct total in auto.tag.
+
+--------------------------------------------------------------------------------
+FIXES:
+
+--------------------------------------------------------------------------------
+ENHANCEMENTS:
+
+1. Added more data syntax variants to -Xd date correct tool. Had failed to 
+handle June-03-2021 syntax.
+
+2. Added --no-md5 for -D/-K, to go along with --no-ffp. md5 generation takes a 
+long time, and  isn't needed for certain purposes. This can be quite useful when 
+checking many ffps from many recordings. For example:
+
+acxi -s./ -K --no-md5 > ffps.txt
+
+--------------------------------------------------------------------------------
+CHANGES: 
+
+1. Got rid of --log, --basic, --full, --verbose, and replaced them with 
+-v/--verbosit [1-4]. Left --quit and --debug, since those make sense. Left 
+internal support for --basic, --full, --verbose, and --log to not break any user 
+habits.
+
+2. Changed configuration variables LOG_LEVEL to VERBOSITY, but left internal 
+support for legacy LOG_LEVEL. While top configurations will show $VERBOSITY,
+user configuration tool supports either.
+
+--------------------------------------------------------------------------------
+CODE:
+
+1. More cleanups of unnecessary whitespace after ( or before ).
+
+2. Refactored ffp/md5 create to match ffp/md5 check, broke into 3 subs, which 
+makes it cleaner.
+
+================================================================================
+Date: 2021-06-29
+Version: 3.3.29
+--------------------------------------------------------------------------------
+
+This is another big trader release, lots of new features, mostly specialized but 
+very useful. Note that the official 'release' 3.3.28 was skipped because all 
+these changes sort of flowed into one another, and took a while, and a lot of 
+testing, to get stable and reasonably reliable.
+
+New features are:
+
+1. Added support for AAC and M4A. Note that if you want tags to transfer, use 
+the m4a container format, if not, use aac. This requires using either the native 
+ffmpeg aac codec, or the better regarded libfdk_aac codec. Only supports input 
+type flac.
+
+2. --prefill / -E takes data from well structured and formatted info.txt files 
+and transfers it to auto.tag file. Saves a lot of time. See --prefill-file 
+filename for using alternate info file names, but I don't recommend doing that. 
+Note that -E requires either -S or -M autotag creation options. See man page for 
+required structures.
+
+3. Updated error handlers for using non compatible options together, that logic 
+had been too loose, and permitted using options that could not be used together.
+
+4. For the obsessive, made man page 80 columns wide, ok, who cares? nobody, 
+except people trying to work with command line tools in absurdly narrow terminal 
+windows, but there you have it. We aim to please. General man and help cleanup 
+and fixes as well. Have to update and fix docs once in a while, afterall!!
+
+5. Added default -C/-S/-M auto.tag create to generate 10, not 8, performer 
+lines. Why not, sometimes groups are big.
+
+6. For larger collections, had forgotten to 'prune' excluded directories from 
+list of files to go through, that leads to slow downs when the dataset is very 
+large, that now prunes as expected. that's for File::Find operations.
+
+7. To compliment -E prefill, and speed up tagging even more, added 
+-X/---infofix, which cleans up info.txt file in preparation for prefill of 
+auto.tag. This is getting close to as much as can practically be done without 
+implementiing machine learning, heh. But it's VERY fast now to process a 
+standard show or recording. Any further speedups will result in much less time 
+saved than these did. See man page for -X options and action explanations. d 
+option fixes dates to ISO YYYY-MM-DD format; n fixes track numbers in file, 
+which -E requires to be a specific format; t fixes upper/lower case track 
+titles, wraps track times after title in parentheses if missing (-E ignores 
+those when updating track titles), and w writes the changes to file. Without w, 
+only what would have happened prints out in terminal, with w, the changes are 
+written to file. Very effective and convenient.
+
+And that's it, while this will never be done, the logic is now radically 
+enhanced, and really has optimized the process of dealing with audio collection 
+tagging while not resorting to the types of automated and often drastically 
+wrong bulk taggers, which can never be reliable due to the randomness of user 
+data and behavior, but the steps are now very optimized and generally require 
+very little effort to yield excellent and reliable tagging results.
+
+Enjoy, while most of these new features are very specialized, if you recognize 
+what is being done and appreciate the ability to create high quality and 
+reliable tagging, you may just be among the people who will benefit from these 
+changes. If not, well, that's fine too, this wasn't made for you in that case, 
+so you can move along, nothing to see here.
+
+================================================================================
+Date: 2020-08-22
+Version: 3.3.27
+--------------------------------------------------------------------------------
+
+Bug fix!!! Oops... 3.3.26 flac > flac had issue.
+
+Many thanks to issue #9 who pointed out that the small changes that made flac to 
+flac conversion possible inadvertently broke flac to lossy conversions, which 
+was obviously a bad thing.
+
+Also added opus type to --ffmpeg, to make it complete for the free audio codecs. 
+Rarely used, but now you can.
+
+Used this mistake to refactor the validations a bit more to make it easier to 
+avoid such mistakes in the future, and also updated the man page to add some new 
+options and features which were not completely documented, or documented 
+inconsistently.
+
+================================================================================
+Date: 2020-08-18
+Version: 3.3.26
+--------------------------------------------------------------------------------
+
+Flac > Flac conversion, tiny update
+
+Just because, well, sometimes in rare cases you might want to rerip flac files 
+you got from some random place to a new set of flac files.
+
+For example, if you get some old flacs, and just want to make sure they are 
+actually up to date and with the quality level you want, you just run:
+
+acxi -i flac -o flac -s [source] -d [destination] -q 8
+
+and away you go, new flacs. Note, I came across a case where a very old flac 
+file would not convert to a lossy format because there was something wrong with 
+the flac formatting, the codec was too old that had been used to convert it, or 
+something, in the end, with that one, I just used audacity, open file, export to 
+itself as flac, then it all worked, but I thought, well, why not? Sometimes you 
+have flacs you have little to no idea about how they were made, and maybe you 
+prefer always having quality 8, as in the above example, and don't want to spend 
+any time researching the old flac files.
+
+As changes go, this may be the smallest one ever, I think I only had to add 
+something like 4 to 8 characters in acxi, but might as well call it the current 
+acxi re releases.
+
+================================================================================
+Date: 2020-05-03
+Version: 3.3.25
+--------------------------------------------------------------------------------
+
+Bug fix release. -M used with --start exposed a small bug in auto.tag 
+generation.
+
+Found a small bug, if -M multidisc auto.tag file generated, and --start used 
+that is not 1, the disc totals would not reflect the different --start value.
+
+There was actually another bug in the logic, but it was only exposed when -M + 
+--start were used together.
+
+================================================================================
+Date: 2020-04-23
+Version: 3.3.24
+--------------------------------------------------------------------------------
+
+Point release - enforce -s/--source use for tagging/checksum options.
+
+Only one change, but I realized I kept forgetting to set -s explicitly for -A, 
+-C, -S, -M, -G, -T, -I, -V tagging or checksum options. That's actually quite 
+dangerous to your collection, particularly when using something like -I or -T, 
+and I'd made that mistake enough times to realize I had to enforce -s explicit 
+use for these.
+
+================================================================================
 Date: 2020-04-11
 Version: 3.3.23
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 Two small fixes, to make things a bit more consistent and intuitive.
 
@@ -13,10 +198,10 @@ excluded directories / files as expected, and subsequent sync acfions
 will not create the excluded directories, which was the case before
 this correction. 
 
-===================================================================
+================================================================================
 Date: 2020-03-09
 Version: 3.3.22
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 Some small and convenient updates:
 
@@ -26,10 +211,10 @@ Some small and convenient updates:
 
 3. Issue #8 requested a way to override default behavior to skip all '.' dot files, added --dot, --no-dot [override for if you use DOT=true in configuration file], and configuration item DOT, which takes true/false value. Since false is the default acxi behavior, the only value that makes sense to use there is true, otherwise don't use that configuration item.
 
-===================================================================
+================================================================================
 Date: 2020-01-22
 Version: 3.3.21
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 Several bug fixes in the 20/21 releases:
 
@@ -41,10 +226,10 @@ led to failures in some cases of strange character use.
 
 3. Added support for AIF lossless type.
 
-===================================================================
+================================================================================
 Date: 2019-12-31
 Version: 3.3.19
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 This turned into a big release, lots of new features, mostly around 
 making tagging and image embedding faster and easier. Also some bug 
 fixes that matter in corner cases.
@@ -94,10 +279,10 @@ removal on tagging updates. This really slows tagging down, and as
 far as I could tell, repeated tagging does not appear to change 
 padding, so I made this a non default action for -A and -T actions.
 
-===================================================================
+================================================================================
 Date: 2019-12-19
 Version: 3.3.18
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 Maintenance release. None massive, but they add up to a nice package 
 of improvements and enhancements
@@ -126,10 +311,10 @@ more intuitive case insensitive as the syncs etc run.
 last line for --clean fail to wrap, now it's all hunky-dory.
 
 
-===================================================================
+================================================================================
 Date: 2019-10-19
 Version: 3.3.17
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 This is just a small point release.
 
 1. The main new feature is adding -M @ for alphabetical pattern 
@@ -143,10 +328,10 @@ world multidisc indicator scenario in a file name.
 of found files each time file find was used, which led to glitches 
 when using the new -AD / -AK combination option.
 
-===================================================================
+================================================================================
 Date: 2019-10-08
 Version: 3.3.16
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 Some fixes:
 
 1. Added backtick ` escape 
@@ -160,16 +345,16 @@ found in the value passed to it.
 have to type the stuff out twice when tagging then generating 
 checksum files.
 
-===================================================================
+================================================================================
 Date: 2019-08-14
 Version: 3.3.14
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 Updated man, help, and doc pages.
 
-===================================================================
+================================================================================
 Date: 2019-08-12
 Version: 3.3.12
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 New feature:
 1. --aggregate/-G and --alt-ag [track id] which lets you collect all
@@ -177,18 +362,18 @@ auto.tag files, or with --alt-ag, any other filename in a collection
 to one place. This can be useful for tracking changes and exchanging
 information about such things.
 
-===================================================================
+================================================================================
 Date: 2019-08-10
 Version: 3.3.06
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 New shortcuts: -K for --checksum; -D for --checksum-delete, -V
 for --checksum-verify. Got tired of typing the long forms.
 
-===================================================================
+================================================================================
 Date: 2019-08-10
 Version: 3.3.05
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 New Feature:
 1. --autotag-create-multi / -M will follow a pattern you provide it
@@ -210,10 +395,10 @@ But assuming you've gotten rid of those legacy ways of storing
 per cd files, this will speed things up significantly, to a few
 minutes on a large multi disc set.
 
-===================================================================
+================================================================================
 Date: 2019-08-10
 Version: 3.3.04
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 Stablized --checksum-verify, it now largely works as intended,
 checks against existing md5 files, and checks flac file integrity.
@@ -222,10 +407,10 @@ Converts windows or *nix line endings and folder paths to the local
 version so the .md5 sum file data will work no matter what OS
 generated the file or is checking it.
 
-===================================================================
+================================================================================
 Date: 2019-08-09
 Version: 3.3.03
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 Enhancements:
 1. New feature --checksum-verify, to be used, currently, with 
@@ -233,10 +418,10 @@ Enhancements:
 This is time consuming, and is not yet handled by forking, and
 may not be because making forking output consistent is a real pain.
 
-===================================================================
+================================================================================
 Date: 2019-08-09
 Version: 3.3.02
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 Bug fix:
 
@@ -258,10 +443,10 @@ so far the experiments don't look or work well.
 Changes:
 1. Changed default opus bitrate to 144.
 
-===================================================================
+================================================================================
 Date: 2019-07-27
 Version: 3.3.0
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 Rolling all the recent updates into acxi 3.3. I believe I've found 
 all the issues I'm going to find on my own with tagging and image 
 embedding.
@@ -284,10 +469,10 @@ Fixes:
 1. Better handling of file name/paths, now avoiding some errors 
  that could happen if file name contained regex characters.
  
-===================================================================
+================================================================================
 Date: 2019-07-27
 Version: 3.2.16
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 New Feature:
 1. -U self updater. I got tired of manually updating it. Now it 
 joins all the other *xi tools to have a self-updater.
@@ -296,10 +481,10 @@ file. This can help when the people who made the source flacs
 took the time to set replaygain data, but did not do any other
 tagging, or did incorrect tagging.
 
-===================================================================
+================================================================================
 Date: 2019-07-27
 Version: 3.2.11
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 New Feature:
 1. --autotag-create-single will also fill in the TRACKTOTAL and 
 TRACKNUMBER for a single disk set. Due to complexity of handling 
@@ -311,10 +496,10 @@ Changes:
 1. --checksum-delete now triggers --checksum so you don't have to
 type it again.
 
-===================================================================
+================================================================================
 Date: 2019-07-26
 Version: 3.2.8
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 New Feature:
 1. --autotag-create which creates an auto.tag file in the folder
 you are working on, prepopulated with track blocks with filenames
@@ -328,19 +513,19 @@ This has been corrected, and now all file trims use s/\Q$PATH\E//
 escapes, which I didn't know about. Those prevent anything in the
 variables executing as a regex character. Easy fix!
 
-===================================================================
+================================================================================
 Date: 2019-07-24
 Version: 3.2.4
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 New Features:
 1. --autotag which uses a file, auto.tag, which follows a specific
 syntax to automatically generate tags for a recording/album. 
 Includes support for per track specifics, etc.
 
-===================================================================
+================================================================================
 Date: 2019-07-21
 Version: 3.2.2
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 New Features:
 1. --checksum and --checksum-delete. --checksum will create .md5
 and .ffp checksum files in each directory in --source that contains
@@ -368,10 +553,10 @@ sync, and checksum generation paths. Since those show at the
 beginning, there's no point in repeating them over and over.
 --log 3 / --full will show the full paths however if you want.
 
-===================================================================
+================================================================================
 Date: 2019-07-15
 Version: 3.2.0
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 Big update.
 
 New features:
@@ -416,10 +601,10 @@ Validation and configuration file processing. This makes the code
 easier to work on since you can fold those packages away in your
 code editor.
 
-===================================================================
+================================================================================
 Date: 2019-07-05
 Version: 3.1.3
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 * Issue #2 - fix for failure of File::Find to detect files or
 directories in a cifs mounted smb file system. Added default
 $File::Find::dont_use_nlink = 1 with override --nlink which sets it
@@ -428,10 +613,10 @@ item which allows for override as well via DONT_USE_NLINK item.
 Values 0 or 1. 1 is default.
 
 Updates to man page as well to note the new options and explanation.
-===================================================================
+================================================================================
 Date: 2019-07-04
 Version: 3.1.2
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 * Fixed 1 bug, when -q used, failed to assign quality level to opus.
 * Improved error handling, now prints out all pretest errors before
 exiting. This should make it easier for new users to figure out how
@@ -439,28 +624,28 @@ to setup acxi. Also made tests more granular, now does not run
 quality or application present tests if invalid input/output type.
 Note that acxi will exit with the last error return number found
 in that case.
-===================================================================
+================================================================================
 Date: 2019-01-03
 Version: 3.1.1
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 * Fixed 1 bug, ogg quality level assigned to opus which leads to
 the worst quality level for opus.
 * Added two filters (for " and $) in path/file name. This
 corrected issue #1 by gyratory. Thanks gyratory for finding
 that oversight and filing an issue report.
 
-===================================================================
+================================================================================
 Date: 2018-12-18
 Version: 3.1.0
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 * Adds support for Opus output type.
 * Adds Ogg quality fractional levels, and the -1 value.
 * Corrects man/comments/help inconsistencies.
 
-===================================================================
+================================================================================
 Date: 2018-12-07
 Version: 3.0.0
--------------------------------------------------------------------
+--------------------------------------------------------------------------------
 * Improved error handling. More protections in place against
 user configuration and option use errors.
 * New --test option to test your configurations before
