@@ -1,9 +1,13 @@
 ================================================================================
 Date: 2021-??-??
-Version: 3.3.30
+Version: 3.4.00
 --------------------------------------------------------------------------------
 
-Point release with some small bug fixes, tweaks, adjustments, and new features.
+New major version that rolls up recent new -E, -X, --no-md5 features (now that 
+they are reasonably stable), new changelog format, and changed options for 
+--verbosity,-v/--version, into 3.4.00.
+
+Also some small bug fixes, tweaks, adjustments, and new feature --no-md5.
 
 --------------------------------------------------------------------------------
 BUGS:
@@ -18,7 +22,7 @@ It would have shown 16 track count in auto.tag in that case before the fix.
 --------------------------------------------------------------------------------
 FIXES:
 
-1. Added more data syntax variants to -Xd date correct tool. Had failed to 
+1. Added more date syntax variants to -Xd date correct tool. Had failed to 
 handle June-03-2021 syntax.
 
 --------------------------------------------------------------------------------
@@ -37,17 +41,21 @@ necessarily desirable.
 CHANGES: 
 
 1. Got rid of --log, --basic, --full, --verbose, and replaced them with 
--v/--verbosity [1-4]. Left --quiet and --debug, since those make sense. Left 
+-v/--verbosity [0-4]. Left --quiet and --debug, since those make sense. Left 
 internal support for --basic, --full, --verbose, and --log to not break any user 
 habits. I'm not sure why acxi ever used LOG_LEVEL, I suspect it was some legacy 
-thing that was just imported without thinking about it, maybe from the original 
-pl script? But it's annoyed me for a while since it makes no sense either 
-reading the code or trying to explain it in man/help.
+thing that was just used without thinking about it. But it's annoyed me for a 
+while since it makes no sense either reading the code or trying to explain it in 
+man/help since --log never logged anything, it was just a screen output 
+verbosity switch.
 
--v [1-4] is also relatively standard for verbosity levels usually, it's also 
-less typing.
+-v [0-4] is also relatively standard option for verbosity levels, it's also less 
+typing.
 
-2. Changed configuration variables LOG_LEVEL to VERBOSITY, but left internal 
+2. Got rid of -v as alternate for --version, having only --version is fine, and
+was wasting the more useful -v short form for --verbosity.
+
+3. Changed configuration variables LOG_LEVEL to VERBOSITY, but left internal 
 support for legacy LOG_LEVEL. While top configurations will show $VERBOSITY, 
 user configuration tool supports either. 
 
@@ -57,7 +65,9 @@ DOCUMENTATION:
 1. Man, help updates for -v/--verbosity change,  and for new --no-ffp feature.
 
 2. Made this changelog match new format of inxi.changelog, which is easier to 
-work with, and easier to read.
+work with, and easier to read. Using easier to scan subject headers BUGS, FIXES, 
+ENHANCEMENTS, CHANGES, DOCUMENTATION, CODE, plus line dividers, and extra 
+linebreaks to avoid having it all crammed together and hard to read.
 
 --------------------------------------------------------------------------------
 CODE:
@@ -68,7 +78,8 @@ CODE:
 makes it cleaner.
 
 3. Changed all internal uses of $LOG_LEVEL to $VERBOSITY, which is what it 
-should have always been since acxi has never logged.
+should have always been since acxi has never logged, and this was just an output 
+verbosity feature all along.
 
 4. Added space after all comments that contain logic or variables. This will let 
 geany/scite users edit acxi with code folding. This is due to a scite folding 
