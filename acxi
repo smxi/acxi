@@ -76,9 +76,9 @@ use Data::Dumper;
 #### -------------------------------------------------------------------
 
 ## SELF INFO ##
-my $SELF_NAME = 'acxi';
-my $SELF_VERSION = '3.3.29';
-my $SELF_DATE = '2021-07-28';
+my $self_name='acxi';
+my $self_version='3.3.29';
+my $self_date='2021-07-28';
 
 ## GLOBALS ##
 my %run;
@@ -1476,7 +1476,7 @@ sub update_directories {
 	eval $print_line_large;
 	# print Dumper \@found_list;
 	if ($VERBOSITY > 1){
-		print "Checking if $SELF_NAME needs to create destination directories...\n";
+		print "Checking if $self_name needs to create destination directories...\n";
 	}
 	elsif ($VERBOSITY > 0){
 		print main::dotify("Updating destination directories");
@@ -1942,12 +1942,12 @@ sub writer {
 ## SelfUpdater
 {
 package SelfUpdater;
-my $self_source = "$SELF_DIRECTORY$path_separator$SELF_NAME";
-my $man_source = "$MAN_DIRECTORY$path_separator$SELF_NAME.1";
+my $self_source = "$SELF_DIRECTORY$path_separator$self_name";
+my $man_source = "$MAN_DIRECTORY$path_separator$self_name.1";
 
 sub update {
 	print $line_large;
-	print "Starting $SELF_NAME self updater.\n";
+	print "Starting $self_name self updater.\n";
 	validate();
 	grab();
 	print "Completed self updates.\n";
@@ -1956,7 +1956,7 @@ sub update {
 }
 sub grab {
 	my ($cmd,@content);
-	print "Downloading $SELF_NAME.\n";
+	print "Downloading $self_name.\n";
 	$cmd = "$COMMAND_CURL -L https:/smxi.org/acxi";
 	print $line_small;
 	@content = qx($cmd);
@@ -1965,16 +1965,16 @@ sub grab {
 	}
 	chomp(@content);
 	print $line_small;
-	print "Verifying $SELF_NAME data... ";
+	print "Verifying $self_name data... ";
 	if (! grep {/###\*\*EOF\*\*###/} @content){
 		main::error_handler('self-updater',"Self update error: Download data corrupted.",1);
 	}
 	else {
-		print "Verified.\nWriting to $SELF_NAME location... ";
+		print "Verified.\nWriting to $self_name location... ";
 		main::writer($self_source,\@content);
 		print "File updated\n";
 	}
-	print "Downloading $SELF_NAME.1 man page.\n";
+	print "Downloading $self_name.1 man page.\n";
 	$cmd = "$COMMAND_CURL -L https:/smxi.org/acxi.1";
 	print $line_small;
 	@content = qx($cmd);
@@ -1983,12 +1983,12 @@ sub grab {
 	}
 	chomp(@content);
 	print $line_small;
-	print "Verifying $SELF_NAME.1 data... ";
+	print "Verifying $self_name.1 data... ";
 	if (! grep {/\Qis a fork and full rewrite of flac2ogg.pl.\E/} @content){
 		main::error_handler('self-updater',"Man update error: Download data corrupted.",1);
 	}
 	else {
-		print "Verified.\nWriting to $SELF_NAME.1 location... ";
+		print "Verified.\nWriting to $self_name.1 location... ";
 		main::writer($man_source,\@content);
 		print "File updated\n";
 	}
@@ -1999,7 +1999,7 @@ sub validate {
 		main::error_handler('self-updater',"Self Updater has been disabled by package maintainer.",1);
 	}
 	if (!-e $self_source){
-		main::error_handler('self-updater',"Only updating $SELF_NAME at $self_source supported.",1);
+		main::error_handler('self-updater',"Only updating $self_name at $self_source supported.",1);
 	}
 	if (!-e $man_source){
 		main::error_handler('self-updater',"Only updating man at $man_source supported.",1);
@@ -2090,7 +2090,7 @@ sub check_user_values {
 sub start_text {
 	if ($VERBOSITY > 0){
 		eval $print_line_heavy;
-		print "Running $SELF_NAME pretests.\n";
+		print "Running $self_name pretests.\n";
 	}
 }
 sub check_infofix {
@@ -2528,10 +2528,10 @@ sub show_options {
 	UserConfigs::set(); 
 	# but this should override the config data so follows
 	set_basic_data();
-	my $output = "$SELF_NAME v: $SELF_VERSION :: Supported Options:\n";
-	$output .= "Examples: $SELF_NAME -q 8 --destination /music/main/ogg\n";
-	$output .= "$SELF_NAME --input flac --output ogg -a md5\n";
-	$output .= "$SELF_NAME --copy doc,docx,bmp\n";
+	my $output = "$self_name v: $self_version :: Supported Options:\n";
+	$output .= "Examples: $self_name -q 8 --destination /music/main/ogg\n";
+	$output .= "$self_name --input flac --output ogg -a md5\n";
+	$output .= "$self_name --copy doc,docx,bmp\n";
 	$output .= $line_small;
 	$output .= "Syncing options:\n";
 	$output .= "--append, -a      Add extension type(s) to existing extension copy list.\n";
@@ -2627,7 +2627,7 @@ sub show_options {
 	$output .= "                  Verifies FLAC files and confirms MD5 file data matches actual\n";
 	$output .= "                  files found. Can be run alone or with --checksum options.\n";
 	$output .= "--dot             Also sync files and directories starting with a '.'. Don't\n";
-	$output .= "                  blame $SELF_NAME if this creates unintended consequences!!\n";
+	$output .= "                  blame $self_name if this creates unintended consequences!!\n";
 	$output .= "--image, -I [jpg,png image file name|remove]\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
@@ -2666,9 +2666,9 @@ sub show_options {
 	$output .= "                  Use ^^ to separate tag key/value pairs, and %: to separate\n";
 	$output .= "                  the tag name and its value. Value 'UNSET' removes the tag.\n";
 	if ($ALLOW_UPDATES){
-		$output .= "--update, -U      Update $SELF_NAME and man page. Set paths if not Linux.\n";
-		$output .= "                  Current values: $SELF_NAME: $SELF_DIRECTORY\n";
-		$output .= "                  man $SELF_NAME.1: $MAN_DIRECTORY\n";
+		$output .= "--update, -U      Update $self_name and man page. Set paths if not Linux.\n";
+		$output .= "                  Current values: $self_name: $SELF_DIRECTORY\n";
+		$output .= "                  man $self_name.1: $MAN_DIRECTORY\n";
 	}
 	$output .= $line_small;
 	$output .= "Display output and debugging options:\n";
@@ -2678,7 +2678,7 @@ sub show_options {
 	$output .= "                  Same as -v 0\n";
 	$output .= "--test            Test copy, sync, autotag, checksum without actually doing \n";
 	$output .= "                  the action. Also activates -v3 for more verbose outputs.\n";
-	$output .= "--version         Show $SELF_NAME version.\n";
+	$output .= "--version         Show $self_name version.\n";
 	$output .= "--verbosity, -v   [0-4] Dynamically set VERBOSITY. Current value: $VERBOSITY\n";
 	$output .= "                  0: Turns off all screen output, except for error messages.\n";
 	$output .= "                  1: Basic single line per operation screen output, default value.\n";
@@ -2691,13 +2691,13 @@ sub show_options {
 	$output .= $line_small;
 	$output .= "User Configs ";
 	if (!$CONFIG_DIRECTORY){
-		$output .= "(checked in this order):\n/etc/$SELF_NAME.conf\n";
-		$output .= "\$XDG_CONFIG_HOME/$SELF_NAME.conf\n";
-		$output .= "\$HOME/.config/$SELF_NAME.conf\n";
-		$output .= "\$HOME/.$SELF_NAME.conf\n";
+		$output .= "(checked in this order):\n/etc/$self_name.conf\n";
+		$output .= "\$XDG_CONFIG_HOME/$self_name.conf\n";
+		$output .= "\$HOME/.config/$self_name.conf\n";
+		$output .= "\$HOME/.$self_name.conf\n";
 	}
 	else {
-		$output .= "(manually set):\n$CONFIG_DIRECTORY/$SELF_NAME.conf\n";
+		$output .= "(manually set):\n$CONFIG_DIRECTORY/$self_name.conf\n";
 	}
 	$output .= "Requires this syntax (any user modifiable variable can be used)\n";
 	$output .= "SOURCE_DIRECTORY=/home/me/music/flac\n";
@@ -2709,7 +2709,7 @@ sub show_options {
 }
 
 sub show_version {
-	print "$SELF_NAME version: $SELF_VERSION ($SELF_DATE)\n";
+	print "$self_name version: $self_version ($self_date)\n";
 	exit 0;
 }
 
@@ -2787,18 +2787,18 @@ package UserConfigs;
 sub set {
 	my (@config_files,$file,$user_config);
 	# set list of supported config files
-	@config_files = ("/etc/$SELF_NAME.conf");
-	if ($ENV{'XDG_CONFIG_HOME'} && -r "$ENV{XDG_CONFIG_HOME}/$SELF_NAME.conf"){
-		$user_config = "$ENV{'XDG_CONFIG_HOME'}/$SELF_NAME.conf";
+	@config_files = ("/etc/$self_name.conf");
+	if ($ENV{'XDG_CONFIG_HOME'} && -r "$ENV{XDG_CONFIG_HOME}/$self_name.conf"){
+		$user_config = "$ENV{'XDG_CONFIG_HOME'}/$self_name.conf";
 	}
-	elsif (-r "$ENV{HOME}/.config/$SELF_NAME.conf"){
-		$user_config = "$ENV{HOME}/.config/$SELF_NAME.conf";
+	elsif (-r "$ENV{HOME}/.config/$self_name.conf"){
+		$user_config = "$ENV{HOME}/.config/$self_name.conf";
 	}
-	elsif (-r "$ENV{HOME}/.$SELF_NAME.conf"){
-		$user_config = "$ENV{HOME}/.$SELF_NAME.conf";
+	elsif (-r "$ENV{HOME}/.$self_name.conf"){
+		$user_config = "$ENV{HOME}/.$self_name.conf";
 	}
-	elsif (-r "$CONFIG_DIRECTORY/$SELF_NAME.conf"){
-		$user_config = "$CONFIG_DIRECTORY/$SELF_NAME.conf";
+	elsif (-r "$CONFIG_DIRECTORY/$self_name.conf"){
+		$user_config = "$CONFIG_DIRECTORY/$self_name.conf";
 	}
 	@config_files = (@config_files,$user_config) if $user_config;
 	foreach $file (@config_files){
