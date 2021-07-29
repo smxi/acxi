@@ -1,6 +1,8 @@
 ================================================================================
-Date: 2021-??-??
 Version: 3.4.00
+Date: 2021-??-??
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 New major version that rolls up recent new -E, -X, --no-md5 features (now that 
@@ -87,8 +89,10 @@ engine weakness where it gets confused and tries to treat stuff after # as
 actual logic. 
 
 ================================================================================
-Date: 2021-06-29
 Version: 3.3.29
+Date: 2021-06-29
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 This is another big trader release, lots of new features, mostly specialized but 
@@ -158,8 +162,8 @@ windows, but there you have it. We aim to please. General man and help cleanup
 and fixes as well. Have to update and fix docs once in a while, afterall!!
 
 ================================================================================
-Date: 2020-08-22
 Version: 3.3.27
+Date: 2020-08-22
 --------------------------------------------------------------------------------
 
 Bug fix!!! Oops... 3.3.26 flac > flac had issue.
@@ -186,8 +190,10 @@ options and features which were not completely documented, or documented
 inconsistently.
 
 ================================================================================
-Date: 2020-08-18
 Version: 3.3.26
+Date: 2020-08-18
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Flac > Flac conversion, tiny update
@@ -217,8 +223,10 @@ prefer always having quality 8, as in the above example, and don't want to spend
 any time researching the old flac files.
 
 ================================================================================
-Date: 2020-05-03
 Version: 3.3.25
+Date: 2020-05-03
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Bug fix release. -M used with --start exposed a small bug in auto.tag 
@@ -234,8 +242,10 @@ There was actually another bug in the logic, but it was only exposed when -M +
 --start were used together.
 
 ================================================================================
-Date: 2020-04-23
 Version: 3.3.24
+Date: 2020-04-23
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Point release - enforce -s/--source use for tagging/checksum options.
@@ -250,8 +260,10 @@ quite dangerous to your collection, particularly when using something like -I or
 explicit use for these.
 
 ================================================================================
-Date: 2020-04-11
 Version: 3.3.23
+Date: 2020-04-11
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Two small fixes, to make things a bit more consistent and intuitive.
@@ -267,8 +279,10 @@ directories / files as expected, and subsequent sync acfions will not create the
 excluded directories, which was the case before this correction. 
 
 ================================================================================
-Date: 2020-03-09
 Version: 3.3.22
+Date: 2020-03-09
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Some small and convenient updates:
@@ -298,8 +312,10 @@ the default acxi behavior, the only value that makes sense to use there is true,
 otherwise don't use that configuration item.
 
 ================================================================================
-Date: 2020-01-22
 Version: 3.3.21
+Date: 2020-01-22
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Several bug fixes in the 20/21 releases:
@@ -319,8 +335,10 @@ ENHANCEMENTS:
 1. Added support for AIF lossless type.
 
 ================================================================================
-Date: 2019-12-31
 Version: 3.3.19
+Date: 2019-12-31
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 This turned into a big release, lots of new features, mostly around making 
@@ -376,8 +394,10 @@ repeated tagging does not appear to change padding, so I made this a non default
 action for -A and -T actions.
 
 ================================================================================
-Date: 2019-12-19
 Version: 3.3.18
+Date: 2019-12-19
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Maintenance release. None massive, but they add up to a nice package of 
@@ -417,8 +437,10 @@ chugs through your collection, the sorts will be a more intuitive case
 insensitive as the syncs etc run.  
 
 ================================================================================
-Date: 2019-10-19
 Version: 3.3.17
+Date: 2019-10-19
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 This is just a small point release.
@@ -439,8 +461,10 @@ extends -M, which previously only supported the % ([0-9]) item, to support
 pretty much any real world multidisc indicator scenario in a file name.
 
 ================================================================================
-Date: 2019-10-08
 Version: 3.3.16
+Date: 2019-10-08
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Some small fixes and enhancements.
@@ -466,8 +490,10 @@ value passed to it.
 the stuff out twice when tagging then generating checksum files.
 
 ================================================================================
-Date: 2019-08-14
 Version: 3.3.14
+Date: 2019-08-14
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Documentation only release.
@@ -478,8 +504,10 @@ DOCUMENTATION:
 1. Updated man, help, and doc pages.
 
 ================================================================================
-Date: 2019-08-12
 Version: 3.3.12
+Date: 2019-08-12
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 New feature added, -G.
@@ -492,8 +520,10 @@ files, or with --alt-ag, any other filename in a collection to one place. This
 can be useful for tracking changes and exchanging information about such things.
 
 ================================================================================
-Date: 2019-08-10
 Version: 3.3.06
+Date: 2019-08-10
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 A few small enhancements, -K and -D.
@@ -505,8 +535,10 @@ ENHANCEMENTS:
 --checksum-verify. Got tired of typing the long forms.
 
 ================================================================================
-Date: 2019-08-10
 Version: 3.3.05
+Date: 2019-08-10
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 New feature, -M.
@@ -533,8 +565,10 @@ this will speed things up significantly, to a few minutes on a large multi disc
 set.
 
 ================================================================================
-Date: 2019-08-10
 Version: 3.3.04
+Date: 2019-08-10
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Fixes to checksum features.
@@ -550,8 +584,10 @@ so the .md5 sum file data will work no matter what OS generated the file or is
 checking it.
 
 ================================================================================
-Date: 2019-08-09
 Version: 3.3.03
+Date: 2019-08-09
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 New --checksum-verify feature.
@@ -565,8 +601,10 @@ not yet handled by forking, and may not be because making forking output
 consistent is a real pain.
 
 ================================================================================
-Date: 2019-08-09
 Version: 3.3.02
+Date: 2019-08-09
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Bug fixes, fixes, new --ffmpeg experimental feature.
@@ -598,8 +636,10 @@ CHANGES:
 1. Changed default opus bitrate to 144.
 
 ================================================================================
-Date: 2019-07-27
 Version: 3.3.0
+Date: 2019-07-27
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Rolling all the recent updates into acxi 3.3. I believe I've found all the 
@@ -633,8 +673,10 @@ DOCUMENTATION:
  https://smxi.org/docs/acxi-options.htm
 
 ================================================================================
-Date: 2019-07-27
 Version: 3.2.16
+Date: 2019-07-27
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Self updater -U added.
@@ -649,8 +691,10 @@ flacs took the time to set replaygain data, but did not do any other tagging, or
 did incorrect tagging.
 
 ================================================================================
-Date: 2019-07-27
 Version: 3.2.11
+Date: 2019-07-27
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 auto.tag prefills added for single, checksum improvements.
@@ -669,8 +713,10 @@ CHANGES:
 1. --checksum-delete now triggers --checksum so you don't have to type it again.
 
 ================================================================================
-Date: 2019-07-26
 Version: 3.2.8
+Date: 2019-07-26
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Bugs and new auto tag feature.
@@ -691,8 +737,10 @@ ENHANCEMENTS:
 on, prepopulated with track blocks with filenames already filled in.
 
 ================================================================================
-Date: 2019-07-24
 Version: 3.2.4
+Date: 2019-07-24
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 New auto tag feature.
@@ -705,8 +753,10 @@ automatically generate tags for a recording/album. Includes support for per
 track specifics, etc.
 
 ================================================================================
-Date: 2019-07-21
 Version: 3.2.2
+Date: 2019-07-21
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Fixes, new checksum features, docs updates.
@@ -749,8 +799,10 @@ CODE:
 packages aka classes, which makes working on it easier.
 
 ================================================================================
-Date: 2019-07-15
 Version: 3.2.0
+Date: 2019-07-15
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Big update. Forking, shn to flac, copy type improvements, --log output option,
@@ -809,8 +861,10 @@ configuration file processing. This makes the code easier to work on since you
 can fold those packages away in your code editor.
 
 ================================================================================
-Date: 2019-07-05
 Version: 3.1.3
+Date: 2019-07-05
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Fixes and docs updates. nlink options added.
@@ -835,8 +889,10 @@ DOCUMENTATION:
 1. Updates to man page as well to note the new options and explanation.
 
 ================================================================================
-Date: 2019-07-04
 Version: 3.1.2
+Date: 2019-07-04
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Bugs and fixes.
@@ -856,8 +912,10 @@ if invalid input/output type. Note that acxi will exit with the last error
 return number found in that case.
 
 ================================================================================
-Date: 2019-01-03
 Version: 3.1.1
+Date: 2019-01-03
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Bugs and Fixes.
@@ -875,8 +933,10 @@ FIXES:
 gyratory. Thanks gyratory for finding that oversight and filing an issue report.
 
 ================================================================================
-Date: 2018-12-18
 Version: 3.1.0
+Date: 2018-12-18
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 Opus support, ogg fractional quality, docs.
@@ -894,8 +954,10 @@ DOCUMENTATION:
 1. Corrected man/comments/help inconsistencies.
 
 ================================================================================
-Date: 2018-12-07
 Version: 3.0.0
+Date: 2018-12-07
+--------------------------------------------------------------------------------
+UPDATES:
 --------------------------------------------------------------------------------
 
 New --clean, --test option, cleanups, fixes, bug fixes, man page added.
