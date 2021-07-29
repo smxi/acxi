@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.3.29';
-my $self_date='2021-07-28';
+my $self_date='2021-07-29';
 
 ## GLOBALS ##
 my %run;
@@ -2680,11 +2680,11 @@ sub show_options {
 	$output .= "                  the action. Also activates -v3 for more verbose outputs.\n";
 	$output .= "--version         Show $self_name version.\n";
 	$output .= "--verbosity, -v   [0-4] Dynamically set VERBOSITY. Current value: $VERBOSITY\n";
-	$output .= "                  0: Turns off all screen output, except for error messages.\n";
-	$output .= "                  1: Basic single line per operation screen output, default value.\n";
+	$output .= "                  0: Turns off all output, except for error messages.\n";
+	$output .= "                  1: Basic single line per operation output, default value.\n";
 	$output .= "                  2: Without full verbosity of -v3, no flac/lame/oggenc/opusenc\n";
 	$output .= "                  for conversion process screen output.\n";
-	$output .= "                  3: Full screen output, including full verbosity of ffmpeg/flac/\n";
+	$output .= "                  3: Full output, including full verbosity of ffmpeg/flac/\n";
 	$output .= "                  lame/oggenc/opusenc conversion process for aac, m4a, mp3, ogg,\n";
 	$output .= "                  or opus output.\n";
 	$output .= "                  4: Adds some debugger output. Same as --debug.\n";
