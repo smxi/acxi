@@ -1159,14 +1159,14 @@ sub generate_checksums {
 		generate_ffp() if !$run{'no-ffp'};
 	}
 	else {
-		say "skipped" ;
+		say 'skipped';
 	}
 	print "  $MD5_FILE.md5: ";
 	if (!$run{'no-md5'}){
 		generate_md5();
 	}
 	else {
-		say "skipped" ;
+		say 'skipped';
 	}
 }
 sub generate_ffp {
@@ -1181,10 +1181,10 @@ sub generate_ffp {
 		chomp (@output);
 		if (!$b_test){
 			main::writer("$FFP_FILE.ffp",\@output);
-			say "created" ;
+			say 'created for ' . scalar(@output) . ' files';
 		}
 		else {
-			print "\n", join("\n", @output),"\n";
+			print "\n  files: " . scalar(@output), "\n", join("\n", @output),"\n";
 		}
 	}
 }
@@ -1200,10 +1200,10 @@ sub generate_md5 {
 		chomp (@output = grep {$_ !~ m^($TAG_FILE|\.ffp|\.md5)^} @output);
 		if (!$b_test){
 			main::writer("$MD5_FILE.md5",\@output);
-			print "created; " ;
+			say 'created for ' . scalar(@output) . ' files';
 		}
 		else {
-			print "\n", join("\n", @output),"\n";
+			print "\n  files: " . scalar(@output), "\n", join("\n", @output),"\n";
 		}
 	}
 }
