@@ -64,10 +64,10 @@ use File::Path qw(rmtree make_path);
 use Cwd qw(getcwd);
 use Data::Dumper;
 # use File::Copy::Recursive qw(fcopy rcopy dircopy fmove rmove dirmove);
-#use feature 'unicode_strings';
+# use feature 'unicode_strings';
 # use open qw(:std :utf8); # don't use
 # only use for debugging, some distros do not ship with core modules.
-#use Data::Dumper qw(Dumper);
+# use Data::Dumper qw(Dumper);
 ## if can't find any other way to get rid of lost+found errors, enable this:
 # no warnings 'File::Find';
 
@@ -237,7 +237,8 @@ my $COPY_TYPES = 'gif,jpg,jpeg,png,txt';
 #     need to change it.
 # 2 = more verbose, but without the actual conversion data from codecs
 # 3 = adds codec conversion information.
-# 4 = [debug] - adds specific debugger information.
+# 4 = [debug] - adds specific debugger information. Certain debugger output may
+# not work in Windows, but you rarely if ever need to see this level.
 # NOTE: with FORK > 1, conversion debugging output can be out of order.
 my $VERBOSITY = 1;
 
@@ -334,7 +335,7 @@ sub aggregate {
 	print " to: " . main::sourcer($DESTINATION_DIRECTORY) . "\n";
 	my @files = split /,/, $run{'ag-file'};
 	# my $abs_path = Cwd::abs_path($SOURCE_DIRECTORY);
-	chdir Cwd::getcwd(); #$SOURCE_DIRECTORY;
+	chdir Cwd::getcwd(); # $SOURCE_DIRECTORY;
 	foreach (@files){
 		aggregate_file($_);
 	}
@@ -368,7 +369,7 @@ sub aggregate_file {
 				File::Path::make_path($path) or die qq("Arg... can't make: $path\n") if !$b_test;
 			}
 			$path .= $path_separator . $name;
-			#say 'path: ', $path;
+			# say 'path: ', $path;
 		}
 		say $file_working;
 		say $file if $VERBOSITY > 3;
@@ -427,11 +428,11 @@ sub process_tags {
 	state %set;
 	foreach (@tags){
 		@working=split /%:/, $_;
-		#print Data::Dumper::Dumper \@working;
+		# print Data::Dumper::Dumper \@working;
 		next if ! $working[1];
 		print "@working\n" if $VERBOSITY > 3;
-		#$working[1] =~ s/"/\\\"/g;
-		#$working[1] =~ s/\$/\\\$/g;
+		# $working[1] =~ s/"/\\\"/g;
+		# $working[1] =~ s/\$/\\\$/g;
 		$working[1] = main::escape_item("$working[1]");
 		if ($working[0] =~ /^(TITLE|TRACKNUMBER|VERSION|PART)$/){
 			$tag = qq(--set-tag=$working[0]="$working[1]");
@@ -463,14 +464,14 @@ sub process_tags {
 			## NOTE: we have to unescape $ in paths for -e tests, but leave it escaped
 			## for qq cmd strings. Why? Shell expands it, perl does not.
 			my $temp = $working[1];
-			#$temp =~ s/\\\$/\$/g;
-			#$temp =~ s/\\\"/"/g;
+			# $temp =~ s/\\\$/\$/g;
+			# $temp =~ s/\\\"/"/g;
 			$temp = main::unescape_item("$temp");
 			print " Tagging \"$temp\"... ";
 			main::error_handler('file-missing',"Missing file: $temp",1) if ! -e "$temp";
 			# note: must be set here, not in qx to avoid quote errors
 			# single quotes, in case contains $ symbol
-			#say File::stat::stat("$working[1]")->size;
+			# say File::stat::stat("$working[1]")->size;
 			$cmd = qq($COMMAND_METAFLAC --remove-all-tags $padding "$working[1]");
 			print "\n", $cmd, "\n" if $VERBOSITY > 3;
 			if (!$b_test){
@@ -483,7 +484,7 @@ sub process_tags {
 			if ($run{'remove-images'}){
 				image_remover("$working[1]");
 			}
-			#say File::stat::stat("$working[1]")->size;
+			# say File::stat::stat("$working[1]")->size;
 			# disable for now, the test for type isn't working, metaflac is making types
 			# 3 regardless of actual type.
 			@image_args = image_handler("$working[1]",@images) if @images;
@@ -506,7 +507,7 @@ sub process_tags {
 				}
 				say 'File tagged';
 			}
-			#say File::stat::stat("$working[1]")->size;
+			# say File::stat::stat("$working[1]")->size;
 		}
 	}
 }
@@ -659,7 +660,7 @@ sub make_file {
 	my ($file,@files);
 	chdir $SOURCE_DIRECTORY;
 	my $source_dir = $SOURCE_DIRECTORY;
-	#$source_dir =~ s|([\(\)\$])|\\$1|g;
+	# $source_dir =~ s|([\(\)\$])|\\$1|g;
 	$source_dir =~ s|^\Q$source_dir$path_separator\E||;
 	say $source_dir;
 	print "Checking for pre-existing $TAG_FILE... ";
@@ -975,7 +976,7 @@ sub populate_file {
 		foreach (@$files){
 			if (/^($autotag_multi)/i){
 				$starter = $1;
-				#$counter++;
+				# $counter++;
 			}
 			else {
 				main::error_handler('autotag-multi',
@@ -995,13 +996,13 @@ sub populate_file {
 		($counter,$j,$holder,$starter) = ($start,0,'','');
 		# this handles the first block of DISC info
 		if (scalar @multi > 1){
-			#print 'm:', $multi[0], ' sm: ', scalar @multi, "\n";
+			# print 'm:', $multi[0], ' sm: ', scalar @multi, "\n";
 			@disc = map {$_ .= scalar @multi if $_ eq 'DISCTOTAL%:'; $_;} @disc;
 			@disc = map {$_ .= create_track_total($multi[0]) if $_ eq 'TRACKTOTAL%:'; $_;} @disc;
 			@disc = map {$_ .= 1 if $_ eq 'DISCNUMBER%:'; $_;} @disc;
 		}
 	}
-	#print Data::Dumper::Dumper \@multi, "\n";
+	# print Data::Dumper::Dumper \@multi, "\n";
 	@tags = (@collection,@disc);
 	@track = map {$_ .= '%:' if /^[A-Z]/; $_;} @track;
 	my (@disc_working,@info_working);
@@ -1076,7 +1077,7 @@ sub create_track_total {
 	else {
 		$total = $working + $start - 1;
 	}
-	#print "ctt: $start $total\n";
+	# print "ctt: $start $total\n";
 	return $total;
 }
 sub get_replaygain {
@@ -1121,10 +1122,10 @@ sub process_directories {
 		$print_src = $item;
 		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 		$print_src = main::sourcer("$print_src");
-		#if ($VERBOSITY > 2){
+		# if ($VERBOSITY > 2){
 		#	say Cwd::getcwd();
 		#	system 'pwd';
-		#}
+		# }
 		chdir "$start_dir";
 		chdir "$item";
 		if ($VERBOSITY > 3){
@@ -1135,7 +1136,7 @@ sub process_directories {
 		}
 		print "Processing: $print_src...\n";
 		@files = main::globber("*.{flac,FLAC}");
-		#print "\n", Data::Dumper::Dumper @files, "\n";
+		# print "\n", Data::Dumper::Dumper @files, "\n";
 		if (grep -f, @files){
 			delete_checksums() if $run{'checksum-delete'};
 			generate_checksums() if $run{'checksum'};
@@ -1150,7 +1151,10 @@ sub process_directories {
 sub generate_checksums {
 	print " Generating checksums:\n";
 	print "  $FFP_FILE.ffp: ";
-	system('pwd') if $VERBOSITY > 3;
+	if ($VERBOSITY > 3){
+		say 'cwd: ', Cwd::getcwd();
+		system('pwd');
+	}
 	if (!$run{'no-ffp'}){
 		generate_ffp() if !$run{'no-ffp'};
 	}
@@ -1167,7 +1171,7 @@ sub generate_checksums {
 }
 sub generate_ffp {
 	my ($error_message,@output);
-	#system("$COMMAND_METAFLAC --show-md5sum *.flac > $FFP_FILE.ffp");
+	# system("$COMMAND_METAFLAC --show-md5sum *.flac > $FFP_FILE.ffp");
 	@output = qx($COMMAND_METAFLAC --show-md5sum *.flac);
 	if ($? == -1 || $? > 0){
 		$error_message = "$COMMAND_METAFLAC returned error: $?";
@@ -1217,7 +1221,7 @@ sub verify_flacs {
 	# note, flac sends output to stderr
 	# NOTE: $_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
 	# shows the weird hidden text this command creates
-	#say 'cwd: ', Cwd::getcwd();
+	# say 'cwd: ', Cwd::getcwd();
 	if (! (grep -f, main::globber("*.$INPUT_TYPE"))){
 		print "No $INPUT_TYPE files found.\n";
 		return;
@@ -1227,27 +1231,27 @@ sub verify_flacs {
 		$error_message = "$COMMAND_FLAC returned error: $?";
 		main::error_handler('application-error', $error_message,1);
 	}
-	#print scalar @results, "\n", "@results","\n";
+	# print scalar @results, "\n", "@results","\n";
 	chomp @results;
 # 	foreach (@results){
 # 		$_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
 # 		print "##$_##\n";
 # 	}
-	#@results = grep {/\.$INPUT_TYPE:\s/i} @results;
+	# @results = grep {/\.$INPUT_TYPE:\s/i} @results;
 	# track.flac: testing, 33% completetesting, 65% completetesting, 98% completeok
-	#@results = map {
+	# @results = map {
 	my $i = 0;
 	my ($holder,$b_start,@temp);
 	foreach (@results){
-		#print length($_), "\n";
+		# print length($_), "\n";
 		$_ =~ s/\s+$//;
-		#print "${_}::\n";
+		# print "${_}::\n";
 		next if /^\s*$/;
 		$b_start = 1 if !$b_start && $_ =~ /\.$INPUT_TYPE:/;
 		next if !$b_start;
 		$_ =~ s/(testing.*complete|\x{08})//gi;
 		$_ =~ s/[^[:print:]]+//g;
-		#print length($_), "\n";
+		# print length($_), "\n";
 		# the idiocy of flac output is hard to put into words
 		# not only do they use those backspace hidden things, but
 		# sometimes they decide to put the ok/failed on its own line!!!
@@ -1258,20 +1262,20 @@ sub verify_flacs {
 		elsif(/\.$INPUT_TYPE:$/i){
 			$holder = $_;
 			$i++;
-			#print "$i $holder\n";
+			# print "$i $holder\n";
 		}
 		else {
-			#print "$i $_\n";
+			# print "$i $_\n";
 			$temp[$i-1] = $holder . ' ' . $_;
 		}
 	}
 	@results = @temp;
-	#print scalar @results, "\n", "@results","\n";
+	# print scalar @results, "\n", "@results","\n";
 	# NOTE: cases found where ok and rest of string prints on next line!!
 	@errors = grep {!/\.$INPUT_TYPE: ok$/i} @results;
 	@results = grep {/\.$INPUT_TYPE: ok$/i} @results;
-	#print scalar @results, "\n", "@errors","\n";
-	#print "errors:\n", join "\n", @errors, "\n";
+	# print scalar @results, "\n", "@errors","\n";
+	# print "errors:\n", join "\n", @errors, "\n";
 	if (@errors){
 		print "\n  ERROR!\n   The following files show errors:\n   ", join "\n    ", @errors, "\n";
 	}
@@ -1294,10 +1298,10 @@ sub verify_md5 {
 	foreach my $file (@checksums){
 		print "  Checking checksums in: $file: ";
 		@data = main::reader("$file",'strip');
-		#print "data\n", join ("\n", @data), "\n";
+		# print "data\n", join ("\n", @data), "\n";
 		$b_break = 0;
 		foreach my $track (@data){
-			#print "track: $track\n";
+			# print "track: $track\n";
 			($hash,$hash2) = ('','');
 			$track =~ /^([a-f0-9]+)([\s\*]+)(.*)$/;
 			if ($1 && $3){
@@ -1478,13 +1482,13 @@ sub update_directories {
 		print main::dotify("Updating destination directories");
 	}
 	foreach $dir (sort { "\L$a" cmp "\L$b" } @found_list){
-		#print "\nd1:$dir\n";
+		# print "\nd1:$dir\n";
 		$result = 'UNSET';
 		next if $dir eq $SOURCE_DIRECTORY || $dir eq $DESTINATION_DIRECTORY;
 		$dir =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||; # strip out source path
 		next if !$dir;
 		$dest_dir = $DESTINATION_DIRECTORY . $path_separator . $dir;
-		#print "d2:$dir\n";
+		# print "d2:$dir\n";
 		# check to see if the destination dir already exists
 		if (! stat("$dest_dir")){
 			# stat failed so create the directory
@@ -1513,7 +1517,7 @@ sub update_files {
 	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list){
 		next if ! $file;
 		$dest_file = $src_file = $file;
-		#print "\nIF: $src_file\n";
+		# print "\nIF: $src_file\n";
 		$dest_file =~ s|^$SOURCE_DIRECTORY|$DESTINATION_DIRECTORY|;
 		$dest_file =~ s/\`/\'/g;
 		# $dest_file =~ s/\$/\\\$/g;
@@ -1524,7 +1528,7 @@ sub update_files {
 		if (lc($extension) eq $INPUT_TYPE){
 			$dest_file =~ s/\.$INPUT_TYPE$/\.$OUTPUT_TYPE/i;
 		}
-		#print "OF: $dest_file\n";
+		# print "OF: $dest_file\n";
 		($action,$result,$dest_mod_time,$src_mod_time) = ('UNSET','UNSET',0,0);
 		# Now stat the destinationFile, and see if it's date is more recent
 		# than that of the original file. If so, we re-encode.
@@ -1793,9 +1797,9 @@ sub escape_item {
 # Note: because of spaces and other strange user file paths, need to use 
 # bsd glob, which returns space agnostic globs, as you'd expect. 
 sub globber {
-	#my @files = glob qq{"$_[0]"};
-	#print Data::Dumper::Dumper @files;
-	#return @files;
+	# my @files = glob qq{"$_[0]"};
+	# print Data::Dumper::Dumper @files;
+	# return @files;
 	return <$_[0]>;
 }
 # arg: 1 - full file path, returns array of file lines.
@@ -1837,15 +1841,15 @@ sub wanted {
 	# make test more general, only prune from results when actually not readable
 	# since on rare occasions, the non readable file might be a file, not a directory, 
 	# no test for -d
-	#if ($File::Find::name =~ m/\Qlost+found\E/){
-	#print $File::Find::name, "\n";
+	# if ($File::Find::name =~ m/\Qlost+found\E/){
+	# print $File::Find::name, "\n";
 	# run the recursion level tests
 	if (-d $File::Find::name){
 		my $b_skip = 0;
 		if ($recurse > -1){
 			my $working = $File::Find::name;
 			$working =~ s|^\Q$SOURCE_DIRECTORY\E$path_separator?||;
-			#my $count = $working =~ tr/$path_separator//;
+			# my $count = $working =~ tr/$path_separator//;
 			my $count = scalar(split (m|$path_separator|, $working));
 			$b_skip = 1 if $count > $recurse;
 			# print "$working :: $path_separator :: re: $recurse c: $count\n";
@@ -1856,7 +1860,7 @@ sub wanted {
 				$b_first = 1;
 				my $message = ($b_skip) ? 'recursion': 'unreadable';
 				print "SKIPPING ($message):\n $File::Find::name\n";
-				#print $line_small;
+				# print $line_small;
 				push @pruned, $File::Find::name;
 			}
 			$File::Find::prune = 1;
@@ -1896,7 +1900,7 @@ sub wanted {
 			return if -l File::Basename::dirname($working);
 		}
 		$working =~ s/\.$OUTPUT_TYPE$/\.$INPUT_TYPE/i if $list_type eq 'file-clean';
-		#print '1: ', "$File::Find::name\n$working\n";
+		# print '1: ', "$File::Find::name\n$working\n";
 		# return if: 1. file/directory not found in destination 
 		# 2. string in exclude array found in destination path
 		# 3. if directory and  string found at end of path after trimming off trailing slash.
@@ -2736,8 +2740,8 @@ sub set_basic_data {
 			@excludes = (@excludes,@temp);
 		}
 		@excludes_stripped = map { my $temp = $_;$temp =~ s|/$||;$temp} @excludes if @excludes;
-		#print Data::Dumper::Dumper \@excludes, "\n";
-		#print Data::Dumper::Dumper \@excludes_stripped, "\n";
+		# print Data::Dumper::Dumper \@excludes, "\n";
+		# print Data::Dumper::Dumper \@excludes_stripped, "\n";
 	}
 }
 

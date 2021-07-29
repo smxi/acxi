@@ -70,6 +70,11 @@ makes it cleaner.
 3. Changed all internal uses of $LOG_LEVEL to $VERBOSITY, which is what it 
 should have always been since acxi has never logged.
 
+4. Added space after all comments that contain logic or variables. This will let 
+geany/scite users edit acxi with code folding. This is due to a scite folding 
+engine weakness where it gets confused and tries to treat stuff after # as 
+actual logic. 
+
 ================================================================================
 Date: 2021-06-29
 Version: 3.3.29
