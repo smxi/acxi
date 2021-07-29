@@ -165,6 +165,8 @@ and fixes as well. Have to update and fix docs once in a while, afterall!!
 Version: 3.3.27
 Date: 2020-08-22
 --------------------------------------------------------------------------------
+UPDATES:
+--------------------------------------------------------------------------------
 
 Bug fix!!! Oops... 3.3.26 flac > flac had issue.
 
