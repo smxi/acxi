@@ -18,13 +18,13 @@ It would have shown 16 track count in auto.tag in that case before the fix.
 --------------------------------------------------------------------------------
 FIXES:
 
---------------------------------------------------------------------------------
-ENHANCEMENTS:
-
 1. Added more data syntax variants to -Xd date correct tool. Had failed to 
 handle June-03-2021 syntax.
 
-2. Added --no-md5 for -D/-K, to go along with --no-ffp. md5 generation takes a 
+--------------------------------------------------------------------------------
+ENHANCEMENTS:
+
+1. Added --no-md5 for -D/-K, to go along with --no-ffp. md5 generation takes a 
 long time, and  isn't needed for certain purposes. This can be quite useful when 
 checking many ffps from many recordings. For example:
 
