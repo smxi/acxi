@@ -2678,7 +2678,7 @@ sub show_options {
 	$output .= "--verbosity, -v   [0-4] Dynamically set VERBOSITY. Current value: $VERBOSITY\n";
 	$output .= "                  0: Turns off all screen output, except for error messages.\n";
 	$output .= "                  1: Basic single line per operation screen output, default value.\n";
-	$output .= "                  2: Without full verbosity of -v3, no flac/lame/oggenc/opusenc\\n";
+	$output .= "                  2: Without full verbosity of -v3, no flac/lame/oggenc/opusenc\n";
 	$output .= "                  for conversion process screen output.\n";
 	$output .= "                  3: Full screen output, including full verbosity of ffmpeg/flac/\n";
 	$output .= "                  lame/oggenc/opusenc conversion process for aac, m4a, mp3, ogg,\n";
