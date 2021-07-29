@@ -4,8 +4,8 @@ Version: 3.4.00
 --------------------------------------------------------------------------------
 
 New major version that rolls up recent new -E, -X, --no-md5 features (now that 
-they are reasonably stable), new changelog format, and changed options for 
---verbosity,-v/--version, into 3.4.00.
+they are reasonably stable), new changelog format, AAC support, and changed 
+options for --verbosity,-v and --version, into 3.4.00.
 
 Also some small bug fixes, tweaks, adjustments, and new feature --no-md5.
 
