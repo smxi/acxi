@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $SELF_NAME = 'acxi';
 my $SELF_VERSION = '3.3.29';
-my $SELF_DATE = '2021-07-26';
+my $SELF_DATE = '2021-07-28';
 
 ## GLOBALS ##
 my %run;
@@ -156,7 +156,6 @@ my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
 #### -------------------------------------------------------------------
 #### EXCLUDES
 #### -------------------------------------------------------------------
-
 # this is the unique part of the exclude file name, not including the 
 # .txt. All exclude file names used must contain this string value.
 my $EXCLUDE_BASE = 'acxi-exclude';
@@ -188,7 +187,6 @@ my $INFO_FILE='info.txt';
 # This is the file that contains the syntax found in auto.tag file. But
 # you can call it something else if you prefer.
 my $TAG_FILE='auto.tag';
-
 
 #### -------------------------------------------------------------------
 #### INPUT/OUTPUT
@@ -231,16 +229,17 @@ my $COPY_TYPES = 'gif,jpg,jpeg,png,txt';
 #### -------------------------------------------------------------------
 #### PRINT OUTPUT
 #### -------------------------------------------------------------------
-# OPtions: --basic -V/--verbose --full --log 0-4
+# Options: --quiet/--debug/-v, --verbosity 0-4
 # You can turn these to always on either here or in config file by setting to 
 # desired verbosity level here directly, or in config file. 
-# 0 = quiet/silent - no output at all; 
-# 1 = default - single line per operation. This is the default, so you don't need 
-#     to change it.
-# 2 = verbose - but without the actual conversion data from codecs
-# 3 = debug -  all available information.
+# 0 = [quiet/silent] - no output at all. File issue if something shows output.
+# 1 = default - single line per operation. This is the default, so you don't
+#     need to change it.
+# 2 = more verbose, but without the actual conversion data from codecs
+# 3 = adds codec conversion information.
+# 4 = [debug] - adds specific debugger information.
 # NOTE: with FORK > 1, conversion debugging output can be out of order.
-my $LOG_LEVEL = 1;
+my $VERBOSITY = 1;
 
 #### -------------------------------------------------------------------
 #### ADVANCED
@@ -372,7 +371,7 @@ sub aggregate_file {
 			#say 'path: ', $path;
 		}
 		say $file_working;
-		say $file if $LOG_LEVEL > 3;
+		say $file if $VERBOSITY > 3;
 		File::Copy::copy($file, $path) if !$b_test;
 		push @files, $file;
 		$path = '';
@@ -402,12 +401,12 @@ sub get_tag_files {
 	my $start_dir = Cwd::getcwd();
 	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		$print_file = $working_dir = $item;
-		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
+		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 		# $working_dir =~ s/[^\/]+$//;
 		$working_dir = File::Basename::dirname($item);
 		chdir "$start_dir";
 		chdir "$working_dir";
-		if ($LOG_LEVEL > 3){
+		if ($VERBOSITY > 3){
 			say Cwd::getcwd();
 			system 'pwd';
 		}
@@ -430,7 +429,7 @@ sub process_tags {
 		@working=split /%:/, $_;
 		#print Data::Dumper::Dumper \@working;
 		next if ! $working[1];
-		print "@working\n" if $LOG_LEVEL > 3;
+		print "@working\n" if $VERBOSITY > 3;
 		#$working[1] =~ s/"/\\\"/g;
 		#$working[1] =~ s/\$/\\\$/g;
 		$working[1] = main::escape_item("$working[1]");
@@ -473,7 +472,7 @@ sub process_tags {
 			# single quotes, in case contains $ symbol
 			#say File::stat::stat("$working[1]")->size;
 			$cmd = qq($COMMAND_METAFLAC --remove-all-tags $padding "$working[1]");
-			print "\n", $cmd, "\n" if $LOG_LEVEL > 3;
+			print "\n", $cmd, "\n" if $VERBOSITY > 3;
 			if (!$b_test){
 				qx($cmd);
 				if ($? > 0){
@@ -497,7 +496,7 @@ sub process_tags {
 				$set{$_} = 0;
 			}
 			$cmd = qq($COMMAND_METAFLAC $args "$working[1]");
-			print "\n", $cmd, "\n" if $LOG_LEVEL > 3;
+			print "\n", $cmd, "\n" if $VERBOSITY > 3;
 			$b_tracks = 1;
 			if (!$b_test){
 				qx($cmd);
@@ -530,7 +529,7 @@ sub tag_updater {
 	print "Updating tags:$print_tags... \n";
 	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list){
 		$print_file = $working_dir = $file;
-		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
+		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 		print "Processing: $print_file...\n Tags$print_padding ";
 		$file = main::escape_item("$file");
 		# 
@@ -583,7 +582,7 @@ sub image_embedder{
 	}
 	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		$print_file = $working_dir = $item;
-		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
+		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 		print "Processing: $print_file...";
 		$item = main::escape_item("$item");
 		if ($run{'remove-images'}){
@@ -593,7 +592,7 @@ sub image_embedder{
 			@image_args = image_handler("$item",("$embed_image"));
 			$args = join ' ', @image_args;
 			$cmd = qq($COMMAND_METAFLAC $args "$item");
-			print "\n", $cmd, "\n" if $LOG_LEVEL > 3;
+			print "\n", $cmd, "\n" if $VERBOSITY > 3;
 			if (!$b_test){
 				qx($cmd);
 				if ($? > 0){
@@ -627,7 +626,7 @@ sub image_remover {
 			main::error_handler('application-error', $error_message,1);
 		}
 	}
-	print "\n", $cmd, "\n" if $LOG_LEVEL > 3;
+	print "\n", $cmd, "\n" if $VERBOSITY > 3;
 }
 # note: metaflac is ignring type integer and assigning 3, not sure why
 sub image_handler {
@@ -673,7 +672,7 @@ sub make_file {
 	else {
 		print "none found. Proceeding.\n";
 	}
-	if ($LOG_LEVEL > 3){
+	if ($VERBOSITY > 3){
 		say Cwd::getcwd();
 		system 'pwd';
 	}
@@ -682,11 +681,11 @@ sub make_file {
 	$list_type = 'file';
 	@found_list = ();
 	File::Find::find(\&main::wanted, $SOURCE_DIRECTORY);
-	print "\n" if $LOG_LEVEL > 2;
+	print "\n" if $VERBOSITY > 2;
 	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list){
 		$b_dest_changed = 1;
 		$file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
-		say $file if $LOG_LEVEL > 2;
+		say $file if $VERBOSITY > 2;
 		push @files, $file;
 	}
 	if (@files){
@@ -1116,19 +1115,19 @@ sub process_directories {
 	@found_list = ();
 	File::Find::find(\&main::wanted, $SOURCE_DIRECTORY);
 	my $start_dir = Cwd::getcwd();
-	say 'start dir: ', $start_dir if $LOG_LEVEL > 3;
+	say 'start dir: ', $start_dir if $VERBOSITY > 3;
 	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		my $b_valid;
 		$print_src = $item;
-		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
+		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 		$print_src = main::sourcer("$print_src");
-		#if ($LOG_LEVEL > 2){
+		#if ($VERBOSITY > 2){
 		#	say Cwd::getcwd();
 		#	system 'pwd';
 		#}
 		chdir "$start_dir";
 		chdir "$item";
-		if ($LOG_LEVEL > 3){
+		if ($VERBOSITY > 3){
 			say 'srcdir: ', $SOURCE_DIRECTORY;
 			say 'item: ', $item;
 			say 'cwd: ', Cwd::getcwd();
@@ -1151,7 +1150,7 @@ sub process_directories {
 sub generate_checksums {
 	print " Generating checksums:\n";
 	print "  $FFP_FILE.ffp: ";
-	system('pwd') if $LOG_LEVEL > 3;
+	system('pwd') if $VERBOSITY > 3;
 	if (!$run{'no-ffp'}){
 		generate_ffp() if !$run{'no-ffp'};
 	}
@@ -1277,7 +1276,7 @@ sub verify_flacs {
 		print "\n  ERROR!\n   The following files show errors:\n   ", join "\n    ", @errors, "\n";
 	}
 	if (@results){
-		if ($LOG_LEVEL > 1){
+		if ($VERBOSITY > 1){
 			print "\n  Verified files:\n    ",  join "\n    ", @results, "\n";
 		}
 		else {
@@ -1306,7 +1305,7 @@ sub verify_md5 {
 				$track = $3;
 				# convert to local paths, windows vs nix
 				$track =~ s^[/|\\]^$path_separator^g;
-				if ($LOG_LEVEL > 1){
+				if ($VERBOSITY > 1){
 					print "\n" if !$b_break;
 					print "   Checking: $track: ";
 					$b_break = 1;
@@ -1321,23 +1320,23 @@ sub verify_md5 {
 				}
 				if ($hash2){
 					if ($hash eq $hash2){
-						print "Matched\n" if $LOG_LEVEL > 1;
+						print "Matched\n" if $VERBOSITY > 1;
 					}
 					else {
 						print "\n" if !$b_break;
-						print "   $track: " if $LOG_LEVEL < 2;
+						print "   $track: " if $VERBOSITY < 2;
 						$msg = ($hash2 ne 'missing') ? "FAILED" : "FAILED: File Not Found";
 						print "$msg\n";
 						$b_bad = 1;
 						$b_break = 1;
 					}
-					if ($LOG_LEVEL > 2){
+					if ($VERBOSITY > 2){
 						print "   MD5 Test: $hash Actual: $hash2\n";
 					}
 				}
 			}
 		}
-		print "All Files Matched\n" if !$b_bad && $LOG_LEVEL < 2;
+		print "All Files Matched\n" if !$b_bad && $VERBOSITY < 2;
 	}
 }
 sub delete_checksums {
@@ -1394,7 +1393,7 @@ sub process_type {
 			$result = File::Path::rmtree("$item") if !$b_test;
 			$b_deleted = 1;
 			$b_dest_changed = 1;
-			print "Delete $type result: $result\n" if $LOG_LEVEL > 1;
+			print "Delete $type result: $result\n" if $VERBOSITY > 1;
 		}
 	}
 	main::print_not_found("$type-cleaned") if ! $b_deleted;
@@ -1433,11 +1432,11 @@ package SyncCollection;
 sub process_collection {
 	my (@extension_files);
 	eval $print_line_heavy;
-	if ($LOG_LEVEL > 1){
+	if ($VERBOSITY > 1){
 		print "Syncing " . main::sourcer("$DESTINATION_DIRECTORY") . " (destination) with\n";
 		print "  " . main::sourcer("$SOURCE_DIRECTORY") . " (source)...\n";
 	}
-	elsif ($LOG_LEVEL > 0){
+	elsif ($VERBOSITY > 0){
 		print "Starting sync of " . main::sourcer("$SOURCE_DIRECTORY");
 		print "\n to " . main::sourcer("$DESTINATION_DIRECTORY") . "\n";
 	}
@@ -1449,10 +1448,10 @@ sub process_collection {
 		@found_list = ();
 		File::Find::find(\&main::wanted, $SOURCE_DIRECTORY);
 		# print Dumper \@found_list;
-		if ($LOG_LEVEL > 1){
+		if ($VERBOSITY > 1){
 			print "PROCESSING DATA TYPE: $extension\n";
 		}
-		elsif ($LOG_LEVEL > 0){
+		elsif ($VERBOSITY > 0){
 			print "\n" . main::dotify("Processing $extension data type");
 		}
 		if (@found_list){
@@ -1472,10 +1471,10 @@ sub update_directories {
 	File::Find::find(\&main::wanted, $SOURCE_DIRECTORY);
 	eval $print_line_large;
 	# print Dumper \@found_list;
-	if ($LOG_LEVEL > 1){
+	if ($VERBOSITY > 1){
 		print "Checking if $SELF_NAME needs to create destination directories...\n";
 	}
-	elsif ($LOG_LEVEL > 0){
+	elsif ($VERBOSITY > 0){
 		print main::dotify("Updating destination directories");
 	}
 	foreach $dir (sort { "\L$a" cmp "\L$b" } @found_list){
@@ -1490,17 +1489,17 @@ sub update_directories {
 		if (! stat("$dest_dir")){
 			# stat failed so create the directory
 			eval $print_line_small;
-			if ($LOG_LEVEL > 1){
+			if ($VERBOSITY > 1){
 				print "CREATING NEW DIRECTORY:\n $dest_dir\n";
 			}
-			elsif ($LOG_LEVEL > 0){
+			elsif ($VERBOSITY > 0){
 				print "\nCreating new directory: $dest_dir";
 			}
 			$dest_dir =~ s/\`/\'/g; # get rid of weird characters
 			$result = mkdir("$dest_dir") if !$b_test;
 			$b_created = 1;
 			$b_dest_changed = 1;
-			print "Create Directory result: $result\n" if $LOG_LEVEL > 1;
+			print "Create Directory result: $result\n" if $VERBOSITY > 1;
 		}
 	}
 	main::print_not_found('dirs') if ! $b_created;
@@ -1561,7 +1560,7 @@ sub update_files {
 				$result = copy_file($file, $src_file, $dest_file);
 			}
 			# NOTE: for forking > 1, this will not print out for the output/input conversion files 
-			print "$action result: $result\n" if $LOG_LEVEL > 1;
+			print "$action result: $result\n" if $VERBOSITY > 1;
 		} 
 	}
 	# wait for all the forks to finish before terminating 
@@ -1575,14 +1574,14 @@ sub copy_file {
 	my ($file, $src_file, $dest_file) = @_;
 	my $result = 'UNSET';
 	my ($src_print,$dest_print) = ($src_file, $dest_file);
-	$src_print =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
-	$dest_print =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
+	$src_print =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
+	$dest_print =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 	eval $print_line_small;
-	if ($LOG_LEVEL > 1){
+	if ($VERBOSITY > 1){
 		print "COPY: $src_print ==> \n";
 		print "      $dest_print\n"; 
 	}
-	elsif ($LOG_LEVEL > 0){
+	elsif ($VERBOSITY > 0){
 		print "\nCopying $src_print...";
 	}
 	if (!$b_test){
@@ -1605,17 +1604,17 @@ sub convert_file {
 # 	$dest_file =~ s/`/\\`/g;
 # 	$src_file =~ s/\$/\\\$/g;
 # 	$dest_file =~ s/\$/\\\$/g;
-	$src_print =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
-	$dest_print =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E|| if $LOG_LEVEL < 3;
+	$src_print =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
+	$dest_print =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 	# with forking, the printing gets messed up unless it's done 
 	# just like this.
 	if (!$b_fork){
 		eval $print_line_small;
-		if ($LOG_LEVEL > 1){
+		if ($VERBOSITY > 1){
 			print "ENCODE: $src_print ==> \n";
 			print "        $dest_print\n"; 
 		}
-		elsif ($LOG_LEVEL > 0){
+		elsif ($VERBOSITY > 0){
 			# add line break only when file exists
 			print main::dotify("\nEncoding $src_print to $OUTPUT_TYPE");
 		}
@@ -1675,12 +1674,12 @@ sub convert_file {
 	}
 	if ($b_fork){
 		eval $print_line_small;
-		if ($LOG_LEVEL > 1){
+		if ($VERBOSITY > 1){
 			print "ENCODED: $src_print ==> \n";
 			print "        $dest_print\n"; 
 			print "$action result: $result\n";
 		}
-		elsif ($LOG_LEVEL > 0){
+		elsif ($VERBOSITY > 0){
 			# add line break only when file exists
 			print main::dotify("\nEncoded $src_print to $OUTPUT_TYPE");
 		}
@@ -2053,7 +2052,7 @@ sub error_handler {
 			$message = "${br}Failed pretests. Please correct the listed errors.\n";
 		}
 		else {
-			$message = "Pretests passed. Continuing.\n" if $LOG_LEVEL > 0;
+			$message = "Pretests passed. Continuing.\n" if $VERBOSITY > 0;
 			$b_exit = 0;
 		}
 	}
@@ -2070,7 +2069,7 @@ package Validation;
 my ($b_valid_in_out) = (0);
 sub check_user_values {
 	start_text();
-	check_log_level();
+	check_verbosity();
 	check_nlink();
 	check_fork();
 	check_excludes();
@@ -2085,7 +2084,7 @@ sub check_user_values {
 	main::error_handler('validation-errors', '',1);
 }
 sub start_text {
-	if ($LOG_LEVEL > 0){
+	if ($VERBOSITY > 0){
 		eval $print_line_heavy;
 		print "Running $SELF_NAME pretests.\n";
 	}
@@ -2101,7 +2100,7 @@ sub check_infofix {
 }
 sub check_in_out_types {
 	my ($b_error,$error_message) = (0,'');
-	if ($LOG_LEVEL > 0){
+	if ($VERBOSITY > 0){
 		eval $print_line_large;
 		print main::dotify("Checking input and output types");
 	}
@@ -2143,14 +2142,14 @@ sub check_in_out_types {
 	}
 	else {
 		$b_valid_in_out = 1;
-		if ($LOG_LEVEL > 0){
+		if ($VERBOSITY > 0){
 			print "Valid: $INPUT_TYPE(in) $OUTPUT_TYPE(out)\n";
 		}
 	}
 }
 sub check_codecs {
 	my ($b_error,$error_message) = (0,'');
-	if ($LOG_LEVEL > 0){
+	if ($VERBOSITY > 0){
 		eval $print_line_large;
 		print main::dotify("Checking codecs");
 	}
@@ -2171,7 +2170,7 @@ sub check_codecs {
 		main::error_handler('unsupported-type',$error_message,0);
 	}
 	else {
-		if ($LOG_LEVEL > 0){
+		if ($VERBOSITY > 0){
 			print "Valid\n";
 		}
 	}
@@ -2179,7 +2178,7 @@ sub check_codecs {
 sub check_src_dest_directories {
 	my $missing_dirs = '';
 	my ($b_error,$error_message) = (0,'');
-	if ($LOG_LEVEL > 0){
+	if ($VERBOSITY > 0){
 		eval $print_line_large;
 		print main::dotify("Checking source / destination directories");
 	}
@@ -2197,7 +2196,7 @@ sub check_src_dest_directories {
 		$error_message .= "\nPlease check the directory paths you provided.";
 		main::error_handler('dest-dir',$error_message,0);
 	} 
-	elsif ($LOG_LEVEL > 0){
+	elsif ($VERBOSITY > 0){
 		print "Directories: exist\n";
 	}
 	if ($b_check_dest && !$b_error && $DESTINATION_DIRECTORY eq $SOURCE_DIRECTORY){
@@ -2208,7 +2207,7 @@ sub check_src_dest_directories {
 sub check_application_paths {
 	my ($b_error,$error_message) = (0,'');
 	my $app_paths = ''; 
-	if ($LOG_LEVEL > 0){
+	if ($VERBOSITY > 0){
 		print main::dotify("Checking required tools paths");
 	}
 	if ($b_check_out){
@@ -2308,13 +2307,13 @@ sub check_application_paths {
 	if ($b_error){
 		main::error_handler('missing-app',$error_message,0);
 	}
-	elsif ($LOG_LEVEL > 0){
+	elsif ($VERBOSITY > 0){
 		print "Available: $app_paths\n";
 	}
 }
 sub check_quality{
 	my ($b_error,$error_message) = (0,'');
-	if ($LOG_LEVEL > 0){
+	if ($VERBOSITY > 0){
 		print main::dotify("Checking quality support for $OUTPUT_TYPE");
 	}
 	## NOTE: this is not used
@@ -2373,31 +2372,31 @@ sub check_quality{
 	if ($b_error){
 		main::error_handler('quality-invalid',$error_message,0);
 	}
-	elsif ($LOG_LEVEL > 0){
+	elsif ($VERBOSITY > 0){
 		print "Supported: $quality ($OUTPUT_TYPE)\n";
 	}
 }
-sub check_log_level {
+sub check_verbosity {
 	my ($b_error,$error_message) = (0,'');
-	if ($LOG_LEVEL > 0){
-		print main::dotify("Checking log/screen output level");
+	if ($VERBOSITY > 0){
+		print main::dotify("Checking verbosity output level");
 	}
-	if ($LOG_LEVEL !~ m/^([0-4])$/){
+	if ($VERBOSITY !~ m/^([0-4])$/){
 		$b_error = 1;
-		$error_message .= "\n  LOG_LEVEL only supports 0-4. ";
-		$error_message .= "You used: $LOG_LEVEL";
+		$error_message .= "\n  VERBOSITY only supports 0-4. ";
+		$error_message .= "You used: $VERBOSITY";
 	}
 	if ($b_error){
 		main::error_handler('bad-level',$error_message,0);
 	}
-	elsif ($LOG_LEVEL > 0){
-		print "Supported: $LOG_LEVEL\n";
+	elsif ($VERBOSITY > 0){
+		print "Supported: $VERBOSITY\n";
 	}
 }
 sub check_nlink {
 	my ($b_error,$error_message) = (0,'');
 	if (defined $DONT_USE_NLINK && $DONT_USE_NLINK ne '0'){
-		if ($LOG_LEVEL > 0){
+		if ($VERBOSITY > 0){
 			print main::dotify("Checking DONT_USE_NLINK value");
 		}
 		if ($DONT_USE_NLINK !~ m/^[01]$/){
@@ -2408,14 +2407,14 @@ sub check_nlink {
 		if ($b_error){
 			main::error_handler('bad-nlink',$error_message,0);
 		}
-		elsif ($LOG_LEVEL > 0){
+		elsif ($VERBOSITY > 0){
 			print "Supported: $DONT_USE_NLINK\n";
 		}
 	}
 }
 sub check_fork {
 	my ($b_error,$error_message) = (0,'');
-	if ($LOG_LEVEL > 0){
+	if ($VERBOSITY > 0){
 		print main::dotify("Checking FORK value");
 	}
 	if ($FORK !~ m/^[0-9]+$/){
@@ -2436,14 +2435,14 @@ sub check_fork {
 	if ($b_error){
 		main::error_handler('bad-fork',$error_message,0);
 	}
-	elsif ($LOG_LEVEL > 0){
+	elsif ($VERBOSITY > 0){
 		print "Supported: $FORK\n";
 	}
 }
 sub check_excludes {
 	my ($b_error,$error_message) = (0,'');
 	if ($EXCLUDE){
-		if ($LOG_LEVEL > 0){
+		if ($VERBOSITY > 0){
 			print main::dotify("Checking EXCLUDE data");
 		}
 		if ($EXCLUDE =~ /\Q$EXCLUDE_BASE\E/){
@@ -2463,7 +2462,7 @@ sub check_excludes {
 		if ($b_error){
 			main::error_handler('bad-exclude-file',$error_message,0);
 		}
-		elsif ($LOG_LEVEL > 0){
+		elsif ($VERBOSITY > 0){
 			print "Supported: $FORK\n";
 		}
 	}
@@ -2477,14 +2476,14 @@ sub check_excludes {
 sub print_completion_message {
 	eval $print_line_heavy;
 	if ($b_dest_changed){
-		if ($LOG_LEVEL > 1){
+		if ($VERBOSITY > 1){
 			print "All done updating. Enjoy your music!\n";
 		}
-		elsif ($LOG_LEVEL > 0){
+		elsif ($VERBOSITY > 0){
 			print "\nUpdating completed. Enjoy your music!\n";
 		}
 	}
-	elsif ($LOG_LEVEL > 0){
+	elsif ($VERBOSITY > 0){
 		print "\nThere was nothing to update today in your collection.\n";
 	}
 	exit 0;
@@ -2512,10 +2511,10 @@ sub print_not_found {
 		$message = "No files to remove. Continuing...\n";
 		$none = "None to remove\n";
 	}
-	if ($LOG_LEVEL > 1){
+	if ($VERBOSITY > 1){
 		print $message;
 	}
-	elsif ($LOG_LEVEL > 0){
+	elsif ($VERBOSITY > 0){
 		print $none;
 	}
 }
@@ -2669,22 +2668,22 @@ sub show_options {
 	}
 	$output .= $line_small;
 	$output .= "Display output and debugging options:\n";
-	$output .= "--basic           Basic single line per operation screen output, default value.\n";
-	$output .= "                  Same as --log 1\n";
-	$output .= "--full            Full screen output, including full verbosity of \n";
-	$output .= "                  flac/lame/oggenc/opusenc conversion process for mp3, ogg,\n";
-	$output .= "                  or opus output. Same as --log 3\n";
-	$output .= "--debug           Trigger advanced output debugging data. Same as --log 4\n";
+	$output .= "--debug           Trigger advanced output debugging data. Same as -v 4\n";
 	$output .= "--help, -h        This help menu.\n";
-	$output .= "--log             [0-4] Dynamically set LOG_LEVEL. Current value: $LOG_LEVEL\n";
 	$output .= "--quiet           Turns off all screen output, except for error messages.\n";
-	$output .= "                  Same as --log 0\n";
+	$output .= "                  Same as -v 0\n";
 	$output .= "--test            Test copy, sync, autotag, checksum without actually doing \n";
-	$output .= "                  the action. Also activates --full for more verbose outputs.\n";
-	$output .= "--verbose         Without full verbosity of full, no flac/lame/oggenc/opusenc\n";
-	$output .= "                  for conversion process screen output. More verbose than\n";
-	$output .= "                  --basic. Same as --log 2\n";
-	$output .= "--version, -v     Show $SELF_NAME version.\n";
+	$output .= "                  the action. Also activates -v3 for more verbose outputs.\n";
+	$output .= "--version         Show $SELF_NAME version.\n";
+	$output .= "--verbosity, -v   [0-4] Dynamically set VERBOSITY. Current value: $VERBOSITY\n";
+	$output .= "                  0: Turns off all screen output, except for error messages.\n";
+	$output .= "                  1: Basic single line per operation screen output, default value.\n";
+	$output .= "                  2: Without full verbosity of -v3, no flac/lame/oggenc/opusenc\\n";
+	$output .= "                  for conversion process screen output.\n";
+	$output .= "                  3: Full screen output, including full verbosity of ffmpeg/flac/\n";
+	$output .= "                  lame/oggenc/opusenc conversion process for aac, m4a, mp3, ogg,\n";
+	$output .= "                  or opus output.\n";
+	$output .= "                  4: Adds some debugger output. Same as --debug.\n";
 	$output .= $line_small;
 	$output .= "User Configs ";
 	if (!$CONFIG_DIRECTORY){
@@ -2743,7 +2742,7 @@ sub set_basic_data {
 }
 
 sub set_display_data {
-	if ($LOG_LEVEL < 3){
+	if ($VERBOSITY < 3){
 		if ($OUTPUT_TYPE eq 'mp3'){
 			$silent_flac = '--silent'; # flac output 
 			$silent_lame = '--silent'; # lame output
@@ -2764,7 +2763,7 @@ sub set_display_data {
 			$silent_opus = '--quiet'; # for oggenc output
 		}
 	}
-	if ($LOG_LEVEL < 2){
+	if ($VERBOSITY < 2){
 		$print_line_heavy = '';
 		$print_line_large = '';
 		$print_line_small = '';
@@ -2833,11 +2832,11 @@ sub assign_value {
 		$SOURCE_DIRECTORY = $value;}
 	elsif ($var eq 'DESTINATION_DIRECTORY' || $var eq 'DIR_PREFIX_DEST'){
 		$DESTINATION_DIRECTORY = $value;}
-	
 	elsif ($var eq 'MAN_DIRECTORY'){$MAN_DIRECTORY = $value}
 	elsif ($var eq 'SELF_DIRECTORY'){$SELF_DIRECTORY = $value}
 	elsif ($var eq 'INPUT_TYPE'){$INPUT_TYPE = $value;}
-	elsif ($var eq 'LOG_LEVEL'){$LOG_LEVEL = $value;}
+	# LOG_LEVEL is legacy name, leave in always.
+	elsif ($var eq 'LOG_LEVEL' || $var eq 'VERBOSITY'){$VERBOSITY = $value;}
 	elsif ($var eq 'OUTPUT_TYPE'){$OUTPUT_TYPE = $value;}
 	elsif ($var eq 'CODEC_AAC'){$CODEC_AAC = $value;}
 	# legacy configs, sets both
@@ -2876,7 +2875,7 @@ sub get_options{
 	my (@args) = @_;
 	my (%test,$msg);
 	GetOptions (
-	"G|aggregate:s" => sub { 
+	'G|aggregate:s' => sub { 
 		my ($opt,$arg) = @_;
 		$b_check_out = 0;
 		if ($arg){
@@ -2899,10 +2898,10 @@ sub get_options{
 		$test{'aggregate'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
 	},
-	"a|append:s" => sub { 
+	'a|append:s' => sub { 
 		my ($opt,$arg) = @_;
 		$COPY_TYPES .= ',' . $arg if $arg;},
-	"A|autotag" => sub { 
+	'A|autotag' => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'autotag'} = 1;
@@ -2914,7 +2913,7 @@ sub get_options{
 		$test{'tag'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
 		},
-	"C|autotag-create" => sub { 
+	'C|autotag-create' => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'autotag-create'} = 1;
@@ -2926,7 +2925,7 @@ sub get_options{
 		$test{'tag-create'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
 		},
-	"M|autotag-create-multi:s" => sub { 
+	'M|autotag-create-multi:s' => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /%|@/){
 			$msg = "$opt requires multidisk file name identifier. See -h.";
@@ -2945,7 +2944,7 @@ sub get_options{
 		$test{'tag-create'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
 		},
-	"S|autotag-create-single" => sub { 
+	'S|autotag-create-single' => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'autotag-create'} = 1;
@@ -2958,9 +2957,10 @@ sub get_options{
 		$test{'tag-create'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
 		},
-	"basic|default" => sub { 
-		$LOG_LEVEL = 1 },
-	"K|checksum" => sub { 
+	# legacy
+	'basic|default' => sub { 
+		$VERBOSITY = 1 },
+	'K|checksum' => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'checksum'} = 1;
@@ -2970,7 +2970,7 @@ sub get_options{
 		$test{'checksum'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
 		},
-	"D|checksum-delete" => sub { 
+	'D|checksum-delete' => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'checksum'} = 1;
@@ -2991,60 +2991,61 @@ sub get_options{
 		$test{'checksum'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
 		},
-	"clean:s" => sub { 
+	'clean:s' => sub { 
 		my ($opt,$arg) = @_;
 		$run{'clean-sync'} = 1 if $arg && $arg eq 'sync';
 		$run{'clean'} = 1;
 		$test{'clean'} = 1;
 		},
-	"codec:s" => sub { 
+	'codec:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires codec.",1) if !$arg;
 		$codec = $arg;
 		$test{'sync'} = 1;
 		},
 	# accepts null value so users can not copy anything
-	"c|copy:s" => sub { 
+	'c|copy:s' => sub { 
 		my ($opt,$arg) = @_;
 		$COPY_TYPES = $arg;
 		$test{'sync'} = 1;
 		},
-	"debug" => sub { 
-		$LOG_LEVEL = 4},
-	"d|destination:s" => sub { 
+	'debug' => sub { 
+		$VERBOSITY = 4},
+	'd|destination:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
 		$DESTINATION_DIRECTORY = $arg;
 		$test{'destination'} = 1;
 		},
-	"dot" => sub { 
+	'dot' => sub { 
 		$run{'dot'} = 1;},
-	"x|exclude:s" => sub { 
+	'x|exclude:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires exclude list or file.",1) if ! $arg;
 		$arg = '' if uc($arg) eq 'UNSET';
 		$EXCLUDE = $arg;
 		$test{'sync'} = 1;
 		},
-	"exclude-append:s" => sub { 
+	'exclude-append:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires exclude list.",1) if ! $arg;
 		$exclude_append = $arg },
-	"f|force" => sub { 
+	'f|force' => sub { 
 		$b_force = 1 },
-	"ffmpeg" => sub { 
+	'ffmpeg' => sub { 
 		$run{'ffmpeg'} = 1 },
-	"F|fork:i" => sub { 
+	'F|fork:i' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires fork count integer.",1) if not defined $arg;
 		$FORK = $arg;
 		$test{'sync'} = 1;
 		},
-	"full" => sub { 
-		$LOG_LEVEL = 3 },
-	"h|help|?" => sub { 
+	# legacy
+	'full' => sub { 
+		$VERBOSITY = 3 },
+	'h|help|?' => sub { 
 		show_options();},
-	"I|image:s" => sub { 
+	'I|image:s' => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /(\.png|\.jpe?g|^remove)$/i){
 			$msg = "$opt requires a cover image file name. See -h.";
@@ -3064,7 +3065,7 @@ sub get_options{
 		$OUTPUT_TYPE = 'UNSET';
 		$test{'tag'} = 1;
 		},
-	"X|infofix:s" => sub { 
+	'X|infofix:s' => sub { 
 		my ($opt,$arg) = @_;
 		$run{'infofix'} = 1;
 		if ($arg){
@@ -3089,37 +3090,33 @@ sub get_options{
 		$test{'info'} = 1;
 		$test{'infofix'} = 1;
 	},
-	"i|input:s" => sub { 
+	'i|input:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires type.",1) if ! $arg;
 		$test{'input'} = 1;
 		$INPUT_TYPE = $arg;
 		$test{'sync'} = 1;
 		},
-	"log:i" => sub { 
-		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt log level integer.",1) if not defined $arg;
-		$LOG_LEVEL = $arg; },
-	"nlink" => sub { 
+	'link' => sub { 
 		$DONT_USE_NLINK = 0 },
-	"no-dot" => sub { 
+	'no-dot' => sub { 
 		$run{'dot'} = 0;},
-	"no-ffp" => sub { 
+	'no-ffp' => sub { 
 		$run{'no-ffp'} = 1 },
-	"no-md5" => sub { 
+	'no-md5' => sub { 
 		$run{'no-md5'} = 1 },
-	"no-nlink" => sub { 
+	'no-nlink' => sub { 
 		$DONT_USE_NLINK = 1 },
-	"no-replaygain" => sub { 
+	'no-replaygain' => sub { 
 		$run{'no-replaygain'} = 1 },
-	"o|output:s" => sub {
+	'o|output:s' => sub {
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires type.",1) if ! $arg;
 		$test{'output'} = 1;
 		$OUTPUT_TYPE = $arg;
 		$test{'sync'} = 1;
 		},
-	"E|prefill" => sub { 
+	'E|prefill' => sub { 
 		$run{'prefill'} = 1;
 		$run{'autotag'} = 0;
 		$run{'sync'} = 0;
@@ -3129,14 +3126,14 @@ sub get_options{
 		$test{'info'} = 1;
 		$test{'prefill'} = 1;
 		},
-	"prefill-file:s" => sub { 
+	'prefill-file:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires file name.",1) if ! $arg;
 		$INFO_FILE = $arg;
 		$test{'info'} = 1;
 		$test{'prefill'} = 1;
 		},
-	"q|quality:f" => sub { 
+	'q|quality:f' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires number.",1) if ! defined $arg || $arg !~ /^-?[0-9\.]+$/;
 		# validate these later
@@ -3147,31 +3144,31 @@ sub get_options{
 		$QUALITY_OPUS = $arg;
 		$test{'sync'} = 1;
 		}, 
-	"quiet|silent" => sub { 
+	'quiet|silent' => sub { 
 		$b_quiet = 1; 
-		$LOG_LEVEL = 0 },
-	"recurse:i" => sub { 
+		$VERBOSITY = 0 },
+	'recurse:i' => sub { 
 		my ($opt,$arg) = @_;
 		if (! defined $arg){
 			$msg = "$opt requires directory recursion level value. See -h.";
 			error_handler('missing-arg',$msg,1);
 		}
 		$recurse = $arg},
-	"R|remove-images" => sub { 
+	'R|remove-images' => sub { 
 		$run{'remove-images'} = 1;
 		$test{'tag'} = 1;
 		},
-	"P|remove-padding" => sub { 
+	'P|remove-padding' => sub { 
 		$padding = ' --dont-use-padding';
 		$test{'tag'} = 1;
 		},
-	"s|source:s" => sub { 
+	's|source:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
 		$SOURCE_DIRECTORY = $arg;
 		$test{'source'} = 1;
 		},
-	"start:i" => sub { 
+	'start:i' => sub { 
 		my ($opt,$arg) = @_;
 		if (!defined $arg || $start < 0){
 			$msg = "$opt requires track number start value. See -h.";
@@ -3180,7 +3177,7 @@ sub get_options{
 		$start = $arg;
 		$test{'tag-create'} = 1;
 		},
-	"T|tag:s" => sub { 
+	'T|tag:s' => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /%:/){
 			$msg = "$opt requires TAG%:value sets. See -h.";
@@ -3199,8 +3196,8 @@ sub get_options{
 		$OUTPUT_TYPE = 'UNSET';
 		$test{'tag'} = 1;
 		},
-	"test" => sub { 
-		$LOG_LEVEL = 3;
+	'test' => sub { 
+		$VERBOSITY = 3;
 		$b_test = 1 },
 	'U|update'=> sub { 
 		$run{'update'} = 1; 
@@ -3213,9 +3210,14 @@ sub get_options{
 		$run{'clean'} = 0;
 		$run{'autotag'} = 0;
 		$OUTPUT_TYPE = 'UNSET';},
-	"verbose" => sub { 
-		$LOG_LEVEL = 2 },
-	"v|version" => sub { 
+	# legacy
+	'verbose'=> sub { 
+		$VERBOSITY = 2 },
+	'v|verbosity|log:i' => sub { 
+		my ($opt,$arg) = @_;
+		error_handler('missing-arg',"$opt verbosity integer.",1) if not defined $arg;
+		$VERBOSITY = $arg; },
+	'version' => sub { 
 		show_version(); },
 	'<>' => sub {
 		my ($opt) = @_;

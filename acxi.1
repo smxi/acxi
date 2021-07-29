@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-07\-26" acxi "acxi manual"
+.TH ACXI 1 "2021\-07\-28" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -26,8 +26,8 @@ Tagging: \fBacxi\fR [\fB\-\-aggregate\fR [file name|extension]]
 Checksums: \fBacxi\fR [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] 
 [\fB\-\-checksum\-verify\fR] [\fB\-\-no\-ffp\fR] 
 .IP * 2
-Output Controls: \fBacxi\fR [\fB\-\-basic\fR] [\fB\-\-full\fR]
-[\fB\-\-log\fR {0-3}] [\fB\-\-quiet\fR] [\fB\-\-verbose\fR] 
+Output Controls: \fBacxi\fR [\fB\-v\fR {0-3}] [\fB\-\-quiet\fR] 
+[\fB\-\-debug\fR] 
 .IP * 2
 Miscellaneous:  [\fB\-h\fR] [\fB\-U\fR] [\fB\-v\fR] 
 [\fB\-\-dot\fR] [\fB\-\-no\-dot\fR] 
@@ -237,11 +237,6 @@ Use together with \fB\-E\fR (\fB\-\-prefill\fR) To prepopulate the \fBALBUM,\fR
 \fBTITLE\fR fields as well. 
 
 .TP
-.B \-\-basic\fR
-Single line per operation screen output, default value for acxi. Same as 
-\fB\-\-log 1\fR
-
-.TP
 .B \-\-checksum\fR, \fB\-K\fR
 Create \fB.ffp\fR and \fB.md5\fR checksum files in your source directory. 
 Checksum files are only created inside directories where flac files are found. 
@@ -321,7 +316,7 @@ Sample: \fB\-c txt,pdf,png,jpg,jpeg,gif\fR
 .TP
 .B \-\-debug\fR
 All output available, including debugger data for some events. Same as 
-\fB\-\-log 4\fR
+\fB\-v 4\fR
 
 .TP
 .B \-\-destination, \fB\-d {path}\fR
@@ -385,11 +380,6 @@ permanently.
 Please note that this can have strange consequences if you run it on a huge job, 
 even if you use only half your threads, the system can still act strange as a 
 result of running it with multiple forks.
-
-.TP
-.B \-\-full\fR
-Full screen output, including full verbosity of flac / oggenc / opusenc / lame 
-conversion tools for flac, mp3, ogg, or opus output. Same as \fB\-\-log 3\fR
 
 .TP
 .B \-\-help\fR, \fB\-h\fR
@@ -472,7 +462,7 @@ Input type. Supported types: flac, wav, raw, shn.
 \fBaif/raw/shn\fR \- only support flac output. 
 
 \fBshn\fR \- requires the shorten codec, which you usually have to build 
-yourself unless you can find a package for it. Use \fB\-\-log 3\fR to test the 
+yourself unless you can find a package for it. Use \fB\-v 3\fR to test the 
 first time to make sure you have shorten codec installed.
 
 Some other input types may be active for testing purposes occasionally, but acxi 
@@ -483,24 +473,6 @@ Supports flac to flac for cases where you might want to redo flac files to known
 quality/compression levels, or redo them using current flac codecs.
 
 Tags transfer from AIF files that are tagged to FLAC files in my tests.
-
-.TP
-.B \-\-log {0-4}\fR
-Dynamically set LOG_LEVEL. Helps for debugging certain types of issues where you 
-might want to see the full level 3 debugging information from audio codec 
-conversions for example. 
-
-\fB0\fR \- shuts off all output except errors. Same as \fB\-\-quiet\fR.
-
-\fB1\fR \- basic single line output. Same as \fB\-\-basic\fR.
-
-\fB2\fR \- more verbose output. Same as \fB\-\-verbose\fR.
-
-\fB3\fR \- full output, incuding all conversion tool output. Same as 
-\fB\-\-full\fR.
-
-\fB4\fR \- debug output, includes some extra debugging data. Don't use in 
-general. Same as \fB\-\-debug\fR.
 
 .TP
 .B \-\-nlink\fR
@@ -632,7 +604,7 @@ files will not result in redoing those files unless you use the \fB\-f\fR /
 
 .TP
 .B \-\-quiet\fR, \fB\-\-silent\fR
-Turns off all screen output, except for error messages. Same as \fB\-\-log 0\fR
+Turns off all screen output, except for error messages. Same as \fB\-v 0\fR
 
 .TP
 .B \-\-recurse {number}\fR
@@ -720,7 +692,7 @@ Sample: \fBacxi \-s ./ \-\-tag "COMMENT%:UNSET^^ARTIST%:Black Sabbath"\fR
 .TP
 .B \-\-test\fR
 Test your configurations, copy, sync, checksum, and tagging actions without 
-actually doing the operations. Activates \fB \-\-full\fR as well for more 
+actually doing the operations. Activates \fB \-v 3\fR as well for more 
 complete output.
 
 .TP
@@ -728,12 +700,23 @@ complete output.
 Self updater, will update acxi and its man page. Non GNU/LInux will probably 
 require changing the default values, which are set in \fBUSER VARIABLES\fR for 
 curl, acxi and man page acxi.1. Requires \fBcurl\fR.
-                  
+
 .TP
-.B  \-\-verbose\fR
-Without full verbosity of full, no flac/oggenc/opusenc/lame for mp3, ogg, or 
-opus conversion process screen output, but more verbose than default. Same as 
-\fB\-\-log 2\fR
+.B \-\-verbosity\fR, \fB\-v {0-4}\fR
+Dynamically set . Helps for debugging certain types of issues where you 
+might want to see the full level 3 debugging information from audio codec 
+conversions for example. 
+
+\fB0\fR \- shuts off all output except errors. Same as \fB\-\-quiet\fR.
+
+\fB1\fR \- basic single line output.
+
+\fB2\fR \- more verbose output. 
+
+\fB3\fR \- full output, incuding all conversion tool output.
+
+\fB4\fR \- debug output, includes some extra debugging data. Don't use in 
+general. Same as \fB\-\-debug\fR.
 
 .TP
 .B \-\-version\fR, \fB\-v\fR
@@ -914,11 +897,11 @@ will speed up your syncing a lot if you have more than a 1 core CPU.
 
 .TP
 .B SCREEN/DEBUGGING OUTPUT
-You can change \fBLOG_LEVEL\fR either at the top of the \fBacxi\fR file itself, 
+You can change \fBVERBOSITY\fR either at the top of the \fBacxi\fR file itself, 
 or in the configuration file, by setting the verbosity/debugging level to what 
-you want. 
+you want. Deprecated: \fBLOG_LEVEL\fR.
 
-Sample: \fBLOG_LEVEL=3\fR 
+Sample: \fBVERBOSITY=3\fR 
 
 \fB0\fR \- quiet/silent \- no output at all (except for errors).
 
