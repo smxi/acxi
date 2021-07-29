@@ -15,7 +15,6 @@ Actual totals: 15 tracks, 2 missing. --start 3, 13 real tracks.
 
 It would have shown 16 track count in auto.tag in that case before the fix.
 
-
 --------------------------------------------------------------------------------
 FIXES:
 
@@ -38,7 +37,7 @@ necessarily desirable.
 CHANGES: 
 
 1. Got rid of --log, --basic, --full, --verbose, and replaced them with 
--v/--verbosit [1-4]. Left --quit and --debug, since those make sense. Left 
+-v/--verbosity [1-4]. Left --quiet and --debug, since those make sense. Left 
 internal support for --basic, --full, --verbose, and --log to not break any user 
 habits. I'm not sure why acxi ever used LOG_LEVEL, I suspect it was some legacy 
 thing that was just imported without thinking about it, maybe from the original 
