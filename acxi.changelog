@@ -615,7 +615,6 @@ DOCUMENTATION:
 1. Documentation pages:
  https://smxi.org/docs/acxi-man.htm
  https://smxi.org/docs/acxi-options.htm
- 
 
 ================================================================================
 Date: 2019-07-27
@@ -738,7 +737,8 @@ Date: 2019-07-15
 Version: 3.2.0
 --------------------------------------------------------------------------------
 
-Big update.
+Big update. Forking, shn to flac, copy type improvements, --log output option,
+docs updates.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
