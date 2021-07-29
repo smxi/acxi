@@ -9,7 +9,12 @@ Point release with some small bug fixes, tweaks, adjustments, and new features.
 BUGS:
 
 1. --start had a bug when start > 1, it needed to subtract 1 from count to show
-correct total in auto.tag.
+correct total in auto.tag. This was the expected result:
+
+Actual totals: 15 tracks, 2 missing. --start 3, 13 real tracks.
+
+It would have shown 16 track count in auto.tag in that case before the fix.
+
 
 --------------------------------------------------------------------------------
 FIXES:
@@ -24,7 +29,10 @@ handle June-03-2021 syntax.
 long time, and  isn't needed for certain purposes. This can be quite useful when 
 checking many ffps from many recordings. For example:
 
-acxi -s./ -K --no-md5 > ffps.txt
+acxi -s./ -K --no-md5 --test > ffps.txt
+
+The --test flag makes it not do the actual ffp file creation, which isn't 
+necessarily desirable.
 
 --------------------------------------------------------------------------------
 CHANGES: 
@@ -32,19 +40,36 @@ CHANGES:
 1. Got rid of --log, --basic, --full, --verbose, and replaced them with 
 -v/--verbosit [1-4]. Left --quit and --debug, since those make sense. Left 
 internal support for --basic, --full, --verbose, and --log to not break any user 
-habits.
+habits. I'm not sure why acxi ever used LOG_LEVEL, I suspect it was some legacy 
+thing that was just imported without thinking about it, maybe from the original 
+pl script? But it's annoyed me for a while since it makes no sense either 
+reading the code or trying to explain it in man/help.
+
+-v [1-4] is also relatively standard for verbosity levels usually, it's also 
+less typing.
 
 2. Changed configuration variables LOG_LEVEL to VERBOSITY, but left internal 
-support for legacy LOG_LEVEL. While top configurations will show $VERBOSITY,
-user configuration tool supports either.
+support for legacy LOG_LEVEL. While top configurations will show $VERBOSITY, 
+user configuration tool supports either. 
+
+--------------------------------------------------------------------------------
+DOCUMENTATION:
+
+1. man, help updates for -v/--verbosity change,  and for new --no-ffp feature.
+
+2. Made this changelog match new format of inxi.changelog, which is easier to 
+work with, and easier to read.
 
 --------------------------------------------------------------------------------
 CODE:
 
 1. More cleanups of unnecessary whitespace after ( or before ).
 
-2. Refactored ffp/md5 create to match ffp/md5 check, broke into 3 subs, which 
+2. Refactored ffp/md5 create to match ffp/md5 verify, broke into 3 subs, which 
 makes it cleaner.
+
+3. Changed all internal uses of $LOG_LEVEL to $VERBOSITY, which is what it 
+should have always been since acxi has never logged.
 
 ================================================================================
 Date: 2021-06-29
