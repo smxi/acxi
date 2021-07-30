@@ -734,7 +734,7 @@ sub info_fixes {
 			$newlines++;
 		}
 		if (($run{'infofix-no'} || $run{'infofix-title'}) && 
-		 $row =~ /^(\s*(([1-9]-)([0-9]{1,2})|([0-9]{1,2}))(\.\s*|\s*-\s*|\s*\)\s*|:\s*|\s+))/){
+		 $row =~ /^(\s*(([1-9]-)([0-9]{1,2})|([0-9]{1,2}))(\]\s*|\.\s*|\s*-\s*|\s*\)\s*|:\s*|\s+))/){
 			# print "$1 '$6'\n";
 			if ($run{'infofix-no'}){
 				# print "$1 $2 $3\n";
