@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.3.29';
-my $self_date='2021-07-29';
+my $self_date='2021-07-30';
 
 ## GLOBALS ##
 my %run;
@@ -852,10 +852,10 @@ sub prefill_data {
 			$info{'date'} = $1;
 			$info{'year'} = $2;
 		}
-		elsif (!$b_top_block && $counter > 7 && $_ =~ /^([1-6]-[0-9]{1,2}|[0-9]{1,2})\.\s(.*?)(\s+[\[\(][0-9:\.\s]+[\]\)]\s*)?$/){
+		elsif (!$b_top_block && $counter > 4 && $_ =~ /^([1-6]-[0-9]{1,2}|[0-9]{1,2})\.\s(.*?)(\s+[\[\(][0-9:\.\s]+[\]\)]\s*)?$/){
 			push(@{$info{'tracks'}},$2);
 		}
-		elsif ($counter > 10 && /^(Band|(Band\s)?Line[\s-]?up|(Band\s)?Members):/i){
+		elsif ($counter > 8 && /^(Band|(Band\s)?Line[\s-]?up|(Band\s)?Members):/i){
 			$b_performer = 1;
 			next;
 		}

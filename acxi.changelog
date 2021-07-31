@@ -27,7 +27,9 @@ FIXES:
 1. Added more date syntax variants to -Xd date correct tool. Had failed to 
 handle June-03-2021 syntax.
 
-2. Added more track numbering variants to -Xn too. Failed to handle '01] '
+2. Added more track numbering variants to -Xn too. Failed to handle '01] '.
+
+3. Tweaked --prefill, let it start looking for track numbers if line > 4.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
