@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.3.29';
-my $self_date='2021-07-30';
+my $self_date='2021-08-04';
 
 ## GLOBALS ##
 my %run;
@@ -1008,6 +1008,7 @@ sub populate_file {
 	my (@disc_working,@info_working);
 	if ($info{'tracks'}){
 		if (scalar(@{$info{'tracks'}}) == scalar(@$files)){
+			print "File/$INFO_FILE track counts match: " . scalar(@$files) . "\n";
 			@info_working = @{$info{'tracks'}};
 		}
 		else {
