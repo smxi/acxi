@@ -25,7 +25,7 @@ It would have shown 16 track count in auto.tag in that case before the fix.
 FIXES:
 
 1. Added more date syntax variants to -Xd date correct tool. Had failed to 
-handle June-03-2021 syntax.
+handle June-03-2021 syntax. Fixed glitch that made 09/19/54 fail.
 
 2. Added more track numbering variants to -Xn too. Failed to handle '01] '.
 
