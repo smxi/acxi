@@ -44,7 +44,8 @@ ABOUT
 --------------------------------------------------------------------------------
 acxi is a tool that syncs/converts lossless (flac, wav, raw) music libraries to 
 compressed (mp3,ogg,opus) versions of the lossless library. It also can convert 
-aif, raw, shn, and wav to flac. 
+aif, raw, shn, and wav to flac. It also creates/checks md5, ffp files, tags your 
+collection (read man page), embeds images, and much more.
 
 acxi is developed as features are requested or discovered useful. It will in 
 general 'just work' for as long as it's installed, though it is a good idea to 
@@ -88,9 +89,10 @@ compressed versions, so if you want to change your compression levels, you have
 to use the -f/--force option.
 
 It can also be used to autotag your collection. Read the man page for more on 
-auto tagging. It can also generate new checksum files (md5 and ffp) if you need 
-those for some reason, and verify existing md5 hashes and flac file integrity, 
-embed cover art into existing tagged files, and much more.
+auto tagging and info file processing. It can also generate new checksum files 
+(md5 and ffp) if you need those for some reason, and verify existing md5 hashes 
+and flac file integrity, embed cover art into existing tagged files, and much 
+more.
 
 ================================================================================
 DEPENDENCIES
@@ -178,16 +180,16 @@ expected, you can start syncing your music files.
 
 You can change the screen output from:
 
-* none (--quiet, --log 0)
+* none (--quiet, -v 0)
 
-* single line (--basic, --log 1)
+* single line (-v 1)
 
-* verbose (--verbose, --log 2)
+* verbose (-v 2)
 
-* full, with all conversion tool outputs (--full, --log 3)
+* full, with all conversion tool outputs (-v 3)
 
 * debug, all output, incuding at times various debugging events 
-  (--debug, --log 4)
+  (--debug, -v 4)
 
 These values can also be set in configuration files using LOG_LEVEL=[0-4].
 
