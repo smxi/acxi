@@ -191,7 +191,7 @@ You can change the screen output from:
 * debug, all output, incuding at times various debugging events 
   (--debug, -v 4)
 
-These values can also be set in configuration files using LOG_LEVEL=[0-4].
+These values can also be set in configuration files using VERBOSITY=[0-4].
 
 ================================================================================
 AAC
