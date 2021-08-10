@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.3.29';
-my $self_date='2021-08-07';
+my $self_date='2021-08-10';
 
 ## GLOBALS ##
 my %run;
@@ -173,22 +173,6 @@ my $EXCLUDE_BASE = 'acxi-exclude';
 my $EXCLUDE = '';
 
 #### -------------------------------------------------------------------
-#### CHECKSUM DATA
-#### -------------------------------------------------------------------
-# These are the file names MINUS the .ffp / .md5 extensions.
-my $FFP_FILE='fingerprints';
-my $MD5_FILE='md5sums';
-
-#### -------------------------------------------------------------------
-#### AUTO TAGGING
-#### -------------------------------------------------------------------
-# For -P/--prefill, can be overridden with config or --prefill-file []
-my $INFO_FILE='info.txt';
-# This is the file that contains the syntax found in auto.tag file. But
-# you can call it something else if you prefer.
-my $TAG_FILE='auto.tag';
-
-#### -------------------------------------------------------------------
 #### INPUT/OUTPUT
 #### -------------------------------------------------------------------
 # Options: -i/--input type ; -o/--output type
@@ -227,7 +211,23 @@ my $CODEC_AAC = 'libfdk_aac';
 my $COPY_TYPES = 'gif,jpg,jpeg,png,txt';
 
 #### -------------------------------------------------------------------
-#### PRINT OUTPUT
+#### AUTO TAGGING
+#### -------------------------------------------------------------------
+# For -P/--prefill, can be overridden with config or --prefill-file []
+my $INFO_FILE='info.txt';
+# This is the file that contains the syntax found in auto.tag file. But
+# you can call it something else if you prefer.
+my $TAG_FILE='auto.tag';
+
+#### -------------------------------------------------------------------
+#### CHECKSUM DATA
+#### -------------------------------------------------------------------
+# These are the file names MINUS the .ffp / .md5 extensions.
+my $FFP_FILE='fingerprints';
+my $MD5_FILE='md5sums';
+
+#### -------------------------------------------------------------------
+#### VERBOSITY LEVELS
 #### -------------------------------------------------------------------
 # Options: --quiet/--debug/-v, --verbosity 0-4
 # You can turn these to always on either here or in config file by setting to 
@@ -257,16 +257,16 @@ my $DONT_USE_NLINK = 1;
 # FORK = 1 results in slower times than using no forking so avoid that. 
 my $FORK = 0;
 
-# Only for maintainers, set to 0 in config file to disable.
-my $ALLOW_UPDATES = 1;
-
 #### -------------------------------------------------------------------
 #### SELF UPDATER
 #### -------------------------------------------------------------------
+
+# Only for maintainers, set to 0 in config file to disable.
+my $ALLOW_UPDATES = 1;
+
 # this will be used to update the program and man page. You must have 
 # write permissions to the file locations. Linux or BSD only.
 # do not end paths with /
-
 my $COMMAND_CURL='/usr/bin/curl';
 my $MAN_DIRECTORY='/usr/local/share/man/man1';
 my $SELF_DIRECTORY='/usr/local/bin';
@@ -2583,7 +2583,7 @@ sub show_options {
 	$output .= "--source, -s      Path to the top-most directory containing your source files.\n";
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
 	$output .= $line_small;
-	$output .= "Specialized options:\n";
+	$output .= "Specialized options (tagging, checksums, prefills, etc):\n";
 	$output .= "--aggregate, -G   [filename|extension] Copy file name or extension type to\n";
 	$output .= "                  --destination directory. If no argument given, copies over\n";
 	$output .= "                  $TAG_FILE. Do not use . in extension (jpg good, .jpg bad)\n";

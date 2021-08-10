@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-08\-06" acxi "acxi manual"
+.TH ACXI 1 "2021\-08\-10" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -726,6 +726,16 @@ You can see by running \fBacxi \-h\fR the configuration file locations.
 
 acxi will read its configuration/initialization files in the following order.
 
+Sample:
+.nf
+DESTINATION_DIRECTORY=/home/fred/music/opus
+SOURCE_DIRECTORY=/home/fred/music/flac
+COPY_TYPES=gif,jpg,jpeg,png,txt
+OUTPUT_TYPE=opus
+QUALITY_OPUS=160
+EXCLUDE=/doc/^^/docs/^^/images/^^/pictures/^^/artwork/^^/photos/^^
+.fi
+
 .TP
 .B STANDARD DETECTION
 \fB/etc/acxi.conf\fR contains the default configurations. These can be 
@@ -780,10 +790,6 @@ NOTE: \fBDESTINATION_DIRECTORY\fR cannot be the same as \fBSOURCE_DIRECTORY\fR.
 apply cleaning action to your destination directories. Accepted values: 
 \fB[enable|on|true|yes]\fR or \fB[disable|off|false|no]\fR. Default is false. 
 
-\fBSOURCE_DIRECTORY\fR \- Sample: \fBSOURCE_DIRECTORY=/home/fred/music\fR 
-
-This the original, working, like flac, wav, etc.
-
 \fBDESTINATION_DIRECTORY\fR \- Sample: 
 \fBDESTINATION_DIRECTORY=/home/fred/music/ogg\fR
 
@@ -791,9 +797,12 @@ This is the processed compressed music files, ie, ogg, opus, or mp3. Destination
 cannot be the same as Source directory, although it can be inside of the source 
 directory.
 
+\fBSOURCE_DIRECTORY\fR \- Sample: \fBSOURCE_DIRECTORY=/home/fred/music\fR 
+
+This the original, working, like flac, wav, etc.
+
 .TP
 .B EXCLUDE LISTS/FILES
-
 \fBDOT\fR \- Disables default behavior of skipping all files starting with a 
 \fB.\fR. Takes values true or false. Note that false is the acxi default so there's 
 no point in using that.
@@ -822,13 +831,13 @@ Changing quality levels will not redo existing files.
 
 \fBCODEC_AAC\fR \- Sample (default value): \fBCODEC_AAC=libfdk_aac\fR 
 
-\fBINPUT_TYPE\fR \- Sample: \fBINPUT_TYPE=flac\fR 
-
-\fBOUTPUT_TYPE\fR \- Sample: \fBOUTPUT_TYPE=mp3\fR 
-
 \fBCOPY_TYPES\fR \- Sample: \fBCOPY_TYPES=doc,docx,bmp,jpg,jpeg\fR Use this to 
 override the default file types acxi will sync. Set to 'none', if you only want 
 to sync the music files, not copy over images, text files, etc.
+
+\fBINPUT_TYPE\fR \- Sample: \fBINPUT_TYPE=flac\fR 
+
+\fBOUTPUT_TYPE\fR \- Sample: \fBOUTPUT_TYPE=mp3\fR 
 
 \fBQUALITY_AAC\fR \- Sample: \fBQUALITY_AAC=320\fR Supported values: 10 to 500. 
 500 is the largest file size / highest quality. Applies to aac and m4a.
@@ -879,23 +888,7 @@ generated .md5 file, not including the .md5 extension, you want your md5
 checksum files to have.
 
 .TP
-.B ADVANCED
-The following are advanced options which should only be used if you know what 
-you are doing:
-
-\fBDONT_USE_NLINK\fR \- Sample: \fBDONT_USE_NLINK=0\fR 
-This sets \fBFile::Find::dont_use_nlink to \fB0\fR or \fB1\fR. \fB1\fR is 
-default. Generally you should be using \fB1\fR, but in certain cases \fB0\fR may 
-be faster. Test using the \fB\-\-nlink\fR option to disable nlink, and see that 
-option for more information.
-
-\fBFORK\fR \- Sample: \fBFORK=4\fR 
-This uses Perl's \fBParallel::ForkManager\fR and accepts values of 0 or more. 
-Note that 0 will not create a fork. See \fB\-\-fork\fR for details. Using this 
-will speed up your syncing a lot if you have more than a 1 core CPU.
-
-.TP
-.B SCREEN/DEBUGGING OUTPUT
+.B VERBOSITY LEVELS
 You can change \fBVERBOSITY\fR either at the top of the \fBacxi\fR file itself, 
 or in the configuration file, by setting the verbosity/debugging level to what 
 you want. Deprecated: \fBLOG_LEVEL\fR.
@@ -914,6 +907,22 @@ need to change it.
 each thread's results as it completes as well as when it started.
 
 \fB4\fR \- debug \-  all available plus some specialized debugging information.
+
+.TP
+.B ADVANCED
+The following are advanced options which should only be used if you know what 
+you are doing:
+
+\fBDONT_USE_NLINK\fR \- Sample: \fBDONT_USE_NLINK=0\fR 
+This sets \fBFile::Find::dont_use_nlink to \fB0\fR or \fB1\fR. \fB1\fR is 
+default. Generally you should be using \fB1\fR, but in certain cases \fB0\fR may 
+be faster. Test using the \fB\-\-nlink\fR option to disable nlink, and see that 
+option for more information.
+
+\fBFORK\fR \- Sample: \fBFORK=4\fR 
+This uses Perl's \fBParallel::ForkManager\fR and accepts values of 0 or more. 
+Note that 0 will not create a fork. See \fB\-\-fork\fR for details. Using this 
+will speed up your syncing a lot if you have more than a 1 core CPU.
 
 .TP
 .B SELF UPDATER
