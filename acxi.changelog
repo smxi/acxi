@@ -69,7 +69,9 @@ user configuration tool supports either.
 --------------------------------------------------------------------------------
 DOCUMENTATION:
 
-1. Man, help updates for -v/--verbosity change,  and for new --no-ffp feature.
+1. Man, help updates for -v/--verbosity change,  and for new --no-ffp feature. 
+Reordered configuration values section to be a bit more clear, some things were 
+not alphabetically listed within sections, sections were slightly oddly ordered.
 
 2. Made this changelog match new format of inxi.changelog, which is easier to 
 work with, and easier to read. Using easier to scan subject headers BUGS, FIXES, 
