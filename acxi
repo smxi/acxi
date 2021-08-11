@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.3.29';
-my $self_date='2021-08-10';
+my $self_date='2021-08-11';
 
 ## GLOBALS ##
 my %run;
@@ -215,6 +215,8 @@ my $COPY_TYPES = 'gif,jpg,jpeg,png,txt';
 #### -------------------------------------------------------------------
 # For -P/--prefill, can be overridden with config or --prefill-file []
 my $INFO_FILE='info.txt';
+# For -Xf, the rating shown in Quality: /[rating] item.
+my $INFO_RATING = 4;
 # This is the file that contains the syntax found in auto.tag file. But
 # you can call it something else if you prefer.
 my $TAG_FILE='auto.tag';
@@ -705,6 +707,7 @@ sub info_fixes {
 	print "Working on file:\n$INFO_FILE\n";
 	my @data = open_info_file();
 	@data = date_fix(\@data) if $run{'infofix-date'};
+	@data = quality_data(\@data) if $run{'infofix-quality'};
 	# print Data::Dumper::Dumper \@data;
 	# we want these to be set to uppercase again after autoformat runs
 	my $upper = 'Aud|Cdr?|Sd?b|Ips|Eac|Ak|Az|Ca|Co|Ct|Dc|De|Dk|Fl|Flac|Hd|Hi|Il|';
@@ -823,6 +826,60 @@ sub date_fix {
 		}
 		if ($mm && $dd && $yyyy){
 			$_ =~ s/\Q$regex\E/$yyyy-$mm-$dd/i;
+		}
+		push(@data,$_);
+	}
+	return @data;
+}
+sub quality_data {
+	my ($ref) = @_;
+	my $dir = Cwd::getcwd; # resolves sym links
+	my ($file,$flac_file,@data,@real);
+	my ($flac_info,$quality) = ('','');
+	if ($file = (main::globber('02*.flac'))[0]){
+		$flac_file = $file;
+	}
+	elsif ($file = (main::globber('*02.flac'))[0]){
+		$flac_file = $file;
+	}
+	elsif ($file = (main::globber('1-02*.flac'))[0]){
+		$flac_file = $file;
+	}
+	elsif ($file = (main::globber('*1-02.flac'))[0]){
+		$flac_file = $file;
+	}
+	elsif ($file = (main::globber('*1-2.flac'))[0]){
+		$flac_file = $file;
+	}
+	elsif ($file = (main::globber('*2.flac'))[0]){
+		$flac_file = $file;
+	}
+	else {
+		main::error_handler('flac-data',"No flac file that matches found!\n",1);
+	}
+	say "Getting metaflac for file: $flac_file";
+	my @flac = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps "$flac_file");
+	if (scalar @flac != 3){
+		main::error_handler('flac-data',"Metaflac failed to get 3 items from file",1);
+	}
+	foreach (@flac){
+		$_ =~ s/[\r\n]//g;
+		push(@real,$_);
+	}
+	# say Dumper \@flac;
+	if (@real && scalar @real > 2){
+		$quality = "Quality: /$INFO_RATING ()";
+		$flac_info = "FLAC: " . $real[2] . '/' . sprintf("%.1f", $real[1]/1000);
+		$flac_info .= " ($real[0] channels)";
+	}
+	# say "Result: $flac_info";
+	my ($b_head,$b_inserted,$counter) = (1,0,0);
+	foreach (@$ref){
+		$counter++;
+		$b_head = 0 if $b_head && $counter > 1 && /^\s*$/;
+		if (!$b_inserted && !$b_head && $flac_info && $counter > 3){
+			push(@data,('',$flac_info,$quality,''));
+			$b_inserted = 1;
 		}
 		push(@data,$_);
 	}
@@ -2050,6 +2107,7 @@ sub error_handler {
 	elsif ($error eq 'unsupported-option'){$error_no = 8;$br=''}
 	elsif ($error eq 'autotag-multi'){$error_no = 18;}
 	elsif ($error eq 'track-counts'){$error_no = 30;}
+	elsif ($error eq 'flac-data'){$error_no = 31;}
 	elsif ($error eq 'missing-perl-module'){$error_no = 10;
 		$message = "Perl Module not found in system: $message";}
 	if ($error eq 'validation-errors'){
@@ -2095,12 +2153,17 @@ sub start_text {
 	}
 }
 sub check_infofix {
-	return if (!$run{'infofix-title'} && !$run{'infofix-upper'});
-	if (!main::check_module('Text::Autoformat')){
-		main::error_handler('missing-perl-module', 'Text::Autoformat',1);
+	if ($run{'infofix-title'} || $run{'infofix-upper'}){
+		if (!main::check_module('Text::Autoformat')){
+			main::error_handler('missing-perl-module', 'Text::Autoformat',1);
+		}
+		else {
+			import Text::Autoformat;
+		}
 	}
-	else {
-		import Text::Autoformat;
+	if ($run{'infofix-quality'} && ! -x "$COMMAND_METAFLAC"){
+		my $error_message = "--infofix q requires metaflac.";
+		main::error_handler('missing-app',$error_message,1);
 	}
 }
 sub check_in_out_types {
@@ -2632,13 +2695,18 @@ sub show_options {
 	$output .= "--image, -I [jpg,png image file name|remove]\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
-	$output .= "--infofix, -X [dntuw]\n";
+	$output .= "--infofix, -X [dnqtuw]\n";
 	$output .= "                  Fix info.txt files. Use any combination. Always cleans white\n";
-	$output .= "                  space issues. d: make iso date:  YYYY-MM-DD from various\n";
-	$output .= "                  random date formats; n: make tracknumbering 'NN. ' (0 padded)\n";
-	$output .= "                  or 'N-NN. '; t: fix upper/lower case track titles; \n";
-	$output .= "                  u: fix entire file upper/lower; w: write changes to file. \n";
+	$output .= "                  space issues.\n";
+	$output .= "                  d: make iso date: YYYY-MM-DD from various random date formats;\n";
+	$output .= "                  n: make tracknumbering 'NN. ' (0 padded) or 'N-NN. ';\n";
+	$output .= "                  q: add FLAC/Quality: /[quality] items to info file;\n";
+	$output .= "                  t: fix upper/lower case track titles;\n";
+	$output .= "                  u: fix entire file upper/lower;\n";
+	$output .= "                  w: write changes to file. \n";
 	$output .= "                  t and u use Title upper case main words.\n";
+	$output .= "--info-rating {2-xxx}\n";
+	$output .= "                  Change default rating value for --infofix q. Current: $INFO_RATING;\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-dot          Override user configuration setting for DOT (--dot) [default].\n";
 	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";
@@ -2860,6 +2928,7 @@ sub assign_value {
 	elsif ($var eq 'FORK'){$FORK = $value}
 	elsif ($var eq 'FFP_FILE'){$FFP_FILE = $value}
 	elsif ($var eq 'INFO_FILE'){$INFO_FILE = $value}
+	elsif ($var eq 'INFO_RATING'){$INFO_RATING = $value}
 	elsif ($var eq 'MD5_FILE'){$MD5_FILE = $value}
 	elsif ($var eq 'TAG_FILE'){$TAG_FILE = $value}
 	elsif ($var eq 'EXCLUDE'){$EXCLUDE = $value}
@@ -3074,9 +3143,10 @@ sub get_options{
 		my ($opt,$arg) = @_;
 		$run{'infofix'} = 1;
 		if ($arg){
-			if ($arg =~ /^[dnutw]+$/i){
+			if ($arg =~ /^[dnqutw]+$/i){
 				$run{'infofix-date'} = 1 if $arg =~ /d/i;
 				$run{'infofix-no'} = 1 if $arg =~ /n/i;
+				$run{'infofix-quality'} = 1 if $arg =~ /q/i;
 				$run{'infofix-title'} = 1 if $arg =~ /t/i;
 				$run{'infofix-upper'} = 1 if $arg =~ /u/i;
 				$run{'infofix-write'} = 1 if $arg =~ /w/i;
@@ -3094,6 +3164,15 @@ sub get_options{
 		$run{'checksum-verify'} = 0;
 		$test{'info'} = 1;
 		$test{'infofix'} = 1;
+	},
+	'info-rating:i' => sub { 
+		my ($opt,$arg) = @_;
+		if (!$arg || $arg < 2){
+			$msg = "$opt requires rating integer > 1. See -h.";
+			error_handler('missing-arg',$msg,1);
+		}
+		$INFO_RATING = $arg;
+		$test{'info-rating'} = 1;
 	},
 	'i|input:s' => sub { 
 		my ($opt,$arg) = @_;
@@ -3243,6 +3322,10 @@ sub get_options{
 	if ($test{'infofix'} && ($test{'prefill'} && $test{'tag-create'})){
 		error_handler('invalid-options', 
 		 "Info Fix cannot be combined with any other option except --source.",1);
+	}
+	if ($test{'info-rating'} && !$test{'infofix'}){
+		error_handler('invalid-options', 
+		 "--info-rating can only be used with --infofix.",1);
 	}
 	# prefill options require tag-create options
 	if ($test{'prefill'} && !$test{'tag-create'}){

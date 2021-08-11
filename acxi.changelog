@@ -44,6 +44,12 @@ acxi -s./ -K --no-md5 --test > ffps.txt
 The --test flag makes it not do the actual ffp file creation, which isn't 
 necessarily desirable.
 
+2. Added 'q' to --infofix/-X, this lets you add in two rows after top band / gig
+info header, Quality: /4 () and FLAC: bits/sample frequency (channels).
+
+3. To go along with 2, added --info-rating {2-xxx} to let people set different 
+default ratings. Also added INFO_RATING item to tagging user values section.
+
 --------------------------------------------------------------------------------
 CHANGES: 
 
@@ -72,6 +78,7 @@ DOCUMENTATION:
 1. Man, help updates for -v/--verbosity change,  and for new --no-ffp feature. 
 Reordered configuration values section to be a bit more clear, some things were 
 not alphabetically listed within sections, sections were slightly oddly ordered.
+Added q explanation to --infofix and INFO_RATING to config section.
 
 2. Made this changelog match new format of inxi.changelog, which is easier to 
 work with, and easier to read. Using easier to scan subject headers BUGS, FIXES, 

@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-08\-10" acxi "acxi manual"
+.TH ACXI 1 "2021\-08\-11" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -16,7 +16,8 @@ Tagging: \fBacxi\fR [\fB\-\-aggregate\fR [file name|extension]]
 [\fB\-\-autotag\-create\-single\fR] 
 [\fB\-\-autotag\-create\-multi\fR {filename start ID}]
 [\fB\-\-image\fR {cover image filename}]
-[\fB\-\-infofix\fR [d|n|t|u|w]]
+[\fB\-\-infofix\fR [d|n|q|t|u|w]] 
+[\fB\-\-info\-rating\fR {2\-xxx}
 [\fB\-\-prefill\fR] [\fB\-\-prefill\-file\fR {release info file name}] 
 [\fB\-\-no\-ffp\fR] [\fB\-\-no\-md5\fR] [\fB\-\-no\-replaygain\fR] 
 [\fB\-\-recurse\fR {-1-xx}] [\fB\-\-remove\-images\fR] 
@@ -90,6 +91,8 @@ logic may be moved to straight Perl to remove the md5 program requirement.
 .IP * 2
 \fB\-\-checksum\-verify\fR require \fBflac\fR executable and \fBmd5sum\fR (or 
 any comparable program that generates md5 hashes). 
+.IP * 2
+\fB\-\-infofix q\fR require \fBmetaflac\fR. 
 .IP * 2
 \fB\-\-infofix [t|u]\fR require Perl module \fBText::Autoformat\fR. 
 .IP * 2
@@ -408,7 +411,7 @@ Sample: \fBacxi \-s ./ \-\-image remove\fR
 Sample: \fBacxi \-s ./ \-I cover.jpg \-\-remove\-images\fR
 
 .TP
-.B \-\-infofix\fR, \fB\-X [d|n|t|u|w]\fR
+.B \-\-infofix\fR, \fB\-X [d|n|q|t|u|w]\fR
 Correct common corruptions to info.txt files. Only to correct these common 
 issues:
 
@@ -436,6 +439,15 @@ Values (can be combined):
 
 * n \- fix track numbering to be consistent '0X. ' or 'Y-0X'
 
+* q \- add in 2 technical quality info lines after top header. Reads flac file 
+in directory to determine bit rate, sampling frequency, and channels. Requires 
+track file name starts with D-NN or ends with D-NN.flac. Exits if it can't find 
+a match. Quality is /[rating] number and can be changed from default if desired.
+.nf
+FLAC: 16/44.1 (2 channels)
+Quality: /4 ()
+.fi
+
 * t \- smart upper case first track titles only. Requires Perl module 
 \fBText::Autoformat\fR.
 
@@ -453,6 +465,12 @@ option.
 See \fB\-\-prefill\-file\fR for using alternate info txt file names.
 
 Samples: \fBacxi \-s./ -X dtn\fR (to test) \fBacxi \-s./ -X dtnw\fR (to apply)
+
+.TP
+.B \-\-info\-rating {2\-xxx}\fR
+Any number greater than 1 for the \fB\-\-infofix q\fR item \fBQuality: /[rating 
+number]\fR line if you want to change from default of 4. Some people like rating 
+by x/100, others x/10, etc. Use with \fB\-X\fR or set in configurations.
 
 .TP
 .B \-\-input\fR, \fB\-i {aif|flac|raw|shn|wav}\fR
@@ -718,6 +736,10 @@ conversions for example.
 general. Same as \fB\-\-debug\fR.
 
 .TP
+.B \-X\fR, \fB\-\-infofix [d|f|n|t|u|w]\fR 
+See \fB\-\-infofix\fR.
+
+.TP
 .B \-\-version\fR
 Show acxi version.
 
@@ -866,6 +888,9 @@ any other context in your music collection files.
 
 \fBinfo.txt\fR \- The filename in the flac directory being processed that will
 be used to populate the \fBauto.tag\fR fields.
+
+\fBINFO_RATING\fR \- Sample (default value): \fBINFO_RATING=4\fR. See 
+\fB\-\-info\-rating\fR. Used with \fB\-X q\fR. Must be greater than 1.
 
 \fBTAG_FILE\fR \- Sample: \fBTAG_FILE=autotags.tag\fR 
 
