@@ -726,16 +726,6 @@ You can see by running \fBacxi \-h\fR the configuration file locations.
 
 acxi will read its configuration/initialization files in the following order.
 
-Sample:
-.nf
-DESTINATION_DIRECTORY=/home/fred/music/opus
-SOURCE_DIRECTORY=/home/fred/music/flac
-COPY_TYPES=gif,jpg,jpeg,png,txt
-OUTPUT_TYPE=opus
-QUALITY_OPUS=160
-EXCLUDE=/doc/^^/docs/^^/images/^^/pictures/^^/artwork/^^/photos/^^
-.fi
-
 .TP
 .B STANDARD DETECTION
 \fB/etc/acxi.conf\fR contains the default configurations. These can be 
@@ -764,6 +754,16 @@ override/ignore all other configuration files.
 .SH CONFIGURATION OPTIONS
 The following corresponds to the \fBUSER MODIFIABLE VALUES\fR section in the top 
 comment header of acxi.
+
+Sample:
+.nf
+DESTINATION_DIRECTORY=/home/fred/music/opus
+SOURCE_DIRECTORY=/home/fred/music/flac
+COPY_TYPES=gif,jpg,jpeg,png,txt
+OUTPUT_TYPE=opus
+QUALITY_OPUS=160
+EXCLUDE=/doc/^^/docs/^^/images/^^/pictures/^^/artwork/^^/photos/^^
+.fi
 
 .TP
 .B APPLICATION PATHS
