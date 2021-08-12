@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.3.29';
-my $self_date='2021-08-11';
+my $self_date='2021-08-12';
 
 ## GLOBALS ##
 my %run;
@@ -784,11 +784,14 @@ sub date_fix {
 	my ($dd,$mm,$regex,$yyyy,@data);
 	foreach (@$ref){
 		($dd,$mm,$regex,$yyyy) =  ('','','','');
-		# fix D month, YY or month D, YY 
-		if (/\b(((0?[1-9]|[12][0-9]|30|31)\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\S*?([\s\/,-]+(0?[1-9]|[12][0-9]|30|31))?(nd|rd|st|th)?,?[\s\/,-]+((19)?[4-9][0-9]|(20)?[012][0-9]))\b/i){
-			# print "$4 $8\n";
-			$yyyy = $8;
+		# fix D month, YY, month D, YY, month-DD-YYYY
+		# regex: 1: total regex; 2: container for day start; 3: day start
+		# 4: month; 5: container for day; 6: day; 7: optional nd/rd etc;
+		# 8: year; 9: 19..; 10: 20..
+		if (/\b(((0?[1-9]|[12][0-9]|30|31)\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\S*?([\s\/,-]+(0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?)?[\s\/,-]+((19)?[4-9][0-9]|(20)?[012][0-9]))\b/i){
 			$regex = $1;
+			$yyyy = $8;
+			# print "rx: $regex 4: $4 8: $8\n";
 			my $month = lc($4);
 			if ($3){$dd = sprintf('%02d',$3)}
 			elsif ($6){$dd = sprintf('%02d',$6)}
@@ -804,6 +807,7 @@ sub date_fix {
 			elsif ($month eq 'oct'){$mm = '10';}
 			elsif ($month eq 'nov'){$mm = '11';}
 			elsif ($month eq 'dec'){$mm = '12';}
+			# print "y: $yyyy m: $mm d: $dd\n";
 		}
 		# Change m/d/yy or m-d-yy or m.d.yy to yyyy-mm-dd 09/19/54
 		elsif (/\b((0?[1-9]|1[0-2])[\/\.-](0?[1-9]|[12][0-9]|30|31)[\/\.-]((19)?[4-9][0-9]|(20)?[0-2][0-9]))\b/){
