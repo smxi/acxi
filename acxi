@@ -845,7 +845,7 @@ sub quality_data {
 	else {
 		main::error_handler('flac-data',"No flac file that matches found!\n",1);
 	}
-	say "Getting metaflac for file: $flac_file";
+	# say "Getting metaflac for file: $flac_file";
 	my @flac = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps "$flac_file");
 	if (scalar @flac != 3){
 		main::error_handler('flac-data',"Metaflac failed to get 3 items from file",1);
