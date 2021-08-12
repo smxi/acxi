@@ -836,28 +836,10 @@ sub quality_data {
 	my $dir = Cwd::getcwd; # resolves sym links
 	my ($file,$flac_file,@data,@real);
 	my ($flac_info,$quality) = ('','');
-	if ($file = (main::globber('02*.flac'))[0]){
+	if ($file = (main::globber('{02,1-02,1-2,2,1}*.flac'))[0]){
 		$flac_file = $file;
 	}
-	elsif ($file = (main::globber('*02.flac'))[0]){
-		$flac_file = $file;
-	}
-	elsif ($file = (main::globber('1-02*.flac'))[0]){
-		$flac_file = $file;
-	}
-	elsif ($file = (main::globber('1-2*.flac'))[0]){
-		$flac_file = $file;
-	}
-	elsif ($file = (main::globber('*1-02.flac'))[0]){
-		$flac_file = $file;
-	}
-	elsif ($file = (main::globber('*1-2.flac'))[0]){
-		$flac_file = $file;
-	}
-	elsif ($file = (main::globber('2*.flac'))[0]){
-		$flac_file = $file;
-	}
-	elsif ($file = (main::globber('*2.flac'))[0]){
+	elsif ($file = (main::globber('*{02,1-02,1-2,2,1}.flac'))[0]){
 		$flac_file = $file;
 	}
 	else {
