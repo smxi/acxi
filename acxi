@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.3.29';
-my $self_date='2021-08-12';
+my $self_date='2021-08-17';
 
 ## GLOBALS ##
 my %run;
@@ -88,7 +88,7 @@ my ($print_line_heavy,$print_line_large,$print_line_small);
 my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
 $silent_opus) = (7,'','','','','');
 my ($codec,$embed_image,$extension,$exclude_append,@excludes,@excludes_stripped,
-@extension_list,@found_list,$list_type,@tags);
+@extension_list,@found_list,$list_type,@tags,$start_dir);
 # default: recurse infinite for File::Find; start tag list track numbers at 1
 my ($padding,$recurse,$start) = ('',-1,1);
 my ($b_check_dest,$b_check_out) = (1,1);
@@ -337,7 +337,8 @@ sub aggregate {
 	print " to: " . main::sourcer($DESTINATION_DIRECTORY) . "\n";
 	my @files = split /,/, $run{'ag-file'};
 	# my $abs_path = Cwd::abs_path($SOURCE_DIRECTORY);
-	chdir Cwd::getcwd(); # $SOURCE_DIRECTORY;
+	# chdir Cwd::getcwd(); # $SOURCE_DIRECTORY;
+	chdir $start_dir;
 	foreach (@files){
 		aggregate_file($_);
 	}
@@ -401,7 +402,6 @@ sub get_tag_files {
 	$extension = $TAG_FILE;
 	@found_list = ();
 	File::Find::find(\&main::wanted, "$SOURCE_DIRECTORY");
-	my $start_dir = Cwd::getcwd();
 	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		$print_file = $working_dir = $item;
 		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
@@ -528,6 +528,7 @@ sub tag_updater {
 	$extension = $INPUT_TYPE;
 	@found_list = ();
 	File::Find::find(\&main::wanted, "$SOURCE_DIRECTORY");
+	chdir "$start_dir";
 	chdir "$SOURCE_DIRECTORY";
 	print "Updating tags:$print_tags... \n";
 	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list){
@@ -575,8 +576,8 @@ sub image_embedder{
 	$extension = $INPUT_TYPE;
 	@found_list = ();
 	File::Find::find(\&main::wanted, "$SOURCE_DIRECTORY");
+	chdir "$start_dir";
 	chdir "$SOURCE_DIRECTORY";
-	my $start_dir = Cwd::getcwd();
 	if ($embed_image ne 'remove' && ! -e $embed_image){
 		$error_message = "Embed image $embed_image could not be located!\n";
 		$error_message .= "Source directory: $SOURCE_DIRECTORY\n";
@@ -660,11 +661,12 @@ sub image_handler {
 }
 sub make_file {
 	my ($file,@files);
-	chdir $SOURCE_DIRECTORY;
+	chdir "$start_dir";
+	#chdir $SOURCE_DIRECTORY;
 	my $source_dir = $SOURCE_DIRECTORY;
 	# $source_dir =~ s|([\(\)\$])|\\$1|g;
 	$source_dir =~ s|^\Q$source_dir$path_separator\E||;
-	say $source_dir;
+	# say "source1:  $source_dir";
 	print "Checking for pre-existing $TAG_FILE... ";
 	if ($b_test){
 		print "Running test mode.\n";
@@ -676,8 +678,9 @@ sub make_file {
 		print "none found. Proceeding.\n";
 	}
 	if ($VERBOSITY > 3){
-		say Cwd::getcwd();
+		say 'cwd: ', Cwd::getcwd();
 		system 'pwd';
+		say "start1: $start_dir"
 	}
 	print "Creating $TAG_FILE file... ";
 	$extension = $INPUT_TYPE;
@@ -921,6 +924,8 @@ sub prefill_data {
 }
 sub open_info_file {
 	my (@data);
+	chdir "$start_dir";
+	chdir "$SOURCE_DIRECTORY";
 	print "Checking for $INFO_FILE... ";
 	main::error_handler('open',"$INFO_FILE not readable!",1) if  ! -r $INFO_FILE;
 	open(my $fh, '<', $INFO_FILE) or 
@@ -1164,8 +1169,8 @@ sub process_directories {
 	print $line_small;
 	print "Checking directories...\n";
 	@found_list = ();
+	chdir "$start_dir";
 	File::Find::find(\&main::wanted, $SOURCE_DIRECTORY);
-	my $start_dir = Cwd::getcwd();
 	say 'start dir: ', $start_dir if $VERBOSITY > 3;
 	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		my $b_valid;
@@ -2778,6 +2783,7 @@ sub show_version {
 #### SET RUNTIME VALUES
 #### -------------------------------------------------------------------
 sub set_basic_data {
+	$start_dir = getcwd();
 	# if --copy/-c is set, then use that data instead of default copy types
 	if (defined $COPY_TYPES){
 		@extension_list = split(/,\s*/, $COPY_TYPES);

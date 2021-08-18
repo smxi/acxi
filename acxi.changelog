@@ -21,6 +21,9 @@ Actual totals: 15 tracks, 2 missing. --start 3, 13 real tracks.
 
 It would have shown 16 track count in auto.tag in that case before the fix.
 
+2. When using some features with -s [item-directory] instead of -s ./, paths 
+were not reset correctly for all features, resulting in failed operations.
+
 --------------------------------------------------------------------------------
 FIXES:
 
