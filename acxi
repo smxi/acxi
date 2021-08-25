@@ -1297,10 +1297,9 @@ sub verify_flacs {
 # 	}
 	if ($err_nu > 0){
 		$b_app_error = 1;
-		print "\n  Error!\n   flac application error number: $err_nu\n";
-		print "   Result: ", join("\n    ",@results), "\n";
 		$error_message = "$COMMAND_FLAC returned error: $?";
 		main::error_handler('application-error', $error_message,0);
+		print "   Result: ", join("\n    ",@results), "\n";
 	}
 	$err_nu = 0;
 	# @results = grep {/\.$INPUT_TYPE:\s/i} @results;
