@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.4.00';
-my $self_date='2021-08-20';
+my $self_date='2021-08-25';
 
 ## GLOBALS ##
 my %run;
@@ -1289,7 +1289,8 @@ sub verify_flacs {
 		$_ =~ s/\s+$//;
 		$_ =~ s/(testing.*complete|\x{08})//gi;
 		$_ =~ s/[^[:print:]]+//g;
-		$_} @results;
+		$_;
+	} @results;
 # 	foreach (@results){
 # 		$_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
 # 		print "##$_##\n";
