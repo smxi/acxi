@@ -1271,7 +1271,7 @@ sub verify_checksums {
 # NOTE: something is wrong with how flac outputs to stderr and
 # creates invisible text strings, maybe unicode related
 sub verify_flacs {
-	my ($error_message,@errors);
+	my ($b_app_error,$error_message,$err_nu,@errors);
 	print "  Checking $INPUT_TYPE files (be patient): ";
 	# note, flac sends output to stderr
 	# NOTE: $_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
@@ -1282,21 +1282,26 @@ sub verify_flacs {
 		return;
 	}
 	my @results = qx($COMMAND_FLAC -wt *.flac 2>&1);
-	if ($? > 0){
-		$error_message = "$COMMAND_FLAC returned error: $?";
-		main::error_handler('application-error', $error_message,1);
-	}
+	$err_nu = $?;
 	# print scalar @results, "\n", "@results","\n";
 	chomp @results;
 # 	foreach (@results){
 # 		$_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
 # 		print "##$_##\n";
 # 	}
+	if ($err_nu > 0){
+		$b_app_error = 1;
+		print "\n  Error!\n   flac application error number: $err_nu\n";
+		print "   Result: ", join("\n    ",@results), "\n";
+		$error_message = "$COMMAND_FLAC returned error: $?";
+		main::error_handler('application-error', $error_message,0);
+	}
+	$err_nu = 0;
 	# @results = grep {/\.$INPUT_TYPE:\s/i} @results;
 	# track.flac: testing, 33% completetesting, 65% completetesting, 98% completeok
-	# @results = map {
 	my $i = 0;
-	my ($holder,$b_start,@temp);
+	my ($b_start,@temp);
+	my ($holder) = ('');
 	foreach (@results){
 		# print length($_), "\n";
 		$_ =~ s/\s+$//;
@@ -1335,7 +1340,7 @@ sub verify_flacs {
 		print "\n  ERROR!\n   The following files show errors:\n   ", join "\n    ", @errors, "\n";
 	}
 	if (@results){
-		if ($VERBOSITY > 1){
+		if ($VERBOSITY > 1 || $b_app_error){
 			print "\n  Verified files:\n    ",  join "\n    ", @results, "\n";
 		}
 		else {
