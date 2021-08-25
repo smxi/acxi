@@ -1285,6 +1285,11 @@ sub verify_flacs {
 	$err_nu = $?;
 	# print scalar @results, "\n", "@results","\n";
 	chomp @results;
+	@results = map {
+		$_ =~ s/\s+$//;
+		$_ =~ s/(testing.*complete|\x{08})//gi;
+		$_ =~ s/[^[:print:]]+//g;
+		$_} @results;
 # 	foreach (@results){
 # 		$_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
 # 		print "##$_##\n";
@@ -1304,13 +1309,13 @@ sub verify_flacs {
 	my ($holder) = ('');
 	foreach (@results){
 		# print length($_), "\n";
-		$_ =~ s/\s+$//;
+		# $_ =~ s/\s+$//; # moved to map
 		# print "${_}::\n";
 		next if /^\s*$/;
 		$b_start = 1 if !$b_start && $_ =~ /\.$INPUT_TYPE:/;
 		next if !$b_start;
-		$_ =~ s/(testing.*complete|\x{08})//gi;
-		$_ =~ s/[^[:print:]]+//g;
+		#$_ =~ s/(testing.*complete|\x{08})//gi; # moved to map
+		#$_ =~ s/[^[:print:]]+//g; # moved to map
 		# print length($_), "\n";
 		# the idiocy of flac output is hard to put into words
 		# not only do they use those backspace hidden things, but
