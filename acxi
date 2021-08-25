@@ -1320,7 +1320,9 @@ sub verify_flacs {
 		# say $_;
 		# the poor design of flac output is hard to put into words
 		# not only do they use those backspace hidden things, but
-		# sometimes they decide to put the ok/failed on its own line!!!
+		# sometimes they decide to put the ok/failed/warning on its own line!!!
+		# .flac: WARNING, cannot check MD5 signature since it was unset in the STREAMINFO
+		# ok - or more odd, say it's ok after giving a warning
 		if (/\.$INPUT_TYPE:\s[a-z]+/i){
 			$holder = $_;
 			push @temp, $_;
@@ -1344,13 +1346,12 @@ sub verify_flacs {
 	@results = grep {/\.$INPUT_TYPE: ok$/i} @results;
 	# print scalar @results, "\n", "@errors","\n";
 	# print "errors:\n", join "\n", @errors, "\n";
-	print "\n" if @errors || @results;
 	if (@errors){
-		say "  Files with errors:\n    ", join "\n     ", @errors;
+		say "\n  Files with errors:\n    ", join("\n     ", @errors);
 	}
 	if (@results){
 		if ($VERBOSITY > 1 || $b_app_error){
-			say "  Verified files:\n    ",  join "\n    ", @results;
+			say "\n  Verified files:\n    ",  join("\n    ", @results);
 		}
 		else {
 			say "Verified";
