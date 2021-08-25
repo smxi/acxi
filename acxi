@@ -1299,7 +1299,7 @@ sub verify_flacs {
 		$b_app_error = 1;
 		$error_message = "$COMMAND_FLAC returned error: $?";
 		main::error_handler('application-error', $error_message,0);
-		print "   Result: ", join("\n    ",@results), "\n";
+		say "   Error Result: ", join("\n    ",@results) if $VERBOSITY > 1;
 	}
 	$err_nu = 0;
 	# @results = grep {/\.$INPUT_TYPE:\s/i} @results;
@@ -1317,39 +1317,43 @@ sub verify_flacs {
 		#$_ =~ s/(testing.*complete|\x{08})//gi; # moved to map
 		#$_ =~ s/[^[:print:]]+//g; # moved to map
 		# print length($_), "\n";
-		# the idiocy of flac output is hard to put into words
+		# say $_;
+		# the poor design of flac output is hard to put into words
 		# not only do they use those backspace hidden things, but
 		# sometimes they decide to put the ok/failed on its own line!!!
 		if (/\.$INPUT_TYPE:\s[a-z]+/i){
+			$holder = $_;
 			push @temp, $_;
 			$i++;
 		}
-		elsif(/\.$INPUT_TYPE:$/i){
+		elsif(/\.$INPUT_TYPE:\s*$/i){
 			$holder = $_;
 			$i++;
 			# print "$i $holder\n";
 		}
 		else {
-			# print "$i $_\n";
+			# say "$i $_";
 			$temp[$i-1] = $holder . ' ' . $_;
+			$holder = '';
 		}
 	}
 	@results = @temp;
-	# print scalar @results, "\n", "@results","\n";
+	# say scalar @results, "\n", "@results";
 	# NOTE: cases found where ok and rest of string prints on next line!!
-	@errors = grep {!/\.$INPUT_TYPE: ok$/i} @results;
+	@errors = grep {!/(\.$INPUT_TYPE: ok$|^ok$)/i} @results;
 	@results = grep {/\.$INPUT_TYPE: ok$/i} @results;
 	# print scalar @results, "\n", "@errors","\n";
 	# print "errors:\n", join "\n", @errors, "\n";
+	print "\n" if @errors || @results;
 	if (@errors){
-		print "\n  ERROR!\n   The following files show errors:\n   ", join "\n    ", @errors, "\n";
+		say "  Files with errors:\n    ", join "\n     ", @errors;
 	}
 	if (@results){
 		if ($VERBOSITY > 1 || $b_app_error){
-			print "\n  Verified files:\n    ",  join "\n    ", @results, "\n";
+			say "  Verified files:\n    ",  join "\n    ", @results;
 		}
 		else {
-			print "Verified\n";
+			say "Verified";
 		}
 	}
 	else {
