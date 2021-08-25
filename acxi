@@ -1273,7 +1273,7 @@ sub verify_checksums {
 # creates invisible text strings, maybe unicode related
 sub verify_flacs {
 	my ($b_app_error,$error_message,$err_nu,@errors);
-	print "  Checking ffps for $INPUT_TYPE files (be patient): ";
+	print "  Checking $INPUT_TYPE file ffps (be patient): ";
 	# note, flac sends output to stderr
 	# NOTE: $_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
 	# shows the weird hidden text this command creates

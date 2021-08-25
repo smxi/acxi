@@ -18,13 +18,18 @@ BUGS:
 --------------------------------------------------------------------------------
 FIXES:
 
-1. -V exits on error, as it should, but had no --test condition so no exit, only 
-error message would be logged. Useful for checking larger sets of audio files to 
-determine which are corrupted.
+1. -V exited on error, but should not have. This prevented bulk -V checks from 
+running. Now error message goes to screen but it keeps looping. Useful for 
+checking larger sets of audio files to determine which are corrupted.
+
+2. -V, -K, -D: corrected indentation of output to make more readable/scannable.
+Particularly useful if outputting results to file for many directories.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
+1. Going with Fix 1, -v3 now will output results of ffp test initially so you 
+can get the full verbose version.
 
 --------------------------------------------------------------------------------
 CHANGES:
