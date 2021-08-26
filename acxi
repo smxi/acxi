@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.4.00';
-my $self_date='2021-08-25';
+my $self_date='2021-08-26';
 
 ## GLOBALS ##
 my %run;
@@ -1334,24 +1334,26 @@ sub verify_flacs {
 			push(@temp, $_);
 		}
 		else {
-			# say "$i $_";
 			$_ =~ s/^\s+|\s+$//g;
-			$temp[$index] .= ' :: ' . $_;
+			my $append = (lc($_) eq 'ok') ? " $_" : " :: $_" ;
+			$temp[$index] .= $append if scalar @temp > 0;
 		}
 	}
 	@results = @temp;
 	# say scalar @results, "\n", "@results";
 	# NOTE: cases found where ok and rest of string prints on next line!!
-	@errors = grep {!/\.$INPUT_TYPE: ok$/i} @results;
-	@results = grep {/\.$INPUT_TYPE: ok$/i} @results;
+	@errors = grep {!/\.$INPUT_TYPE:\s+ok$/i} @results;
+	@results = grep {/\.$INPUT_TYPE:\s+ok$/i} @results;
 	# print scalar @results, "\n", "@errors","\n";
 	# print "errors:\n", join "\n", @errors, "\n";
 	if (@errors){
-		say "\n   Files with errors:\n    ", join("\n    ", @errors);
+		print "\n" if !$b_app_error;
+		say "   Files with errors:\n    ", join("\n    ", @errors);
 	}
 	if (@results){
 		if ($VERBOSITY > 1 || $b_app_error){
-			say "\n   Verified files:\n    ",  join("\n    ", @results);
+			print "\n" if !$b_app_error && !@errors;
+			say "   Verified files:\n    ",  join("\n    ", @results);
 		}
 		else {
 			say "Verified";
