@@ -1451,6 +1451,7 @@ sub delete_checksums {
 sub check_ffp_duplicates {
 	# print Data::Dumper::Dumper \%ffp_dupes;
 	my (%dupes,%orig,@ffps);
+	my ($count,$i,$pad) = (0,0,2);
 	print $line_small;
 	say "Starting duplicate verification...";
 	foreach my $dir (sort keys %ffp_dupes){
@@ -1460,7 +1461,7 @@ sub check_ffp_duplicates {
 				push(@ffps, $track[-1]);
 			}
 			else {
-				if ($VERBOSITY > 1){
+				if ($VERBOSITY > 2){
 					say " Duplicate found in:\n  $dir:";
 					say "   ffp:  $track[-1]";
 					say "   file: $track[0]";
@@ -1471,11 +1472,15 @@ sub check_ffp_duplicates {
 	}
 	print $line_small;
 	if (%dupes){
-		my $count = keys %dupes;
+		$count = keys %dupes;
+		$pad = get_pad($count);
 		say "The following $count directories had ffp duplicates:";
 		foreach my $dir (sort keys %dupes){
-			say " $dir";
-			say "  dupe: ", join("\n  dupe: ", @{$dupes{$dir}});
+			$i++;
+			say ' ', sprintf("%0${pad}d: ", $i), $dir;
+			if ($VERBOSITY > 1){
+				say "  dupe: ", join("\n  dupe: ", @{$dupes{$dir}});
+			}
 		}
 		print $line_small;
 		say "These were first found in:";
@@ -1488,7 +1493,7 @@ sub check_ffp_duplicates {
 					foreach my $item1 (@{$ffp_dupes{$dir1}}){
 						my $ffp1 = (split(/:/,$item1))[-1];
 						if ($ffp eq $ffp1){
-							if ($VERBOSITY > 1){
+							if ($VERBOSITY > 2){
 								say " $dir1";
 								say "  item: $item1";
 							}
@@ -1500,15 +1505,34 @@ sub check_ffp_duplicates {
 			}
 		}
 		if (%orig){
+			$i = 0;
+			$count = keys %orig;
+			$pad = get_pad($count);
 			foreach my $dir (sort keys %orig){
-				say " $dir";
-				say "  orig: ", join("\n  orig: ", @{$orig{$dir}});
+				$i++;
+				say ' ', sprintf("%0${pad}d: ", $i), $dir;
+				if ($VERBOSITY > 1){
+					say "  orig: ", join("\n  orig: ", @{$orig{$dir}});
+				}
 			}
 		}
 	}
 	else {
 		say "No ffp duplicates found!! Great!!";
 	}
+}
+sub get_pad {
+	my $count = $_[0];
+	my $pad = 2;
+	if ($count < 10){
+		$pad = 1;}
+	elsif ($count < 100){
+		$pad = 2;}
+	elsif ($count < 1000){
+		$pad = 3;}
+	elsif ($count < 10000){
+		$pad = 4;}
+	return $pad;
 }
 }
 
