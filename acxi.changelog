@@ -31,6 +31,11 @@ ENHANCEMENTS:
 1. Going with Fix 1, -v3 now will output results of ffp test initially so you 
 can get the full verbose version.
 
+2. New feature: --ffp-dupes: allows checking collection for duplicates of flac 
+files, then gives a report of the directories that had duplicates, and the 
+directories that first had the files that were duplicated. Useful for trimming
+out redundant stuff from your collection. 
+
 --------------------------------------------------------------------------------
 CHANGES:
 
@@ -38,6 +43,7 @@ CHANGES:
 --------------------------------------------------------------------------------
 DOCUMENTATION:
 
+1. Updated man, help for --ffp-dupes.
 
 --------------------------------------------------------------------------------
 CODE:

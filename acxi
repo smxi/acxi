@@ -1155,6 +1155,7 @@ sub get_replaygain {
 ## Checksums 
 {
 package Checksums;
+my ($print_src,%ffp_dupes);
 sub process {
 	print $line_large;
 	print "Starting checksum processing in " . main::sourcer("$SOURCE_DIRECTORY") . "...\n";
@@ -1164,7 +1165,7 @@ sub process {
 	print $line_large;
 }
 sub process_directories {
-	my (@files,$item,$print_src,$result);
+	my (@files,$item,$result);
 	$list_type = 'dir';
 	print $line_small;
 	print "Checking directories...\n";
@@ -1204,10 +1205,18 @@ sub process_directories {
 			verify_checksums(@files);
 		}
 	}
+	if ($run{'ffp-dupes'}){
+		check_ffp_duplicates();
+	}
 }
 sub generate_checksums {
-	print "  Generating checksums:\n";
-	print "   File: $FFP_FILE.ffp: ";
+	if (!$run{'ffp-dupes'}){
+		say "  Generating checksums:";
+		print "   File: $FFP_FILE.ffp: ";
+	}
+	else {
+		say "  Collecting ffps...";
+	}
 	if ($VERBOSITY > 3){
 		say 'cwd: ', Cwd::getcwd();
 		system('pwd');
@@ -1218,12 +1227,14 @@ sub generate_checksums {
 	else {
 		say 'skipped';
 	}
-	print "   File: $MD5_FILE.md5: ";
-	if (!$run{'no-md5'}){
-		generate_md5();
-	}
-	else {
-		say 'skipped';
+	if (!$run{'ffp-dupes'}){
+		print "   File: $MD5_FILE.md5: ";
+		if (!$run{'no-md5'}){
+			generate_md5();
+		}
+		else {
+			say 'skipped';
+		}
 	}
 }
 sub generate_ffp {
@@ -1236,7 +1247,10 @@ sub generate_ffp {
 	}
 	else {
 		chomp (@output);
-		if (!$b_test){
+		if ($run{'ffp-dupes'}){
+			$ffp_dupes{$print_src} = \@output;
+		}
+		elsif (!$b_test){
 			main::writer("$FFP_FILE.ffp",\@output);
 			say 'created for ' . scalar(@output) . ' files';
 		}
@@ -1432,6 +1446,68 @@ sub delete_checksums {
 		else {
 			main::error_handler('checksum-delete', "Failed to delete: $file");
 		}
+	}
+}
+sub check_ffp_duplicates {
+	# print Data::Dumper::Dumper \%ffp_dupes;
+	my (%dupes,%orig,@ffps);
+	print $line_small;
+	say "Starting duplicate verification...";
+	foreach my $dir (sort keys %ffp_dupes){
+		foreach my $item (@{$ffp_dupes{$dir}}){
+			my @track = split(/:/,$item);
+			if (!grep {$_ eq $track[-1]} @ffps){
+				push(@ffps, $track[-1]);
+			}
+			else {
+				if ($VERBOSITY > 1){
+					say " Duplicate found in:\n  $dir:";
+					say "   ffp:  $track[-1]";
+					say "   file: $track[0]";
+				}
+				push(@{$dupes{$dir}},$item);
+			}
+		}
+	}
+	print $line_small;
+	if (%dupes){
+		my $count = keys %dupes;
+		say "The following $count directories had ffp duplicates:";
+		foreach my $dir (sort keys %dupes){
+			say " $dir";
+			say "  dupe: ", join("\n  dupe: ", @{$dupes{$dir}});
+		}
+		print $line_small;
+		say "These were first found in:";
+		foreach my $dir (sort keys %dupes){
+			foreach my $item (@{$dupes{$dir}}){
+				my $ffp = (split(/:/,$item))[-1];
+				FFP:
+				foreach my $dir1 (sort keys %ffp_dupes){
+					next if $dir eq $dir1;
+					foreach my $item1 (@{$ffp_dupes{$dir1}}){
+						my $ffp1 = (split(/:/,$item1))[-1];
+						if ($ffp eq $ffp1){
+							if ($VERBOSITY > 1){
+								say " $dir1";
+								say "  item: $item1";
+							}
+							push(@{$orig{$dir1}},$item1);
+							next FFP;
+						}
+					}
+				}
+			}
+		}
+		if (%orig){
+			foreach my $dir (sort keys %orig){
+				say " $dir";
+				say "  orig: ", join("\n  orig: ", @{$orig{$dir}});
+			}
+		}
+	}
+	else {
+		say "No ffp duplicates found!! Great!!";
 	}
 }
 }
@@ -2706,6 +2782,7 @@ sub show_options {
 	$output .= "                  files found. Can be run alone or with --checksum options.\n";
 	$output .= "--dot             Also sync files and directories starting with a '.'. Don't\n";
 	$output .= "                  blame $self_name if this creates unintended consequences!!\n";
+	$output .= "--ffp-dupes       Test a directory of many releases for duplicated ffp files.\n";             
 	$output .= "--image, -I [jpg,png image file name|remove]\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
@@ -3123,6 +3200,16 @@ sub get_options{
 		$b_force = 1 },
 	'ffmpeg' => sub { 
 		$run{'ffmpeg'} = 1 },
+	'ffp-dupes' => sub { 
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		$run{'checksum'} = 1;
+		$run{'ffp-dupes'} = 1;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$run{'no-md5'} = 1;
+		$test{'checksum'} = 1;
+		$OUTPUT_TYPE = 'UNSET';},
 	'F|fork:i' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires fork count integer.",1) if not defined $arg;
