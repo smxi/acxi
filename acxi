@@ -1485,9 +1485,9 @@ sub check_ffp_duplicates {
 		foreach my $dir (sort keys %dupes){
 			$i++;
 			say ' ', sprintf("%0${pad}d: ", $i), $dir;
-			#if ($VERBOSITY > 1){
+			# if ($VERBOSITY > 1){
 				say "  dupe: ", join("\n  dupe: ", @{$dupes{$dir}});
-			#}
+			# }
 		}
 		print $line_small;
 		say "These were first found in:";
@@ -1500,10 +1500,10 @@ sub check_ffp_duplicates {
 					foreach my $item1 (@{$ffp_dupes{$dir1}}){
 						my $ffp1 = (split(/:/,$item1))[-1];
 						if ($ffp eq $ffp1){
-							#if ($VERBOSITY > 2){
+							if ($VERBOSITY > 2){
 								say " $dir1";
 								say "  item: $item1";
-							#}
+							}
 							push(@{$orig{$dir1}},$item1);
 							next FFP;
 						}
@@ -1518,9 +1518,9 @@ sub check_ffp_duplicates {
 			foreach my $dir (sort keys %orig){
 				$i++;
 				say ' ', sprintf("%0${pad}d: ", $i), $dir;
-				if ($VERBOSITY > 1){
+				# if ($VERBOSITY > 1){
 					say "  orig: ", join("\n  orig: ", @{$orig{$dir}});
-				}
+				# }
 			}
 		}
 	}
