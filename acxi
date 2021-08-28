@@ -3161,10 +3161,13 @@ sub get_options{
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'checksum'} = 1;
+		$run{'checksum-verify'} = 0;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
+		$run{'ffp-dupes'} = 0;
 		# $run{'autotag'} = 0;
 		$test{'checksum'} = 1;
+		$test{'checksum-generate'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	'D|checksum-delete' => sub { 
@@ -3174,8 +3177,10 @@ sub get_options{
 		$run{'checksum-delete'} = 1; 
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
+		$run{'ffp-dupes'} = 0;
 		# $run{'autotag'} = 0;
 		$test{'checksum'} = 1;
+		$test{'checksum-delete'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	'V|checksum-verify' => sub { 
@@ -3185,7 +3190,9 @@ sub get_options{
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
 		$run{'autotag'} = 0;
+		$run{'ffp-dupes'} = 0;
 		$test{'checksum'} = 1;
+		$test{'checksum-verify'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	'clean:s' => sub { 
@@ -3236,10 +3243,13 @@ sub get_options{
 		$b_check_out = 0;
 		$run{'checksum'} = 1;
 		$run{'ffp-dupes'} = 1;
+		$run{'no-md5'} = 1;
+		$run{'checksum-delete'} = 0;
+		$run{'checksum-verify'} = 0;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
-		$run{'no-md5'} = 1;
 		$test{'checksum'} = 1;
+		$test{'ffp-dupes'} = 1;
 		$OUTPUT_TYPE = 'UNSET';},
 	'F|fork:i' => sub { 
 		my ($opt,$arg) = @_;
@@ -3475,7 +3485,7 @@ sub get_options{
 	if ($test{'checksum'} && ($test{'sync'} || $run{'test'} || $test{'tag-create'} || 
 	$test{'info'})){
 		error_handler('invalid-options', 
-		 "Checksum options cannot be used with clean/sync/image/tagging options.",1);
+		 "Checksum options cannot be used with clean/sync/image/auto.tag-create options.",1);
 	}
 	# tagging can only be used with checksum or other tagging options like -I, -R
 	if ($test{'tag'} && ($test{'sync'} || $test{'clean'} || $test{'tag-create'})){
