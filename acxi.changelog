@@ -25,6 +25,9 @@ checking larger sets of audio files to determine which are corrupted.
 2. -V, -K, -D: corrected indentation of output to make more readable/scannable.
 Particularly useful if outputting results to file for many directories.
 
+3. Added -Xn pattern, some cases where track number is DNN, converts to D-NN. 
+as expected now.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
