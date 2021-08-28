@@ -3175,6 +3175,7 @@ sub get_options{
 		$b_check_out = 0;
 		$run{'checksum'} = 1;
 		$run{'checksum-delete'} = 1; 
+		$run{'checksum-verify'} = 0;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
 		$run{'ffp-dupes'} = 0;
@@ -3187,6 +3188,7 @@ sub get_options{
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'checksum-verify'} = 1;
+		$run{'checksum-delete'} = 0; 
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
 		$run{'autotag'} = 0;
