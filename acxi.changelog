@@ -26,7 +26,7 @@ checking larger sets of audio files to determine which are corrupted.
 Particularly useful if outputting results to file for many directories.
 
 3. Added -Xn pattern, some cases where track number is DNN, converts to D-NN. 
-as expected now.
+as expected now. -Xd more date variants added.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
