@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.4.00';
-my $self_date='2021-08-29';
+my $self_date='2021-08-31';
 
 ## GLOBALS ##
 my %run;
@@ -520,8 +520,8 @@ sub tag_updater {
 	$print_padding = ' and padding' if $padding;
 	foreach (@tags){
 		@working = split /%:/, $_;
-		$tag .= qq(--set-tag=$working[0]="$working[1]") if $working[1] ne 'UNSET';
-		$remove .= qq(--remove-tag=$working[0]);
+		$tag .= qq(--set-tag=$working[0]="$working[1]" ) if $working[1] ne 'UNSET';
+		$remove .= qq(--remove-tag=$working[0] );
 		$print_tags .= qq($working[0])
 	}
 	$list_type = 'file';

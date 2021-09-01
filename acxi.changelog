@@ -14,6 +14,10 @@ KNOWN ISSUES:
 --------------------------------------------------------------------------------
 BUGS:
 
+1. A code cleanup remove a few too many white spaces in front of ), in this 
+case, for -T, that was required, not to clean up. Search and replace can be 
+dangerous sometimes. This regression was probably introduced around 3.4.00 or 
+so.
 
 --------------------------------------------------------------------------------
 FIXES:
