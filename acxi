@@ -1223,7 +1223,7 @@ sub process_directories {
 			}
 			else {
 				my %data = AutoTag::quality_data('data',\@files);
-				say "  Getting FLAC data:";
+				say "  Generating FLAC data:";
 				foreach my $key (keys %data){
 					say "   File: $key:";
 					say "    $data{$key}";
