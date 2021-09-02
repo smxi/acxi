@@ -1179,17 +1179,18 @@ package Checksums;
 my ($print_src,%ffp_dupes);
 sub process {
 	print $line_large;
-	print "Starting checksum processing in " . main::sourcer("$SOURCE_DIRECTORY") . "...\n";
+	my $type = (!$run{'flac-data'}) ? 'checksum processing': 'FLAC tests';
+	print "Starting $type in " . main::sourcer("$SOURCE_DIRECTORY") . "...\n";
 	process_directories();
 	print $line_small;
-	print "Completed checksum processing.\n";
+	print "Completed $type.\n";
 	print $line_large;
 }
 sub process_directories {
 	my (@files,$item,$result);
 	$list_type = 'dir';
 	print $line_small;
-	print "Checking directories...\n";
+	say "Checking directories...";
 	@found_list = ();
 	chdir "$start_dir";
 	File::Find::find(\&main::wanted, $SOURCE_DIRECTORY);
@@ -1211,9 +1212,9 @@ sub process_directories {
 			say 'cwd: ', Cwd::getcwd();
 			system 'pwd';
 		}
-		print " Processing: $print_src...\n";
+		say " Processing: $print_src...";
 		@files = main::globber("*.{flac,FLAC,Flac}");
-		# print "\n", Data::Dumper::Dumper @files, "\n";
+		# say "\n", Data::Dumper::Dumper @files;
 		if (grep -f, @files){
 			if (!$run{'flac-data'}){
 				delete_checksums() if $run{'checksum-delete'};
@@ -1222,7 +1223,7 @@ sub process_directories {
 			}
 			else {
 				my %data = AutoTag::quality_data('data',\@files);
-				say "  Checking FLAC data:";
+				say "  Getting FLAC data:";
 				foreach my $key (keys %data){
 					say "   File: $key:";
 					say "    $data{$key}";
@@ -1230,7 +1231,7 @@ sub process_directories {
 			}
 		}
 		else {
-			print "  No $INPUT_TYPE files\n";
+			say "  No $INPUT_TYPE files";
 		}
 		if ($run{'checksum-verify'}){
 			verify_checksums(@files);
