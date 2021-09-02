@@ -1179,7 +1179,7 @@ package Checksums;
 my ($print_src,%ffp_dupes);
 sub process {
 	print $line_large;
-	my $type = (!$run{'flac-data'}) ? 'checksum processing': 'FLAC tests';
+	my $type = (!$run{'flac-data'}) ? 'checksum processing': 'flac tests';
 	print "Starting $type in " . main::sourcer("$SOURCE_DIRECTORY") . "...\n";
 	process_directories();
 	print $line_small;
@@ -1223,7 +1223,7 @@ sub process_directories {
 			}
 			else {
 				my %data = AutoTag::quality_data('data',\@files);
-				say "  Generating FLAC data:";
+				say "  Generating flac data:";
 				foreach my $key (keys %data){
 					say "   File: $key:";
 					say "    $data{$key}";
