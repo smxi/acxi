@@ -122,6 +122,8 @@ acxi fully platform agnostic.
   (or a comparable md5 generating command line utility).
   
 * --checksum-verify requires md5sum (or comparable tool) and flac.
+
+* --flac-data requires metaflac.
   
 * -U self updater requires curl, and valid paths for currently installed acxi 
   and acxi.1 man page. Will not update if both acxi and acxi.1 are not present 

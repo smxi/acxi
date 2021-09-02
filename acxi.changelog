@@ -32,7 +32,7 @@ Particularly useful if outputting results to file for many directories.
 3. Added -Xn pattern, some cases where track number is DNN, converts to D-NN. 
 as expected now. -Xd more date variants added.
 
-4. Added 'Personnel:' to performers pre ID
+4. Added 'Personnel:', 'Performers:' to performers pre ID
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
@@ -44,6 +44,9 @@ can get the full verbose version.
 files, then gives a report of the directories that had duplicates, and the 
 directories that first had the files that were duplicated. Useful for trimming
 out redundant stuff from your collection. 
+
+3. New feature: --flac-data: prints to screen flac bits and sampling rate per
+file found in -s source directory/ies.
 
 --------------------------------------------------------------------------------
 CHANGES:

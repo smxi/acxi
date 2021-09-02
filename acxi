@@ -710,7 +710,7 @@ sub info_fixes {
 	print "Working on file:\n$INFO_FILE\n";
 	my @data = open_info_file();
 	@data = date_fix(\@data) if $run{'infofix-date'};
-	@data = quality_data(\@data) if $run{'infofix-quality'};
+	@data = quality_data('info',\@data) if $run{'infofix-quality'};
 	# print Data::Dumper::Dumper \@data;
 	# we want these to be set to uppercase again after autoformat runs
 	my $upper = 'Aud|Cdr?|Sd?b|Ips|Eac|Ak|Az|Ca|Co|Ct|Dc|De|Dk|Fl|Flac|Hd|Hi|Il|';
@@ -846,46 +846,60 @@ sub date_fix {
 	return @data;
 }
 sub quality_data {
-	my ($ref) = @_;
+	my ($type,$ref) = @_;
 	my $dir = Cwd::getcwd; # resolves sym links
-	my ($file,$flac_file,@data,@real);
+	my ($file,@data,@files,@real,%results);
 	my ($flac_info,$quality) = ('','');
-	if ($file = (main::globber('{02,1-02,1-2,2,1}*.flac'))[0]){
-		$flac_file = $file;
-	}
-	elsif ($file = (main::globber('*{02,1-02,1-2,2,1}.flac'))[0]){
-		$flac_file = $file;
+	if ($type eq 'info'){
+		@files = main::globber('*.flac');
+		if (@files){
+			if ($type eq 'info'){
+				# we want generally 2nd track to avoid intro tracks etc, else 1st
+				@files = ($files[1]) ? ($files[1]): ($files[0]);
+			}
+		}
+		else {
+			main::error_handler('flac-data',"No flac files found for quality test!\n",1);
+		}
 	}
 	else {
-		main::error_handler('flac-data',"No flac file that matches found!\n",1);
+		@files = @$ref;
 	}
-	# say "Getting metaflac for file: $flac_file";
-	my @flac = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps "$flac_file");
-	if (scalar @flac != 3){
-		main::error_handler('flac-data',"Metaflac failed to get 3 items from file",1);
-	}
-	foreach (@flac){
-		$_ =~ s/[\r\n]//g;
-		push(@real,$_);
-	}
-	# say Dumper \@flac;
-	if (@real && scalar @real > 2){
-		$quality = "Quality: /$INFO_RATING ()";
-		$flac_info = "FLAC: " . $real[2] . '/' . sprintf("%.1f", $real[1]/1000);
-		$flac_info .= " ($real[0] channels)";
+	foreach my $flac_file (@files){
+		# say "Getting metaflac for file: $flac_file";
+		my @flac = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps "$flac_file");
+		if (scalar @flac != 3){
+			main::error_handler('flac-data',"Metaflac failed to get 3 items from file:\n '$flac_file'",1);
+		}
+		foreach (@flac){
+			$_ =~ s/[\r\n]//g;
+			push(@real,$_);
+		}
+		# say Dumper \@flac;
+		if (@real && scalar @real > 2){
+			$quality = "Quality: /$INFO_RATING ()" if $type eq 'info';
+			$flac_info = "FLAC: " . $real[2] . '/' . sprintf("%.1f", $real[1]/1000);
+			$flac_info .= " ($real[0] channels)";
+			$results{$flac_file} = $flac_info if $type eq 'data';
+		}
 	}
 	# say "Result: $flac_info";
-	my ($b_head,$b_inserted,$counter) = (1,0,0);
-	foreach (@$ref){
-		$counter++;
-		$b_head = 0 if $b_head && $counter > 1 && /^\s*$/;
-		if (!$b_inserted && !$b_head && $flac_info && $counter > 3){
-			push(@data,('',$flac_info,$quality,''));
-			$b_inserted = 1;
+	if ($type eq 'info'){
+		my ($b_head,$b_inserted,$counter) = (1,0,0);
+		foreach (@$ref){
+			$counter++;
+			$b_head = 0 if $b_head && $counter > 1 && /^\s*$/;
+			if (!$b_inserted && !$b_head && $flac_info && $counter > 3){
+				push(@data,('',$flac_info,$quality,''));
+				$b_inserted = 1;
+			}
+			push(@data,$_);
 		}
-		push(@data,$_);
+		return @data;
 	}
-	return @data;
+	else {
+		return %results;
+	}
 }
 sub prefill_data {
 	my ($b_performer,%info);
@@ -1198,12 +1212,22 @@ sub process_directories {
 			system 'pwd';
 		}
 		print " Processing: $print_src...\n";
-		@files = main::globber("*.{flac,FLAC}");
+		@files = main::globber("*.{flac,FLAC,Flac}");
 		# print "\n", Data::Dumper::Dumper @files, "\n";
 		if (grep -f, @files){
-			delete_checksums() if $run{'checksum-delete'};
-			generate_checksums() if $run{'checksum'};
-			$b_dest_changed = 1;
+			if (!$run{'flac-data'}){
+				delete_checksums() if $run{'checksum-delete'};
+				generate_checksums() if $run{'checksum'};
+				$b_dest_changed = 1;
+			}
+			else {
+				my %data = AutoTag::quality_data('data',\@files);
+				say "  Checking FLAC data:";
+				foreach my $key (keys %data){
+					say "   File: $key:";
+					say "    $data{$key}";
+				}
+			}
 		}
 		else {
 			print "  No $INPUT_TYPE files\n";
@@ -2303,8 +2327,8 @@ sub check_in_out_types {
 		$error_message .= "\n  The input type you entered is not supported: ";
 		$error_message .= "$INPUT_TYPE";
 	}
-	if (($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'}) && 
-	 $INPUT_TYPE !~ m/^(flac)$/i){
+	if (($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'} ||
+	 $run{'flac-data'}) && $INPUT_TYPE !~ m/^(flac)$/i){
 		$b_error = 1;
 		$error_message .= "\n  The input type you entered is not supported for checksum/tagging operations: ";
 		$error_message .= "$INPUT_TYPE";
@@ -3162,6 +3186,7 @@ sub get_options{
 		$b_check_out = 0;
 		$run{'checksum'} = 1;
 		$run{'checksum-verify'} = 0;
+		$run{'flac-data'} = 0;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
 		$run{'ffp-dupes'} = 0;
@@ -3176,6 +3201,7 @@ sub get_options{
 		$run{'checksum'} = 1;
 		$run{'checksum-delete'} = 1; 
 		$run{'checksum-verify'} = 0;
+		$run{'flac-data'} = 0;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
 		$run{'ffp-dupes'} = 0;
@@ -3189,6 +3215,7 @@ sub get_options{
 		$b_check_out = 0;
 		$run{'checksum-verify'} = 1;
 		$run{'checksum-delete'} = 0; 
+		$run{'flac-data'} = 0;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
 		$run{'autotag'} = 0;
@@ -3246,12 +3273,26 @@ sub get_options{
 		$run{'checksum'} = 1;
 		$run{'ffp-dupes'} = 1;
 		$run{'no-md5'} = 1;
+		$run{'flac-data'} = 0;
 		$run{'checksum-delete'} = 0;
 		$run{'checksum-verify'} = 0;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
 		$test{'checksum'} = 1;
 		$test{'ffp-dupes'} = 1;
+		$OUTPUT_TYPE = 'UNSET';},
+	'flac-data' => sub { 
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		$run{'checksum'} = 1;
+		$run{'flac-data'} = 1;
+		$run{'ffp-dupes'} = 0;
+		$run{'checksum-delete'} = 0;
+		$run{'checksum-verify'} = 0;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$test{'checksum'} = 1;
+		$test{'flac-data'} = 1;
 		$OUTPUT_TYPE = 'UNSET';},
 	'F|fork:i' => sub { 
 		my ($opt,$arg) = @_;
