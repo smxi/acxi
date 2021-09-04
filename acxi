@@ -710,7 +710,7 @@ sub info_fixes {
 	print "Working on file:\n$INFO_FILE\n";
 	my @data = open_info_file();
 	@data = date_fix(\@data) if $run{'infofix-date'};
-	@data = quality_data('info',\@data) if $run{'infofix-quality'};
+	@data = analyze_files('info',\@data) if $run{'infofix-quality'};
 	# print Data::Dumper::Dumper \@data;
 	# we want these to be set to uppercase again after autoformat runs
 	my $upper = 'Aud|Cdr?|Sd?b|Ips|Eac|Ak|Az|Ca|Co|Ct|Dc|De|Dk|Fl|Flac|Hd|Hi|Il|';
@@ -801,7 +801,7 @@ sub date_fix {
 		if (/\b(((0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\S*?([\s\/,-]+(0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?)?[\s\/,-]+((19)?[4-9][0-9]|(20)?[012][0-9]))\b/i){
 			$regex = $1;
 			$yyyy = $9;
-			 print "rx: $regex 5: $5 9: $9\n";
+			# print "rx: $regex 5: $5 9: $9\n";
 			my $month = lc($5);
 			if ($3){$dd = sprintf('%02d',$3)}
 			elsif ($7){$dd = sprintf('%02d',$7)}
@@ -817,7 +817,7 @@ sub date_fix {
 			elsif ($month eq 'oct'){$mm = '10';}
 			elsif ($month eq 'nov'){$mm = '11';}
 			elsif ($month eq 'dec'){$mm = '12';}
-			 print "y: $yyyy m: $mm d: $dd\n";
+			# print "y: $yyyy m: $mm d: $dd\n";
 		}
 		# Change m/d/yy or m-d-yy or m.d.yy to yyyy-mm-dd 09/19/54
 		elsif (/\b((0?[1-9]|1[0-2])[\/\.-](0?[1-9]|[12][0-9]|30|31)[\/\.-]((19)?[4-9][0-9]|(20)?[0-2][0-9]))\b/){
@@ -845,52 +845,76 @@ sub date_fix {
 	}
 	return @data;
 }
-sub quality_data {
+sub analyze_files {
 	my ($type,$ref) = @_;
 	my $dir = Cwd::getcwd; # resolves sym links
 	my ($file,@data,@files,@real,%results);
-	my ($flac_info,$quality) = ('','');
+	my ($bps,$flac_info,$total_time,$total_size) = ('','',0,0);
 	if ($type eq 'info'){
 		@files = main::globber('*.flac');
-		if (@files){
-			if ($type eq 'info'){
-				# we want generally 2nd track to avoid intro tracks etc, else 1st
-				@files = ($files[1]) ? ($files[1]): ($files[0]);
-			}
-		}
-		else {
-			main::error_handler('flac-data',"No flac files found for quality test!\n",1);
-		}
 	}
 	else {
 		@files = @$ref;
 	}
+	if (!@files){
+		main::error_handler('analyze',"No flac files found for quality test!\n",1);
+	}
 	foreach my $flac_file (@files){
 		# say "Getting metaflac for file: $flac_file";
-		my @flac = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps "$flac_file");
-		if (scalar @flac != 3){
-			main::error_handler('flac-data',"Metaflac failed to get 3 items from file:\n '$flac_file'",1);
+		undef(@real);
+		my @flac = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps --show-total-samples "$flac_file");
+		if (scalar @flac != 4){
+			main::error_handler('analyze',"Metaflac failed to get 4 items from file:\n '$flac_file'",1);
 		}
 		foreach (@flac){
 			$_ =~ s/[\r\n]//g;
 			push(@real,$_);
 		}
-		# say Dumper \@flac;
-		if (@real && scalar @real > 2){
-			$quality = "Quality: /$INFO_RATING ()" if $type eq 'info';
-			$flac_info = "FLAC: " . $real[2] . '/' . sprintf("%.1f", $real[1]/1000);
-			$flac_info .= " ($real[0] channels)";
-			$results{$flac_file} = $flac_info if $type eq 'data';
+		# say Data::Dumper::Dumper \@flac;
+		if (@real && scalar @real > 3){
+			my $duration = ($real[3]/$real[1]);
+			$total_time += $duration;
+			# -s returns size in bytes, we want bits
+			my $size = (-s $flac_file) * 8;
+			$total_size += $size;
+			my $kbs = $size/$duration/1000;
+			
+			$kbs = sprintf("%.0f",$kbs);
+			# say $size $kbs;
+			# say "duration: $duration seconds";
+			if ($type eq 'data' || !$flac_info){
+				$flac_info = "FLAC: " . $real[2] . '/' . sprintf("%.1f", $real[1]/1000);
+				$flac_info .= " ($real[0] channels)";
+			}
+			if ($type eq 'data'){
+				$duration = main::print_time($duration);
+				$size = $size / 8 / 1024;
+				$size = main::print_size($size);
+				$flac_info .= ' time: ' . $duration . ' kbs: '. $kbs . ' size: ' . $size;
+				$results{$flac_file} = $flac_info;
+			}
 		}
 	}
 	# say "Result: $flac_info";
+	my $avg_kbs = sprintf("%.0f",$total_size/$total_time/1000);
+	# back to KiB
+	$total_size = $total_size / 8 / 1024;
 	if ($type eq 'info'){
 		my ($b_head,$b_inserted,$counter) = (1,0,0);
 		foreach (@$ref){
 			$counter++;
 			$b_head = 0 if $b_head && $counter > 1 && /^\s*$/;
 			if (!$b_inserted && !$b_head && $flac_info && $counter > 3){
-				push(@data,('',$flac_info,$quality,''));
+				my $quality = "Quality: /$INFO_RATING ()";
+				$flac_info .= " avg kbs: $avg_kbs";
+				push(@data,(
+				'',
+				$flac_info,
+				$quality,
+				'Time: ' . main::print_time($total_time),
+				'Size: ' . main::print_size($total_size),
+				'',
+				));
 				$b_inserted = 1;
 			}
 			push(@data,$_);
@@ -898,9 +922,13 @@ sub quality_data {
 		return @data;
 	}
 	else {
+		$results{'total-time'} = main::print_time($total_time);
+		$results{'total-size'} = main::print_size($total_size);
+		$results{'avg-kbs'} = $avg_kbs;
 		return %results;
 	}
 }
+
 sub prefill_data {
 	my ($b_performer,%info);
 	# no blank lines in band/location/date block, stop after first blank line.
@@ -1179,7 +1207,7 @@ package Checksums;
 my ($print_src,%ffp_dupes);
 sub process {
 	print $line_large;
-	my $type = (!$run{'flac-data'}) ? 'checksum processing': 'flac tests';
+	my $type = (!$run{'analyze'}) ? 'checksum processing': 'flac tests';
 	print "Starting $type in " . main::sourcer("$SOURCE_DIRECTORY") . "...\n";
 	process_directories();
 	print $line_small;
@@ -1216,18 +1244,34 @@ sub process_directories {
 		@files = main::globber("*.{flac,FLAC,Flac}");
 		# say "\n", Data::Dumper::Dumper @files;
 		if (grep -f, @files){
-			if (!$run{'flac-data'}){
+			if (!$run{'analyze'}){
 				delete_checksums() if $run{'checksum-delete'};
 				generate_checksums() if $run{'checksum'};
 				$b_dest_changed = 1;
 			}
 			else {
-				my %data = AutoTag::quality_data('data',\@files);
+				my %data = AutoTag::analyze_files('data',\@files);
+				my ($avg_kbs,$total_size,$total_time);
 				say "  Generating flac data:";
-				foreach my $key (keys %data){
+				if (defined $data{'total-time'}){
+					$total_time = '  Time: ' . $data{'total-time'};
+					delete $data{'total-time'};
+				}
+				if (defined $data{'total-size'}){
+					$total_size = '  Size: ' . $data{'total-size'};
+					delete $data{'total-size'};
+				}
+				if (defined $data{'avg-kbs'}){
+					$avg_kbs = '  Average kbs: ' . $data{'avg-kbs'};
+					delete $data{'avg-kbs'};
+				}
+				foreach my $key (sort keys %data){
 					say "   File: $key:";
 					say "    $data{$key}";
 				}
+				say $total_time if defined $total_time;
+				say $avg_kbs if defined $avg_kbs;
+				say $total_size if defined $total_size;
 			}
 		}
 		else {
@@ -1237,12 +1281,12 @@ sub process_directories {
 			verify_checksums(@files);
 		}
 	}
-	if ($run{'ffp-dupes'}){
+	if ($run{'duplicates'}){
 		check_ffp_duplicates();
 	}
 }
 sub generate_checksums {
-	if (!$run{'ffp-dupes'}){
+	if (!$run{'duplicates'}){
 		say "  Generating checksums:";
 		print "   File: $FFP_FILE.ffp: ";
 	}
@@ -1259,7 +1303,7 @@ sub generate_checksums {
 	else {
 		say 'skipped';
 	}
-	if (!$run{'ffp-dupes'}){
+	if (!$run{'duplicates'}){
 		print "   File: $MD5_FILE.md5: ";
 		if (!$run{'no-md5'}){
 			generate_md5();
@@ -1279,7 +1323,7 @@ sub generate_ffp {
 	}
 	else {
 		chomp (@output);
-		if ($run{'ffp-dupes'}){
+		if ($run{'duplicates'}){
 			$ffp_dupes{$print_src} = \@output;
 		}
 		elsif (!$b_test){
@@ -2006,6 +2050,47 @@ sub globber {
 	# return @files;
 	return <$_[0]>;
 }
+# args: 1 size in KiB
+sub print_size {
+	my ($size) = $_[0];
+	return 'Error' unless $size;
+	my ($unit);
+	if ($size < 1024){
+		$unit = 'Kib';
+	}
+	elsif ($size < 1024**3) {
+		$unit = 'MiB';
+		$size = sprintf("%.1f",$size/1024);
+	}
+	else {
+		$unit = 'GiB';
+		$size = sprintf("%.2f",$size/1024**3);
+	}
+	return "$size $unit";
+}
+# args: 1 - time in seconds
+sub print_time {
+	my ($seconds) = $_[0];
+	return 0 unless $seconds;
+	my ($hours,$minutes,$secs,$cents,$time) = (0,0,0,0,'');
+	if ($seconds > 60**2){
+		$hours = int($seconds/60**2);
+		$seconds -= ($hours*60**2);
+	}
+	if ($seconds > 60){
+		$minutes = int($seconds/60);
+		$seconds -= ($minutes*60);
+	}
+	if ($seconds){
+		$cents = $seconds % 60;
+		$seconds = sprintf("%02d",int($seconds));
+	}
+	$minutes = sprintf("%02d",$minutes) if $hours;
+	$cents = sprintf("%02d",$cents) if $cents;
+	$time = "$hours:" if $hours;
+	$time .= "$minutes:$seconds.$cents";
+	return $time;
+}
 # arg: 1 - full file path, returns array of file lines.
 # 2 - 'strip': strip and clean data
 # note: chomp has to chomp the entire action, not just <$fh>
@@ -2253,7 +2338,7 @@ sub error_handler {
 	elsif ($error eq 'unsupported-option'){$error_no = 8;$br=''}
 	elsif ($error eq 'autotag-multi'){$error_no = 18;}
 	elsif ($error eq 'track-counts'){$error_no = 30;}
-	elsif ($error eq 'flac-data'){$error_no = 31;}
+	elsif ($error eq 'analyze'){$error_no = 31;}
 	elsif ($error eq 'missing-perl-module'){$error_no = 10;
 		$message = "Perl Module not found in system: $message";}
 	if ($error eq 'validation-errors'){
@@ -2328,8 +2413,8 @@ sub check_in_out_types {
 		$error_message .= "\n  The input type you entered is not supported: ";
 		$error_message .= "$INPUT_TYPE";
 	}
-	if (($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'} ||
-	 $run{'flac-data'}) && $INPUT_TYPE !~ m/^(flac)$/i){
+	if (($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'}) &&
+	 $INPUT_TYPE !~ m/^(flac)$/i){
 		$b_error = 1;
 		$error_message .= "\n  The input type you entered is not supported for checksum/tagging operations: ";
 		$error_message .= "$INPUT_TYPE";
@@ -3120,6 +3205,19 @@ sub get_options{
 		$test{'aggregate'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
 	},
+	'analyze' => sub { 
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		$run{'checksum'} = 1;
+		$run{'analyze'} = 1;
+		$run{'duplicates'} = 0;
+		$run{'checksum-delete'} = 0;
+		$run{'checksum-verify'} = 0;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$test{'checksum'} = 1;
+		$test{'analyze'} = 1;
+		$OUTPUT_TYPE = 'UNSET';},
 	'a|append:s' => sub { 
 		my ($opt,$arg) = @_;
 		$COPY_TYPES .= ',' . $arg if $arg;},
@@ -3187,10 +3285,10 @@ sub get_options{
 		$b_check_out = 0;
 		$run{'checksum'} = 1;
 		$run{'checksum-verify'} = 0;
-		$run{'flac-data'} = 0;
+		$run{'analyze'} = 0;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
-		$run{'ffp-dupes'} = 0;
+		$run{'duplicates'} = 0;
 		# $run{'autotag'} = 0;
 		$test{'checksum'} = 1;
 		$test{'checksum-generate'} = 1;
@@ -3202,10 +3300,10 @@ sub get_options{
 		$run{'checksum'} = 1;
 		$run{'checksum-delete'} = 1; 
 		$run{'checksum-verify'} = 0;
-		$run{'flac-data'} = 0;
+		$run{'analyze'} = 0;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
-		$run{'ffp-dupes'} = 0;
+		$run{'duplicates'} = 0;
 		# $run{'autotag'} = 0;
 		$test{'checksum'} = 1;
 		$test{'checksum-delete'} = 1;
@@ -3216,11 +3314,11 @@ sub get_options{
 		$b_check_out = 0;
 		$run{'checksum-verify'} = 1;
 		$run{'checksum-delete'} = 0; 
-		$run{'flac-data'} = 0;
+		$run{'analyze'} = 0;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
 		$run{'autotag'} = 0;
-		$run{'ffp-dupes'} = 0;
+		$run{'duplicates'} = 0;
 		$test{'checksum'} = 1;
 		$test{'checksum-verify'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
@@ -3253,6 +3351,20 @@ sub get_options{
 		},
 	'dot' => sub { 
 		$run{'dot'} = 1;},
+	'dupes|duplicates' => sub { 
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		$run{'checksum'} = 1;
+		$run{'duplicates'} = 1;
+		$run{'no-md5'} = 1;
+		$run{'analyze'} = 0;
+		$run{'checksum-delete'} = 0;
+		$run{'checksum-verify'} = 0;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$test{'checksum'} = 1;
+		$test{'duplicates'} = 1;
+		$OUTPUT_TYPE = 'UNSET';},
 	'x|exclude:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires exclude list or file.",1) if ! $arg;
@@ -3268,33 +3380,6 @@ sub get_options{
 		$b_force = 1 },
 	'ffmpeg' => sub { 
 		$run{'ffmpeg'} = 1 },
-	'ffp-dupes' => sub { 
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$run{'checksum'} = 1;
-		$run{'ffp-dupes'} = 1;
-		$run{'no-md5'} = 1;
-		$run{'flac-data'} = 0;
-		$run{'checksum-delete'} = 0;
-		$run{'checksum-verify'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		$test{'checksum'} = 1;
-		$test{'ffp-dupes'} = 1;
-		$OUTPUT_TYPE = 'UNSET';},
-	'flac-data' => sub { 
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$run{'checksum'} = 1;
-		$run{'flac-data'} = 1;
-		$run{'ffp-dupes'} = 0;
-		$run{'checksum-delete'} = 0;
-		$run{'checksum-verify'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		$test{'checksum'} = 1;
-		$test{'flac-data'} = 1;
-		$OUTPUT_TYPE = 'UNSET';},
 	'F|fork:i' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires fork count integer.",1) if not defined $arg;

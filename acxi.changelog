@@ -10,6 +10,7 @@ RELEASE NOTES:
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
 
+1. -X does not work in bulk jobs, only per directory.
 
 --------------------------------------------------------------------------------
 BUGS:
@@ -40,13 +41,18 @@ ENHANCEMENTS:
 1. Going with Fix 1, -v3 now will output results of ffp test initially so you 
 can get the full verbose version.
 
-2. New feature: --ffp-dupes: allows checking collection for duplicates of flac 
-files, then gives a report of the directories that had duplicates, and the 
-directories that first had the files that were duplicated. Useful for trimming
-out redundant stuff from your collection. 
+2. New feature: --dupes/--duplicates: allows checking collection for duplicates 
+of flac files, then gives a report of the directories that had duplicates, and 
+the directories that first had the files that were duplicated. Useful for 
+trimming out redundant stuff from your collection. 
 
-3. New feature: --flac-data: prints to screen flac bits and sampling rate per
-file found in -s source directory/ies.
+3. New feature: --analyze: prints to screen flac bits, sampling rate, track 
+times (per file) found in -s source directory/ies. Also prints total time, total 
+size, and average kbs of all flacs in directory. Depending it may be possible to 
+extend this to other than flac.
+
+4. Going along with --analyze, -Xq now includes avg kbs, total time and size per 
+directory of flacs.
 
 --------------------------------------------------------------------------------
 CHANGES:

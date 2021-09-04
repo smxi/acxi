@@ -24,8 +24,9 @@ Tagging: \fBacxi\fR [\fB\-\-aggregate\fR [file name|extension]]
 [\fB\-\-remove\-padding\fR] [\fB\-\-start\fR {0-xx}]
 [\fB\-\-tag\fR {"TAG1%:tag value^^TAG2%:tag value"}] 
 .IP * 2
-Checksums: \fBacxi\fR [\fB\-\-checksum\fR] [\fB\-\-checksum\-delete\fR] 
-[\fB\-\-checksum\-verify\fR] [\fB\-\-no\-ffp\fR] [\fB\-\-ffp\-dupes\fR] 
+Checksums: \fBacxi\fR [\fB\-\-analyze\fR] [\fB\-\-checksum\fR] 
+[\fB\-\-checksum\-delete\fR] [\fB\-\-checksum\-verify\fR] [\fB\-\-duplicates\fR]
+[\fB\-\-no\-ffp\fR] [\fB\-\-no\-md5\fR]
 .IP * 2
 Output Controls: \fBacxi\fR [\fB\-v\fR {0-3}] [\fB\-\-quiet\fR] 
 [\fB\-\-debug\fR] 
@@ -334,6 +335,14 @@ consequences. Note that if you do find unintended consequences, you should be
 able to filter those out using additional \fB\-\-exclude\fR lists.
 
 .TP
+.B \-\-dupes\fR, \fB\-\-duplicates\fR
+Check your collection for duplicated flac files or releases, helpful to find 
+repeated items in your collection. Note that in cases of only 1 file matching, 
+it's in theory possible for that to be a random coincidence, so always confirm 
+before deleting anything!! But it's pretty rare for an ffp hash to be 
+duplicated.
+
+.TP
 .B \-\-exclude\fR, \fB\-x  {items}\fR
 Exclude a list of unique strings separated by ^^, or a full path to an exclude 
 file whose name includes the value set in \fB$EXCLUDE_BASE\fR. 
@@ -357,14 +366,6 @@ Append an item to the list of excludes or file. Only accepts string values, not
 a file path.
 
 Sample: \fB\-\-exclude\-append='My Sharona^^Dancing Queen'\fR
-
-.TP
-.B \-\-ffp\-dupes\fR
-Check your collection for duplicated flac files or releases, helpful to find 
-repeated items in your collection. Note that in cases of only 1 file matching, 
-it's in theory possible for that to be a random coincidence, so always confirm 
-before deleting anything!! But it's pretty rare for an ffp hash to be 
-duplicated.
 
 .TP
 .B \-\-force\fR, \fB\-f\fR
