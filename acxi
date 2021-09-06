@@ -2088,13 +2088,13 @@ sub print_time {
 		$minutes = int($seconds/60);
 		$seconds -= ($minutes*60);
 	}
-	if ($seconds){
-		$cents = $seconds % 60;
-		$seconds = sprintf("%02d",int($seconds));
+	$cents = sprintf("%.2f",($seconds - int($seconds)));
+	if ($hours){
+		$minutes = sprintf("%02d",$minutes);
+		$time = "$hours:";
 	}
-	$minutes = sprintf("%02d",$minutes) if $hours;
-	$cents = sprintf("%02d",$cents) if $cents;
-	$time = "$hours:" if $hours;
+	$seconds = sprintf("%02d",int($seconds));
+	$cents = sprintf("%02d",$cents*100);
 	$time .= "$minutes:$seconds.$cents";
 	return $time;
 }
