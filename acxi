@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.4.00';
-my $self_date='2021-08-31';
+my $self_date='2021-09-06';
 
 ## GLOBALS ##
 my %run;
@@ -849,7 +849,7 @@ sub analyze_files {
 	my ($type,$ref) = @_;
 	my $dir = Cwd::getcwd; # resolves sym links
 	my ($file,@data,@files,@real,%results);
-	my ($bps,$flac_info,$total_time,$total_size) = ('','',0,0);
+	my ($bps,$flac_info,$total_time,$total_size,$total_tracks) = ('','',0,0,0);
 	if ($type eq 'info'){
 		@files = main::globber('*.flac');
 	}
@@ -906,13 +906,14 @@ sub analyze_files {
 			$b_head = 0 if $b_head && $counter > 1 && /^\s*$/;
 			if (!$b_inserted && !$b_head && $flac_info && $counter > 3){
 				my $quality = "Quality: /$INFO_RATING ()";
-				$flac_info .= " avg kbs: $avg_kbs";
 				push(@data,(
 				'',
 				$flac_info,
 				$quality,
 				'Time: ' . main::print_time($total_time),
 				'Size: ' . main::print_size($total_size),
+				'Average kb/s: ' . $avg_kbs,
+				'Tracks: ' . scalar @files,
 				'',
 				));
 				$b_inserted = 1;
@@ -924,6 +925,7 @@ sub analyze_files {
 	else {
 		$results{'total-time'} = main::print_time($total_time);
 		$results{'total-size'} = main::print_size($total_size);
+		$results{'total-tracks'} = scalar @files;
 		$results{'avg-kbs'} = $avg_kbs;
 		return %results;
 	}
@@ -1251,7 +1253,7 @@ sub process_directories {
 			}
 			else {
 				my %data = AutoTag::analyze_files('data',\@files);
-				my ($avg_kbs,$total_size,$total_time);
+				my ($avg_kbs,$total_size,$total_time,$track_count);
 				say "  Generating flac data:";
 				if (defined $data{'total-time'}){
 					$total_time = '  Time: ' . $data{'total-time'};
@@ -1262,8 +1264,12 @@ sub process_directories {
 					delete $data{'total-size'};
 				}
 				if (defined $data{'avg-kbs'}){
-					$avg_kbs = '  Average kbs: ' . $data{'avg-kbs'};
+					$avg_kbs = '  Average kb/s: ' . $data{'avg-kbs'};
 					delete $data{'avg-kbs'};
+				}
+				if (defined $data{'total-tracks'}){
+					$track_count = '  Tracks: ' . $data{'total-tracks'};
+					delete $data{'total-tracks'};
 				}
 				foreach my $key (sort keys %data){
 					say "   File: $key:";
@@ -1272,6 +1278,7 @@ sub process_directories {
 				say $total_time if defined $total_time;
 				say $avg_kbs if defined $avg_kbs;
 				say $total_size if defined $total_size;
+				say $track_count if defined $track_count;
 			}
 		}
 		else {
