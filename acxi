@@ -2895,6 +2895,9 @@ sub show_options {
 	$output .= "                  (file name): acxi -d ~/music/cdinfo --aggregate info.txt\n";
 	$output .= "                  (extension): acxi -d ~/music/cdinfo --aggregate jpg\n";
 	$output .= "                  (several): acxi -d ~/music/cdinfo --aggregate png,jpg,info.txt\n";
+	$output .= "--analyze, -Z     Analyze contents of directories, creates screen report per\n";
+	$output .= "                  file/directory. Currently only supports flac. Shows total time,\n";
+	$output .= "                  size, ffp avg kbs, etc. Similar to -Xq but prints to screen.\n";
 	$output .= "--autotag, -A     Requires auto.tag formatted file in each directory. Flac only.\n";
 	$output .= "                  Deletes all existing tags, then creates a fully tagged set of\n";
 	$output .= "                  files.\n";
@@ -2933,7 +2936,8 @@ sub show_options {
 	$output .= "                  files found. Can be run alone or with --checksum options.\n";
 	$output .= "--dot             Also sync files and directories starting with a '.'. Don't\n";
 	$output .= "                  blame $self_name if this creates unintended consequences!!\n";
-	$output .= "--ffp-dupes       Test a directory of many releases for duplicated ffp files.\n";             
+	$output .= "--dupes,--duplicates\n";
+	$output .= "                  Test a directory of many releases for duplicated ffp files.\n";             
 	$output .= "--image, -I [jpg,png image file name|remove]\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
@@ -3229,7 +3233,7 @@ sub get_options{
 		$test{'aggregate'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
 	},
-	'analyze' => sub { 
+	'analyze|Z' => sub { 
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$run{'checksum'} = 1;

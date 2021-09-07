@@ -35,6 +35,10 @@ as expected now. -Xd more date variants added.
 
 4. Added 'Personnel:', 'Performers:' to performers pre ID
 
+5. Tiny fix, acxi was neglecting to apply the os path separator correctly in at
+least one location, which in fringe cases could lead to windows failing under
+certain conditions, though windows support is only theoretical.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
@@ -46,7 +50,7 @@ of flac files, then gives a report of the directories that had duplicates, and
 the directories that first had the files that were duplicated. Useful for 
 trimming out redundant stuff from your collection. 
 
-3. New feature: --analyze: prints to screen flac bits, sampling rate, track 
+3. New feature: --analyze/-Z: prints to screen flac bits, sampling rate, track 
 times (per file) found in -s source directory/ies. Also prints total time, total 
 size, and average kbs of all flacs in directory. Depending it may be possible to 
 extend this to other than flac.
