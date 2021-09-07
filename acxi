@@ -88,7 +88,7 @@ my ($print_line_heavy,$print_line_large,$print_line_small);
 my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
 $silent_opus) = (7,'','','','','');
 my ($codec,$embed_image,$extension,$exclude_append,@excludes,@excludes_stripped,
-@extension_list,@found_list,$list_type,@tags,$start_dir);
+@extension_list,@found_list,$list_type,@source_glob,@tags,$start_dir);
 # default: recurse infinite for File::Find; start tag list track numbers at 1
 my ($padding,$recurse,$start) = ('',-1,1);
 my ($b_check_dest,$b_check_out) = (1,1);
@@ -353,7 +353,7 @@ sub aggregate_file {
 	my ($dir,$file,$file_working,$name);
 	$list_type = 'file';
 	@found_list = ();
-	File::Find::find(\&main::wanted, $SOURCE_DIRECTORY);
+	File::Find::find(\&main::wanted, @source_glob);
 	print $line_small;
 	print "Aggregating file type $extension...\n";
 	print $line_small;
@@ -401,7 +401,7 @@ sub get_tag_files {
 	$list_type = 'file';
 	$extension = $TAG_FILE;
 	@found_list = ();
-	File::Find::find(\&main::wanted, "$SOURCE_DIRECTORY");
+	File::Find::find(\&main::wanted, @source_glob);
 	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		$print_file = $working_dir = $item;
 		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
@@ -527,7 +527,7 @@ sub tag_updater {
 	$list_type = 'file';
 	$extension = $INPUT_TYPE;
 	@found_list = ();
-	File::Find::find(\&main::wanted, "$SOURCE_DIRECTORY");
+	File::Find::find(\&main::wanted, @source_glob);
 	chdir "$start_dir";
 	chdir "$SOURCE_DIRECTORY";
 	print "Updating tags:$print_tags... \n";
@@ -575,7 +575,7 @@ sub image_embedder{
 	$list_type = 'file';
 	$extension = $INPUT_TYPE;
 	@found_list = ();
-	File::Find::find(\&main::wanted, "$SOURCE_DIRECTORY");
+	File::Find::find(\&main::wanted, @source_glob);
 	chdir "$start_dir";
 	chdir "$SOURCE_DIRECTORY";
 	if ($embed_image ne 'remove' && ! -e $embed_image){
@@ -630,7 +630,7 @@ sub image_remover {
 			main::error_handler('application-error', $error_message,1);
 		}
 	}
-	print "\n", $cmd, "\n" if $VERBOSITY > 3;
+	say "\n", $cmd if $VERBOSITY > 3;
 }
 # note: metaflac is ignring type integer and assigning 3, not sure why
 sub image_handler {
@@ -644,16 +644,16 @@ sub image_handler {
 	foreach (@images){
 		$working = (split /\|/, $_)[-1];
 		if (@result){
-			print "\n  Skipping $working (pre-existing image data)... ";
+			say "\n  Skipping $working (pre-existing image data)... ";
 		}
 		else {
 			if (-e $working){
 				$size = sprintf("%.1f", File::stat::stat("$working")->size / 1024);
 				push @args, qq(--import-picture-from="$_");
-				print "\n  Embedding $working ($size KiB)... ";
+				say "\n  Embedding $working ($size KiB)... ";
 			}
 			else {
-				print "\n  File $working not found... ";
+				say "\n  File $working not found... ";
 			}
 		}
 	}
@@ -669,13 +669,13 @@ sub make_file {
 	# say "source1:  $source_dir";
 	print "Checking for pre-existing $TAG_FILE... ";
 	if ($b_test){
-		print "Running test mode.\n";
+		say "Running test mode.";
 	}
 	elsif (-e $source_dir . $path_separator . $TAG_FILE){
 		main::error_handler('file-exists', "File $TAG_FILE already exists in:\n$source_dir",1);
 	}
 	else {
-		print "none found. Proceeding.\n";
+		say "none found. Proceeding.";
 	}
 	if ($VERBOSITY > 3){
 		say 'cwd: ', Cwd::getcwd();
@@ -686,28 +686,28 @@ sub make_file {
 	$extension = $INPUT_TYPE;
 	$list_type = 'file';
 	@found_list = ();
-	File::Find::find(\&main::wanted, $SOURCE_DIRECTORY);
+	File::Find::find(\&main::wanted, @source_glob);
 	print "\n" if $VERBOSITY > 2;
 	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list){
 		$b_dest_changed = 1;
 		$file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
 		say $file if $VERBOSITY > 2;
-		push @files, $file;
+		push(@files, $file);
 	}
 	if (@files){
 		@files = sort @files; # can be a problem, if track number comes last!
-		print "Processing.\n";
+		say "Processing.";
 		populate_file(\@files);
 	}
 	else {
-		print "No files found to process.\n";
+		say "No files found to process.";
 	}
 }
 sub info_fixes {
 	my (@prepped);
 	my ($newlines) = (0);
 	print $line_small;
-	print "Working on file:\n$INFO_FILE\n";
+	say "Working on file:\n$INFO_FILE";
 	my @data = open_info_file();
 	@data = date_fix(\@data) if $run{'infofix-date'};
 	@data = analyze_files('info',\@data) if $run{'infofix-quality'};
@@ -1223,7 +1223,7 @@ sub process_directories {
 	say "Checking directories...";
 	@found_list = ();
 	chdir "$start_dir";
-	File::Find::find(\&main::wanted, $SOURCE_DIRECTORY);
+	File::Find::find(\&main::wanted, @source_glob);
 	say 'start dir: ', $start_dir if $VERBOSITY > 3;
 	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		my $b_valid;
@@ -1705,7 +1705,7 @@ sub process_collection {
 		eval $print_line_large;
 		$extension = $_;
 		@found_list = ();
-		File::Find::find(\&main::wanted, $SOURCE_DIRECTORY);
+		File::Find::find(\&main::wanted, @source_glob);
 		# print Dumper \@found_list;
 		if ($VERBOSITY > 1){
 			print "PROCESSING DATA TYPE: $extension\n";
@@ -1714,7 +1714,6 @@ sub process_collection {
 			print "\n" . main::dotify("Processing $extension data type");
 		}
 		if (@found_list){
-			
 			update_files();
 		}
 		else {
@@ -1727,7 +1726,7 @@ sub update_directories {
 	my ($b_created,$dest_dir,$dir,$result);
 	$list_type = 'dir';
 	@found_list = ();
-	File::Find::find(\&main::wanted, $SOURCE_DIRECTORY);
+	File::Find::find(\&main::wanted, @source_glob);
 	eval $print_line_large;
 	# print Dumper \@found_list;
 	if ($VERBOSITY > 1){
@@ -2053,7 +2052,8 @@ sub escape_item {
 # bsd glob, which returns space agnostic globs, as you'd expect. 
 sub globber {
 	# my @files = glob qq{"$_[0]"};
-	# print Data::Dumper::Dumper @files;
+	# say Data::Dumper::Dumper @files;
+	# say $_[0];
 	# return @files;
 	return <$_[0]>;
 }
@@ -2883,6 +2883,9 @@ sub show_options {
 	$output .= "                  $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
 	$output .= "--source, -s      Path to the top-most directory containing your source files.\n";
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
+	$output .= "--source-glob, --sg Path inside -s directory with wildcards\n";
+	$output .= "                  Wildcard path, using *, paths relative to -s path.\n";
+	$output .= "                  Allows work on only a subset of directories in -s path.\n";
 	$output .= $line_small;
 	$output .= "Specialized options (tagging, checksums, prefills, etc):\n";
 	$output .= "--aggregate, -G   [filename|extension] Copy file name or extension type to\n";
@@ -3030,13 +3033,27 @@ sub set_basic_data {
 	if (defined $COPY_TYPES){
 		@extension_list = split(/,\s*/, $COPY_TYPES);
 	}
-	$DESTINATION_DIRECTORY =~ s|/$||;
-	$SOURCE_DIRECTORY =~ s|/$||;
-	$CONFIG_DIRECTORY =~ s|/$|| if $CONFIG_DIRECTORY;
+	$DESTINATION_DIRECTORY =~ s|$path_separator$||;
+	$SOURCE_DIRECTORY =~ s|$path_separator$||;
+	$CONFIG_DIRECTORY =~ s|$path_separator$|| if $CONFIG_DIRECTORY;
 	$INPUT_TYPE = lc($INPUT_TYPE) if $INPUT_TYPE;
 	$OUTPUT_TYPE = lc($OUTPUT_TYPE) if $OUTPUT_TYPE;
 	@extension_list = (@extension_list,$INPUT_TYPE);
 	$File::Find::dont_use_nlink = $DONT_USE_NLINK;
+	if ($run{'source-glob'}){
+		$run{'source-glob'} =~ s|$path_separator$||;
+		# say $start_dir;
+		chdir $SOURCE_DIRECTORY;
+		my @temp = globber("$run{'source-glob'}");
+		foreach (@temp){
+			push(@source_glob,$SOURCE_DIRECTORY . $path_separator . $_);
+		}
+		# say Data::Dumper::Dumper \@source_glob;exit;
+		chdir $start_dir;
+	}
+	else {
+		push(@source_glob,$SOURCE_DIRECTORY);
+	}
 	if ($EXCLUDE){
 		if ($EXCLUDE =~ /\Q$EXCLUDE_BASE\E/){
 			@excludes = reader($EXCLUDE, 'strip');
@@ -3531,6 +3548,12 @@ sub get_options{
 		$SOURCE_DIRECTORY = $arg;
 		$test{'source'} = 1;
 		},
+	'sg|source-glob:s' => sub { 
+		my ($opt,$arg) = @_;
+		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
+		$run{'source-glob'} = $arg;
+		$test{'source-glob'} = 1;
+		},
 	'start:i' => sub { 
 		my ($opt,$arg) = @_;
 		if (!defined $arg || $start < 0){
@@ -3605,6 +3628,14 @@ sub get_options{
 	if ($test{'info-rating'} && !$test{'infofix'}){
 		error_handler('invalid-options', 
 		 "--info-rating can only be used with --infofix.",1);
+	}
+	if ($test{'source-glob'} && !$test{'source'}){
+		error_handler('invalid-options', 
+		 "--source-glob/--sg must be used with --source/-s.",1);
+	}
+	if ($test{'source-glob'} && $test{'clean'}){
+		error_handler('invalid-options', 
+		 "--source-glob/--sg cannot be used with --clean.",1);
 	}
 	# prefill options require tag-create options
 	if ($test{'prefill'} && !$test{'tag-create'}){
