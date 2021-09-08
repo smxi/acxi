@@ -809,14 +809,13 @@ sub info_fixes {
 	}
 	print '  Processing completed. ';
 	if (!$run{'infofix-write'}){
-		say 'Confirm these changes.';
-		say "  Write to $INFO_FILE by adding 'w':";
+		say "  Write changes to $INFO_FILE by adding 'w':";
 		say $line_small;
 		print "   Fix: ";
 		say join("\n   Fix: ",@prepped);
 	}
 	else {
-		say "Writing these changes to $INFO_FILE:";
+		say "Writing changes to $INFO_FILE:";
 		say $line_small;
 		say join("\n",@prepped);
 		my $contents = join("\r\n",@prepped);
