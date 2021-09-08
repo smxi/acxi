@@ -142,6 +142,19 @@ Sampe 4 (collects multiple values):
 \fBacxi \-\-aggregate jpg,info.txt,png \-s my\-music -d music\-data\fR
 
 .TP
+.B \-\-analyze\fR, \fB\-Z\fR
+Similar to \fB\-Xq\fR, except creates per file/directory reports with screen 
+output. Shows flac file size, duration, kb/s, and also per directory summaries 
+of those values.
+
+To write to a file, use something like this:
+
+\fBacxi -s./ \-\-analyze 2&>1 | tee analzyse.txt\fR
+
+The tee will allow the output to also scroll on screen while it runs, which is
+helpful in many cases. Otherwise just redirect output to file directly.
+
+.TP
 .B \-\-append, \fB\-a  {extensions}\fR
 Takes one or more comma separated extensions. Do not use whitespaces in this 
 list. These will be appended on to the current list being used on a one time 
@@ -341,6 +354,13 @@ repeated items in your collection. Note that in cases of only 1 file matching,
 it's in theory possible for that to be a random coincidence, so always confirm 
 before deleting anything!! But it's pretty rare for an ffp hash to be 
 duplicated.
+
+For larger directories/collections, use 
+
+\fBacxi -s./ \-\-duplicates 2&>1 | tee duplicates.txt\fR
+
+The tee will allow the output to also scroll on screen while it runs, which is
+helpful to see what's going on. Otherwise just redirect output to file directly.
 
 .TP
 .B \-\-exclude\fR, \fB\-x  {items}\fR

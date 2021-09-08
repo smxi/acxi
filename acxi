@@ -1546,6 +1546,7 @@ sub check_ffp_duplicates {
 	say $line_small;
 	say "Starting duplicate verification...";
 	foreach my $dir (sort keys %ffp_dupes){
+		# say 'd1: ', $dir;
 		foreach my $item (@{$ffp_dupes{$dir}}){
 			my @track = split(/:/,$item);
 			if (!grep {$_ eq $track[-1]} @ffps){
@@ -1570,12 +1571,13 @@ sub check_ffp_duplicates {
 			$i++;
 			say ' ', sprintf("%0${pad}d: ", $i), $dir;
 			# if ($VERBOSITY > 1){
-				say "  dupe: ", join("\n  dupe: ", @{$dupes{$dir}});
+				say "  dupe: ", join("\n  dupe: ", sort @{$dupes{$dir}});
 			# }
 		}
 		say $line_small;
 		say "These were first found in:";
 		foreach my $dir (sort keys %dupes){
+			# say 'd2: ', $dir;
 			foreach my $item (@{$dupes{$dir}}){
 				my $ffp = (split(/:/,$item))[-1];
 				FFP:
@@ -1588,7 +1590,9 @@ sub check_ffp_duplicates {
 								say " $dir1";
 								say "  item: $item1";
 							}
-							push(@{$orig{$dir1}},$item1);
+							if (!grep {$_ eq $item1} @{$orig{$dir1}}){
+								push(@{$orig{$dir1}},$item1);
+							}
 							next FFP;
 						}
 					}
@@ -1603,7 +1607,7 @@ sub check_ffp_duplicates {
 				$i++;
 				say ' ', sprintf("%0${pad}d: ", $i), $dir;
 				# if ($VERBOSITY > 1){
-					say "  orig: ", join("\n  orig: ", @{$orig{$dir}});
+					say "  orig: ", join("\n  orig: ", sort @{$orig{$dir}});
 				# }
 			}
 		}
@@ -2359,10 +2363,10 @@ sub error_handler {
 		$message = "Perl Module not found in system: $message";}
 	if ($error eq 'validation-errors'){
 		if (!$b_valid){
-			$message = "${br}Failed pretests. Please correct the listed errors.\n";
+			$message = "${br}Failed pretests. Please correct the listed errors.";
 		}
 		else {
-			$message = "Pretests passed. Continuing.\n" if $VERBOSITY > 0;
+			$message = "Pretests passed. Continuing." if $VERBOSITY > 0;
 			$b_exit = 0;
 		}
 	}
