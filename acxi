@@ -902,7 +902,7 @@ sub analyze_files {
 				$duration = main::print_time($duration);
 				$size = $size / 8 / 1024;
 				$size = main::print_size($size);
-				$flac_info .= ' time: ' . $duration . ' kbs: '. $kbs . ' size: ' . $size;
+				$flac_info .= ' time: ' . $duration . ' size: ' . $size . ' kbs: '. $kbs;
 				$results{$flac_file} = $flac_info;
 			}
 		}
@@ -1294,8 +1294,8 @@ sub process_directories {
 				}
 				say $flac_data if defined $flac_data;
 				say $total_time if defined $total_time;
-				say $avg_kbs if defined $avg_kbs;
 				say $total_size if defined $total_size;
+				say $avg_kbs if defined $avg_kbs;
 				say $track_count if defined $track_count;
 			}
 		}
