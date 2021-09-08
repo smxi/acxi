@@ -2950,7 +2950,7 @@ sub show_options {
 	$output .= "                  $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
 	$output .= "--source, -s      Path to the top-most directory containing your source files.\n";
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
-	$output .= "--source-glob, -O [Path inside -s directory with wildcards]\n";
+	$output .= "--source-glob, -g [Path inside -s directory with wildcards]\n";
 	$output .= "                  Wildcard path, using *, paths relative to -s path.\n";
 	$output .= "                  Allows work on only a subset of directories in -s path.\n";
 	$output .= $line_small;
@@ -3275,6 +3275,8 @@ sub get_boolean {
 sub get_options{
 	my (@args) = @_;
 	my (%test,$msg);
+	# single letters used:
+	# aAcCdDEfFgGhiIKMoPqRsSTUvVxXZ
 	GetOptions (
 	'G|aggregate:s' => sub { 
 		my ($opt,$arg) = @_;
@@ -3623,7 +3625,7 @@ sub get_options{
 		$SOURCE_DIRECTORY = $arg;
 		$test{'source'} = 1;
 		},
-	'O|source-glob:s' => sub { 
+	'g|source-glob:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
 		$run{'source-glob'} = $arg;
@@ -3706,11 +3708,11 @@ sub get_options{
 	}
 	if ($test{'source-glob'} && !$test{'source'}){
 		error_handler('invalid-options', 
-		 "--source-glob/--sg must be used with --source/-s.",1);
+		 "--source-glob/-g must be used with --source/-s.",1);
 	}
-	if ($test{'source-glob'} && $test{'clean'}){
+	if ($test{'source-glob'} && ($test{'clean'} || $test{'prefill'})){
 		error_handler('invalid-options', 
-		 "--source-glob/--sg cannot be used with --clean.",1);
+		 "--source-glob/-g cannot be used with --clean/--prefill.",1);
 	}
 	# prefill options require tag-create options
 	if ($test{'prefill'} && !$test{'tag-create'}){

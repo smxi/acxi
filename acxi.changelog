@@ -58,11 +58,11 @@ extend this to other than flac.
 4. Going along with --analyze, -Xq now includes avg kbs, total time and size per 
 directory of flacs.
 
-5. New feature: --source-glob/-O: accepts wild card paths if you only want to 
+5. New feature: --source-glob/-g: accepts wild card paths if you only want to 
 update or check certain directories within the main --source working directory. 
 Requires --source, wild card path must be within --source, like:
 
-acxi -s ./ -O 'BandName*' -V
+acxi -s ./ -g 'BandName*' -V
 
 Will only verify folders tarting with BandName. Remember to always quote the 
 value otherwise your shell will expand the wild cards!! Accepts standard 
