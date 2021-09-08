@@ -2950,7 +2950,7 @@ sub show_options {
 	$output .= "                  $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
 	$output .= "--source, -s      Path to the top-most directory containing your source files.\n";
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
-	$output .= "--source-glob, -S [Path inside -s directory with wildcards]\n";
+	$output .= "--source-glob, -O [Path inside -s directory with wildcards]\n";
 	$output .= "                  Wildcard path, using *, paths relative to -s path.\n";
 	$output .= "                  Allows work on only a subset of directories in -s path.\n";
 	$output .= $line_small;
@@ -3623,7 +3623,7 @@ sub get_options{
 		$SOURCE_DIRECTORY = $arg;
 		$test{'source'} = 1;
 		},
-	'S|source-glob:s' => sub { 
+	'O|source-glob:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
 		$run{'source-glob'} = $arg;
