@@ -817,13 +817,14 @@ sub info_fixes {
 	else {
 		say "Writing changes to $INFO_FILE:";
 		say $line_small;
-		say join("\n",@prepped);
+		print '   ';
+		say join("\n   ",@prepped);
 		my $contents = join("\r\n",@prepped);
 		open(my $fh, '>', $INFO_FILE) or die "failed to open for writing: $INFO_FILE";
 		print $fh $contents;;
 		close $fh if $fh;
 		say $line_small;
-		say 'All done, hope it worked!!';
+		say "  Changes written to $INFO_FILE.";
 	}
 }
 sub date_fix {
