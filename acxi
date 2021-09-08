@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.4.00';
-my $self_date='2021-09-06';
+my $self_date='2021-09-08';
 
 ## GLOBALS ##
 my %run;
@@ -852,7 +852,7 @@ sub date_fix {
 sub analyze_files {
 	my ($type,$ref) = @_;
 	my $dir = Cwd::getcwd; # resolves sym links
-	my ($file,@data,@files,@real,%results);
+	my ($file,@data,@files,@info,@real,%results);
 	my ($bps,$flac_info,$total_time,$total_size,$total_tracks) = ('','',0,0,0);
 	if ($type eq 'info'){
 		@files = main::globber('*.flac');
@@ -884,13 +884,19 @@ sub analyze_files {
 			my $size = (-s $flac_file) * 8;
 			$total_size += $size;
 			my $kbs = $size/$duration/1000;
-			
 			$kbs = sprintf("%.0f",$kbs);
 			# say $size $kbs;
 			# say "duration: $duration seconds";
 			if ($type eq 'data' || !$flac_info){
-				$flac_info = "FLAC: " . $real[2] . '/' . sprintf("%.1f", $real[1]/1000);
+				my $flac_data = $real[2] . '/' . sprintf("%.1f", $real[1]/1000);
+				$flac_info = "FLAC: $flac_data";
 				$flac_info .= " ($real[0] channels)";
+				if ($type eq 'data'){
+					$flac_data .= '/' . $real[0] . 'ch';
+					if (!grep {$_ eq $flac_data} @info){
+						push(@info,$flac_data);
+					}
+				}
 			}
 			if ($type eq 'data'){
 				$duration = main::print_time($duration);
@@ -932,6 +938,7 @@ sub analyze_files {
 		$results{'total-time'} = main::print_time($total_time);
 		$results{'total-size'} = main::print_size($total_size);
 		$results{'total-tracks'} = scalar @files;
+		$results{'flac-info'} = join(', ',sort @info);
 		$results{'avg-kbs'} = $avg_kbs;
 		return %results;
 	}
@@ -1259,7 +1266,7 @@ sub process_directories {
 			}
 			else {
 				my %data = AutoTag::analyze_files('data',\@files);
-				my ($avg_kbs,$total_size,$total_time,$track_count);
+				my ($avg_kbs,$flac_data,$total_size,$total_time,$track_count);
 				say "  Generating flac data:";
 				if (defined $data{'total-time'}){
 					$total_time = '  Time: ' . $data{'total-time'};
@@ -1277,10 +1284,15 @@ sub process_directories {
 					$track_count = '  Tracks: ' . $data{'total-tracks'};
 					delete $data{'total-tracks'};
 				}
+				if (defined $data{'flac-info'}){
+					$flac_data = '  Info: ' . $data{'flac-info'};
+					delete $data{'flac-info'};
+				}
 				foreach my $key (sort keys %data){
 					say "   File: $key:";
 					say "    $data{$key}";
 				}
+				say $flac_data if defined $flac_data;
 				say $total_time if defined $total_time;
 				say $avg_kbs if defined $avg_kbs;
 				say $total_size if defined $total_size;

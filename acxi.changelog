@@ -33,7 +33,7 @@ Particularly useful if outputting results to file for many directories.
 3. Added -Xn pattern, some cases where track number is DNN, converts to D-NN. 
 as expected now. -Xd more date variants added.
 
-4. Added 'Personnel:', 'Performers:' to performers pre ID
+4. Added 'Personnel:', 'Performers:' to performers pre ID.
 
 5. Tiny fix, acxi was neglecting to apply the os path separator correctly in at
 least one location, which in fringe cases could lead to windows failing under
@@ -58,14 +58,15 @@ extend this to other than flac.
 4. Going along with --analyze, -Xq now includes avg kbs, total time and size per 
 directory of flacs.
 
-5. New feature: --source-glob/--sg: accepts wild card paths if you only want to 
+5. New feature: --source-glob/-S: accepts wild card paths if you only want to 
 update or check certain directories within the main --source working directory. 
 Requires --source, wild card path must be within --source, like:
 
-acxi -s ./ --sg 'BandName*' -V
+acxi -s ./ -S 'BandName*' -V
 
 Will only verify folders tarting with BandName. Remember to always quote the 
-value otherwise your shell will expand the wild cards!!
+value otherwise your shell will expand the wild cards!! Accepts standard 
+globbing options like {one,two,three}, [0-9], etc.
 
 --------------------------------------------------------------------------------
 CHANGES:
@@ -74,11 +75,15 @@ CHANGES:
 --------------------------------------------------------------------------------
 DOCUMENTATION:
 
-1. Updated man, help for --ffp-dupes.
+1. Updated man, help for --duplicates, --analyze.
 
 --------------------------------------------------------------------------------
 CODE:
 
+1. Fully transitioned to 'say' when we want line breaks at end of print line.
+This cleans the code up and makes it easier to see what's going on in various
+line output scenarios. 'print' is used now when we do NOT want a linebreak at 
+end of line, and in other more complex scenarios where it is appropriate.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Wed, 25 Aug 2021 12:24:47 -0700
