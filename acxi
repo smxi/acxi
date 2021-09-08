@@ -95,9 +95,9 @@ my ($b_check_dest,$b_check_out) = (1,1);
 my $b_win = ($^O =~ /win/i) ? 1 : 0; # detect if $^O returns windows 
 my $path_separator = ($b_win) ? '\\' : '/';
 ## CONSTANTS ##
-my $line_heavy = "===========================================================================\n";
-my $line_small = "-----------------------------------------------------------------\n";
-my $line_large = "---------------------------------------------------------------------------\n";
+my $line_heavy = "===========================================================================";
+my $line_small = "-----------------------------------------------------------------";
+my $line_large = "---------------------------------------------------------------------------";
 
 #########################################################################
 ### USER MODIFIABLE VALUES ###
@@ -310,31 +310,31 @@ sub main {
 {
 package AutoTag;
 sub run_tagger {
-	print $line_large;
+	say $line_large;
 	if ($run{'embed-image'}){
-		print "Starting image embedding in " . main::sourcer($SOURCE_DIRECTORY) . "...\n";
+		say 'Starting image embedding in ' . main::sourcer($SOURCE_DIRECTORY) . '...';
 		image_embedder();
-		print $line_small;
-		print "Completed image embedding.\n";
+		say $line_small;
+		say 'Completed image embedding.';
 	}
 	if ($run{'update-tag'}){
-		print "Starting tag update in " . main::sourcer($SOURCE_DIRECTORY) . "...\n";
+		say 'Starting tag update in ' . main::sourcer($SOURCE_DIRECTORY) . '...';
 		tag_updater();
-		print $line_small;
-		print "Completed tag update.\n";
+		say $line_small;
+		say 'Completed tag update.';
 	}
 	else {
-		print "Starting auto-tagging in " . main::sourcer($SOURCE_DIRECTORY) . "...\n";
+		say 'Starting auto-tagging in ' . main::sourcer($SOURCE_DIRECTORY) . '...';
 		get_tag_files();
-		print $line_small;
-		print "Completed auto-tagging.\n";
+		say $line_small;
+		say 'Completed auto-tagging.';
 	}
-	print $line_large;
+	say $line_large;
 }
 sub aggregate {
-	print $line_large;
-	print "Starting file aggregation from: " . main::sourcer($SOURCE_DIRECTORY) . "\n";
-	print " to: " . main::sourcer($DESTINATION_DIRECTORY) . "\n";
+	say $line_large;
+	say 'Starting file aggregation from: ' . main::sourcer($SOURCE_DIRECTORY);
+	say ' to: ' . main::sourcer($DESTINATION_DIRECTORY);
 	my @files = split /,/, $run{'ag-file'};
 	# my $abs_path = Cwd::abs_path($SOURCE_DIRECTORY);
 	# chdir Cwd::getcwd(); # $SOURCE_DIRECTORY;
@@ -342,9 +342,9 @@ sub aggregate {
 	foreach (@files){
 		aggregate_file($_);
 	}
-	print $line_small;
-	print "Completed file aggregation.\n";
-	print $line_large;
+	say $line_small;
+	say 'Completed file aggregation.';
+	say $line_large;
 	exit;
 }
 sub aggregate_file {
@@ -354,9 +354,9 @@ sub aggregate_file {
 	$list_type = 'file';
 	@found_list = ();
 	File::Find::find(\&main::wanted, @source_glob);
-	print $line_small;
-	print "Aggregating file type $extension...\n";
-	print $line_small;
+	say $line_small;
+	say "Aggregating file type $extension...";
+	say $line_small;
 	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list){
 		$b_dest_changed = 1;
 		$file_working = $file;
@@ -381,20 +381,20 @@ sub aggregate_file {
 		$path = '';
 	}
 	if (!@found_list){
-		print "No $extension type files found.\n";
+		say "No $extension type files found.";
 	}
-	print $line_small;
-	# print Data::Dumper::Dumper \@files;
-	print "Finished copying over $extension type files to " . main::sourcer("$DESTINATION_DIRECTORY" . "\n");
+	say $line_small;
+	# say Data::Dumper::Dumper \@files;
+	say "Finished copying over $extension type files to " . main::sourcer("$DESTINATION_DIRECTORY");
 	
 }
 sub create_file {
-	print $line_large;
-	print "Creating $TAG_FILE in " . main::sourcer("$SOURCE_DIRECTORY") . "...\n";
+	say $line_large;
+	say "Creating $TAG_FILE in " . main::sourcer("$SOURCE_DIRECTORY");
 	make_file();
-	print $line_small;
-	print "Completed file creation.\n";
-	print $line_large;
+	say $line_small;
+	say 'Completed file creation.';
+	say $line_large;
 }
 sub get_tag_files {
 	my ($item,$print_file,$result,$working_dir);
@@ -413,12 +413,12 @@ sub get_tag_files {
 			say Cwd::getcwd();
 			system 'pwd';
 		}
-		print "Processing: $print_file...\n";
+		say "Processing: $print_file...";
 		process_tags();
 		$b_dest_changed = 1;
 	}
 	if (!@found_list){
-		print "No $TAG_FILE files found.\n";
+		say "No $TAG_FILE files found.";
 	}
 }
 sub process_tags {
@@ -430,15 +430,15 @@ sub process_tags {
 	state %set;
 	foreach (@tags){
 		@working=split /%:/, $_;
-		# print Data::Dumper::Dumper \@working;
+		# say Data::Dumper::Dumper \@working;
 		next if ! $working[1];
-		print "@working\n" if $VERBOSITY > 3;
+		say "@working" if $VERBOSITY > 3;
 		# $working[1] =~ s/"/\\\"/g;
 		# $working[1] =~ s/\$/\\\$/g;
 		$working[1] = main::escape_item("$working[1]");
 		if ($working[0] =~ /^(TITLE|TRACKNUMBER|VERSION|PART)$/){
-			$tag = qq(--set-tag=$working[0]="$working[1]");
-			push @track_tags, $tag;
+			$tag = qq(--set-tag=$working[0]="$working[1]" );
+			push(@track_tags,$tag);
 		}
 		elsif ($working[0] ne 'FILE'){
 			# delete all previous items for key, to avoid multi tagging
@@ -459,7 +459,7 @@ sub process_tags {
 			}
 			else {
 				$tag = qq(--set-tag=$working[0]="$working[1]");
-				push @main_tags, $tag;
+				push(@main_tags,$tag);
 			}
 		}
 		elsif ($working[0] eq 'FILE'){
@@ -475,7 +475,7 @@ sub process_tags {
 			# single quotes, in case contains $ symbol
 			# say File::stat::stat("$working[1]")->size;
 			$cmd = qq($COMMAND_METAFLAC --remove-all-tags $padding "$working[1]");
-			print "\n", $cmd, "\n" if $VERBOSITY > 3;
+			say "\n", $cmd if $VERBOSITY > 3;
 			if (!$b_test){
 				qx($cmd);
 				if ($? > 0){
@@ -499,7 +499,7 @@ sub process_tags {
 				$set{$_} = 0;
 			}
 			$cmd = qq($COMMAND_METAFLAC $args "$working[1]");
-			print "\n", $cmd, "\n" if $VERBOSITY > 3;
+			say "\n", $cmd if $VERBOSITY > 3;
 			$b_tracks = 1;
 			if (!$b_test){
 				qx($cmd);
@@ -507,7 +507,12 @@ sub process_tags {
 					$error_message = "$COMMAND_METAFLAC returned error: $?";
 					main::error_handler('application-error', $error_message,1);
 				}
-				say 'File tagged';
+				else {
+					say 'File tagged';
+				}
+			}
+			else {
+				say 'Test mode, no tag';
 			}
 			# say File::stat::stat("$working[1]")->size;
 		}
@@ -530,13 +535,12 @@ sub tag_updater {
 	File::Find::find(\&main::wanted, @source_glob);
 	chdir "$start_dir";
 	chdir "$SOURCE_DIRECTORY";
-	print "Updating tags:$print_tags... \n";
+	say "Updating tags:$print_tags... ";
 	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list){
 		$print_file = $working_dir = $file;
 		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 		print "Processing: $print_file...\n Tags$print_padding ";
 		$file = main::escape_item("$file");
-		# 
 		$cmd = qq($COMMAND_METAFLAC $remove "$file");
 		if (!$b_test){
 			qx($cmd);
@@ -566,7 +570,7 @@ sub tag_updater {
 		}
 	}
 	if (!@found_list){
-		print "No $INPUT_TYPE files found.\n";
+		say "No $INPUT_TYPE files found.";
 	}
 }
 sub image_embedder{
@@ -596,7 +600,7 @@ sub image_embedder{
 			@image_args = image_handler("$item",("$embed_image"));
 			$args = join ' ', @image_args;
 			$cmd = qq($COMMAND_METAFLAC $args "$item");
-			print "\n", $cmd, "\n" if $VERBOSITY > 3;
+			say "\n", $cmd if $VERBOSITY > 3;
 			if (!$b_test){
 				qx($cmd);
 				if ($? > 0){
@@ -615,7 +619,7 @@ sub image_embedder{
 		$b_dest_changed = 1;
 	}
 	if (!@found_list){
-		print "No $INPUT_TYPE files found.\n";
+		say "No $INPUT_TYPE files found.";
 	}
 }
 sub image_remover {
@@ -687,7 +691,7 @@ sub make_file {
 	$list_type = 'file';
 	@found_list = ();
 	File::Find::find(\&main::wanted, @source_glob);
-	print "\n" if $VERBOSITY > 2;
+	say '' if $VERBOSITY > 2;
 	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list){
 		$b_dest_changed = 1;
 		$file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
@@ -706,12 +710,12 @@ sub make_file {
 sub info_fixes {
 	my (@prepped);
 	my ($newlines) = (0);
-	print $line_small;
+	say $line_small;
 	say "Working on file:\n$INFO_FILE";
 	my @data = open_info_file();
 	@data = date_fix(\@data) if $run{'infofix-date'};
 	@data = analyze_files('info',\@data) if $run{'infofix-quality'};
-	# print Data::Dumper::Dumper \@data;
+	# say Data::Dumper::Dumper \@data;
 	# we want these to be set to uppercase again after autoformat runs
 	my $upper = 'Aud|Cdr?|Sd?b|Ips|Eac|Ak|Az|Ca|Co|Ct|Dc|De|Dk|Fl|Flac|Hd|Hi|Il|';
 	$upper .= 'Ma|Md|Mkw|Mo|Nc|Nh|Nj|Nm|Nyc?|Pa|Ri|Sbd?|Sf|Shn|Tn|Usa|Ut|Wa|';
@@ -742,9 +746,9 @@ sub info_fixes {
 		# 1-4 / 1-12 / 12 / 213
 		if (($run{'infofix-no'} || $run{'infofix-title'}) && 
 		 $row =~ /^(\s*(([1-9]-)([0-9]{1,2})|([0-9]{1,2}|[0-9]{3}))(\]\s*|\.\s*|\s*-\s*|\s*\)\s*|:\s*|\s+))/){
-			# print "$1 '$6'\n";
+			# say "$1 '$6'";
 			if ($run{'infofix-no'}){
-				# print "$1 $2 $3\n";
+				# say "$1 $2 $3";
 				my $nu = (defined $4) ? $4 : $5;
 				my $disc = (defined $3) ? $3 : '';
 				my $pattern = $1;
@@ -766,27 +770,27 @@ sub info_fixes {
 		}
 		# $row =~ s//'/g;
 		# $row =~ s/�/'/g;
-		# print "$row\n";
+		# say $row;
 		push(@prepped,$row) if $newlines < 2;
 	}
-	print $line_small;
-	print "Processing completed. Results:\n";
+	say $line_small;
+	say 'Processing completed. Results:';
 	if (!$run{'infofix-write'}){
-		print "Confirm changes made by infofix. Write to $INFO_FILE by adding 'w':\n";
-		print $line_small;
+		say "Confirm changes made by infofix. Write to $INFO_FILE by adding 'w':";
+		say $line_small;
 		print "Fix: ";
-		print join("\nFix: ",@prepped),"\n";
+		say join("\nFix: ",@prepped);
 	}
 	else {
-		print "Writing these changes back to $INFO_FILE:\n";
-		print $line_small;
-		print join("\n",@prepped);
+		say "Writing these changes back to $INFO_FILE:";
+		say $line_small;
+		say join("\n",@prepped);
 		my $contents = join("\r\n",@prepped);
 		open(my $fh, '>', $INFO_FILE) or die "failed to open for writing: $INFO_FILE";
 		print $fh $contents;;
 		close $fh if $fh;
-		print $line_small;
-		print "All done, hope it worked!!\n";
+		say $line_small;
+		say 'All done, hope it worked!!';
 	}
 }
 sub date_fix {
@@ -801,7 +805,7 @@ sub date_fix {
 		if (/\b(((0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\S*?([\s\/,-]+(0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?)?[\s\/,-]+((19)?[4-9][0-9]|(20)?[012][0-9]))\b/i){
 			$regex = $1;
 			$yyyy = $9;
-			# print "rx: $regex 5: $5 9: $9\n";
+			# say "rx: $regex 5: $5 9: $9";
 			my $month = lc($5);
 			if ($3){$dd = sprintf('%02d',$3)}
 			elsif ($7){$dd = sprintf('%02d',$7)}
@@ -817,7 +821,7 @@ sub date_fix {
 			elsif ($month eq 'oct'){$mm = '10';}
 			elsif ($month eq 'nov'){$mm = '11';}
 			elsif ($month eq 'dec'){$mm = '12';}
-			# print "y: $yyyy m: $mm d: $dd\n";
+			# say "y: $yyyy m: $mm d: $dd";
 		}
 		# Change m/d/yy or m-d-yy or m.d.yy to yyyy-mm-dd 09/19/54
 		elsif (/\b((0?[1-9]|1[0-2])[\/\.-](0?[1-9]|[12][0-9]|30|31)[\/\.-]((19)?[4-9][0-9]|(20)?[0-2][0-9]))\b/){
@@ -862,9 +866,11 @@ sub analyze_files {
 	foreach my $flac_file (@files){
 		# say "Getting metaflac for file: $flac_file";
 		undef(@real);
-		my @flac = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps --show-total-samples "$flac_file");
+		my $escaped = main::escape_item("$flac_file");
+		# say 'cf: ', $escaped;
+		my @flac = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps --show-total-samples "$escaped");
 		if (scalar @flac != 4){
-			main::error_handler('analyze',"Metaflac failed to get 4 items from file:\n '$flac_file'",1);
+			main::error_handler('analyze',"Metaflac failed to get 4 items from file:\n '$flac_file'",0);
 		}
 		foreach (@flac){
 			$_ =~ s/[\r\n]//g;
@@ -970,7 +976,7 @@ sub prefill_data {
 		}
 	}
 	$info{'location'} =~ s/,\s*$// if $info{'location'};
-	# print Data::Dumper::Dumper \%info;
+	# say Data::Dumper::Dumper \%info;
 	return %info;
 }
 sub open_info_file {
@@ -983,7 +989,7 @@ sub open_info_file {
 	 main::error_handler('open', "Failed to open: $INFO_FILE with error:\n:$!",1);
 	chomp(@data = <$fh>);
 	close $fh if $fh;
-	print "File found and read\n";
+	say 'File found and read';
 	my $count = scalar @data;
 	if ($count < 15){
 		main::error_handler('info-file',"$INFO_FILE only had $count lines",1);
@@ -997,7 +1003,7 @@ sub populate_file {
 	my ($b_first,$j,$holder,$starter) = (1,0,'','');
 	my $counter=$start;
 	%info = prefill_data() if $run{'prefill'};
-	print Data::Dumper::Dumper \%info if $b_test;
+	say Data::Dumper::Dumper \%info if $b_test;
 	my @collection = (
 	'## RECORDING NAME/CREATORS ##',
 	'ALBUM','# Name to sort under','ALBUMSORT',
@@ -1068,7 +1074,7 @@ sub populate_file {
 		}
 		@collection = @working if @working;
 	}
-	# print Data::Dumper::Dumper \@collection;
+	# say Data::Dumper::Dumper \@collection;
 	@disc = map {$_ .= '%:' if /^[A-Z]/; $_;} @disc;
 	@discs = map {$_ .= '%:' if /^[A-Z]/; $_;} @discs;
 	if ($run{'autotag-single'} && @$files){
@@ -1077,7 +1083,7 @@ sub populate_file {
 	if ($run{'autotag-multi'} && @$files){
 		$autotag_multi =~ s/%/[1-9]/g;
 		$autotag_multi =~ s/@/[A-Z]/g;
-		# print "$autotag_multi\n";
+		# say "$autotag_multi";
 		foreach (@$files){
 			if (/^($autotag_multi)/i){
 				$starter = $1;
@@ -1101,19 +1107,19 @@ sub populate_file {
 		($counter,$j,$holder,$starter) = ($start,0,'','');
 		# this handles the first block of DISC info
 		if (scalar @multi > 1){
-			# print 'm:', $multi[0], ' sm: ', scalar @multi, "\n";
+			# say 'm:', $multi[0], ' sm: ', scalar @multi;
 			@disc = map {$_ .= scalar @multi if $_ eq 'DISCTOTAL%:'; $_;} @disc;
 			@disc = map {$_ .= create_track_total($multi[0]) if $_ eq 'TRACKTOTAL%:'; $_;} @disc;
 			@disc = map {$_ .= 1 if $_ eq 'DISCNUMBER%:'; $_;} @disc;
 		}
 	}
-	# print Data::Dumper::Dumper \@multi, "\n";
+	# say Data::Dumper::Dumper \@multi;
 	@tags = (@collection,@disc);
 	@track = map {$_ .= '%:' if /^[A-Z]/; $_;} @track;
 	my (@disc_working,@info_working);
 	if ($info{'tracks'}){
 		if (scalar(@{$info{'tracks'}}) == scalar(@$files)){
-			print "File/$INFO_FILE track counts match: " . scalar(@$files) . "\n";
+			say "File/$INFO_FILE track counts match: " . scalar(@$files);
 			@info_working = @{$info{'tracks'}};
 		}
 		else {
@@ -1159,7 +1165,7 @@ sub populate_file {
 		$counter++;
 	}
 	if ($b_test){
-		print join "\n", @tags, "\n";
+		say join "\n", @tags;
 	}
 	else {
 		main::writer($TAG_FILE,\@tags);
@@ -1183,7 +1189,7 @@ sub create_track_total {
 	else {
 		$total = $working + $start - 1;
 	}
-	# print "ctt: $start $total\n";
+	# say "ctt: $start $total";
 	return $total;
 }
 sub get_replaygain {
@@ -1208,18 +1214,18 @@ sub get_replaygain {
 package Checksums;
 my ($print_src,%ffp_dupes);
 sub process {
-	print $line_large;
+	say $line_large;
 	my $type = (!$run{'analyze'}) ? 'checksum processing': 'flac tests';
-	print "Starting $type in " . main::sourcer("$SOURCE_DIRECTORY") . "...\n";
+	say "Starting $type in " . main::sourcer("$SOURCE_DIRECTORY") . '...';
 	process_directories();
-	print $line_small;
-	print "Completed $type.\n";
-	print $line_large;
+	say $line_small;
+	say "Completed $type.";
+	say $line_large;
 }
 sub process_directories {
 	my (@files,$item,$result);
 	$list_type = 'dir';
-	print $line_small;
+	say $line_small;
 	say "Checking directories...";
 	@found_list = ();
 	chdir "$start_dir";
@@ -1244,7 +1250,7 @@ sub process_directories {
 		}
 		say " Processing: $print_src...";
 		@files = main::globber("*.{flac,FLAC,Flac}");
-		# say "\n", Data::Dumper::Dumper @files;
+		# say "\n", Data::Dumper::Dumper \@files;
 		if (grep -f, @files){
 			if (!$run{'analyze'}){
 				delete_checksums() if $run{'checksum-delete'};
@@ -1396,7 +1402,7 @@ sub verify_flacs {
 	} @results;
 # 	foreach (@results){
 # 		$_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
-# 		print "##$_##\n";
+# 		say "##$_##";
 # 	}
 	if ($err_nu > 0){
 		$b_app_error = 1;
@@ -1411,15 +1417,15 @@ sub verify_flacs {
 	my $index = 0;
 	my ($b_start,@temp);
 	foreach (@results){
-		# print length($_), "\n";
+		# say length($_);
 		# $_ =~ s/\s+$//; # moved to map
-		# print "${_}::\n";
+		# say "${_}::";
 		# next if /^\s*$/; # moved to grep
 		$b_start = 1 if !$b_start && $_ =~ /\.$INPUT_TYPE:/;
 		next if !$b_start;
 		#$_ =~ s/(testing.*complete|\x{08})//gi; # moved to map
 		#$_ =~ s/[^[:print:]]+//g; # moved to map
-		# print length($_), "\n";
+		# say length($_);
 		# say $_;
 		# the poor design of flac output is hard to put into words
 		# not only do they use those backspace hidden things, but
@@ -1441,15 +1447,15 @@ sub verify_flacs {
 	# NOTE: cases found where ok and rest of string prints on next line!!
 	@errors = grep {!/\.$INPUT_TYPE:\s+ok$/i} @results;
 	@results = grep {/\.$INPUT_TYPE:\s+ok$/i} @results;
-	# print scalar @results, "\n", "@errors","\n";
-	# print "errors:\n", join "\n", @errors, "\n";
+	# say scalar @results, "\n", "@errors";
+	# say "errors:\n", join "\n", @errors;
 	if (@errors){
-		print "\n" if !$b_app_error;
+		say '' if !$b_app_error;
 		say "   Files with errors:\n    ", join("\n    ", @errors);
 	}
 	if (@results){
 		if ($VERBOSITY > 1 || $b_app_error){
-			print "\n" if !$b_app_error && !@errors;
+			say '' if !$b_app_error && !@errors;
 			say "   Verified files:\n    ",  join("\n    ", @results);
 		}
 		else {
@@ -1457,7 +1463,7 @@ sub verify_flacs {
 		}
 	}
 	else {
-		print "No verified $INPUT_TYPE files\n";
+		say "No verified $INPUT_TYPE files";
 	}
 }
 sub verify_md5 {
@@ -1466,11 +1472,11 @@ sub verify_md5 {
 	my @checksums = main::globber("*.{md5,md5.txt}");
 	foreach my $file (@checksums){
 		print "  Checking md5 checksums in: $file: ";
-		@data = main::reader("$file",'strip');
-		# print "data\n", join ("\n", @data), "\n";
+		@data = main::reader($file,'strip');
+		# say "data\n", join ("\n", @data);
 		$b_break = 0;
 		foreach my $track (@data){
-			# print "track: $track\n";
+			# say "track: $track";
 			($hash,$hash2) = ('','');
 			$track =~ /^([a-f0-9]+)([\s\*]+)(.*)$/;
 			if ($1 && $3){
@@ -1478,13 +1484,15 @@ sub verify_md5 {
 				$track = $3;
 				# convert to local paths, windows vs nix
 				$track =~ s^[/|\\]^$path_separator^g;
+				# say 't: ', $track;
 				if ($VERBOSITY > 1){
-					print "\n" if !$b_break;
+					say '' if !$b_break;
 					print "   Checking: $track: ";
 					$b_break = 1;
 				}
-				if (-e "$track"){
-					$cmd = qq($COMMAND_MD5 "$track");
+				if (-e $track){
+					my $escaped = main::escape_item("$track");
+					$cmd = qq($COMMAND_MD5 "$escaped");
 					$result = qx($cmd);
 					$hash2 = (split /\s/, $result)[0];
 				}
@@ -1493,23 +1501,23 @@ sub verify_md5 {
 				}
 				if ($hash2){
 					if ($hash eq $hash2){
-						print "Matched\n" if $VERBOSITY > 1;
+						say "Matched" if $VERBOSITY > 1;
 					}
 					else {
-						print "\n" if !$b_break;
+						say '' if !$b_break;
 						print "   $track: " if $VERBOSITY < 2;
 						$msg = ($hash2 ne 'missing') ? "FAILED" : "FAILED: File Not Found";
-						print "$msg\n";
+						say $msg;
 						$b_bad = 1;
 						$b_break = 1;
 					}
 					if ($VERBOSITY > 2){
-						print "    MD5 Test: $hash Actual: $hash2\n";
+						say "    MD5 Test: $hash Actual: $hash2";
 					}
 				}
 			}
 		}
-		print "All Files Matched\n" if !$b_bad && $VERBOSITY < 2;
+		say "All Files Matched" if !$b_bad && $VERBOSITY < 2;
 	}
 }
 sub delete_checksums {
@@ -1517,7 +1525,7 @@ sub delete_checksums {
 	# note: some checksum generators tack on a .txt to the filename.
 	# seen case like: "verbose stuff md5.txt
 	my @checksums = main::globber("*{.ffp,ffp.txt,.md5,md5.txt}");
-	# print Data::Dumper::Dumper @checksums, "\n";
+	# say Data::Dumper::Dumper @checksums;
 	foreach my $file (@checksums){
 		print "   Deleting $file: ";
 		if ($b_test){
@@ -1532,10 +1540,10 @@ sub delete_checksums {
 	}
 }
 sub check_ffp_duplicates {
-	# print Data::Dumper::Dumper \%ffp_dupes;
+	# say Data::Dumper::Dumper \%ffp_dupes;
 	my (%dupes,%orig,@ffps);
 	my ($count,$i,$pad) = (0,0,2);
-	print $line_small;
+	say $line_small;
 	say "Starting duplicate verification...";
 	foreach my $dir (sort keys %ffp_dupes){
 		foreach my $item (@{$ffp_dupes{$dir}}){
@@ -1553,7 +1561,7 @@ sub check_ffp_duplicates {
 			}
 		}
 	}
-	print $line_small;
+	say $line_small;
 	if (%dupes){
 		$count = keys %dupes;
 		$pad = get_pad($count);
@@ -1565,7 +1573,7 @@ sub check_ffp_duplicates {
 				say "  dupe: ", join("\n  dupe: ", @{$dupes{$dir}});
 			# }
 		}
-		print $line_small;
+		say $line_small;
 		say "These were first found in:";
 		foreach my $dir (sort keys %dupes){
 			foreach my $item (@{$dupes{$dir}}){
@@ -1628,31 +1636,31 @@ sub get_pad {
 package CleanCollection;
 
 sub process_destination {
-	print $line_large;
-	print "Starting cleanup of " . main::sourcer("$DESTINATION_DIRECTORY") . "...\n";
+	say $line_large;
+	say "Starting cleanup of " . main::sourcer("$DESTINATION_DIRECTORY") . '...';
 	process_type('directory');
 	process_type('file');
-	print $line_small;
-	print "Completed cleanup checks.\n";
-	print $line_large;
+	say $line_small;
+	say 'Completed cleanup checks.';
+	say $line_large;
 	exit if !$run{'clean-sync'};
 }
 sub process_type {
 	my ($type) = @_;
 	my ($b_deleted,$item,$result);
 	$list_type = ($type eq 'directory') ? 'dir-clean': 'file-clean';
-	print $line_small;
-	print "Checking $type removal...\n";
+	say $line_small;
+	say "Checking $type removal...";
 	@found_list = ();
 	File::Find::find(\&main::wanted, $DESTINATION_DIRECTORY);
 	if (@found_list && confirm_deletion($type)){
 		foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 			$result = 'UNSET';
-			print "Deleting $type: $item\n";
+			say "Deleting $type: $item";
 			$result = File::Path::rmtree("$item") if !$b_test;
 			$b_deleted = 1;
 			$b_dest_changed = 1;
-			print "Delete $type result: $result\n" if $VERBOSITY > 1;
+			say "Delete $type result: $result" if $VERBOSITY > 1;
 		}
 	}
 	main::print_not_found("$type-cleaned") if ! $b_deleted;
@@ -1660,21 +1668,21 @@ sub process_type {
 sub confirm_deletion {
 	my ($type) = @_;
 	my ($b_confirm,$response) = (0,'');
-	print $line_small;
-	print join("\n", @found_list),"\n";
-	print $line_small;
-	print "The preceding $type items will be deleted. Deletions cannot\n";
-	print "be restored! BE AWARE!!\n";
-	print "Please type 'delete' + 'enter' to remove them, or hit 'enter' to skip.\n";
-	print "If you are unsure, hit 'enter' to see the file list.\n" if $type eq 'directory';
+	say $line_small;
+	say join("\n", @found_list);
+	say $line_small;
+	say "The preceding $type items will be deleted. Deletions cannot";
+	say "be restored! BE AWARE!!";
+	say "Please type 'delete' + 'enter' to remove them, or hit 'enter' to skip.";
+	say "If you are unsure, hit 'enter' to see the file list." if $type eq 'directory';
 	chomp($response = <STDIN>);
 	if (lc($response) eq 'delete'){
-		print "Are you SURE you want to delete these items?\n";
-		print "Type 'yes' + 'enter' to confirm, or hit 'enter' to skip.\n";
+		say "Are you SURE you want to delete these items?";
+		say "Type 'yes' + 'enter' to confirm, or hit 'enter' to skip.";
 		chomp($response = <STDIN>);
 		return 1 if lc($response) eq 'yes';
 	}
-	print "Skipping deletion for this $type group.\n";
+	say "Skipping deletion for this $type group.";
 	return 0;
 }
 ## end package 
@@ -1692,12 +1700,12 @@ sub process_collection {
 	my (@extension_files);
 	eval $print_line_heavy;
 	if ($VERBOSITY > 1){
-		print "Syncing " . main::sourcer("$DESTINATION_DIRECTORY") . " (destination) with\n";
-		print "  " . main::sourcer("$SOURCE_DIRECTORY") . " (source)...\n";
+		say 'Syncing ' . main::sourcer("$DESTINATION_DIRECTORY") . ' (destination) with';
+		say '  ' . main::sourcer("$SOURCE_DIRECTORY") . ' (source)...';
 	}
 	elsif ($VERBOSITY > 0){
-		print "Starting sync of " . main::sourcer("$SOURCE_DIRECTORY");
-		print "\n to " . main::sourcer("$DESTINATION_DIRECTORY") . "\n";
+		say 'Starting sync of ' . main::sourcer("$SOURCE_DIRECTORY");
+		say ' to ' . main::sourcer("$DESTINATION_DIRECTORY");
 	}
 	update_directories();
 	$list_type = 'file';
@@ -1706,9 +1714,9 @@ sub process_collection {
 		$extension = $_;
 		@found_list = ();
 		File::Find::find(\&main::wanted, @source_glob);
-		# print Dumper \@found_list;
+		# say Dumper \@found_list;
 		if ($VERBOSITY > 1){
-			print "PROCESSING DATA TYPE: $extension\n";
+			say "PROCESSING DATA TYPE: $extension";
 		}
 		elsif ($VERBOSITY > 0){
 			print "\n" . main::dotify("Processing $extension data type");
@@ -1728,27 +1736,27 @@ sub update_directories {
 	@found_list = ();
 	File::Find::find(\&main::wanted, @source_glob);
 	eval $print_line_large;
-	# print Dumper \@found_list;
+	# say Dumper \@found_list;
 	if ($VERBOSITY > 1){
-		print "Checking if $self_name needs to create destination directories...\n";
+		say "Checking if $self_name needs to create destination directories...";
 	}
 	elsif ($VERBOSITY > 0){
 		print main::dotify("Updating destination directories");
 	}
 	foreach $dir (sort { "\L$a" cmp "\L$b" } @found_list){
-		# print "\nd1:$dir\n";
+		# say "\nd1:$dir";
 		$result = 'UNSET';
 		next if $dir eq $SOURCE_DIRECTORY || $dir eq $DESTINATION_DIRECTORY;
 		$dir =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||; # strip out source path
 		next if !$dir;
 		$dest_dir = $DESTINATION_DIRECTORY . $path_separator . $dir;
-		# print "d2:$dir\n";
+		# say "d2:$dir";
 		# check to see if the destination dir already exists
 		if (! stat("$dest_dir")){
 			# stat failed so create the directory
 			eval $print_line_small;
 			if ($VERBOSITY > 1){
-				print "CREATING NEW DIRECTORY:\n $dest_dir\n";
+				say "CREATING NEW DIRECTORY:\n $dest_dir";
 			}
 			elsif ($VERBOSITY > 0){
 				print "\nCreating new directory: $dest_dir";
@@ -1757,7 +1765,7 @@ sub update_directories {
 			$result = mkdir("$dest_dir") if !$b_test;
 			$b_created = 1;
 			$b_dest_changed = 1;
-			print "Create Directory result: $result\n" if $VERBOSITY > 1;
+			say "Create Directory result: $result" if $VERBOSITY > 1;
 		}
 	}
 	main::print_not_found('dirs') if ! $b_created;
@@ -1771,7 +1779,7 @@ sub update_files {
 	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list){
 		next if ! $file;
 		$dest_file = $src_file = $file;
-		# print "\nIF: $src_file\n";
+		# say "\nIF: $src_file";
 		$dest_file =~ s|^$SOURCE_DIRECTORY|$DESTINATION_DIRECTORY|;
 		$dest_file =~ s/\`/\'/g;
 		# $dest_file =~ s/\$/\\\$/g;
@@ -1782,7 +1790,7 @@ sub update_files {
 		if (lc($extension) eq $INPUT_TYPE){
 			$dest_file =~ s/\.$INPUT_TYPE$/\.$OUTPUT_TYPE/i;
 		}
-		# print "OF: $dest_file\n";
+		# say "OF: $dest_file";
 		($action,$result,$dest_mod_time,$src_mod_time) = ('UNSET','UNSET',0,0);
 		# Now stat the destinationFile, and see if it's date is more recent
 		# than that of the original file. If so, we re-encode.
@@ -1794,14 +1802,14 @@ sub update_files {
 		if ($dest_info){
 			$dest_mod_time = $dest_info->mtime;
 			#  :: FORCE: $b_force
-# 			print "DEST_MOD: $dest_mod_time :: SRC_MOD: $src_mod_time\n"; 
+# 			say "DEST_MOD: $dest_mod_time :: SRC_MOD: $src_mod_time"; 
 # 		} else {
-# 			print "NOT EXISTS: $dest_file \n"; 
-# 			print "P1: $file ==> \n  $dest_file\n"; 
+# 			say "NOT EXISTS: $dest_file "; 
+# 			say "P1: $file ==> \n  $dest_file"; 
 		}
 		# If the destination file does not exist, or the user specified force,
 		# or the srcfile is more recent then the dest file, we encode/copy.
-		# print "src-mt: $src_mod_time dest-mt:$dest_mod_time\n";
+		# say "src-mt: $src_mod_time dest-mt:$dest_mod_time";
 		if (!$dest_info || $b_force || ($src_mod_time > $dest_mod_time)){
 			# these have to be set before the forking
 			$b_created = 1;
@@ -1818,7 +1826,7 @@ sub update_files {
 				$result = copy_file($file, $src_file, $dest_file);
 			}
 			# NOTE: for forking > 1, this will not print out for the output/input conversion files 
-			print "$action result: $result\n" if $VERBOSITY > 1;
+			say "$action result: $result" if $VERBOSITY > 1;
 		} 
 	}
 	# wait for all the forks to finish before terminating 
@@ -1836,8 +1844,8 @@ sub copy_file {
 	$dest_print =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 	eval $print_line_small;
 	if ($VERBOSITY > 1){
-		print "COPY: $src_print ==> \n";
-		print "      $dest_print\n"; 
+		say "COPY: $src_print ==> ";
+		say "      $dest_print"; 
 	}
 	elsif ($VERBOSITY > 0){
 		print "\nCopying $src_print...";
@@ -1869,8 +1877,8 @@ sub convert_file {
 	if (!$b_fork){
 		eval $print_line_small;
 		if ($VERBOSITY > 1){
-			print "ENCODE: $src_print ==> \n";
-			print "        $dest_print\n"; 
+			say "ENCODE: $src_print ==> ";
+			say "        $dest_print"; 
 		}
 		elsif ($VERBOSITY > 0){
 			# add line break only when file exists
@@ -1933,9 +1941,9 @@ sub convert_file {
 	if ($b_fork){
 		eval $print_line_small;
 		if ($VERBOSITY > 1){
-			print "ENCODED: $src_print ==> \n";
-			print "        $dest_print\n"; 
-			print "$action result: $result\n";
+			say "ENCODED: $src_print ==> ";
+			say "        $dest_print"; 
+			say "$action result: $result";
 		}
 		elsif ($VERBOSITY > 0){
 			# add line break only when file exists
@@ -1960,7 +1968,7 @@ sub flac2mp3_cmd {
 	foreach (keys %tags){
 		$tags{$_} = escape_item($tags{$_});
 	}
-	# print Dumper \%tags;
+	# say Dumper \%tags;
 	if ($tags{'TRACKNUMBER'} && $tags{'TRACKTOTAL'}){
 		$tags{'TRACKNUMBER'} .= "/$tags{'TRACKTOTAL'}";
 	}
@@ -1977,7 +1985,7 @@ sub flac2mp3_cmd {
 	# $lame_params .= ' --tt \"$tags{'TRACKTOTAL'}\" --tg \"$tags{'DISKNUMBER'}\"';
 	my $cmd = "$COMMAND_FLAC $silent_flac -d -c \"$i_file\" | ";
 	$cmd .= "$COMMAND_LAME $silent_lame -h -V $quality $lame_params";
-	# print $cmd,"\n";
+	# say $cmd;
 	return $cmd;
 }
 
@@ -2010,7 +2018,7 @@ sub get_flac_tags {
 	foreach (@tags){
 		$tag_list{$_} = '' if ! defined $tag_list{$_};
 	}
-	# print Dumper \%tag_list;
+	# say Dumper \%tag_list;
 	return %tag_list;
 }
 
@@ -2045,6 +2053,7 @@ sub escape_item {
 	$file =~ s/"/\\"/g;
 	$file =~ s/`/\\`/g;
 	$file =~ s/\$/\\\$/g;
+	$file =~ s/\@/\\\@/g;
 	return $file;
 }
 # args: 1 - string value to glob
@@ -2138,7 +2147,7 @@ sub wanted {
 	# since on rare occasions, the non readable file might be a file, not a directory, 
 	# no test for -d
 	# if ($File::Find::name =~ m/\Qlost+found\E/){
-	# print $File::Find::name, "\n";
+	# say $File::Find::name;
 	# run the recursion level tests
 	if (-d $File::Find::name){
 		my $b_skip = 0;
@@ -2148,15 +2157,15 @@ sub wanted {
 			# my $count = $working =~ tr/$path_separator//;
 			my $count = scalar(split (m|$path_separator|, $working));
 			$b_skip = 1 if $count > $recurse;
-			# print "$working :: $path_separator :: re: $recurse c: $count\n";
+			# say "$working :: $path_separator :: re: $recurse c: $count";
 		}
 		if (! -r $File::Find::name || $b_skip){
 			if (! grep { $_ eq $File::Find::name } @pruned){
-				print $line_small if !$b_first;
+				say $line_small if !$b_first;
 				$b_first = 1;
 				my $message = ($b_skip) ? 'recursion': 'unreadable';
-				print "SKIPPING ($message):\n $File::Find::name\n";
-				# print $line_small;
+				say "SKIPPING ($message):\n $File::Find::name";
+				# say $line_small;
 				push @pruned, $File::Find::name;
 			}
 			$File::Find::prune = 1;
@@ -2196,7 +2205,7 @@ sub wanted {
 			return if -l File::Basename::dirname($working);
 		}
 		$working =~ s/\.$OUTPUT_TYPE$/\.$INPUT_TYPE/i if $list_type eq 'file-clean';
-		# print '1: ', "$File::Find::name\n$working\n";
+		# say '1: ', "$File::Find::name\n$working";
 		# return if: 1. file/directory not found in destination 
 		# 2. string in exclude array found in destination path
 		# 3. if directory and  string found at end of path after trimming off trailing slash.
@@ -2205,9 +2214,9 @@ sub wanted {
 		(grep {$File::Find::name =~ /\Q$_\E/} @excludes) ||
 		($list_type eq 'dir-clean' && @excludes_stripped &&
 		(grep {$File::Find::name =~ /\Q$_\E$/} @excludes_stripped)));
-		# print '2: ', "$File::Find::name\n"; print "$_ ::";
+		# say '2: ', "$File::Find::name"; print "$_ ::";
 	}
-	# print $File::Find::name . "\n";
+	# say $File::Find::name;
 	push (@found_list, $File::Find::name);
 	return;
 }
@@ -2218,7 +2227,7 @@ sub writer {
 	my ($path, $ref_content) = @_;
 	my ($content);
 	no strict 'refs';
-	# print Dumper $ref_content, "\n";
+	# say Dumper $ref_content;
 	if (ref $ref_content eq 'ARRAY'){
 		$content = join "\n", @$ref_content or die "failed with error $!";
 	}
@@ -2242,25 +2251,25 @@ my $self_source = "$SELF_DIRECTORY$path_separator$self_name";
 my $man_source = "$MAN_DIRECTORY$path_separator$self_name.1";
 
 sub update {
-	print $line_large;
-	print "Starting $self_name self updater.\n";
+	say $line_large;
+	say "Starting $self_name self updater.";
 	validate();
 	grab();
-	print "Completed self updates.\n";
-	print $line_large;
+	say "Completed self updates.";
+	say $line_large;
 	exit 0;
 }
 sub grab {
 	my ($cmd,@content);
-	print "Downloading $self_name.\n";
+	say "Downloading $self_name.";
 	$cmd = "$COMMAND_CURL -L https:/smxi.org/acxi";
-	print $line_small;
+	say $line_small;
 	@content = qx($cmd);
 	if ($? > 0){
 		main::error_handler('self-updater',"Self update error: curl returns: $?.",1);
 	}
 	chomp(@content);
-	print $line_small;
+	say $line_small;
 	print "Verifying $self_name data... ";
 	if (! grep {/###\*\*EOF\*\*###/} @content){
 		main::error_handler('self-updater',"Self update error: Download data corrupted.",1);
@@ -2268,17 +2277,17 @@ sub grab {
 	else {
 		print "Verified.\nWriting to $self_name location... ";
 		main::writer($self_source,\@content);
-		print "File updated\n";
+		say 'File updated';
 	}
-	print "Downloading $self_name.1 man page.\n";
+	say "Downloading $self_name.1 man page.";
 	$cmd = "$COMMAND_CURL -L https:/smxi.org/acxi.1";
-	print $line_small;
+	say $line_small;
 	@content = qx($cmd);
 	if ($? > 0){
 		main::error_handler('self-updater',"Man update error: curl returns: $?.",1);
 	}
 	chomp(@content);
-	print $line_small;
+	say $line_small;
 	print "Verifying $self_name.1 data... ";
 	if (! grep {/\Qis a fork and full rewrite of flac2ogg.pl.\E/} @content){
 		main::error_handler('self-updater',"Man update error: Download data corrupted.",1);
@@ -2286,11 +2295,11 @@ sub grab {
 	else {
 		print "Verified.\nWriting to $self_name.1 location... ";
 		main::writer($man_source,\@content);
-		print "File updated\n";
+		say 'File updated';
 	}
 }
 sub validate {
-	print "Validating data... ";
+	print 'Validating data... ';
 	if (!$ALLOW_UPDATES){
 		main::error_handler('self-updater',"Self Updater has been disabled by package maintainer.",1);
 	}
@@ -2309,7 +2318,7 @@ sub validate {
 	if (!-w $man_source){
 		main::error_handler('self-updater',"$man_source is not writeable. Need superuser rights?.",1);
 	}
-	print "Valid\n";
+	say 'Valid';
 }
 }
 
@@ -2358,9 +2367,9 @@ sub error_handler {
 		}
 	}
 	else {
-		$message = "${br}Error $error_no: $message\n";
+		$message = "${br}Error $error_no: $message";
 	}
-	print "$message" if $message;
+	say "$message" if $message;
 	exit $error_no if $b_exit;
 }
 
@@ -2387,7 +2396,7 @@ sub check_user_values {
 sub start_text {
 	if ($VERBOSITY > 0){
 		eval $print_line_heavy;
-		print "Running $self_name pretests.\n";
+		say "Running $self_name pretests.";
 	}
 }
 sub check_infofix {
@@ -2449,7 +2458,7 @@ sub check_in_out_types {
 	else {
 		$b_valid_in_out = 1;
 		if ($VERBOSITY > 0){
-			print "Valid: $INPUT_TYPE(in) $OUTPUT_TYPE(out)\n";
+			say "Valid: $INPUT_TYPE(in) $OUTPUT_TYPE(out)";
 		}
 	}
 }
@@ -2477,7 +2486,7 @@ sub check_codecs {
 	}
 	else {
 		if ($VERBOSITY > 0){
-			print "Valid\n";
+			say 'Valid';
 		}
 	}
 }
@@ -2503,7 +2512,7 @@ sub check_src_dest_directories {
 		main::error_handler('dest-dir',$error_message,0);
 	} 
 	elsif ($VERBOSITY > 0){
-		print "Directories: exist\n";
+		say 'Directories: exist';
 	}
 	if ($b_check_dest && !$b_error && $DESTINATION_DIRECTORY eq $SOURCE_DIRECTORY){
 		$error_message = "Destination directory cannot be same as Source directory!";
@@ -2614,7 +2623,7 @@ sub check_application_paths {
 		main::error_handler('missing-app',$error_message,0);
 	}
 	elsif ($VERBOSITY > 0){
-		print "Available: $app_paths\n";
+		say "Available: $app_paths";
 	}
 }
 sub check_quality{
@@ -2679,7 +2688,7 @@ sub check_quality{
 		main::error_handler('quality-invalid',$error_message,0);
 	}
 	elsif ($VERBOSITY > 0){
-		print "Supported: $quality ($OUTPUT_TYPE)\n";
+		say "Supported: $quality ($OUTPUT_TYPE)";
 	}
 }
 sub check_verbosity {
@@ -2696,7 +2705,7 @@ sub check_verbosity {
 		main::error_handler('bad-level',$error_message,0);
 	}
 	elsif ($VERBOSITY > 0){
-		print "Supported: $VERBOSITY\n";
+		say "Supported: $VERBOSITY";
 	}
 }
 sub check_nlink {
@@ -2714,7 +2723,7 @@ sub check_nlink {
 			main::error_handler('bad-nlink',$error_message,0);
 		}
 		elsif ($VERBOSITY > 0){
-			print "Supported: $DONT_USE_NLINK\n";
+			say "Supported: $DONT_USE_NLINK";
 		}
 	}
 }
@@ -2742,7 +2751,7 @@ sub check_fork {
 		main::error_handler('bad-fork',$error_message,0);
 	}
 	elsif ($VERBOSITY > 0){
-		print "Supported: $FORK\n";
+		say "Supported: $FORK";
 	}
 }
 sub check_excludes {
@@ -2769,7 +2778,7 @@ sub check_excludes {
 			main::error_handler('bad-exclude-file',$error_message,0);
 		}
 		elsif ($VERBOSITY > 0){
-			print "Supported: $FORK\n";
+			say "Supported: $FORK";
 		}
 	}
 }
@@ -2783,14 +2792,14 @@ sub print_completion_message {
 	eval $print_line_heavy;
 	if ($b_dest_changed){
 		if ($VERBOSITY > 1){
-			print "All done updating. Enjoy your music!\n";
+			say 'All done updating. Enjoy your music!';
 		}
 		elsif ($VERBOSITY > 0){
-			print "\nUpdating completed. Enjoy your music!\n";
+			say "\nUpdating completed. Enjoy your music!";
 		}
 	}
 	elsif ($VERBOSITY > 0){
-		print "\nThere was nothing to update today in your collection.\n";
+		say "\nThere was nothing to update today in your collection.";
 	}
 	exit 0;
 }
@@ -2798,27 +2807,27 @@ sub print_completion_message {
 sub print_not_found {
 	my ($message,$none);
 	if ($_[0] eq 'files'){
-		$message = "No files to update of type: $extension\n";
+		$message = "No files to update of type: $extension";
 		$none = "None to update";
 	}
 	elsif ($_[0] eq 'extension'){
-		$message = "No files found of type: $extension\n";
+		$message = "No files found of type: $extension";
 		$none = "None found";
 	}
 	elsif ($_[0] eq 'dirs'){
-		$message = "No new directories required. Continuing...\n";
+		$message = 'No new directories required. Continuing...';
 		$none = "None required";
 	}
 	elsif ($_[0] eq 'directory-cleaned'){
-		$message = "No directories to remove. Continuing...\n";
+		$message = 'No directories to remove. Continuing...';
 		$none = "None to remove\n";
 	}
 	elsif ($_[0] eq 'file-cleaned'){
-		$message = "No files to remove. Continuing...\n";
+		$message = 'No files to remove. Continuing...';
 		$none = "None to remove\n";
 	}
 	if ($VERBOSITY > 1){
-		print $message;
+		say $message;
 	}
 	elsif ($VERBOSITY > 0){
 		print $none;
@@ -2883,7 +2892,7 @@ sub show_options {
 	$output .= "                  $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
 	$output .= "--source, -s      Path to the top-most directory containing your source files.\n";
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
-	$output .= "--source-glob, --sg Path inside -s directory with wildcards\n";
+	$output .= "--source-glob, -S [Path inside -s directory with wildcards]\n";
 	$output .= "                  Wildcard path, using *, paths relative to -s path.\n";
 	$output .= "                  Allows work on only a subset of directories in -s path.\n";
 	$output .= $line_small;
@@ -3018,13 +3027,12 @@ sub show_options {
 	$output .= "SOURCE_DIRECTORY=/home/me/music/flac\n";
 	$output .= "DESTINATION_DIRECTORY=/home/me/music/opus\n";
 	$output .= "Do not use \$, \", or \' in config options or values (except in path names).\n";
-	$output .= "\n";
-	print $output;
+	say $output;
 	exit 0;
 }
 
 sub show_version {
-	print "$self_name version: $self_version ($self_date)\n";
+	say "$self_name version: $self_version ($self_date)";
 	exit 0;
 }
 
@@ -3048,7 +3056,7 @@ sub set_basic_data {
 		$run{'source-glob'} =~ s|$path_separator$||;
 		# say $start_dir;
 		chdir $SOURCE_DIRECTORY;
-		my @temp = globber("$run{'source-glob'}");
+		my @temp = globber($run{'source-glob'});
 		foreach (@temp){
 			push(@source_glob,$SOURCE_DIRECTORY . $path_separator . $_);
 		}
@@ -3070,8 +3078,8 @@ sub set_basic_data {
 			@excludes = (@excludes,@temp);
 		}
 		@excludes_stripped = map { my $temp = $_;$temp =~ s|/$||;$temp} @excludes if @excludes;
-		# print Data::Dumper::Dumper \@excludes, "\n";
-		# print Data::Dumper::Dumper \@excludes_stripped, "\n";
+		# say Data::Dumper::Dumper \@excludes;
+		# say Data::Dumper::Dumper \@excludes_stripped;
 	}
 }
 
@@ -3103,9 +3111,9 @@ sub set_display_data {
 		$print_line_small = '';
 	}
 	else {
-		$print_line_heavy = 'print $line_heavy';
-		$print_line_large = 'print $line_large';
-		$print_line_small = 'print $line_small';
+		$print_line_heavy = 'say $line_heavy';
+		$print_line_large = 'say $line_large';
+		$print_line_small = 'say $line_small';
 	}
 }
 
@@ -3533,7 +3541,7 @@ sub get_options{
 		$VERBOSITY = 0 },
 	'recurse:i' => sub { 
 		my ($opt,$arg) = @_;
-		if (! defined $arg){
+		if (!defined $arg){
 			$msg = "$opt requires directory recursion level value. See -h.";
 			error_handler('missing-arg',$msg,1);
 		}
@@ -3546,13 +3554,18 @@ sub get_options{
 		$padding = ' --dont-use-padding';
 		$test{'tag'} = 1;
 		},
+	'resample' => sub {
+		my ($opt,$arg) = @_;
+		$run{'resample'} = 1;
+		$test{'resample'} = 1;
+		},
 	's|source:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
 		$SOURCE_DIRECTORY = $arg;
 		$test{'source'} = 1;
 		},
-	'sg|source-glob:s' => sub { 
+	'S|source-glob:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
 		$run{'source-glob'} = $arg;

@@ -670,15 +670,21 @@ lot, especially over network connections.
 Path to the top-most directory containing your source files (eg, flac).
 
 .TP
-.B \-\-source\-glob\fR, \fB\-\-sg {relative path}\fR
+.B \-\-source\-glob\fR, \fB\-S {path relative to \-s path}\fR
 Accepts wild card paths if you only want to update or check certain directories 
 within the main  \fB\-\-source\fR working directory. Requires \fB\-\-source\fR, 
 wild card path must be within \fB-\-source\fR, like:
 
-\fBacxi -s ./ \-\-sg 'BandName*' \-V\fR
+\fBacxi -s ./ \-S 'BandName*' \-V\fR
+
+\fBacxi -s ./ \-S '{BandName,Band Name,Band_Name}*' \-V\fR
 
 Will only verify folders tarting with BandName. Remember to always quote the 
 value otherwise your shell will expand the wild cards!!
+
+Uses standard globbing patterns: * one or more of anything; {one,two,three} 
+matches one of the comma separated values inside {...}. Note that * only matches 
+directory names or files, not the path separator, like /.
 
 Works with all options except \fB\-\-clean\fR.
 
