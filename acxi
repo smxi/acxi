@@ -290,7 +290,7 @@ sub main {
 	set_basic_data();
 	AutoTag::aggregate() if $run{'autotag-aggregate'};
 	AutoTag::create_file() if $run{'autotag-create'};
-	AutoTag::info_fixes() if $run{'infofix'};
+	AutoTag::process_info_files() if $run{'infofix'};
 	AutoTag::run_tagger() if $run{'autotag'};
 	CleanCollection::process_destination() if $run{'clean'};
 	SyncCollection::process_collection() if $run{'sync'};
@@ -707,12 +707,46 @@ sub make_file {
 		say "No files found to process.";
 	}
 }
+sub process_info_files {
+	my (@files,$item,$print_src,$result);
+	$list_type = 'dir';
+	say $line_small;
+	say "Checking directories for $INFO_FILE...";
+	@found_list = ();
+	chdir "$start_dir";
+	File::Find::find(\&main::wanted, @source_glob);
+	say 'start dir: ', $start_dir if $VERBOSITY > 3;
+	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
+		my $b_valid;
+		$print_src = $item;
+		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
+		$print_src = main::sourcer("$print_src");
+		chdir "$start_dir";
+		chdir "$item";
+		if ($VERBOSITY > 3){
+			say 'srcdir: ', $SOURCE_DIRECTORY;
+			say 'item: ', $item;
+			say 'cwd: ', Cwd::getcwd();
+			system 'pwd';
+		}
+		say " Processing: $print_src...";
+		if (-r "$INFO_FILE"){
+			# say $line_small;
+			say "  Working on file: $INFO_FILE";
+			info_fixes();
+		}
+		else {
+			say "  No $INFO_FILE found";
+		}
+	}
+	if (!@found_list){
+		say "No directories found.";
+	}
+}
 sub info_fixes {
 	my (@prepped);
 	my ($newlines) = (0);
-	say $line_small;
-	say "Working on file:\n$INFO_FILE";
-	my @data = open_info_file();
+	my @data = open_info_file('info-fixes');
 	@data = date_fix(\@data) if $run{'infofix-date'};
 	@data = analyze_files('info',\@data) if $run{'infofix-quality'};
 	# say Data::Dumper::Dumper \@data;
@@ -773,16 +807,16 @@ sub info_fixes {
 		# say $row;
 		push(@prepped,$row) if $newlines < 2;
 	}
-	say $line_small;
-	say 'Processing completed. Results:';
+	print '  Processing completed. ';
 	if (!$run{'infofix-write'}){
-		say "Confirm changes made by infofix. Write to $INFO_FILE by adding 'w':";
+		say 'Confirm these changes.';
+		say "  Write to $INFO_FILE by adding 'w':";
 		say $line_small;
-		print "Fix: ";
-		say join("\nFix: ",@prepped);
+		print "   Fix: ";
+		say join("\n   Fix: ",@prepped);
 	}
 	else {
-		say "Writing these changes back to $INFO_FILE:";
+		say "Writing these changes to $INFO_FILE:";
 		say $line_small;
 		say join("\n",@prepped);
 		my $contents = join("\r\n",@prepped);
@@ -867,7 +901,6 @@ sub analyze_files {
 		# say "Getting metaflac for file: $flac_file";
 		undef(@real);
 		my $escaped = main::escape_item("$flac_file");
-		# say 'cf: ', $escaped;
 		my @flac = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps --show-total-samples "$escaped");
 		if (scalar @flac != 4){
 			main::error_handler('analyze',"Metaflac failed to get 4 items from file:\n '$flac_file'",0);
@@ -948,7 +981,7 @@ sub prefill_data {
 	my ($b_performer,%info);
 	# no blank lines in band/location/date block, stop after first blank line.
 	my ($b_top_block) = (1);
-	my @data = open_info_file();
+	my @data = open_info_file('prefill');
 	my $counter = 0;
 	foreach (@data){
 		$counter++;
@@ -987,21 +1020,30 @@ sub prefill_data {
 	return %info;
 }
 sub open_info_file {
+	my ($source) = @_;
 	my (@data);
-	chdir "$start_dir";
-	chdir "$SOURCE_DIRECTORY";
-	print "Checking for $INFO_FILE... ";
-	main::error_handler('open',"$INFO_FILE not readable!",1) if  ! -r $INFO_FILE;
-	open(my $fh, '<', $INFO_FILE) or 
-	 main::error_handler('open', "Failed to open: $INFO_FILE with error:\n:$!",1);
-	chomp(@data = <$fh>);
-	close $fh if $fh;
-	say 'File found and read';
-	my $count = scalar @data;
-	if ($count < 15){
-		main::error_handler('info-file',"$INFO_FILE only had $count lines",1);
+	my ($in1) = ('  ');
+	if ($source eq 'prefill'){
+		chdir "$start_dir";
+		chdir "$SOURCE_DIRECTORY";
+		($in1) = ('');
 	}
-	push(@data,'') if @data;
+	print $in1 . "Checking $INFO_FILE... ";
+	if (! -r $INFO_FILE){
+		main::error_handler('open',"$INFO_FILE not readable or not present!",1) ;
+	}
+	else {
+		open(my $fh, '<', $INFO_FILE) or 
+		main::error_handler('open', "Failed to open: $INFO_FILE with error:\n:$!",1);
+		chomp(@data = <$fh>);
+		close $fh if $fh;
+		say 'File found and read';
+		my $count = scalar @data;
+		if ($count < 15){
+			main::error_handler('info-file',"$INFO_FILE only had $count lines",1);
+		}
+		push(@data,'') if @data;
+	}
 	return @data;
 }
 sub populate_file {

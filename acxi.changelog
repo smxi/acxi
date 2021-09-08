@@ -10,7 +10,7 @@ RELEASE NOTES:
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
 
-1. -X does not work in bulk jobs, only per directory.
+1. -E does not work in bulk jobs, only per directory.
 
 --------------------------------------------------------------------------------
 BUGS:
