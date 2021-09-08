@@ -289,7 +289,7 @@ sub main {
 	Validation::check_user_values();
 	set_basic_data();
 	AutoTag::aggregate() if $run{'autotag-aggregate'};
-	AutoTag::create_file() if $run{'autotag-create'};
+	AutoTag::create_tag_file() if $run{'autotag-create'};
 	AutoTag::process_info_files() if $run{'infofix'};
 	AutoTag::run_tagger() if $run{'autotag'};
 	CleanCollection::process_destination() if $run{'clean'};
@@ -340,14 +340,14 @@ sub aggregate {
 	# chdir Cwd::getcwd(); # $SOURCE_DIRECTORY;
 	chdir $start_dir;
 	foreach (@files){
-		aggregate_file($_);
+		aggregate_files($_);
 	}
 	say $line_small;
 	say 'Completed file aggregation.';
 	say $line_large;
 	exit;
 }
-sub aggregate_file {
+sub aggregate_files {
 	($extension) = @_;
 	my ($path,@files);
 	my ($dir,$file,$file_working,$name);
@@ -388,10 +388,10 @@ sub aggregate_file {
 	say "Finished copying over $extension type files to " . main::sourcer("$DESTINATION_DIRECTORY");
 	
 }
-sub create_file {
+sub create_tag_file {
 	say $line_large;
 	say "Creating $TAG_FILE in " . main::sourcer("$SOURCE_DIRECTORY");
-	make_file();
+	make_tag_file();
 	say $line_small;
 	say 'Completed file creation.';
 	say $line_large;
@@ -663,7 +663,7 @@ sub image_handler {
 	}
 	return @args;
 }
-sub make_file {
+sub make_tag_file {
 	my ($file,@files);
 	chdir "$start_dir";
 	#chdir $SOURCE_DIRECTORY;
