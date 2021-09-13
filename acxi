@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.4.00';
-my $self_date='2021-09-08';
+my $self_date='2021-09-12';
 
 ## GLOBALS ##
 my %run;
@@ -286,15 +286,15 @@ sub main {
 	get_options();
 	set_display_data();
 	SelfUpdater::update() if $run{'update'};
-	Validation::check_user_values();
+	Validation::run();
 	set_basic_data();
-	AutoTag::aggregate() if $run{'autotag-aggregate'};
-	AutoTag::create_tag_file() if $run{'autotag-create'};
-	AutoTag::process_info_files() if $run{'infofix'};
+	Aggregate::run() if $run{'aggregate'};
+	AutoTag::create() if $run{'autotag-create'};
 	AutoTag::run_tagger() if $run{'autotag'};
-	CleanCollection::process_destination() if $run{'clean'};
-	SyncCollection::process_collection() if $run{'sync'};
 	Checksums::process() if ($run{'checksum'} || $run{'checksum-verify'});
+	CleanCollection::process() if $run{'clean'};
+	InfoFix::process() if $run{'infofix'};
+	SyncCollection::process() if $run{'sync'};
 	print_completion_message();
 }
 
@@ -303,35 +303,13 @@ sub main {
 #########################################################################
 
 #### -------------------------------------------------------------------
-#### AUTO-TAGGING
+#### AGGREGATE
 #### -------------------------------------------------------------------
 
-## AutoTag 
+## Aggregate
 {
-package AutoTag;
-sub run_tagger {
-	say $line_large;
-	if ($run{'embed-image'}){
-		say 'Starting image embedding in ' . main::sourcer($SOURCE_DIRECTORY) . '...';
-		image_embedder();
-		say $line_small;
-		say 'Completed image embedding.';
-	}
-	if ($run{'update-tag'}){
-		say 'Starting tag update in ' . main::sourcer($SOURCE_DIRECTORY) . '...';
-		tag_updater();
-		say $line_small;
-		say 'Completed tag update.';
-	}
-	else {
-		say 'Starting auto-tagging in ' . main::sourcer($SOURCE_DIRECTORY) . '...';
-		get_tag_files();
-		say $line_small;
-		say 'Completed auto-tagging.';
-	}
-	say $line_large;
-}
-sub aggregate {
+package Aggregate;
+sub run {
 	say $line_large;
 	say 'Starting file aggregation from: ' . main::sourcer($SOURCE_DIRECTORY);
 	say ' to: ' . main::sourcer($DESTINATION_DIRECTORY);
@@ -340,14 +318,14 @@ sub aggregate {
 	# chdir Cwd::getcwd(); # $SOURCE_DIRECTORY;
 	chdir $start_dir;
 	foreach (@files){
-		aggregate_files($_);
+		aggregate($_);
 	}
 	say $line_small;
 	say 'Completed file aggregation.';
 	say $line_large;
 	exit;
 }
-sub aggregate_files {
+sub aggregate {
 	($extension) = @_;
 	my ($path,@files);
 	my ($dir,$file,$file_working,$name);
@@ -386,9 +364,184 @@ sub aggregate_files {
 	say $line_small;
 	# say Data::Dumper::Dumper \@files;
 	say "Finished copying over $extension type files to " . main::sourcer("$DESTINATION_DIRECTORY");
-	
 }
-sub create_tag_file {
+}
+
+#### -------------------------------------------------------------------
+#### ANALYZE
+#### -------------------------------------------------------------------
+
+## Analyze
+{
+package Analyze;
+my ($avg_kbs,$raw_total_size,$total_size,$total_time) = (0,0,0,0);
+my ($flac_info) = ('');
+my ($type,$ref,@files,@info,%results);
+
+sub run {
+	($type,$ref) = @_;
+	my $dir = Cwd::getcwd; # resolves sym links
+	# the caller has looped into directory with info file and flacs
+	if ($type eq 'info'){
+		@files = main::globber('*.flac');
+	}
+	# the caller is generating the flac list and passing it in here
+	else {
+		@files = @$ref;
+	}
+	if (!@files){
+		main::error_handler('analyze',"No flac files found for quality test!\n",1);
+	}
+	else {
+		process();
+		if ($type eq 'info'){
+			return info_data(); # returns updated INFO_FILE page contents array
+		}
+		else {
+			generate_output(); # print output to screen
+		}
+	}
+}
+sub process {
+	foreach my $flac_file (@files){
+		# say "Getting metaflac for file: $flac_file";
+		my @real;
+		my $escaped = main::escape_item("$flac_file");
+		my @flac = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps --show-total-samples "$escaped");
+		if (scalar @flac != 4){
+			main::error_handler('analyze',"Metaflac failed to get 4 items from file:\n '$flac_file'",0);
+		}
+		foreach (@flac){
+			$_ =~ s/[\r\n]//g;
+			push(@real,$_);
+		}
+		# say Data::Dumper::Dumper \@flac;
+		if (@real && scalar @real > 3){
+			my $duration = ($real[3]/$real[1]);
+			$total_time += $duration;
+			# -s returns size in bytes, we want bits
+			my $size = (-s $flac_file) * 8;
+			$total_size += $size;
+			my $kbs = $size/$duration/1000;
+			$kbs = sprintf("%.0f",$kbs);
+			# say $size $kbs;
+			# say "duration: $duration seconds";
+			if ($type eq 'data' || !$flac_info){
+				my $flac_data = $real[2] . '/' . sprintf("%.1f", $real[1]/1000);
+				$flac_info = "FLAC: $flac_data";
+				$flac_info .= " ($real[0] channels)";
+				if ($type eq 'data'){
+					$flac_data .= '/' . $real[0] . 'ch';
+					if (!grep {$_ eq $flac_data} @info){
+						push(@info,$flac_data);
+					}
+				}
+			}
+			if ($type eq 'data'){
+				my ($raw_time,$raw_size) = ($duration,$size);
+				my $time_print = 'time: ' . main::print_time($duration);
+				my $size_print = 'size: '. main::print_size($size / 8 / 1024);
+				my $kbs_print = 'kbs: '. $kbs;
+				if ($VERBOSITY > 2){
+					$time_print .= " ($raw_time seconds)"; 
+					$size_print .= " ($raw_size bits)"; 
+				}
+				$results{$flac_file} = [$flac_info,$time_print,$size_print,$kbs_print];
+			}
+		}
+	}
+	# say "Result: $flac_info";
+	$avg_kbs = sprintf("%.0f",$total_size/$total_time/1000);
+	# back to KiB
+	$raw_total_size = $total_size;
+	$total_size = $total_size/8/1024;
+}
+# this will be inserted into $INFO_FILE
+sub info_data {
+	my ($b_head,$b_inserted,$counter) = (1,0,0);
+	my (@data);
+	foreach (@$ref){
+		$counter++;
+		$b_head = 0 if $b_head && $counter > 1 && /^\s*$/;
+		# put the block under the top band info header block
+		if (!$b_inserted && !$b_head && $flac_info && $counter > 3){
+			my $quality = "Quality: /$INFO_RATING ()";
+			push(@data,(
+			'',
+			$flac_info,
+			$quality,
+			'Time: ' . main::print_time($total_time),
+			'Size: ' . main::print_size($total_size),
+			'Average kb/s: ' . $avg_kbs,
+			'Tracks: ' . scalar @files,
+			'',
+			));
+			$b_inserted = 1;
+		}
+		push(@data,$_);
+	}
+	return @data;
+}
+sub generate_output {
+	my $time = main::print_time($total_time);
+	my $size = main::print_size($total_size);
+	if ($VERBOSITY > 2){
+		$time .= " ($total_time seconds)"; 
+		$size .= " ($raw_total_size bits)"; 
+	}
+	say '  Generating flac data:';
+	$time = '  Time: ' . $time;
+	$size = '  Size: ' . $size;
+	$avg_kbs = '  Average kb/s: ' . $avg_kbs;
+	my $track_count = '  Tracks: ' . scalar @files;
+	my $flac_data = '  Info: ' . join(', ',sort @info);
+	foreach my $key (sort keys %results){
+		say "   File: $key:";
+		if ($VERBOSITY > 1){
+			say '    ', join("\n    ",@{$results{$key}});
+		}
+		else {
+			say '    ', join(' ',@{$results{$key}});
+		}
+	}
+	say $flac_data if defined $flac_data;
+	say $time if defined $time;
+	say $size if defined $size;
+	say $avg_kbs if defined $avg_kbs;
+	say $track_count if defined $track_count;
+}
+}
+
+#### -------------------------------------------------------------------
+#### AUTO-TAGGING
+#### -------------------------------------------------------------------
+
+## AutoTag 
+{
+package AutoTag;
+sub run_tagger {
+	say $line_large;
+	if ($run{'embed-image'}){
+		say 'Starting image embedding in ' . main::sourcer($SOURCE_DIRECTORY) . '...';
+		image_embedder();
+		say $line_small;
+		say 'Completed image embedding.';
+	}
+	if ($run{'update-tag'}){
+		say 'Starting tag update in ' . main::sourcer($SOURCE_DIRECTORY) . '...';
+		tag_updater();
+		say $line_small;
+		say 'Completed tag update.';
+	}
+	else {
+		say 'Starting auto-tagging in ' . main::sourcer($SOURCE_DIRECTORY) . '...';
+		get_tag_files();
+		say $line_small;
+		say 'Completed auto-tagging.';
+	}
+	say $line_large;
+}
+sub create {
 	say $line_large;
 	say "Creating $TAG_FILE in " . main::sourcer("$SOURCE_DIRECTORY");
 	make_tag_file();
@@ -573,96 +726,6 @@ sub tag_updater {
 		say "No $INPUT_TYPE files found.";
 	}
 }
-sub image_embedder{
-	my ($args,$cmd,$error_message,@image_args,$item,$print_file,
-	$result,$working_dir);
-	$list_type = 'file';
-	$extension = $INPUT_TYPE;
-	@found_list = ();
-	File::Find::find(\&main::wanted, @source_glob);
-	chdir "$start_dir";
-	chdir "$SOURCE_DIRECTORY";
-	if ($embed_image ne 'remove' && ! -e $embed_image){
-		$error_message = "Embed image $embed_image could not be located!\n";
-		$error_message .= "Source directory: $SOURCE_DIRECTORY\n";
-		$error_message .= "Please make sure your embed image file name or path is correct.\n";
-		main::error_handler('file-missing', $error_message,1);
-	}
-	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
-		$print_file = $working_dir = $item;
-		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
-		print "Processing: $print_file...";
-		$item = main::escape_item("$item");
-		if ($run{'remove-images'}){
-			image_remover("$item");
-		}
-		if ($embed_image ne 'remove'){
-			@image_args = image_handler("$item",("$embed_image"));
-			$args = join ' ', @image_args;
-			$cmd = qq($COMMAND_METAFLAC $args "$item");
-			say "\n", $cmd if $VERBOSITY > 3;
-			if (!$b_test){
-				qx($cmd);
-				if ($? > 0){
-					$error_message = "$COMMAND_METAFLAC returned error: $?";
-					main::error_handler('application-error', $error_message,1);
-				}
-				say 'Image embedded';
-			}
-			else {
-				say 'Test mode only';
-			}
-		}
-		else {
-			say 'Image and padding data removed';
-		}
-		$b_dest_changed = 1;
-	}
-	if (!@found_list){
-		say "No $INPUT_TYPE files found.";
-	}
-}
-sub image_remover {
-	my ($file) = @_;
-	my ($cmd,$error_message) = ('','');
-	print "Removing images... ";
-	$cmd = qq($COMMAND_METAFLAC --remove --block-type=PICTURE,PADDING --dont-use-padding "$file");
-	if (!$b_test){
-		qx($cmd);
-		if ($? > 0){
-			$error_message = "$COMMAND_METAFLAC returned error: $?";
-			main::error_handler('application-error', $error_message,1);
-		}
-	}
-	say "\n", $cmd if $VERBOSITY > 3;
-}
-# note: metaflac is ignring type integer and assigning 3, not sure why
-sub image_handler {
-	my ($file,@images) = @_;
-	my ($size,@args,@result,$working);
-	my $cmd = qq($COMMAND_METAFLAC --list --block-type=PICTURE "$file");
-	@result = qx($cmd);
-	@result = grep {/type:.*\(PICTURE\)/} @result if @result;
-	# filename: type: 6 (PICTURE) 3||||images/cover.jpg
-	# --import-picture-from="3||||front.jpg"
-	foreach (@images){
-		$working = (split /\|/, $_)[-1];
-		if (@result){
-			say "\n  Skipping $working (pre-existing image data)... ";
-		}
-		else {
-			if (-e $working){
-				$size = sprintf("%.1f", File::stat::stat("$working")->size / 1024);
-				push @args, qq(--import-picture-from="$_");
-				say "\n  Embedding $working ($size KiB)... ";
-			}
-			else {
-				say "\n  File $working not found... ";
-			}
-		}
-	}
-	return @args;
-}
 sub make_tag_file {
 	my ($file,@files);
 	chdir "$start_dir";
@@ -701,279 +764,10 @@ sub make_tag_file {
 	if (@files){
 		@files = sort @files; # can be a problem, if track number comes last!
 		say "Processing.";
-		populate_file(\@files);
+		populate_tag_file(\@files);
 	}
 	else {
 		say "No files found to process.";
-	}
-}
-sub process_info_files {
-	my (@files,$item,$print_src,$result);
-	$list_type = 'dir';
-	say $line_small;
-	say "Checking directories for $INFO_FILE...";
-	@found_list = ();
-	chdir "$start_dir";
-	File::Find::find(\&main::wanted, @source_glob);
-	say 'start dir: ', $start_dir if $VERBOSITY > 3;
-	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
-		my $b_valid;
-		$print_src = $item;
-		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
-		$print_src = main::sourcer("$print_src");
-		chdir "$start_dir";
-		chdir "$item";
-		if ($VERBOSITY > 3){
-			say 'srcdir: ', $SOURCE_DIRECTORY;
-			say 'item: ', $item;
-			say 'cwd: ', Cwd::getcwd();
-			system 'pwd';
-		}
-		say " Processing: $print_src...";
-		if (-r "$INFO_FILE"){
-			# say $line_small;
-			say "  Working on file: $INFO_FILE";
-			info_fixes();
-		}
-		else {
-			say "  No $INFO_FILE found";
-		}
-	}
-	if (!@found_list){
-		say "No directories found.";
-	}
-}
-sub info_fixes {
-	my (@prepped);
-	my ($newlines) = (0);
-	my @data = open_info_file('info-fixes');
-	@data = date_fix(\@data) if $run{'infofix-date'};
-	@data = analyze_files('info',\@data) if $run{'infofix-quality'};
-	# say Data::Dumper::Dumper \@data;
-	# we want these to be set to uppercase again after autoformat runs
-	my $upper = 'Aud|Cdr?|Sd?b|Ips|Eac|Ak|Az|Ca|Co|Ct|Dc|De|Dk|Fl|Flac|Hd|Hi|Il|';
-	$upper .= 'Ma|Md|Mkw|Mo|Nc|Nh|Nj|Nm|Nyc?|Pa|Ri|Sbd?|Sf|Shn|Tn|Usa|Ut|Wa|';
-	$upper .= 'Wav|Wi|Va|Vt';
-	foreach my $row (@data){
-		if ($run{'infofix-upper'}){
-			foreach my $style (qw(highlight)){
-				$row = Text::Autoformat::autoformat($row, {case => $style, left=>1, right=>1000});
-			}
-			# set back to upper common abbreviations, states, etc
-			# don't do Or or Me or Oh!
-			$row =~ s/\b($upper)\b/\U$1/g;
-			$row =~ s/\bCD[\s-]?([1-6])/Disc $1/g;
-			$row =~ s/\bSB\b/SBD/g;
-		}
-		$row =~ s/[\r\n]+//g; # has to be AFTER autoformat
-		$row =~ s/\s\s+/ /g;
-		$row =~ s/\s+$//g;
-		$row =~ s/\(\s+/\(/g;
-		$row =~ s/\s+\)/\)/g;
-		$row =~ s/^\s+$//;
-		if ($row !~ /^$/){
-			$newlines = 0;
-		}
-		else {
-			$newlines++;
-		}
-		# 1-4 / 1-12 / 12 / 213
-		if (($run{'infofix-no'} || $run{'infofix-title'}) && 
-		 $row =~ /^(\s*(([1-9]-)([0-9]{1,2})|([0-9]{1,2}|[0-9]{3}))(\]\s*|\.\s*|\s*-\s*|\s*\)\s*|:\s*|\s+))/){
-			# say "$1 '$6'";
-			if ($run{'infofix-no'}){
-				# say "$1 $2 $3";
-				my $nu = (defined $4) ? $4 : $5;
-				my $disc = (defined $3) ? $3 : '';
-				my $pattern = $1;
-				if ($nu =~ /^([1-9])([0-9]{2})$/){
-					$nu = $2;
-					$disc = $1 . '-';
-				}
-				$nu = sprintf('%02d',$nu);
-				$nu = $disc . $nu if $disc;
-				$row =~ s/^\Q$pattern\E/$nu. /;
-			}
-			if ($run{'infofix-title'}){
-				foreach my $style (qw(highlight)){
-					$row = Text::Autoformat::autoformat($row, { case => $style, left=>1, right=>1000 });
-					$row =~ s/[\r\n]+//g; # has to be AFTER autoformat
-				}
-				$row =~ s/\s+[\(\[]?([0-9]{1,2}[\.:]([0-9\.:]+))[\)\]]?\s*$/ ($1)/;
-			}
-		}
-		# $row =~ s//'/g;
-		# $row =~ s/�/'/g;
-		# say $row;
-		push(@prepped,$row) if $newlines < 2;
-	}
-	print '  Processing completed. ';
-	if (!$run{'infofix-write'}){
-		say "Write changes to $INFO_FILE by adding 'w':";
-		say $line_small;
-		print "   Fix: ";
-		say join("\n   Fix: ",@prepped);
-	}
-	else {
-		say "Writing changes to $INFO_FILE:";
-		say $line_small;
-		print '   ';
-		say join("\n   ",@prepped);
-		my $contents = join("\r\n",@prepped);
-		open(my $fh, '>', $INFO_FILE) or die "failed to open for writing: $INFO_FILE";
-		print $fh $contents;;
-		close $fh if $fh;
-		say $line_small;
-		say "  Changes written to $INFO_FILE.";
-	}
-}
-sub date_fix {
-	my ($ref) = @_;
-	my ($dd,$mm,$regex,$yyyy,@data);
-	foreach (@$ref){
-		($dd,$mm,$regex,$yyyy) =  ('','','','');
-		# fix D month, YY, month D, YY, month-DD-YYYY
-		# regex: 1: total regex; 2: container for day start; 3: day start
-		# 4: optional nd/rd 5: month; 6: container for day; 7: day;
-		# 8: optional nd/rd etc; 9: year; 10: 19..; 11: 20..
-		if (/\b(((0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\S*?([\s\/,-]+(0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?)?[\s\/,-]+((19)?[4-9][0-9]|(20)?[012][0-9]))\b/i){
-			$regex = $1;
-			$yyyy = $9;
-			# say "rx: $regex 5: $5 9: $9";
-			my $month = lc($5);
-			if ($3){$dd = sprintf('%02d',$3)}
-			elsif ($7){$dd = sprintf('%02d',$7)}
-			if ($month eq 'jan'){$mm = '01';}
-			elsif ($month eq 'feb'){$mm = '02';}
-			elsif ($month eq 'mar'){$mm = '03';}
-			elsif ($month eq 'apr'){$mm = '04';}
-			elsif ($month eq 'may'){$mm = '05';}
-			elsif ($month eq 'jun'){$mm = '06';}
-			elsif ($month eq 'jul'){$mm = '07';}
-			elsif ($month eq 'aug'){$mm = '08';}
-			elsif ($month eq 'sep'){$mm = '09';}
-			elsif ($month eq 'oct'){$mm = '10';}
-			elsif ($month eq 'nov'){$mm = '11';}
-			elsif ($month eq 'dec'){$mm = '12';}
-			# say "y: $yyyy m: $mm d: $dd";
-		}
-		# Change m/d/yy or m-d-yy or m.d.yy to yyyy-mm-dd 09/19/54
-		elsif (/\b((0?[1-9]|1[0-2])[\/\.-](0?[1-9]|[12][0-9]|30|31)[\/\.-]((19)?[4-9][0-9]|(20)?[0-2][0-9]))\b/){
-			$regex = $1;
-			$mm = sprintf('%02d',$2);
-			$dd = sprintf('%02d',$3);
-			$yyyy = $4;
-		}
-		elsif (/\b((19[4-9][0-9]|20[0-2][0-9])[\._-]?(0?[1-9]|1[0-2])[\._-]?(0?[1-9]|[12][0-9]|30|31))\b/){
-			$regex = $1;
-			$yyyy = $2;
-			$mm = sprintf('%02d',$3);
-			$dd = sprintf('%02d',$4);
-		}
-		if ($yyyy =~ /^[4-9][0-9]$/){
-			$yyyy = '19' . $yyyy;
-		}
-		elsif ($yyyy =~ /^[0-2][0-9]$/){
-			$yyyy = '20' . $yyyy;
-		}
-		if ($mm && $dd && $yyyy){
-			$_ =~ s/\Q$regex\E/$yyyy-$mm-$dd/i;
-		}
-		push(@data,$_);
-	}
-	return @data;
-}
-sub analyze_files {
-	my ($type,$ref) = @_;
-	my $dir = Cwd::getcwd; # resolves sym links
-	my ($file,@data,@files,@info,@real,%results);
-	my ($bps,$flac_info,$total_time,$total_size,$total_tracks) = ('','',0,0,0);
-	if ($type eq 'info'){
-		@files = main::globber('*.flac');
-	}
-	else {
-		@files = @$ref;
-	}
-	if (!@files){
-		main::error_handler('analyze',"No flac files found for quality test!\n",1);
-	}
-	foreach my $flac_file (@files){
-		# say "Getting metaflac for file: $flac_file";
-		undef(@real);
-		my $escaped = main::escape_item("$flac_file");
-		my @flac = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps --show-total-samples "$escaped");
-		if (scalar @flac != 4){
-			main::error_handler('analyze',"Metaflac failed to get 4 items from file:\n '$flac_file'",0);
-		}
-		foreach (@flac){
-			$_ =~ s/[\r\n]//g;
-			push(@real,$_);
-		}
-		# say Data::Dumper::Dumper \@flac;
-		if (@real && scalar @real > 3){
-			my $duration = ($real[3]/$real[1]);
-			$total_time += $duration;
-			# -s returns size in bytes, we want bits
-			my $size = (-s $flac_file) * 8;
-			$total_size += $size;
-			my $kbs = $size/$duration/1000;
-			$kbs = sprintf("%.0f",$kbs);
-			# say $size $kbs;
-			# say "duration: $duration seconds";
-			if ($type eq 'data' || !$flac_info){
-				my $flac_data = $real[2] . '/' . sprintf("%.1f", $real[1]/1000);
-				$flac_info = "FLAC: $flac_data";
-				$flac_info .= " ($real[0] channels)";
-				if ($type eq 'data'){
-					$flac_data .= '/' . $real[0] . 'ch';
-					if (!grep {$_ eq $flac_data} @info){
-						push(@info,$flac_data);
-					}
-				}
-			}
-			if ($type eq 'data'){
-				$duration = main::print_time($duration);
-				$size = $size / 8 / 1024;
-				$size = main::print_size($size);
-				$flac_info .= ' time: ' . $duration . ' size: ' . $size . ' kbs: '. $kbs;
-				$results{$flac_file} = $flac_info;
-			}
-		}
-	}
-	# say "Result: $flac_info";
-	my $avg_kbs = sprintf("%.0f",$total_size/$total_time/1000);
-	# back to KiB
-	$total_size = $total_size / 8 / 1024;
-	if ($type eq 'info'){
-		my ($b_head,$b_inserted,$counter) = (1,0,0);
-		foreach (@$ref){
-			$counter++;
-			$b_head = 0 if $b_head && $counter > 1 && /^\s*$/;
-			if (!$b_inserted && !$b_head && $flac_info && $counter > 3){
-				my $quality = "Quality: /$INFO_RATING ()";
-				push(@data,(
-				'',
-				$flac_info,
-				$quality,
-				'Time: ' . main::print_time($total_time),
-				'Size: ' . main::print_size($total_size),
-				'Average kb/s: ' . $avg_kbs,
-				'Tracks: ' . scalar @files,
-				'',
-				));
-				$b_inserted = 1;
-			}
-			push(@data,$_);
-		}
-		return @data;
-	}
-	else {
-		$results{'total-time'} = main::print_time($total_time);
-		$results{'total-size'} = main::print_size($total_size);
-		$results{'total-tracks'} = scalar @files;
-		$results{'flac-info'} = join(', ',sort @info);
-		$results{'avg-kbs'} = $avg_kbs;
-		return %results;
 	}
 }
 
@@ -981,7 +775,7 @@ sub prefill_data {
 	my ($b_performer,%info);
 	# no blank lines in band/location/date block, stop after first blank line.
 	my ($b_top_block) = (1);
-	my @data = open_info_file('prefill');
+	my @data = InfoFix::open_info_file('prefill');
 	my $counter = 0;
 	foreach (@data){
 		$counter++;
@@ -1019,34 +813,7 @@ sub prefill_data {
 	# say Data::Dumper::Dumper \%info;
 	return %info;
 }
-sub open_info_file {
-	my ($source) = @_;
-	my (@data);
-	my ($in1) = ('  ');
-	if ($source eq 'prefill'){
-		chdir "$start_dir";
-		chdir "$SOURCE_DIRECTORY";
-		($in1) = ('');
-	}
-	print $in1 . "Checking $INFO_FILE... ";
-	if (! -r $INFO_FILE){
-		main::error_handler('open',"$INFO_FILE not readable or not present!",1) ;
-	}
-	else {
-		open(my $fh, '<', $INFO_FILE) or 
-		main::error_handler('open', "Failed to open: $INFO_FILE with error:\n:$!",1);
-		chomp(@data = <$fh>);
-		close $fh if $fh;
-		say 'File found and read';
-		my $count = scalar @data;
-		if ($count < 15){
-			main::error_handler('info-file',"$INFO_FILE only had $count lines",1);
-		}
-		push(@data,'') if @data;
-	}
-	return @data;
-}
-sub populate_file {
+sub populate_tag_file {
 	my ($files) = @_;
 	my (@multi,@replaygain,@tags,%info);
 	my ($b_first,$j,$holder,$starter) = (1,0,'','');
@@ -1220,6 +987,96 @@ sub populate_file {
 		main::writer($TAG_FILE,\@tags);
 	}
 }
+sub image_embedder{
+	my ($args,$cmd,$error_message,@image_args,$item,$print_file,
+	$result,$working_dir);
+	$list_type = 'file';
+	$extension = $INPUT_TYPE;
+	@found_list = ();
+	File::Find::find(\&main::wanted, @source_glob);
+	chdir "$start_dir";
+	chdir "$SOURCE_DIRECTORY";
+	if ($embed_image ne 'remove' && ! -e $embed_image){
+		$error_message = "Embed image $embed_image could not be located!\n";
+		$error_message .= "Source directory: $SOURCE_DIRECTORY\n";
+		$error_message .= "Please make sure your embed image file name or path is correct.\n";
+		main::error_handler('file-missing', $error_message,1);
+	}
+	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
+		$print_file = $working_dir = $item;
+		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
+		print "Processing: $print_file...";
+		$item = main::escape_item("$item");
+		if ($run{'remove-images'}){
+			image_remover("$item");
+		}
+		if ($embed_image ne 'remove'){
+			@image_args = image_handler("$item",("$embed_image"));
+			$args = join ' ', @image_args;
+			$cmd = qq($COMMAND_METAFLAC $args "$item");
+			say "\n", $cmd if $VERBOSITY > 3;
+			if (!$b_test){
+				qx($cmd);
+				if ($? > 0){
+					$error_message = "$COMMAND_METAFLAC returned error: $?";
+					main::error_handler('application-error', $error_message,1);
+				}
+				say 'Image embedded';
+			}
+			else {
+				say 'Test mode only';
+			}
+		}
+		else {
+			say 'Image and padding data removed';
+		}
+		$b_dest_changed = 1;
+	}
+	if (!@found_list){
+		say "No $INPUT_TYPE files found.";
+	}
+}
+sub image_remover {
+	my ($file) = @_;
+	my ($cmd,$error_message) = ('','');
+	print "Removing images... ";
+	$cmd = qq($COMMAND_METAFLAC --remove --block-type=PICTURE,PADDING --dont-use-padding "$file");
+	if (!$b_test){
+		qx($cmd);
+		if ($? > 0){
+			$error_message = "$COMMAND_METAFLAC returned error: $?";
+			main::error_handler('application-error', $error_message,1);
+		}
+	}
+	say "\n", $cmd if $VERBOSITY > 3;
+}
+# note: metaflac is ignring type integer and assigning 3, not sure why
+sub image_handler {
+	my ($file,@images) = @_;
+	my ($size,@args,@result,$working);
+	my $cmd = qq($COMMAND_METAFLAC --list --block-type=PICTURE "$file");
+	@result = qx($cmd);
+	@result = grep {/type:.*\(PICTURE\)/} @result if @result;
+	# filename: type: 6 (PICTURE) 3||||images/cover.jpg
+	# --import-picture-from="3||||front.jpg"
+	foreach (@images){
+		$working = (split /\|/, $_)[-1];
+		if (@result){
+			say "\n  Skipping $working (pre-existing image data)... ";
+		}
+		else {
+			if (-e $working){
+				$size = sprintf("%.1f", File::stat::stat("$working")->size / 1024);
+				push @args, qq(--import-picture-from="$_");
+				say "\n  Embedding $working ($size KiB)... ";
+			}
+			else {
+				say "\n  File $working not found... ";
+			}
+		}
+	}
+	return @args;
+}
 # The idea here is that the track total will show the full number including
 # removed start tracks. Not a common situation, but does happen
 sub create_track_total {
@@ -1284,7 +1141,6 @@ sub process_directories {
 		my $b_valid;
 		$print_src = $item;
 		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
-		$print_src = main::sourcer("$print_src");
 		# if ($VERBOSITY > 2){
 		#	say Cwd::getcwd();
 		#	system 'pwd';
@@ -1307,38 +1163,7 @@ sub process_directories {
 				$b_dest_changed = 1;
 			}
 			else {
-				my %data = AutoTag::analyze_files('data',\@files);
-				my ($avg_kbs,$flac_data,$total_size,$total_time,$track_count);
-				say "  Generating flac data:";
-				if (defined $data{'total-time'}){
-					$total_time = '  Time: ' . $data{'total-time'};
-					delete $data{'total-time'};
-				}
-				if (defined $data{'total-size'}){
-					$total_size = '  Size: ' . $data{'total-size'};
-					delete $data{'total-size'};
-				}
-				if (defined $data{'avg-kbs'}){
-					$avg_kbs = '  Average kb/s: ' . $data{'avg-kbs'};
-					delete $data{'avg-kbs'};
-				}
-				if (defined $data{'total-tracks'}){
-					$track_count = '  Tracks: ' . $data{'total-tracks'};
-					delete $data{'total-tracks'};
-				}
-				if (defined $data{'flac-info'}){
-					$flac_data = '  Info: ' . $data{'flac-info'};
-					delete $data{'flac-info'};
-				}
-				foreach my $key (sort keys %data){
-					say "   File: $key:";
-					say "    $data{$key}";
-				}
-				say $flac_data if defined $flac_data;
-				say $total_time if defined $total_time;
-				say $total_size if defined $total_size;
-				say $avg_kbs if defined $avg_kbs;
-				say $track_count if defined $track_count;
+				Analyze::run('data',\@files);
 			}
 		}
 		else {
@@ -1693,7 +1518,7 @@ sub get_pad {
 {
 package CleanCollection;
 
-sub process_destination {
+sub process {
 	say $line_large;
 	say "Starting cleanup of " . main::sourcer("$DESTINATION_DIRECTORY") . '...';
 	process_type('directory');
@@ -1747,6 +1572,217 @@ sub confirm_deletion {
 }
 
 #### -------------------------------------------------------------------
+#### INFO FILE PROCESSING
+#### -------------------------------------------------------------------
+
+## InfoFix
+{
+package InfoFix;
+sub process {
+	my (@files,$item,$print_src,$result);
+	$list_type = 'dir';
+	say $line_small;
+	say "Checking directories for $INFO_FILE...";
+	@found_list = ();
+	chdir "$start_dir";
+	File::Find::find(\&main::wanted, @source_glob);
+	say 'start dir: ', $start_dir if $VERBOSITY > 3;
+	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
+		my $b_valid;
+		$print_src = $item;
+		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
+		chdir "$start_dir";
+		chdir "$item";
+		if ($VERBOSITY > 3){
+			say 'srcdir: ', $SOURCE_DIRECTORY;
+			say 'item: ', $item;
+			say 'cwd: ', Cwd::getcwd();
+			system 'pwd';
+		}
+		say " Processing: $print_src...";
+		if (-r "$INFO_FILE"){
+			# say $line_small;
+			say "  Working on file: $INFO_FILE";
+			run_fixes();
+		}
+		else {
+			say "  No $INFO_FILE found";
+		}
+	}
+	if (!@found_list){
+		say "No directories found.";
+	}
+}
+sub run_fixes {
+	my (@prepped);
+	my ($newlines) = (0);
+	my @data = open_info_file('info-fixes');
+	@data = date_fix(\@data) if $run{'infofix-date'};
+	@data = Analyze::run('info',\@data) if $run{'infofix-quality'};
+	# say Data::Dumper::Dumper \@data;
+	# we want these to be set to uppercase again after autoformat runs
+	my $upper = 'Aud|Cdr?|Sd?b|Ips|Eac|Ak|Az|Ca|Co|Ct|Dc|De|Dk|Fl|Flac|Hd|Hi|Il|';
+	$upper .= 'Ma|Md|Mkw|Mo|Nc|Nh|Nj|Nm|Nyc?|Pa|Ri|Sbd?|Sf|Shn|Tn|Usa|Ut|Wa|';
+	$upper .= 'Wav|Wi|Va|Vt';
+	foreach my $row (@data){
+		if ($run{'infofix-upper'}){
+			foreach my $style (qw(highlight)){
+				$row = Text::Autoformat::autoformat($row, {case => $style, left=>1, right=>1000});
+			}
+			# set back to upper common abbreviations, states, etc
+			# don't do Or or Me or Oh!
+			$row =~ s/\b($upper)\b/\U$1/g;
+			$row =~ s/\bCD[\s-]?([1-6])/Disc $1/g;
+			$row =~ s/\bSB\b/SBD/g;
+		}
+		$row =~ s/[\r\n]+//g; # has to be AFTER autoformat
+		$row =~ s/\s\s+/ /g;
+		$row =~ s/\s+$//g;
+		$row =~ s/\(\s+/\(/g;
+		$row =~ s/\s+\)/\)/g;
+		$row =~ s/^\s+$//;
+		if ($row !~ /^$/){
+			$newlines = 0;
+		}
+		else {
+			$newlines++;
+		}
+		# 1-4 / 1-12 / 12 / 213
+		if (($run{'infofix-no'} || $run{'infofix-title'}) && 
+		 $row =~ /^(\s*(([1-9]-)([0-9]{1,2})|([0-9]{1,2}|[0-9]{3}))(\]\s*|\.\s*|\s*-\s*|\s*\)\s*|:\s*|\s+))/){
+			# say "$1 '$6'";
+			if ($run{'infofix-no'}){
+				# say "$1 $2 $3";
+				my $nu = (defined $4) ? $4 : $5;
+				my $disc = (defined $3) ? $3 : '';
+				my $pattern = $1;
+				if ($nu =~ /^([1-9])([0-9]{2})$/){
+					$nu = $2;
+					$disc = $1 . '-';
+				}
+				$nu = sprintf('%02d',$nu);
+				$nu = $disc . $nu if $disc;
+				$row =~ s/^\Q$pattern\E/$nu. /;
+			}
+			if ($run{'infofix-title'}){
+				foreach my $style (qw(highlight)){
+					$row = Text::Autoformat::autoformat($row, { case => $style, left=>1, right=>1000 });
+					$row =~ s/[\r\n]+//g; # has to be AFTER autoformat
+				}
+				$row =~ s/\s+[\(\[]?([0-9]{1,2}[\.:]([0-9\.:]+))[\)\]]?\s*$/ ($1)/;
+			}
+		}
+		# $row =~ s//'/g;
+		# $row =~ s/�/'/g;
+		# say $row;
+		push(@prepped,$row) if $newlines < 2;
+	}
+	print '  Processing completed. ';
+	if (!$run{'infofix-write'}){
+		say "Write changes to $INFO_FILE by adding 'w':";
+		say $line_small;
+		print "   Fix: ";
+		say join("\n   Fix: ",@prepped);
+	}
+	else {
+		say "Writing changes to $INFO_FILE:";
+		say $line_small;
+		print '   ';
+		say join("\n   ",@prepped);
+		my $contents = join("\r\n",@prepped);
+		open(my $fh, '>', $INFO_FILE) or die "failed to open for writing: $INFO_FILE";
+		print $fh $contents;;
+		close $fh if $fh;
+		say $line_small;
+		say "  Changes written to $INFO_FILE.";
+	}
+}
+sub date_fix {
+	my ($ref) = @_;
+	my ($dd,$mm,$regex,$yyyy,@data);
+	foreach (@$ref){
+		($dd,$mm,$regex,$yyyy) =  ('','','','');
+		# fix D month, YY, month D, YY, month-DD-YYYY
+		# regex: 1: total regex; 2: container for day start; 3: day start
+		# 4: optional nd/rd 5: month; 6: container for day; 7: day;
+		# 8: optional nd/rd etc; 9: year; 10: 19..; 11: 20..
+		if (/\b(((0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\S*?([\s\/,-]+(0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?)?[\s\/,-]+((19)?[4-9][0-9]|(20)?[012][0-9]))\b/i){
+			$regex = $1;
+			$yyyy = $9;
+			# say "rx: $regex 5: $5 9: $9";
+			my $month = lc($5);
+			if ($3){$dd = sprintf('%02d',$3)}
+			elsif ($7){$dd = sprintf('%02d',$7)}
+			if ($month eq 'jan'){$mm = '01';}
+			elsif ($month eq 'feb'){$mm = '02';}
+			elsif ($month eq 'mar'){$mm = '03';}
+			elsif ($month eq 'apr'){$mm = '04';}
+			elsif ($month eq 'may'){$mm = '05';}
+			elsif ($month eq 'jun'){$mm = '06';}
+			elsif ($month eq 'jul'){$mm = '07';}
+			elsif ($month eq 'aug'){$mm = '08';}
+			elsif ($month eq 'sep'){$mm = '09';}
+			elsif ($month eq 'oct'){$mm = '10';}
+			elsif ($month eq 'nov'){$mm = '11';}
+			elsif ($month eq 'dec'){$mm = '12';}
+			# say "y: $yyyy m: $mm d: $dd";
+		}
+		# Change m/d/yy or m-d-yy or m.d.yy to yyyy-mm-dd 09/19/54
+		elsif (/\b((0?[1-9]|1[0-2])[\/\.-](0?[1-9]|[12][0-9]|30|31)[\/\.-]((19)?[4-9][0-9]|(20)?[0-2][0-9]))\b/){
+			$regex = $1;
+			$mm = sprintf('%02d',$2);
+			$dd = sprintf('%02d',$3);
+			$yyyy = $4;
+		}
+		elsif (/\b((19[4-9][0-9]|20[0-2][0-9])[\._-]?(0?[1-9]|1[0-2])[\._-]?(0?[1-9]|[12][0-9]|30|31))\b/){
+			$regex = $1;
+			$yyyy = $2;
+			$mm = sprintf('%02d',$3);
+			$dd = sprintf('%02d',$4);
+		}
+		if ($yyyy =~ /^[4-9][0-9]$/){
+			$yyyy = '19' . $yyyy;
+		}
+		elsif ($yyyy =~ /^[0-2][0-9]$/){
+			$yyyy = '20' . $yyyy;
+		}
+		if ($mm && $dd && $yyyy){
+			$_ =~ s/\Q$regex\E/$yyyy-$mm-$dd/i;
+		}
+		push(@data,$_);
+	}
+	return @data;
+}
+sub open_info_file {
+	my ($source) = @_;
+	my (@data);
+	my ($in1) = ('  ');
+	if ($source eq 'prefill'){
+		chdir "$start_dir";
+		chdir "$SOURCE_DIRECTORY";
+		($in1) = ('');
+	}
+	print $in1 . "Checking $INFO_FILE... ";
+	if (! -r $INFO_FILE){
+		main::error_handler('open',"$INFO_FILE not readable or not present!",1) ;
+	}
+	else {
+		open(my $fh, '<', $INFO_FILE) or 
+		main::error_handler('open', "Failed to open: $INFO_FILE with error:\n:$!",1);
+		chomp(@data = <$fh>);
+		close $fh if $fh;
+		say 'File found and read';
+		my $count = scalar @data;
+		if ($count < 15){
+			main::error_handler('info-file',"$INFO_FILE only had $count lines",1);
+		}
+		push(@data,'') if @data;
+	}
+	return @data;
+}
+}
+
+#### -------------------------------------------------------------------
 #### SYNCING
 #### -------------------------------------------------------------------
 
@@ -1754,7 +1790,7 @@ sub confirm_deletion {
 {
 package SyncCollection; 
 
-sub process_collection {
+sub process {
 	my (@extension_files);
 	eval $print_line_heavy;
 	if ($VERBOSITY > 1){
@@ -1898,8 +1934,10 @@ sub copy_file {
 	my ($file, $src_file, $dest_file) = @_;
 	my $result = 'UNSET';
 	my ($src_print,$dest_print) = ($src_file, $dest_file);
-	$src_print =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
-	$dest_print =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
+	if ($VERBOSITY < 3){
+		$src_print =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
+		$dest_print =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E||;
+	}
 	eval $print_line_small;
 	if ($VERBOSITY > 1){
 		say "COPY: $src_print ==> ";
@@ -1928,8 +1966,10 @@ sub convert_file {
 # 	$dest_file =~ s/`/\\`/g;
 # 	$src_file =~ s/\$/\\\$/g;
 # 	$dest_file =~ s/\$/\\\$/g;
-	$src_print =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
-	$dest_print =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
+	if ($VERBOSITY < 3){
+		$src_print =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||;
+		$dest_print =~ s|^\Q$DESTINATION_DIRECTORY$path_separator\E||;
+	}
 	# with forking, the printing gets messed up unless it's done 
 	# just like this.
 	if (!$b_fork){
@@ -2435,7 +2475,7 @@ sub error_handler {
 {
 package Validation;
 my ($b_valid_in_out) = (0);
-sub check_user_values {
+sub run {
 	start_text();
 	check_verbosity();
 	check_nlink();
@@ -2487,10 +2527,10 @@ sub check_in_out_types {
 		$error_message .= "\n  The input type you entered is not supported: ";
 		$error_message .= "$INPUT_TYPE";
 	}
-	if (($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'}) &&
-	 $INPUT_TYPE !~ m/^(flac)$/i){
+	if (($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'} || 
+	 $run{'analyze'} || $run{'info-quality'}) && $INPUT_TYPE !~ m/^(flac)$/i){
 		$b_error = 1;
-		$error_message .= "\n  The input type you entered is not supported for checksum/tagging operations: ";
+		$error_message .= "\n  The input type you entered is not supported for analyze/checksum/tagging operations: ";
 		$error_message .= "$INPUT_TYPE";
 	}
 	if ($b_check_out){
@@ -2658,7 +2698,7 @@ sub check_application_paths {
 					$error_message .= "ffp checksum files.";
 				}
 			}
-			if ($run{'checsum-verify'}){
+			if ($run{'checksum-verify'}){
 				$app_paths .= "$COMMAND_FLAC ";
 				if (! -x "$COMMAND_FLAC"){
 					$b_error = 1;
@@ -2672,8 +2712,17 @@ sub check_application_paths {
 			# Added: Odd @2011-03-23 01:55:28
 			if (! -x "$COMMAND_METAFLAC"){
 				$b_error = 1;
-				$error_message .= "\n  $COMMAND_METAFLAC not found. Required to auto-tag ";
-				$error_message .= "collection files.";
+				$error_message .= "\n  $COMMAND_METAFLAC not found. Required auto-tag ";
+				$error_message .= "operations.";
+			}
+		}
+		if ($run{'analyze'}){
+			$app_paths .= "$COMMAND_METAFLAC ";
+			# Added: Odd @2011-03-23 01:55:28
+			if (! -x "$COMMAND_METAFLAC"){
+				$b_error = 1;
+				$error_message .= "\n  $COMMAND_METAFLAC not found. Required for ";
+				$error_message .= "analyzing $INPUT_TYPE files.";
 			}
 		}
 	}
@@ -3291,7 +3340,7 @@ sub get_options{
 		else {
 			$run{'ag-file'} = $TAG_FILE;
 		}
-		$run{'autotag-aggregate'} = 1;
+		$run{'aggregate'} = 1;
 		$run{'autotag'} = 1;
 		$run{'autotag-create'} = 0;
 		$run{'sync'} = 0;

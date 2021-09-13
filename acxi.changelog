@@ -55,6 +55,9 @@ times (per file) found in -s source directory/ies. Also prints total time, total
 size, and average kbs of all flacs in directory. Depending it may be possible to 
 extend this to other than flac.
 
+-v1 (default) shows flac data in one line; -v 2 makes key: value pairs, one per 
+line; -v 3 adds raw full seconds and bits to time/size info for file and totals.
+
 4. Going along with --analyze, -Xq now includes avg kbs, total time and size per 
 directory of flacs.
 
@@ -84,6 +87,13 @@ CODE:
 This cleans the code up and makes it easier to see what's going on in various
 line output scenarios. 'print' is used now when we do NOT want a linebreak at 
 end of line, and in other more complex scenarios where it is appropriate.
+
+2. Moved -G/--aggregate logic to package Aggregate, it's not really related to 
+autotagging. Moved -I --infofix to package InfoFix, AutoTag was getting too much 
+clutter in it. 
+
+3. Renamed/simplified launch/trigger subs names in Packages, forgot to do that 
+when I made the classes for 3.0.0.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Wed, 25 Aug 2021 12:24:47 -0700
