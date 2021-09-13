@@ -39,6 +39,9 @@ as expected now. -Xd more date variants added.
 least one location, which in fringe cases could lead to windows failing under
 certain conditions, though windows support is only theoretical.
 
+6. Added error handler for trying to run -E/--prefill on any bulk job, flac 
+files must be present in the given --source directory or it exits with error.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
@@ -89,8 +92,8 @@ line output scenarios. 'print' is used now when we do NOT want a linebreak at
 end of line, and in other more complex scenarios where it is appropriate.
 
 2. Moved -G/--aggregate logic to package Aggregate, it's not really related to 
-autotagging. Moved -I --infofix to package InfoFix, AutoTag was getting too much 
-clutter in it. 
+autotagging. Moved -I --infofix to package InfoFix, Moved -Z --analyze logic to 
+Analyze package. AutoTag and Checksums were getting too much clutter in them. 
 
 3. Renamed/simplified launch/trigger subs names in Packages, forgot to do that 
 when I made the classes for 3.0.0.

@@ -2453,6 +2453,7 @@ sub error_handler {
 	elsif ($error eq 'autotag-multi'){$error_no = 18;}
 	elsif ($error eq 'track-counts'){$error_no = 30;}
 	elsif ($error eq 'analyze'){$error_no = 31;}
+	elsif ($error eq 'prefill-error'){$error_no = 32;}
 	elsif ($error eq 'missing-perl-module'){$error_no = 10;
 		$message = "Perl Module not found in system: $message";}
 	if ($error eq 'validation-errors'){
@@ -2615,6 +2616,13 @@ sub check_src_dest_directories {
 	if ($b_check_dest && !$b_error && $DESTINATION_DIRECTORY eq $SOURCE_DIRECTORY){
 		$error_message = "Destination directory cannot be same as Source directory!";
 		main::error_handler('dest-eq-src-dir',$error_message,0);
+	}
+	if ($run{'prefill'} && 
+	 !(main::globber("$SOURCE_DIRECTORY${path_separator}*.$INPUT_TYPE"))){
+		my $error_message = "The --prefill option can only be run on a directory ";
+		$error_message .= "containing\n$INPUT_TYPE files. No $INPUT_TYPE files ";
+		$error_message .= "were found in: $SOURCE_DIRECTORY";
+		main::error_handler('prefill-error',$error_message,1);
 	}
 }
 sub check_application_paths {
