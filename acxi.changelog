@@ -59,10 +59,11 @@ size, and average kbs of all flacs in directory. Depending it may be possible to
 extend this to other than flac.
 
 -v1 (default) shows flac data in one line; -v 2 makes key: value pairs, one per 
-line; -v 3 adds raw full seconds and bits to time/size info for file and totals.
+line; -v 3 adds raw full seconds and file size/size on disk in bytes to 
+time/size info for file and totals.
 
-4. Going along with --analyze, -Xq now includes avg kbs, total time and size per 
-directory of flacs.
+4. Going along with --analyze, -Xq now includes avg kbs, total time and size of 
+flacs, per directory of flacs.
 
 5. New feature: --source-glob/-g: accepts wild card paths if you only want to 
 update or check certain directories within the main --source working directory. 

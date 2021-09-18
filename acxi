@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.4.00';
-my $self_date='2021-09-12';
+my $self_date='2021-09-18';
 
 ## GLOBALS ##
 my %run;
@@ -374,7 +374,7 @@ sub aggregate {
 ## Analyze
 {
 package Analyze;
-my ($avg_kbs,$raw_total_size,$total_size,$total_time) = (0,0,0,0);
+my ($avg_kbs,$total_size,$total_size_disk,$total_size_raw,$total_time) = (0,0,0,0,0);
 my ($flac_info) = ('');
 my ($type,$ref,@files,@info,%results);
 
@@ -417,14 +417,23 @@ sub process {
 		}
 		# say Data::Dumper::Dumper \@flac;
 		if (@real && scalar @real > 3){
+			my ($size,$size_disk) = (0,0);
 			my $duration = ($real[3]/$real[1]);
 			$total_time += $duration;
-			# -s returns size in bytes, we want bits
-			my $size = (-s $flac_file) * 8;
+			my @stat = stat($flac_file);
+			# stat returns size in bytes
+			$size = $stat[7];
 			$total_size += $size;
-			my $kbs = $size/$duration/1000;
+			# stat blocks/block size not supported on all os
+			if ($stat[11] && $stat[12]){
+				# block size * blocks, claims to be in bytes, but is in bits
+				$size_disk = $stat[11] * $stat[12] / 8;
+				$total_size_disk += $size_disk;
+			}
+			# in kilobits per second, not bytes
+			my $kbs = $size/$duration/1000*8;
 			$kbs = sprintf("%.0f",$kbs);
-			# say $size $kbs;
+			# say "s: $size kbs: $kbs";
 			# say "duration: $duration seconds";
 			if ($type eq 'data' || !$flac_info){
 				my $flac_data = $real[2] . '/' . sprintf("%.1f", $real[1]/1000);
@@ -440,21 +449,23 @@ sub process {
 			if ($type eq 'data'){
 				my ($raw_time,$raw_size) = ($duration,$size);
 				my $time_print = 'time: ' . main::print_time($duration);
-				my $size_print = 'size: '. main::print_size($size / 8 / 1024);
+				my $size_print = 'size: '. main::print_size($size/1024);
 				my $kbs_print = 'kbs: '. $kbs;
 				if ($VERBOSITY > 2){
 					$time_print .= " ($raw_time seconds)"; 
-					$size_print .= " ($raw_size bits)"; 
+					$size_print .= " (file: $raw_size B"; 
+					$size_print .= "; on-disk: $size_disk B" if $size_disk;
+					$size_print .= ')';
 				}
 				$results{$flac_file} = [$flac_info,$time_print,$size_print,$kbs_print];
 			}
 		}
 	}
 	# say "Result: $flac_info";
-	$avg_kbs = sprintf("%.0f",$total_size/$total_time/1000);
+	$avg_kbs = sprintf("%.0f",$total_size*8/$total_time/1000);
 	# back to KiB
-	$raw_total_size = $total_size;
-	$total_size = $total_size/8/1024;
+	$total_size_raw = $total_size;
+	$total_size = $total_size/1024;
 }
 # this will be inserted into $INFO_FILE
 sub info_data {
@@ -487,7 +498,11 @@ sub generate_output {
 	my $size = main::print_size($total_size);
 	if ($VERBOSITY > 2){
 		$time .= " ($total_time seconds)"; 
-		$size .= " ($raw_total_size bits)"; 
+		$size .= " (file: $total_size_raw B"; 
+		if ($total_size_disk){
+			$size .= '; on-disk: ' . $total_size_raw . ' B';
+		}
+		$size .= ')';
 	}
 	say '  Generating flac data:';
 	$time = '  Time: ' . $time;
@@ -2481,6 +2496,7 @@ sub run {
 	check_verbosity();
 	check_nlink();
 	check_fork();
+	check_resample();
 	check_excludes();
 	check_infofix();
 	check_src_dest_directories();
@@ -2510,6 +2526,11 @@ sub check_infofix {
 	if ($run{'infofix-quality'} && ! -x "$COMMAND_METAFLAC"){
 		my $error_message = "--infofix q requires metaflac.";
 		main::error_handler('missing-app',$error_message,1);
+	}
+}
+sub check_resample {
+	if ($run{'resample'}){
+		
 	}
 }
 sub check_in_out_types {
@@ -2620,8 +2641,8 @@ sub check_src_dest_directories {
 	if ($run{'prefill'} && 
 	 !(main::globber("$SOURCE_DIRECTORY${path_separator}*.$INPUT_TYPE"))){
 		my $error_message = "The --prefill option can only be run on a directory ";
-		$error_message .= "containing\n$INPUT_TYPE files. No $INPUT_TYPE files ";
-		$error_message .= "were found in: $SOURCE_DIRECTORY";
+		$error_message .= "containing\n$INPUT_TYPE files. None found in: ";
+		$error_message .= "$SOURCE_DIRECTORY";
 		main::error_handler('prefill-error',$error_message,1);
 	}
 }
