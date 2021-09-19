@@ -374,7 +374,7 @@ sub aggregate {
 ## Analyze
 {
 package Analyze;
-my ($avg_kbs,$total_size,$total_size_disk,$total_size_raw,$total_time) = (0,0,0,0,0);
+my ($avg_kbs,$total_size,$total_size_raw,$total_time) = (0,0,0,0);
 my ($flac_info) = ('');
 my ($type,$ref,@files,@info,%results);
 
@@ -417,19 +417,12 @@ sub process {
 		}
 		# say Data::Dumper::Dumper \@flac;
 		if (@real && scalar @real > 3){
-			my ($size,$size_disk) = (0,0);
 			my $duration = ($real[3]/$real[1]);
 			$total_time += $duration;
 			my @stat = stat($flac_file);
 			# stat returns size in bytes
-			$size = $stat[7];
+			my $size = $stat[7];
 			$total_size += $size;
-			# stat blocks/block size not supported on all os
-			if ($stat[12]){
-				# $size[11] isn't block size, varies massively, use 512
-				$size_disk = 512 * $stat[12];
-				$total_size_disk += $size_disk;
-			}
 			# in kilobits per second, not bytes
 			my $kbs = $size/$duration/1000*8;
 			$kbs = sprintf("%.0f",$kbs);
@@ -454,9 +447,7 @@ sub process {
 				my $kbs_print = 'kbs: '. $kbs;
 				if ($VERBOSITY > 2){
 					$time_print .= " ($raw_time seconds)"; 
-					$size_print .= " (file: $raw_size B"; 
-					$size_print .= "; on-disk: $size_disk B" if $size_disk;
-					$size_print .= ')';
+					$size_print .= " ($raw_size B)";
 				}
 				$results{$flac_file} = [$flac_info,$time_print,$size_print,$kbs_print];
 			}
@@ -499,12 +490,7 @@ sub generate_output {
 	my $size = main::print_size($total_size);
 	if ($VERBOSITY > 2){
 		$time .= " ($total_time seconds)"; 
-		$size .= " (file: $total_size_raw B"; 
-		if ($total_size_disk){
-			$size .= '; on-disk: ' . $total_size_disk . ' B';
-			$size .= ' [' . main::print_size($total_size_disk/1024) . ']';
-		}
-		$size .= ')';
+		$size .= " ($total_size_raw B)"; 
 	}
 	say '  Generating flac data:';
 	$time = '  Time: ' . $time;
