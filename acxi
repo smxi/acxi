@@ -425,14 +425,15 @@ sub process {
 			$size = $stat[7];
 			$total_size += $size;
 			# stat blocks/block size not supported on all os
-			if ($stat[11] && $stat[12]){
-				# block size * blocks, claims to be in bytes, but is in bits
-				$size_disk = $stat[11] * $stat[12] / 8;
+			if ($stat[12]){
+				# $size[11] isn't block size, varies massively, use 512
+				$size_disk = 512 * $stat[12];
 				$total_size_disk += $size_disk;
 			}
 			# in kilobits per second, not bytes
 			my $kbs = $size/$duration/1000*8;
 			$kbs = sprintf("%.0f",$kbs);
+			# say "$stat[7] $stat[11] $stat[12]";
 			# say "s: $size kbs: $kbs";
 			# say "duration: $duration seconds";
 			if ($type eq 'data' || !$flac_info){
@@ -500,7 +501,8 @@ sub generate_output {
 		$time .= " ($total_time seconds)"; 
 		$size .= " (file: $total_size_raw B"; 
 		if ($total_size_disk){
-			$size .= '; on-disk: ' . $total_size_raw . ' B';
+			$size .= '; on-disk: ' . $total_size_disk . ' B';
+			$size .= ' [' . main::print_size($total_size_disk/1024) . ']';
 		}
 		$size .= ')';
 	}
@@ -2183,17 +2185,18 @@ sub globber {
 sub print_size {
 	my ($size) = $_[0];
 	return 'Error' unless $size;
+	my ($j,$k) = ($VERBOSITY < 2) ? (1,2): (2,3);
 	my ($unit);
 	if ($size < 1024){
-		$unit = 'Kib';
+		$unit = 'KiB';
 	}
 	elsif ($size < 1024**3) {
 		$unit = 'MiB';
-		$size = sprintf("%.1f",$size/1024);
+		$size = sprintf("%.${j}f",$size/1024);
 	}
 	else {
 		$unit = 'GiB';
-		$size = sprintf("%.2f",$size/1024**3);
+		$size = sprintf("%.${k}f",$size/1024**3);
 	}
 	return "$size $unit";
 }
