@@ -99,6 +99,9 @@ Analyze package. AutoTag and Checksums were getting too much clutter in them.
 3. Renamed/simplified launch/trigger subs names in Packages, forgot to do that 
 when I made the classes for 3.0.0.
 
+4. Reordered validation functions, and cleaned up and reorganized some of them
+to get rid of redundant logic.
+
 --------------------------------------------------------------------------------
 -- Harald Hope - Wed, 25 Aug 2021 12:24:47 -0700
 

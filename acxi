@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.4.00';
-my $self_date='2021-09-18';
+my $self_date='2021-09-19';
 
 ## GLOBALS ##
 my %run;
@@ -1958,8 +1958,12 @@ sub copy_file {
 
 sub convert_file { 
 	my ($src_file, $dest_file) = @_;
-	my ($src_print,$dest_print) = ($src_file, $dest_file);
+	my ($src_print,$dest_print) = ($src_file,$dest_file);
 	my ($result,$cmd,$action) = (1000,'','unset'); 
+	my ($encoding,$encoded) = ('Encoding','Encoded');
+	if ($run{'resample'}){
+		($encoding,$encoded) = ('Resampling','Resampled');
+	}
 	# escape characters for conversion processing
 	$src_file = main::escape_item("$src_file");
 	$dest_file = main::escape_item("$dest_file");
@@ -1978,12 +1982,12 @@ sub convert_file {
 	if (!$b_fork){
 		eval $print_line_small;
 		if ($VERBOSITY > 1){
-			say "ENCODE: $src_print ==> ";
+			say uc($encoding) . ": $src_print ==> ";
 			say "        $dest_print"; 
 		}
 		elsif ($VERBOSITY > 0){
 			# add line break only when file exists
-			print main::dotify("\nEncoding $src_print to $OUTPUT_TYPE");
+			print main::dotify("\n$encoding $src_print to $OUTPUT_TYPE");
 		}
 	}
 	if ($OUTPUT_TYPE eq 'aac' || $OUTPUT_TYPE eq 'm4a'){
@@ -1998,14 +2002,24 @@ sub convert_file {
 		}
 	}
 	elsif ($OUTPUT_TYPE eq 'flac'){
-		$action = 'To flac';
+		$action = (!$run{'resample'}) ? 'To flac' : 'to ' . $run{'resample'}->[0] . ':' . $run{'resample'}->[1];
+		# note: sample depth is taken usually from originating file, like shn or wav, but 
+		# mp3 does not seem to do this in my tests, and outputs to 24 bit
+		# note that -aq / -q:a does not seem to do anything, and ffmpeg reverts to default 5 level
+		my $sample_data = '';
+		if ($INPUT_TYPE eq 'mp3'){
+			$sample_data = '-sample_fmt s16';
+		}
+		elsif ($run{'resample'}){
+			$sample_data = '-sample_fmt s' . $run{'resample'}->[0] . ' -ar ' . $run{'resample'}->[1];
+		}
+		$cmd = qq($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" -compression_level $quality $sample_data "$dest_file");
 		if (!$b_test){
-			# note: sample depth is taken usually from originating file, like shn or wav, but 
-			# mp3 does not seem to do this in my tests, and outputs to 24 bit
-			# note that -aq / -q:a does not seem to do anything, and ffmpeg reverts to default 5 level
-			my $sample_depth = ($INPUT_TYPE eq 'mp3') ? '-sample_fmt s16' : '';
-			qx($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" -compression_level $quality $sample_depth "$dest_file");
+			qx($cmd);
 			$result = $?;
+		}
+		else {
+			say "Would have run: $cmd";
 		}
 	}
 	elsif ($OUTPUT_TYPE eq 'mp3'){
@@ -2042,13 +2056,13 @@ sub convert_file {
 	if ($b_fork){
 		eval $print_line_small;
 		if ($VERBOSITY > 1){
-			say "ENCODED: $src_print ==> ";
+			say uc($encoded) . ": $src_print ==> ";
 			say "        $dest_print"; 
 			say "$action result: $result";
 		}
 		elsif ($VERBOSITY > 0){
 			# add line break only when file exists
-			print main::dotify("\nEncoded $src_print to $OUTPUT_TYPE");
+			print main::dotify("\n$encoded $src_print to $OUTPUT_TYPE");
 		}
 	}
 	# this return only works with non forking
@@ -2442,6 +2456,7 @@ sub error_handler {
 	elsif ($error eq 'bad-level'){$error_no = 5;$b_valid=0;}
 	elsif ($error eq 'bad-fork'){$error_no = 9;$b_valid=0;}
 	elsif ($error eq 'bad-nlink'){$error_no = 9;$b_valid=0;}
+	elsif ($error eq 'bad-resample'){$error_no = 9;$b_valid=0;}
 	elsif ($error eq 'bad-exclude-file'){$error_no = 19;$b_valid=0;}
 	elsif ($error eq 'self-updater'){$error_no = 17;}
 	elsif ($error eq 'open'){$error_no = 14;}
@@ -2479,22 +2494,21 @@ sub error_handler {
 ## Validation 
 {
 package Validation;
-my ($b_valid_in_out) = (0);
+my ($b_valid_in_out);
 sub run {
 	start_text();
-	check_verbosity();
-	check_nlink();
-	check_fork();
-	check_resample();
-	check_excludes();
-	check_infofix();
 	check_src_dest_directories();
 	check_in_out_types();
-	check_codecs();
 	if ($b_valid_in_out){
 		check_quality() if $b_check_out;
 		check_application_paths();
 	}
+	check_codecs();
+	check_excludes();
+	check_fork();
+	check_resample() if $run{'resample'};
+	check_nlink();
+	check_verbosity();
 	main::error_handler('validation-errors', '',1);
 }
 sub start_text {
@@ -2503,72 +2517,131 @@ sub start_text {
 		say "Running $self_name pretests.";
 	}
 }
-sub check_infofix {
-	if ($run{'infofix-title'} || $run{'infofix-upper'}){
-		if (!main::check_module('Text::Autoformat')){
-			main::error_handler('missing-perl-module', 'Text::Autoformat',1);
-		}
-		else {
-			import Text::Autoformat;
-		}
-	}
-	if ($run{'infofix-quality'} && ! -x "$COMMAND_METAFLAC"){
-		my $error_message = "--infofix q requires metaflac.";
-		main::error_handler('missing-app',$error_message,1);
-	}
-}
-sub check_resample {
-	if ($run{'resample'}){
-		
-	}
-}
-sub check_in_out_types {
+sub check_application_paths {
 	my ($b_error,$error_message) = (0,'');
+	my $app_paths = ''; 
 	if ($VERBOSITY > 0){
-		eval $print_line_large;
-		print main::dotify("Checking input and output types");
-	}
-	if ($run{'ffmpeg'} && ($INPUT_TYPE !~ /^(flac)$/ || $OUTPUT_TYPE !~ m/^(flac|ogg|opus)$/i)){
-		$b_error = 1;
-		$error_message .= "\n  The --ffmpeg input/output type combination you entered is not supported: ";
-		$error_message .= "in: $INPUT_TYPE out: $OUTPUT_TYPE";
-	}
-	if ($INPUT_TYPE !~ m/^(aiff?|flac|mp3|raw|shn|wav)$/i){
-		$b_error = 1;
-		$error_message .= "\n  The input type you entered is not supported: ";
-		$error_message .= "$INPUT_TYPE";
-	}
-	if (($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'} || 
-	 $run{'analyze'} || $run{'info-quality'}) && $INPUT_TYPE !~ m/^(flac)$/i){
-		$b_error = 1;
-		$error_message .= "\n  The input type you entered is not supported for analyze/checksum/tagging operations: ";
-		$error_message .= "$INPUT_TYPE";
+		print main::dotify("Checking required tools paths");
 	}
 	if ($b_check_out){
-		if ($OUTPUT_TYPE !~ m/^(aac|flac|m4a|mp3|ogg|opus)$/i){
-			$b_error = 1;
-			$error_message .= "\n  The output type you entered is not supported: ";
-			$error_message .= "$OUTPUT_TYPE";
+		if ($OUTPUT_TYPE =~ /^(aac|flac|m4a)$/){
+			$app_paths .= "$COMMAND_FFMPEG";
+			if (! -x "$COMMAND_FFMPEG"){
+				$b_error = 1;
+				$error_message .= "\n Encoding application not available: $COMMAND_FFMPEG";
+			}
 		}
-		if ($OUTPUT_TYPE =~ /^(m4a|mp3|aac)$/i && $INPUT_TYPE ne lc('flac')){
-			$b_error = 1;
-			$error_message .= "\n  The output type $OUTPUT_TYPE you entered ";
-			$error_message .= "only supports input type: flac";
+		elsif ($OUTPUT_TYPE eq 'ogg' || $OUTPUT_TYPE eq 'opus'){
+			if (!$run{'ffmpeg'}){
+				if ($OUTPUT_TYPE eq 'ogg'){
+					$app_paths .= "\n $COMMAND_OGG";
+					if (! -x "$COMMAND_OGG"){
+						$b_error = 1;
+						$error_message .= "\n Encoding application not available: $COMMAND_OGG";
+					}
+				}
+				elsif ($OUTPUT_TYPE eq 'opus'){
+					$app_paths .= "\n $COMMAND_OPUS";
+					if (!$run{'ffmpeg'}){
+						if (! -x "$COMMAND_OPUS"){
+							$b_error = 1;
+							$error_message .= "\n Encoding application not available: $COMMAND_OPUS";
+						}
+					}
+				}
+			}
+			else {
+				$app_paths .= "\n $COMMAND_FFMPEG";
+				if (! -x "$COMMAND_FFMPEG"){
+					$b_error = 1;
+					$error_message .= "\n Encoding application not available: $COMMAND_FFMPEG";
+				}
+			}
 		}
-		if ($INPUT_TYPE =~ m/^(aac|aiff?|m4a|mp3|raw|shn)$/i && $OUTPUT_TYPE ne lc('flac')){
-			$b_error = 1;
-			$error_message .= "\n  The input type $INPUT_TYPE you entered ";
-			$error_message .= "only supports output type: flac";
+		elsif ($OUTPUT_TYPE eq 'mp3'){
+			$app_paths .= "\n $COMMAND_LAME ";
+			if (! -x "$COMMAND_LAME"){
+				$b_error = 1;
+				$error_message .= "\n Encoding application not available: $COMMAND_LAME";
+			}
+			$app_paths .= "$COMMAND_FLAC ";
+			if (! -x "$COMMAND_FLAC"){
+				$b_error = 1;
+				$error_message .= "\n Input processor $COMMAND_FLAC needed by lame ";
+				$error_message .= "not available.";
+			}
+			$app_paths .= "$COMMAND_METAFLAC ";
+			# Added: Odd @2011-03-23 01:55:28
+			if (! -x "$COMMAND_METAFLAC"){
+				$b_error = 1;
+				$error_message .= "\n $COMMAND_METAFLAC not found. Required to copy ";
+				$error_message .= "ID3 tags from Flac to MP3.";
+			}
+		}
+	}
+	else {
+		# Note: -AK but not -AV
+		if ($run{'checksum'} || $run{'checksum-verify'}){
+			$app_paths .= "$COMMAND_MD5 ";
+			# Added: Odd @2011-03-23 01:55:28
+			if (! -x "$COMMAND_MD5"){
+				$b_error = 1;
+				$error_message .= "\n $COMMAND_MD5 not found. Required to generate ";
+				$error_message .= "md5 checksum files.";
+			}
+			if ($run{'checksum'}){
+				$app_paths .= "$COMMAND_METAFLAC ";
+				# Added: Odd @2011-03-23 01:55:28
+				if (! -x "$COMMAND_METAFLAC"){
+					$b_error = 1;
+					$error_message .= "\n $COMMAND_METAFLAC not found. Required to generate ";
+					$error_message .= "ffp checksum files.";
+				}
+			}
+			if ($run{'checksum-verify'}){
+				$app_paths .= "$COMMAND_FLAC ";
+				if (! -x "$COMMAND_FLAC"){
+					$b_error = 1;
+					$error_message .= "\n $COMMAND_FLAC not found. Required to verify ";
+					$error_message .= "$INPUT_TYPE files.";
+				}
+			}
+		}
+		if ($run{'autotag'}){
+			$app_paths .= "$COMMAND_METAFLAC ";
+			# Added: Odd @2011-03-23 01:55:28
+			if (! -x "$COMMAND_METAFLAC"){
+				$b_error = 1;
+				$error_message .= "\n $COMMAND_METAFLAC not found. Required auto-tag ";
+				$error_message .= "operations.";
+			}
+		}
+		if ($run{'infofix-quality'} || $run{'analyze'}){
+			$app_paths .= "$COMMAND_METAFLAC ";
+			# Added: Odd @2011-03-23 01:55:28
+			if (! -x "$COMMAND_METAFLAC"){
+				$b_error = 1;
+				$error_message .= "\n $COMMAND_METAFLAC not found. Required for ";
+				$error_message .= "analyzing $INPUT_TYPE files.";
+			}
+		}
+		if ($run{'infofix-title'} || $run{'infofix-upper'}){
+			if (!main::check_module('Text::Autoformat')){
+				main::error_handler('missing-perl-module', 'Text::Autoformat',1);
+				$b_error = 1;
+				$error_message .= "\n Perl module ext::Autoformat not found. Required ";
+				$error_message .= "for -Xt / -Xu.";
+			}
+			else {
+				import Text::Autoformat;
+			}
 		}
 	}
 	if ($b_error){
-		main::error_handler('unsupported-type',$error_message,0);
+		main::error_handler('missing-app',$error_message,0);
 	}
-	else {
-		$b_valid_in_out = 1;
-		if ($VERBOSITY > 0){
-			say "Valid: $INPUT_TYPE(in) $OUTPUT_TYPE(out)";
-		}
+	elsif ($VERBOSITY > 0){
+		say "Available: $app_paths";
 	}
 }
 sub check_codecs {
@@ -2599,256 +2672,31 @@ sub check_codecs {
 		}
 	}
 }
-sub check_src_dest_directories {
-	my $missing_dirs = '';
+sub check_excludes {
 	my ($b_error,$error_message) = (0,'');
-	if ($VERBOSITY > 0){
-		eval $print_line_large;
-		print main::dotify("Checking source / destination directories");
-	}
-	if (! -d $SOURCE_DIRECTORY){
-		$b_error = 1;
-		$missing_dirs .= "\n  Source Directory: $SOURCE_DIRECTORY";
-	}
-	if ($b_check_dest && ! -d $DESTINATION_DIRECTORY){
-		$b_error = 1;
-		$missing_dirs .= "\n  Destination Directory: $DESTINATION_DIRECTORY";
-	}
-	if ($b_error){
-		my $error_message = "The paths for the following directories are missing:";
-		$error_message .= "$missing_dirs";
-		$error_message .= "\nPlease check the directory paths you provided.";
-		main::error_handler('dest-dir',$error_message,0);
-	} 
-	elsif ($VERBOSITY > 0){
-		say 'Directories: exist';
-	}
-	if ($b_check_dest && !$b_error && $DESTINATION_DIRECTORY eq $SOURCE_DIRECTORY){
-		$error_message = "Destination directory cannot be same as Source directory!";
-		main::error_handler('dest-eq-src-dir',$error_message,0);
-	}
-	if ($run{'prefill'} && 
-	 !(main::globber("$SOURCE_DIRECTORY${path_separator}*.$INPUT_TYPE"))){
-		my $error_message = "The --prefill option can only be run on a directory ";
-		$error_message .= "containing\n$INPUT_TYPE files. None found in: ";
-		$error_message .= "$SOURCE_DIRECTORY";
-		main::error_handler('prefill-error',$error_message,1);
-	}
-}
-sub check_application_paths {
-	my ($b_error,$error_message) = (0,'');
-	my $app_paths = ''; 
-	if ($VERBOSITY > 0){
-		print main::dotify("Checking required tools paths");
-	}
-	if ($b_check_out){
-		if ($OUTPUT_TYPE =~ /^(aac|flac|m4a)$/){
-			$app_paths .= "$COMMAND_FFMPEG";
-			if (! -x "$COMMAND_FFMPEG"){
-				$b_error = 1;
-				$error_message .= "\n  Encoding application not available: $COMMAND_FFMPEG";
-			}
-		}
-		elsif ($OUTPUT_TYPE eq 'ogg' || $OUTPUT_TYPE eq 'opus'){
-			if (!$run{'ffmpeg'}){
-				if ($OUTPUT_TYPE eq 'ogg'){
-					$app_paths .= "\n $COMMAND_OGG";
-					if (! -x "$COMMAND_OGG"){
-						$b_error = 1;
-						$error_message .= "\n  Encoding application not available: $COMMAND_OGG";
-					}
-				}
-				elsif ($OUTPUT_TYPE eq 'opus'){
-					$app_paths .= "\n $COMMAND_OPUS";
-					if (!$run{'ffmpeg'}){
-						if (! -x "$COMMAND_OPUS"){
-							$b_error = 1;
-							$error_message .= "\n  Encoding application not available: $COMMAND_OPUS";
-						}
-					}
-				}
-			}
-			else {
-				$app_paths .= "\n $COMMAND_FFMPEG";
-				if (! -x "$COMMAND_FFMPEG"){
-					$b_error = 1;
-					$error_message .= "\n  Encoding application not available: $COMMAND_FFMPEG";
-				}
-			}
-		}
-		elsif ($OUTPUT_TYPE eq 'mp3'){
-			$app_paths .= "\n $COMMAND_LAME ";
-			if (! -x "$COMMAND_LAME"){
-				$b_error = 1;
-				$error_message .= "\n  Encoding application not available: $COMMAND_LAME";
-			}
-			$app_paths .= "$COMMAND_FLAC ";
-			if (! -x "$COMMAND_FLAC"){
-				$b_error = 1;
-				$error_message .= "\n  Input processor $COMMAND_FLAC needed by lame ";
-				$error_message .= "not available.";
-			}
-			$app_paths .= "$COMMAND_METAFLAC ";
-			# Added: Odd @2011-03-23 01:55:28
-			if (! -x "$COMMAND_METAFLAC"){
-				$b_error = 1;
-				$error_message .= "\n  $COMMAND_METAFLAC not found. Required to copy ";
-				$error_message .= "ID3 tags from Flac to MP3.";
-			}
-		}
-	}
-	else {
-		# Note: -AK but not -AV
-		if ($run{'checksum'} || $run{'checksum-verify'}){
-			$app_paths .= "$COMMAND_MD5 ";
-			# Added: Odd @2011-03-23 01:55:28
-			if (! -x "$COMMAND_MD5"){
-				$b_error = 1;
-				$error_message .= "\n  $COMMAND_MD5 not found. Required to generate ";
-				$error_message .= "md5 checksum files.";
-			}
-			if ($run{'checksum'}){
-				$app_paths .= "$COMMAND_METAFLAC ";
-				# Added: Odd @2011-03-23 01:55:28
-				if (! -x "$COMMAND_METAFLAC"){
-					$b_error = 1;
-					$error_message .= "\n  $COMMAND_METAFLAC not found. Required to generate ";
-					$error_message .= "ffp checksum files.";
-				}
-			}
-			if ($run{'checksum-verify'}){
-				$app_paths .= "$COMMAND_FLAC ";
-				if (! -x "$COMMAND_FLAC"){
-					$b_error = 1;
-					$error_message .= "\n  $COMMAND_FLAC not found. Required to verify ";
-					$error_message .= "$INPUT_TYPE files.";
-				}
-			}
-		}
-		if ($run{'autotag'}){
-			$app_paths .= "$COMMAND_METAFLAC ";
-			# Added: Odd @2011-03-23 01:55:28
-			if (! -x "$COMMAND_METAFLAC"){
-				$b_error = 1;
-				$error_message .= "\n  $COMMAND_METAFLAC not found. Required auto-tag ";
-				$error_message .= "operations.";
-			}
-		}
-		if ($run{'analyze'}){
-			$app_paths .= "$COMMAND_METAFLAC ";
-			# Added: Odd @2011-03-23 01:55:28
-			if (! -x "$COMMAND_METAFLAC"){
-				$b_error = 1;
-				$error_message .= "\n  $COMMAND_METAFLAC not found. Required for ";
-				$error_message .= "analyzing $INPUT_TYPE files.";
-			}
-		}
-	}
-	if ($b_error){
-		main::error_handler('missing-app',$error_message,0);
-	}
-	elsif ($VERBOSITY > 0){
-		say "Available: $app_paths";
-	}
-}
-sub check_quality{
-	my ($b_error,$error_message) = (0,'');
-	if ($VERBOSITY > 0){
-		print main::dotify("Checking quality support for $OUTPUT_TYPE");
-	}
-	## NOTE: this is not used
-	if (lc($OUTPUT_TYPE) eq 'flac'){
-		if ($QUALITY_FLAC !~ m/^[0-8]$/){
-			$b_error = 1;
-			$error_message .= "\n  $OUTPUT_TYPE only supports ";
-			$error_message .= "0 to 8 quality levels. You entered: $QUALITY_FLAC";
-		}
-		else {
-			$quality = $QUALITY_FLAC;
-		}
-	}
-	if (lc($OUTPUT_TYPE) eq 'ogg'){
-		if ($QUALITY_OGG !~ m/^-?[0-9]+(\.[0-9]+)?$/ || 
-		 $QUALITY_OGG < -1 || $QUALITY_OGG > 10){
-			$b_error = 1;
-			$error_message .= "\n  $OUTPUT_TYPE only supports ";
-			$error_message .= "-1 to 10 quality levels. You entered: $QUALITY_OGG";
-		}
-		else {
-			$quality = $QUALITY_OGG;
-		}
-	}
-	if (lc($OUTPUT_TYPE) eq 'aac' || lc($OUTPUT_TYPE) eq 'm4a'){
-		if ($QUALITY_AAC !~ m/^[0-9]+$/ || $QUALITY_AAC < 10 || $QUALITY_AAC > 500){
-			$b_error = 1;
-			$error_message .= "\n  $OUTPUT_TYPE only supports ";
-			$error_message .= "10 to 500 quality levels. You entered: $QUALITY_AAC";
-		}
-		else {
-			$quality = $QUALITY_AAC;
-		}
-	}
-	# supports fractional quality levels
-	elsif (lc($OUTPUT_TYPE) eq 'opus'){
-		if ($QUALITY_OPUS !~ m/^[0-9]+$/ || $QUALITY_OPUS < 6|| $QUALITY_OPUS > 256){
-			$b_error = 1;
-			$error_message .= "\n  $OUTPUT_TYPE only supports ";
-			$error_message .= "6 to 256 bitrate quality levels. You entered: $QUALITY_OPUS";
-		}
-		else {
-			$quality = $QUALITY_OPUS;
-		}
-	}
-	elsif (lc($OUTPUT_TYPE) eq 'mp3'){
-		if ($QUALITY_MP3 !~ m/^[0-9]$/){
-			$b_error = 1;
-			$error_message .= "\n  $OUTPUT_TYPE only supports 0-9 quality levels. ";
-			$error_message .= "You entered: $QUALITY_MP3";
-		}
-		else {
-			$quality = $QUALITY_MP3;
-		}
-	}
-	if ($b_error){
-		main::error_handler('quality-invalid',$error_message,0);
-	}
-	elsif ($VERBOSITY > 0){
-		say "Supported: $quality ($OUTPUT_TYPE)";
-	}
-}
-sub check_verbosity {
-	my ($b_error,$error_message) = (0,'');
-	if ($VERBOSITY > 0){
-		print main::dotify("Checking verbosity output level");
-	}
-	if ($VERBOSITY !~ m/^([0-4])$/){
-		$b_error = 1;
-		$error_message .= "\n  VERBOSITY only supports 0-4. ";
-		$error_message .= "You used: $VERBOSITY";
-	}
-	if ($b_error){
-		main::error_handler('bad-level',$error_message,0);
-	}
-	elsif ($VERBOSITY > 0){
-		say "Supported: $VERBOSITY";
-	}
-}
-sub check_nlink {
-	my ($b_error,$error_message) = (0,'');
-	if (defined $DONT_USE_NLINK && $DONT_USE_NLINK ne '0'){
+	if ($EXCLUDE){
 		if ($VERBOSITY > 0){
-			print main::dotify("Checking DONT_USE_NLINK value");
+			print main::dotify("Checking EXCLUDE data");
 		}
-		if ($DONT_USE_NLINK !~ m/^[01]$/){
-			$b_error = 1;
-			$error_message .= "\n  DONT_USE_NLINK only supports 0-1. ";
-			$error_message .= "You used: $DONT_USE_NLINK";
+		if ($EXCLUDE =~ /\Q$EXCLUDE_BASE\E/){
+			if (! -e $EXCLUDE){
+				$b_error = 1;
+				$error_message .= "\n You must provide a valid exclude file path. ";
+				$error_message .= "You used: $EXCLUDE";
+			}
+		}
+		else {
+			if ($EXCLUDE =~ /\Q^^^^\E/ || $EXCLUDE =~ /\Q^^\E$/){
+				$b_error = 1;
+				$error_message .= "\n You have an empty value in your EXCLUDE data. ";
+				$error_message .= "You used: $EXCLUDE";
+			}
 		}
 		if ($b_error){
-			main::error_handler('bad-nlink',$error_message,0);
+			main::error_handler('bad-exclude-file',$error_message,0);
 		}
 		elsif ($VERBOSITY > 0){
-			say "Supported: $DONT_USE_NLINK";
+			say "Supported: $FORK";
 		}
 	}
 }
@@ -2859,7 +2707,7 @@ sub check_fork {
 	}
 	if ($FORK !~ m/^[0-9]+$/){
 		$b_error = 1;
-		$error_message .= "\n  FORK requires value: 0 or more. ";
+		$error_message .= "\n FORK requires value: 0 or more. ";
 		$error_message .= "You used: $FORK";
 	}
 	# note: tests show fork == 1 slower than no forking!!
@@ -2879,32 +2727,229 @@ sub check_fork {
 		say "Supported: $FORK";
 	}
 }
-sub check_excludes {
+sub check_in_out_types {
 	my ($b_error,$error_message) = (0,'');
-	if ($EXCLUDE){
+	if ($VERBOSITY > 0){
+		eval $print_line_large;
+		print main::dotify("Checking input and output types");
+	}
+	if ($run{'ffmpeg'} && ($INPUT_TYPE !~ /^(flac)$/ || $OUTPUT_TYPE !~ m/^(flac|ogg|opus)$/i)){
+		$b_error = 1;
+		$error_message .= "\n The --ffmpeg input/output type combination you entered is not supported: ";
+		$error_message .= "in: $INPUT_TYPE out: $OUTPUT_TYPE";
+	}
+	if ($INPUT_TYPE !~ m/^(aiff?|flac|mp3|raw|shn|wav)$/i){
+		$b_error = 1;
+		$error_message .= "\n The input type you entered is not supported: ";
+		$error_message .= "$INPUT_TYPE";
+	}
+	if (($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'} || 
+	 $run{'analyze'} || $run{'info-quality'} || $run{'resample'}) && 
+	 $INPUT_TYPE !~ m/^(flac)$/i){
+		$b_error = 1;
+		$error_message .= "\n The input type you entered is not supported for ";
+		$error_message .= "\n analyze/checksum/resample/tagging operations: ";
+		$error_message .= "$INPUT_TYPE";
+	}
+	if ($b_check_out){
+		if ($OUTPUT_TYPE !~ m/^(aac|flac|m4a|mp3|ogg|opus)$/i){
+			$b_error = 1;
+			$error_message .= "\n  The output type you entered is not supported: ";
+			$error_message .= "$OUTPUT_TYPE";
+		}
+		if ($OUTPUT_TYPE =~ /^(m4a|mp3|aac)$/i && $INPUT_TYPE ne lc('flac')){
+			$b_error = 1;
+			$error_message .= "\n The output type $OUTPUT_TYPE you entered ";
+			$error_message .= "only supports input type: flac";
+		}
+		if (($run{'resample'} || $INPUT_TYPE =~ m/^(aac|aiff?|m4a|mp3|raw|shn)$/i) &&
+		 $OUTPUT_TYPE ne lc('flac')){
+			$b_error = 1;
+			$error_message .= "\n The input type $INPUT_TYPE you entered ";
+			$error_message .= "only supports output type: flac";
+		}
+	}
+	if ($b_error){
+		main::error_handler('unsupported-type',$error_message,0);
+	}
+	else {
+		$b_valid_in_out = 1;
 		if ($VERBOSITY > 0){
-			print main::dotify("Checking EXCLUDE data");
+			say "Valid: $INPUT_TYPE(in) $OUTPUT_TYPE(out)";
 		}
-		if ($EXCLUDE =~ /\Q$EXCLUDE_BASE\E/){
-			if (! -e $EXCLUDE){
-				$b_error = 1;
-				$error_message .= "\n  You must provide a valid exclude file path. ";
-				$error_message .= "You used: $EXCLUDE";
-			}
+	}
+}
+sub check_nlink {
+	my ($b_error,$error_message) = (0,'');
+	if (defined $DONT_USE_NLINK && $DONT_USE_NLINK ne '0'){
+		if ($VERBOSITY > 0){
+			print main::dotify("Checking DONT_USE_NLINK value");
 		}
-		else {
-			if ($EXCLUDE =~ /\Q^^^^\E/ || $EXCLUDE =~ /\Q^^\E$/){
-				$b_error = 1;
-				$error_message .= "\n  You have an empty value in your EXCLUDE data. ";
-				$error_message .= "You used: $EXCLUDE";
-			}
+		if ($DONT_USE_NLINK !~ m/^[01]$/){
+			$b_error = 1;
+			$error_message .= "\n DONT_USE_NLINK only supports 0-1. ";
+			$error_message .= "You used: $DONT_USE_NLINK";
 		}
 		if ($b_error){
-			main::error_handler('bad-exclude-file',$error_message,0);
+			main::error_handler('bad-nlink',$error_message,0);
 		}
 		elsif ($VERBOSITY > 0){
-			say "Supported: $FORK";
+			say "Supported: $DONT_USE_NLINK";
 		}
+	}
+}
+sub check_quality{
+	my ($b_error,$error_message) = (0,'');
+	if ($VERBOSITY > 0){
+		print main::dotify("Checking quality support for $OUTPUT_TYPE");
+	}
+	## NOTE: this is not used
+	if (lc($OUTPUT_TYPE) eq 'flac'){
+		if ($QUALITY_FLAC !~ m/^[0-8]$/){
+			$b_error = 1;
+			$error_message .= "\n $OUTPUT_TYPE only supports ";
+			$error_message .= "0 to 8 quality levels. You entered: $QUALITY_FLAC";
+		}
+		else {
+			$quality = $QUALITY_FLAC;
+		}
+	}
+	if (lc($OUTPUT_TYPE) eq 'ogg'){
+		if ($QUALITY_OGG !~ m/^-?[0-9]+(\.[0-9]+)?$/ || 
+		 $QUALITY_OGG < -1 || $QUALITY_OGG > 10){
+			$b_error = 1;
+			$error_message .= "\n $OUTPUT_TYPE only supports ";
+			$error_message .= "-1 to 10 quality levels. You entered: $QUALITY_OGG";
+		}
+		else {
+			$quality = $QUALITY_OGG;
+		}
+	}
+	if (lc($OUTPUT_TYPE) eq 'aac' || lc($OUTPUT_TYPE) eq 'm4a'){
+		if ($QUALITY_AAC !~ m/^[0-9]+$/ || $QUALITY_AAC < 10 || $QUALITY_AAC > 500){
+			$b_error = 1;
+			$error_message .= "\n $OUTPUT_TYPE only supports ";
+			$error_message .= "10 to 500 quality levels. You entered: $QUALITY_AAC";
+		}
+		else {
+			$quality = $QUALITY_AAC;
+		}
+	}
+	# supports fractional quality levels
+	elsif (lc($OUTPUT_TYPE) eq 'opus'){
+		if ($QUALITY_OPUS !~ m/^[0-9]+$/ || $QUALITY_OPUS < 6|| $QUALITY_OPUS > 256){
+			$b_error = 1;
+			$error_message .= "\n $OUTPUT_TYPE only supports ";
+			$error_message .= "6 to 256 bitrate quality levels. You entered: $QUALITY_OPUS";
+		}
+		else {
+			$quality = $QUALITY_OPUS;
+		}
+	}
+	elsif (lc($OUTPUT_TYPE) eq 'mp3'){
+		if ($QUALITY_MP3 !~ m/^[0-9]$/){
+			$b_error = 1;
+			$error_message .= "\n $OUTPUT_TYPE only supports 0-9 quality levels. ";
+			$error_message .= "You entered: $QUALITY_MP3";
+		}
+		else {
+			$quality = $QUALITY_MP3;
+		}
+	}
+	if ($b_error){
+		main::error_handler('quality-invalid',$error_message,0);
+	}
+	elsif ($VERBOSITY > 0){
+		say "Supported: $quality ($OUTPUT_TYPE)";
+	}
+}
+# check only runs if $run{'resample'} loaded
+sub check_resample {
+	my ($b_error,$error_message) = (0,'');
+	if ($VERBOSITY > 0){
+		eval $print_line_large;
+		print main::dotify("Checking resample values");
+	}
+	if (!$run{'resample-override'}) {
+		if ($run{'resample'}->[0] !~ /(16|20|24)/ || 
+		 $run{'resample'}->[1] !~ /(44\.1|48|88\.2|96|192)/){
+			$b_error = 1;
+			$error_message = 'Invalid resample values. Supported bit depths: 16/20/24; ';
+			$error_message .= "\n sample rates: 44.1/48/88.2/96/192";
+		}
+	}
+	else{
+		if (($run{'resample'}->[0] < 4 || $run{'resample'}->[0] > 32) || 
+		 ($run{'resample'}->[1] < 1 || $run{'resample'}->[1] > 655)){
+			$b_error = 1;
+			$error_message = 'Invalid resample values. Supported bit depths: 4-32; ';
+			$error_message .= "\n sample rates: 1-655khz";
+		}
+	}
+	if ($b_error){
+		main::error_handler('bad-resample',$error_message,0);
+	}
+	else {
+		if ($VERBOSITY > 0){
+			my $info = 'Valid: ' . $run{'resample'}->[0];
+			$info .= ':' .  $run{'resample'}->[1];
+			say $info;
+		}
+		# ffmpeg uses the raw hz values, not khz
+		$run{'resample'}->[1] = $run{'resample'}->[1] * 1000;
+	}
+}
+sub check_src_dest_directories {
+	my $missing_dirs = '';
+	my ($b_error,$error_message) = (0,'');
+	if ($VERBOSITY > 0){
+		eval $print_line_large;
+		print main::dotify("Checking source / destination directories");
+	}
+	if (! -d $SOURCE_DIRECTORY){
+		$b_error = 1;
+		$missing_dirs .= "\n Source Directory: $SOURCE_DIRECTORY";
+	}
+	if ($b_check_dest && ! -d $DESTINATION_DIRECTORY){
+		$b_error = 1;
+		$missing_dirs .= "\n Destination Directory: $DESTINATION_DIRECTORY";
+	}
+	if ($b_error){
+		my $error_message = "The paths for the following directories are missing:";
+		$error_message .= "$missing_dirs";
+		$error_message .= "\nPlease check the directory paths you provided.";
+		main::error_handler('dest-dir',$error_message,0);
+	} 
+	elsif ($VERBOSITY > 0){
+		say 'Directories: exist';
+	}
+	if ($b_check_dest && !$b_error && $DESTINATION_DIRECTORY eq $SOURCE_DIRECTORY){
+		$error_message = "Destination directory cannot be same as Source directory!";
+		main::error_handler('dest-eq-src-dir',$error_message,0);
+	}
+	if ($run{'prefill'} && 
+	 !(main::globber("$SOURCE_DIRECTORY${path_separator}*.$INPUT_TYPE"))){
+		my $error_message = "The --prefill option can only be run on a directory ";
+		$error_message .= "containing\n$INPUT_TYPE files. None found in: ";
+		$error_message .= "$SOURCE_DIRECTORY";
+		main::error_handler('prefill-error',$error_message,0);
+	}
+}
+sub check_verbosity {
+	my ($b_error,$error_message) = (0,'');
+	if ($VERBOSITY > 0){
+		print main::dotify("Checking verbosity output level");
+	}
+	if ($VERBOSITY !~ m/^([0-4])$/){
+		$b_error = 1;
+		$error_message .= "\n VERBOSITY only supports 0-4. ";
+		$error_message .= "You used: $VERBOSITY";
+	}
+	if ($b_error){
+		main::error_handler('bad-level',$error_message,0);
+	}
+	elsif ($VERBOSITY > 0){
+		say "Supported: $VERBOSITY";
 	}
 }
 # end Validation
@@ -3015,6 +3060,12 @@ sub show_options {
 	$output .= "                  mp3: n between 0-9. Variable bit rate, 0 best quality.\n";
 	$output .= "                  Current values: $QUALITY_AAC (aac/m4a); $QUALITY_MP3 (mp3); \n";
 	$output .= "                  $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
+	$output .= "--resample        [bit depth:sample rate khz] - Supports bit depth 16|20|24 and\n";
+	$output .= "                  sample rates 44.1|48|88.2|96|192. Read manual for more info.\n";
+	$output .= "                  Example --resample 16:48\n";
+	$output .= "--resample-override\n";
+	$output .= "                  Allows all supported flac resampling values: 2-32 bit depths;\n";
+	$output .= "                  1-655 khz sampling rates (decimals ok).\n";
 	$output .= "--source, -s      Path to the top-most directory containing your source files.\n";
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
 	$output .= "--source-glob, -g [Path inside -s directory with wildcards]\n";
@@ -3347,7 +3398,6 @@ sub get_options{
 	GetOptions (
 	'G|aggregate:s' => sub { 
 		my ($opt,$arg) = @_;
-		$b_check_out = 0;
 		if ($arg){
 			if ($arg eq 'file'){
 				$run{'aggregate-file'} = 1;
@@ -3366,11 +3416,10 @@ sub get_options{
 		$run{'checksum'} = 0;
 		$run{'checksum-verify'} = 0;
 		$test{'aggregate'} = 1;
+		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';
 	},
 	'analyze|Z' => sub { 
-		$b_check_dest = 0;
-		$b_check_out = 0;
 		$run{'checksum'} = 1;
 		$run{'analyze'} = 1;
 		$run{'duplicates'} = 0;
@@ -3380,13 +3429,13 @@ sub get_options{
 		$run{'clean'} = 0;
 		$test{'checksum'} = 1;
 		$test{'analyze'} = 1;
+		$b_check_dest = 0;
+		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';},
 	'a|append:s' => sub { 
 		my ($opt,$arg) = @_;
 		$COPY_TYPES .= ',' . $arg if $arg;},
 	'A|autotag' => sub { 
-		$b_check_dest = 0;
-		$b_check_out = 0;
 		$run{'autotag'} = 1;
 		$run{'autotag-create'} = 0;
 		$run{'sync'} = 0;
@@ -3394,11 +3443,11 @@ sub get_options{
 		# $run{'checksum'} = 0;
 		$run{'checksum-verify'} = 0;
 		$test{'tag'} = 1;
+		$b_check_dest = 0;
+		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	'C|autotag-create' => sub { 
-		$b_check_dest = 0;
-		$b_check_out = 0;
 		$run{'autotag-create'} = 1;
 		$run{'autotag'} = 0;
 		$run{'sync'} = 0;
@@ -3406,6 +3455,8 @@ sub get_options{
 		$run{'checksum'} = 0;
 		$run{'checksum-verify'} = 0;
 		$test{'tag-create'} = 1;
+		$b_check_dest = 0;
+		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	'M|autotag-create-multi:s' => sub { 
@@ -3415,8 +3466,6 @@ sub get_options{
 			error_handler('missing-arg',$msg,1);
 		}
 		$autotag_multi = $arg;
-		$b_check_dest = 0;
-		$b_check_out = 0;
 		$run{'autotag-create'} = 1;
 		$run{'autotag-multi'} = 1;
 		$run{'autotag'} = 0;
@@ -3425,11 +3474,11 @@ sub get_options{
 		$run{'checksum'} = 0;
 		$run{'checksum-verify'} = 0;
 		$test{'tag-create'} = 1;
+		$b_check_dest = 0;
+		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	'S|autotag-create-single' => sub { 
-		$b_check_dest = 0;
-		$b_check_out = 0;
 		$run{'autotag-create'} = 1;
 		$run{'autotag-single'} = 1;
 		$run{'autotag'} = 0;
@@ -3438,14 +3487,14 @@ sub get_options{
 		$run{'checksum'} = 0;
 		$run{'checksum-verify'} = 0;
 		$test{'tag-create'} = 1;
+		$b_check_dest = 0;
+		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	# legacy
 	'basic|default' => sub { 
 		$VERBOSITY = 1 },
 	'K|checksum' => sub { 
-		$b_check_dest = 0;
-		$b_check_out = 0;
 		$run{'checksum'} = 1;
 		$run{'checksum-verify'} = 0;
 		$run{'analyze'} = 0;
@@ -3455,11 +3504,11 @@ sub get_options{
 		# $run{'autotag'} = 0;
 		$test{'checksum'} = 1;
 		$test{'checksum-generate'} = 1;
+		$b_check_dest = 0;
+		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	'D|checksum-delete' => sub { 
-		$b_check_dest = 0;
-		$b_check_out = 0;
 		$run{'checksum'} = 1;
 		$run{'checksum-delete'} = 1; 
 		$run{'checksum-verify'} = 0;
@@ -3470,11 +3519,11 @@ sub get_options{
 		# $run{'autotag'} = 0;
 		$test{'checksum'} = 1;
 		$test{'checksum-delete'} = 1;
+		$b_check_dest = 0;
+		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	'V|checksum-verify' => sub { 
-		$b_check_dest = 0;
-		$b_check_out = 0;
 		$run{'checksum-verify'} = 1;
 		$run{'checksum-delete'} = 0; 
 		$run{'analyze'} = 0;
@@ -3484,6 +3533,8 @@ sub get_options{
 		$run{'duplicates'} = 0;
 		$test{'checksum'} = 1;
 		$test{'checksum-verify'} = 1;
+		$b_check_dest = 0;
+		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		},
 	'clean:s' => sub { 
@@ -3515,8 +3566,6 @@ sub get_options{
 	'dot' => sub { 
 		$run{'dot'} = 1;},
 	'dupes|duplicates' => sub { 
-		$b_check_dest = 0;
-		$b_check_out = 0;
 		$run{'checksum'} = 1;
 		$run{'duplicates'} = 1;
 		$run{'no-md5'} = 1;
@@ -3527,6 +3576,8 @@ sub get_options{
 		$run{'clean'} = 0;
 		$test{'checksum'} = 1;
 		$test{'duplicates'} = 1;
+		$b_check_dest = 0;
+		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';},
 	'x|exclude:s' => sub { 
 		my ($opt,$arg) = @_;
@@ -3562,8 +3613,6 @@ sub get_options{
 		}
 		$embed_image = $arg;
 		$run{'remove-images'} = 1 if $embed_image eq 'remove';
-		$b_check_dest = 0;
-		$b_check_out = 0;
 		$run{'embed-image'} = 1;
 		$run{'autotag'} = 1;
 		$run{'autotag-create'} = 0;
@@ -3572,6 +3621,8 @@ sub get_options{
 		# $run{'checksum'} = 0;
 		$run{'checksum-verify'} = 0;
 		$OUTPUT_TYPE = 'UNSET';
+		$b_check_dest = 0;
+		$b_check_out = 0;
 		$test{'tag'} = 1;
 		},
 	'X|infofix:s' => sub { 
@@ -3599,6 +3650,9 @@ sub get_options{
 		$run{'checksum-verify'} = 0;
 		$test{'info'} = 1;
 		$test{'infofix'} = 1;
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		$OUTPUT_TYPE = 'UNSET';
 	},
 	'info-rating:i' => sub { 
 		my ($opt,$arg) = @_;
@@ -3654,7 +3708,9 @@ sub get_options{
 		},
 	'q|quality:f' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires number.",1) if ! defined $arg || $arg !~ /^-?[0-9\.]+$/;
+		if (!defined $arg || $arg !~ /^-?[0-9\.]+$/){
+			error_handler('missing-arg',"$opt requires number.",1);
+		}
 		# validate these later
 		$QUALITY_AAC = $arg;
 		$QUALITY_FLAC = $arg;
@@ -3681,11 +3737,18 @@ sub get_options{
 		$padding = ' --dont-use-padding';
 		$test{'tag'} = 1;
 		},
-	'resample' => sub {
+	'resample:s' => sub {
 		my ($opt,$arg) = @_;
-		$run{'resample'} = 1;
+		if (defined $arg && $arg =~ /^([0-9]+):([0-9]+(\.[0-9]+)?)$/){
+			$run{'resample'} = [$1,$2];
+		}
+		else {
+			error_handler('missing-arg',"Incorrect syntax for $opt: bits:khz, see -h or man.",1);
+		}
 		$test{'resample'} = 1;
 		},
+	'resample-override' => sub {
+		$run{'resample-override'} = 1; },
 	's|source:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
@@ -3714,8 +3777,6 @@ sub get_options{
 			error_handler('missing-arg',$msg,1);
 		}
 		@tags = split /\Q^^\E/, $arg;
-		$b_check_dest = 0;
-		$b_check_out = 0;
 		$run{'update-tag'} = 1;
 		$run{'autotag'} = 1;
 		$run{'autotag-create'} = 0;
@@ -3723,6 +3784,8 @@ sub get_options{
 		$run{'clean'} = 0;
 		# $run{'checksum'} = 0;
 		$run{'checksum-verify'} = 0;
+		$b_check_dest = 0;
+		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';
 		$test{'tag'} = 1;
 		},
@@ -3731,14 +3794,14 @@ sub get_options{
 		$b_test = 1 },
 	'U|update'=> sub { 
 		$run{'update'} = 1; 
-		$b_check_dest = 0;
-		$b_check_out = 0;
 		$run{'checksum'} = 0;
 		$run{'checksum-delete'} = 0; 
 		$run{'checksum-verify'} = 0;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
 		$run{'autotag'} = 0;
+		$b_check_dest = 0;
+		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';},
 	# legacy
 	'verbose'=> sub { 

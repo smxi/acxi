@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-09\-08" acxi "acxi manual"
+.TH ACXI 1 "2021\-09\-19" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -7,9 +7,10 @@ Syncing: \fBacxi\fR [\fB\-a\fR {extensions}] [\fB\-\-clean\fR]
 [\fB\-\-codec\fR {aac|libfdk_aac2}] [\fB\-\-copy\fR {extensions}] 
 [\fB\-d\fR {destination-path}]  [\fB\-\-exclude\fR] 
 [\fB\-\-exclude\-append\fR {filename|extension}] 
-[\fB\-f\fR] [\fB\-\-flac\-data\fR] [\fB\-\-fork\fR {0-xx}]
+[\fB\-f\fR] [\fB\-\-fork\fR {0-xx}]
 [\fB\-i\fR {flac|raw|shn|wave}] [\fB\-o\fR {flac|mp3|ogg|opus}] 
-[\fB\-q\fR {NUMBER]} [\fB\-s\fR {source\-path}] 
+[\fB\-q\fR {NUMBER}] [\fB\-\-resample\fR {bit-depth:sample-rate}]
+[\fB\-s\fR {source\-path}] 
 .IP * 2
 Tagging: \fBacxi\fR [\fB\-\-aggregate\fR [file name|extension]] 
 [\fB\-\-autotag\fR] [\fB\-\-autotag\-create\fR] 
@@ -161,7 +162,7 @@ helpful in many cases. Otherwise just redirect output to file directly.
 non rounded seconds and file size in bytes to all size / time results.
 
 .TP
-.B \-\-append, \fB\-a  {extensions}\fR
+.B \-\-append\fR, \fB\-a  {extensions}\fR
 Takes one or more comma separated extensions. Do not use whitespaces in this 
 list. These will be appended on to the current list being used on a one time 
 basis. This can be useful if you want to copy over a specific file type for one 
@@ -379,9 +380,11 @@ path will be excluded or removed from the destination directory.
 
 If it's a path to a file of excludes, use one exclude string per line.
 
-Sample: \fB\-\-exclude='artwork^^Daisy Queen^^Bon Jovi'\fR
-
-Sample: \fB\-\-exclude='/home/me/music/excludes/acxi-excludes-phone.txt\fR
+Samples:
+.nf
+\fB\-\-exclude='artwork^^Daisy Queen^^Bon Jovi'
+\-\-exclude='/home/me/music/excludes/acxi-excludes-phone.txt\fR
+.fi
 
 If you want to temporarily suspend exclude actions one time, use: 
 \fB\-\-exclude='UNSET'\fR
@@ -439,11 +442,12 @@ padding will be removed.
 
 Only run this in a single recording directory, do not use globally!!
 
-Sample: \fBacxi \-s ./ \-\-image='cover.jpg'\fR
-
-Sample: \fBacxi \-s ./ \-\-image remove\fR
-
-Sample: \fBacxi \-s ./ \-I cover.jpg \-\-remove\-images\fR
+Samples:
+.nf
+\fBacxi \-s ./ \-\-image='cover.jpg'
+acxi \-s ./ \-\-image remove
+acxi \-s ./ \-I cover.jpg \-\-remove\-images\fR
+.fi
 
 .TP
 .B \-\-infofix\fR, \fB\-X [d|n|q|t|u|w]\fR
@@ -479,8 +483,8 @@ in directory to determine bit rate, sampling frequency, and channels. Requires
 track file name starts with D-NN or ends with D-NN.flac. Exits if it can't find 
 a match. Quality is /[rating] number and can be changed from default if desired.
 .nf
-FLAC: 16/44.1 (2 channels)
-Quality: /4 ()
+\fBFLAC: 16/44.1 (2 channels)
+Quality: /4 ()\fR
 .fi
 
 * t \- smart upper case first track titles only. Requires Perl module 
@@ -692,6 +696,48 @@ tests showed inconclusive results with this, and it slows down the tagging a
 lot, especially over network connections.
 
 .TP
+.B \-\-resample {bit depth:sample rate khz}\fR
+Allows for standard resampling options: 16|20|24 bit depth and 
+44.1|48|88.2|96|192 khz sampling rate. 
+
+To get best results, always make sure to resample to a sampling rate that 
+divides evenly into the original sampling rate, for example, if the original is 
+96khz sampling rate, 24 bit, resample to 48khz, 16 bit (96/2 == 48). 
+
+If you use values that do not divide evenly, you have to deal with dithering 
+issues and other headaches, and your audio will not be as good as it could be. 
+Note that 44.1 is only required for Audio CDs, and in most cases, the cd burning 
+software can deal with that itself, unless you want to force it using acxi.
+
+In short, if you have 192 or 96 khz originals, resample them to 48 khz. If you 
+have for some strange reason 88.2 khz, resample it to 44.1. Do not sample 
+upwards, it's just wasted bytes, for example, there is no reason to resample 
+from 44.1 to 88.2. In almost all cases, if you need to work like that, use a 
+dedicated DAW program like Audacity and let it do the resamplings to higher 
+levels in its native mode, then after you have worked on the project, save it, 
+and export to normal sampling rates and bit depths.
+
+IMPORTANT: use the \fB\-Z\fR analyze option first to make sure what the bit 
+depth and sampling rate of your files are before using this resampling option. 
+\fB\-\-resample\fR and \fB\-\-analyze\fR are meant to be used together to avoid 
+errors, and so you always can be sure of what you are actually dealing with.
+
+Sample:
+.nf
+\fB# to get sampling rates etc:
+acxi \-s ./ \-Z
+[.... output...]
+# then run resampling once you have determined sampling rates etc
+acxi \-s working \-d results \-i flac \-o flac \-\-resample 16:48\fR
+.fi
+
+.TP
+.B \-\-resample\-override\fR
+Allows users to select any supported bit depth (4\-32) and sample rate, in khz 
+(1\-655). Why you would want to do this is beyond me, but if you want to, you 
+can if you add this override switch.
+
+.TP
 .B \-\-source\fR, \fB\-s {path}\fR
 Path to the top-most directory containing your source files (eg, flac).
 
@@ -699,11 +745,13 @@ Path to the top-most directory containing your source files (eg, flac).
 .B \-\-source\-glob\fR, \fB\-g {path relative to \-s path}\fR
 Accepts wild card paths if you only want to update or check certain directories 
 within the main  \fB\-\-source\fR working directory. Requires \fB\-\-source\fR, 
-wild card path must be within \fB-\-source\fR, like:
+wild card path must be within \fB-\-source\fR.
 
-\fBacxi -s ./ \-g 'BandName*' \-V\fR
-
-\fBacxi -s ./ \-g '{BandName,Band Name,Band_Name}*' \-V\fR
+Sample:
+.nf
+\fBacxi -s ./ \-g 'BandName*' \-V
+acxi -s ./ \-g '{BandName,Band Name,Band_Name}*' \-V\fR
+.fi
 
 Will only verify folders tarting with BandName. Remember to always quote the 
 value otherwise your shell will expand the wild cards!!
@@ -829,12 +877,12 @@ comment header of acxi.
 
 Sample contents of a configuration file:
 .nf
-DESTINATION_DIRECTORY=/home/fred/music/opus
+\fBDESTINATION_DIRECTORY=/home/fred/music/opus
 SOURCE_DIRECTORY=/home/fred/music/flac
 COPY_TYPES=gif,jpg,jpeg,png,txt
 OUTPUT_TYPE=opus
 QUALITY_OPUS=160
-EXCLUDE=/doc/^^/docs/^^/images/^^/pictures/^^/artwork/^^/photos/^^
+EXCLUDE=/doc/^^/docs/^^/images/^^/pictures/^^/artwork/^^/photos/^^\fR
 .fi
 
 .TP
