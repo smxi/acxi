@@ -393,6 +393,8 @@ sub run {
 		main::error_handler('analyze',"No flac files found for quality test!\n",1);
 	}
 	else {
+		undef(%results);
+		undef(@info);
 		process();
 		if ($type eq 'info'){
 			return info_data(); # returns updated INFO_FILE page contents array
