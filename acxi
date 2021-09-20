@@ -2519,13 +2519,15 @@ sub start_text {
 }
 sub check_application_paths {
 	my ($b_error,$error_message) = (0,'');
-	my $app_paths = ''; 
+	my @app_paths; 
 	if ($VERBOSITY > 0){
 		print main::dotify("Checking required tools paths");
 	}
 	if ($b_check_out){
 		if ($OUTPUT_TYPE =~ /^(aac|flac|m4a)$/){
-			$app_paths .= "$COMMAND_FFMPEG";
+			if (!grep {$_ eq $COMMAND_FFMPEG} @app_paths){
+				push(@app_paths,$COMMAND_FFMPEG);
+			}
 			if (! -x "$COMMAND_FFMPEG"){
 				$b_error = 1;
 				$error_message .= "\n Encoding application not available: $COMMAND_FFMPEG";
@@ -2534,14 +2536,18 @@ sub check_application_paths {
 		elsif ($OUTPUT_TYPE eq 'ogg' || $OUTPUT_TYPE eq 'opus'){
 			if (!$run{'ffmpeg'}){
 				if ($OUTPUT_TYPE eq 'ogg'){
-					$app_paths .= "\n $COMMAND_OGG";
+					if (!grep {$_ eq $COMMAND_OGG} @app_paths){
+						push(@app_paths,$COMMAND_OGG);
+					}
 					if (! -x "$COMMAND_OGG"){
 						$b_error = 1;
 						$error_message .= "\n Encoding application not available: $COMMAND_OGG";
 					}
 				}
 				elsif ($OUTPUT_TYPE eq 'opus'){
-					$app_paths .= "\n $COMMAND_OPUS";
+					if (!grep {$_ eq $COMMAND_OPUS} @app_paths){
+						push(@app_paths,$COMMAND_OPUS);
+					}
 					if (!$run{'ffmpeg'}){
 						if (! -x "$COMMAND_OPUS"){
 							$b_error = 1;
@@ -2551,7 +2557,9 @@ sub check_application_paths {
 				}
 			}
 			else {
-				$app_paths .= "\n $COMMAND_FFMPEG";
+				if (!grep {$_ eq $COMMAND_FFMPEG} @app_paths){
+					push(@app_paths,$COMMAND_FFMPEG);
+				}
 				if (! -x "$COMMAND_FFMPEG"){
 					$b_error = 1;
 					$error_message .= "\n Encoding application not available: $COMMAND_FFMPEG";
@@ -2559,18 +2567,24 @@ sub check_application_paths {
 			}
 		}
 		elsif ($OUTPUT_TYPE eq 'mp3'){
-			$app_paths .= "\n $COMMAND_LAME ";
+			if (!grep {$_ eq $COMMAND_LAME} @app_paths){
+				push(@app_paths,$COMMAND_LAME);
+			}
 			if (! -x "$COMMAND_LAME"){
 				$b_error = 1;
 				$error_message .= "\n Encoding application not available: $COMMAND_LAME";
 			}
-			$app_paths .= "$COMMAND_FLAC ";
+			if (!grep {$_ eq $COMMAND_FLAC} @app_paths){
+				push(@app_paths,$COMMAND_FLAC);
+			}
 			if (! -x "$COMMAND_FLAC"){
 				$b_error = 1;
 				$error_message .= "\n Input processor $COMMAND_FLAC needed by lame ";
 				$error_message .= "not available.";
 			}
-			$app_paths .= "$COMMAND_METAFLAC ";
+			if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
+				push(@app_paths,$COMMAND_METAFLAC);
+			}
 			# Added: Odd @2011-03-23 01:55:28
 			if (! -x "$COMMAND_METAFLAC"){
 				$b_error = 1;
@@ -2582,7 +2596,9 @@ sub check_application_paths {
 	else {
 		# Note: -AK but not -AV
 		if ($run{'checksum'} || $run{'checksum-verify'}){
-			$app_paths .= "$COMMAND_MD5 ";
+			if (!grep {$_ eq $COMMAND_MD5} @app_paths){
+				push(@app_paths,$COMMAND_MD5);
+			}
 			# Added: Odd @2011-03-23 01:55:28
 			if (! -x "$COMMAND_MD5"){
 				$b_error = 1;
@@ -2590,7 +2606,9 @@ sub check_application_paths {
 				$error_message .= "md5 checksum files.";
 			}
 			if ($run{'checksum'}){
-				$app_paths .= "$COMMAND_METAFLAC ";
+				if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
+					push(@app_paths,$COMMAND_METAFLAC);
+				}
 				# Added: Odd @2011-03-23 01:55:28
 				if (! -x "$COMMAND_METAFLAC"){
 					$b_error = 1;
@@ -2599,7 +2617,9 @@ sub check_application_paths {
 				}
 			}
 			if ($run{'checksum-verify'}){
-				$app_paths .= "$COMMAND_FLAC ";
+				if (!grep {$_ eq $COMMAND_FLAC} @app_paths){
+					push(@app_paths,$COMMAND_FLAC);
+				}
 				if (! -x "$COMMAND_FLAC"){
 					$b_error = 1;
 					$error_message .= "\n $COMMAND_FLAC not found. Required to verify ";
@@ -2608,7 +2628,9 @@ sub check_application_paths {
 			}
 		}
 		if ($run{'autotag'}){
-			$app_paths .= "$COMMAND_METAFLAC ";
+			if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
+				push(@app_paths,$COMMAND_METAFLAC);
+			}
 			# Added: Odd @2011-03-23 01:55:28
 			if (! -x "$COMMAND_METAFLAC"){
 				$b_error = 1;
@@ -2617,7 +2639,9 @@ sub check_application_paths {
 			}
 		}
 		if ($run{'infofix-quality'} || $run{'analyze'}){
-			$app_paths .= "$COMMAND_METAFLAC ";
+			if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
+				push(@app_paths,$COMMAND_METAFLAC);
+			}
 			# Added: Odd @2011-03-23 01:55:28
 			if (! -x "$COMMAND_METAFLAC"){
 				$b_error = 1;
@@ -2626,6 +2650,9 @@ sub check_application_paths {
 			}
 		}
 		if ($run{'infofix-title'} || $run{'infofix-upper'}){
+			if (!grep {$_ eq 'Module Text::Autoformat'} @app_paths){
+				push(@app_paths,'Module Text::Autoformat');
+			}
 			if (!main::check_module('Text::Autoformat')){
 				main::error_handler('missing-perl-module', 'Text::Autoformat',1);
 				$b_error = 1;
@@ -2641,7 +2668,8 @@ sub check_application_paths {
 		main::error_handler('missing-app',$error_message,0);
 	}
 	elsif ($VERBOSITY > 0){
-		say "Available: $app_paths";
+		my ($join,$joiner) = ($VERBOSITY > 1) ? ("\n ","\n "): (' ','; ');
+		say "Available:$join" .  join($joiner,@app_paths);
 	}
 }
 sub check_codecs {
