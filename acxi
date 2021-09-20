@@ -377,7 +377,6 @@ package Analyze;
 my ($avg_kbs,$total_size,$total_size_raw,$total_time) = (0,0,0,0);
 my ($flac_info) = ('');
 my ($type,$ref,@files,@info,%results);
-
 sub run {
 	($type,$ref) = @_;
 	my $dir = Cwd::getcwd; # resolves sym links
@@ -395,6 +394,8 @@ sub run {
 	else {
 		undef(%results);
 		undef(@info);
+		($avg_kbs,$total_size,$total_size_raw,$total_time) = (0,0,0,0);
+		($flac_info) = ('');
 		process();
 		if ($type eq 'info'){
 			return info_data(); # returns updated INFO_FILE page contents array
