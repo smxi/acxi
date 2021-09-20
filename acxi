@@ -1148,10 +1148,10 @@ sub process_directories {
 	my (@files,$item,$result);
 	my $qualify = '';
 	if ($run{'no-ffp'}){
-		$qualify = " (Skipping ffp processing)";
+		$qualify .= " (Skipping ffp processing)";
 	}
-	elsif ($run{'no-md5'} && !$run{'duplicates'} && !$run{'checksum-ffps'}){
-		$qualify = " (Skipping md5 processing)";
+	if ($run{'no-md5'} && !$run{'duplicates'} && !$run{'checksum-ffps'}){
+		$qualify .= " (Skipping md5 processing)";
 	}
 	$list_type = 'dir';
 	say $line_small;
@@ -3584,6 +3584,7 @@ sub get_options{
 		$run{'checksum-ffps'} = 1;
 		$run{'no-md5'} = 1;
 		$test{'checksum'} = 1;
+		$test{'checksum-ffps'} = 1;
 		$test{'checksum-generate'} = 1;
 		$b_check_dest = 0;
 		$b_check_out = 0;
@@ -3942,6 +3943,14 @@ sub get_options{
 	if (!$test{'sync'} && $run{'ffmpeg'}){
 		error_handler('invalid-options', 
 		 "You can only use --ffmpeg with sync operations.",1);
+	}
+	if (($test{'duplicates'} || $test{'checksum-ffps'}) && $run{'no-ffp'}){
+		error_handler('invalid-options', 
+		 "You cannot use --no-ffp with --duplicates or --checksum-verify.",1);
+	}
+	if ($test{'checksum'} && $run{'no-ffp'} && $run{'no-md5'}){
+		error_handler('invalid-options', 
+		 "You cannot use both --no-ffp and --no-md5 with checksum options.",1);
 	}
 }
 
