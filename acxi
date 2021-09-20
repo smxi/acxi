@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.4.00';
-my $self_date='2021-09-19';
+my $self_date='2021-09-20';
 
 ## GLOBALS ##
 my %run;
@@ -410,8 +410,8 @@ sub process {
 		# say "Getting metaflac for file: $flac_file";
 		my @real;
 		my $escaped = main::escape_item("$flac_file");
-		my @flac = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps --show-total-samples "$escaped");
-		if (scalar @flac != 4){
+		my @flac = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps --show-total-samples --show-md5sum "$escaped");
+		if (scalar @flac != 5){
 			main::error_handler('analyze',"Metaflac failed to get 4 items from file:\n '$flac_file'",0);
 		}
 		foreach (@flac){
@@ -453,6 +453,10 @@ sub process {
 					$size_print .= " ($raw_size B)";
 				}
 				$results{$flac_file} = [$flac_info,$time_print,$size_print,$kbs_print];
+				if ($VERBOSITY > 1){
+					my $ffp_print = 'ffp: ' . $real[4];
+					splice(@{$results{$flac_file}},1,0,$ffp_print);
+				}
 			}
 		}
 	}
@@ -1127,7 +1131,13 @@ package Checksums;
 my ($print_src,%ffp_dupes);
 sub process {
 	say $line_large;
-	my $type = (!$run{'analyze'}) ? 'checksum processing': 'flac tests';
+	my $type = 'checksum processing';
+	if ($run{'analyze'}){
+		$type = 'flac tests';
+	}
+	elsif ($run{'duplicates'}){
+		$type = 'ffp duplicate tests';
+	}
 	say "Starting $type in " . main::sourcer("$SOURCE_DIRECTORY") . '...';
 	process_directories();
 	say $line_small;
@@ -1136,9 +1146,16 @@ sub process {
 }
 sub process_directories {
 	my (@files,$item,$result);
+	my $qualify = '';
+	if ($run{'no-ffp'}){
+		$qualify = " (Skipping ffp processing)";
+	}
+	elsif ($run{'no-md5'} && !$run{'duplicates'} && !$run{'checksum-ffps'}){
+		$qualify = " (Skipping md5 processing)";
+	}
 	$list_type = 'dir';
 	say $line_small;
-	say "Checking directories...";
+	say "Checking directories...$qualify";
 	@found_list = ();
 	chdir "$start_dir";
 	File::Find::find(\&main::wanted, @source_glob);
@@ -1184,7 +1201,7 @@ sub process_directories {
 	}
 }
 sub generate_checksums {
-	if (!$run{'duplicates'}){
+	if (!$run{'duplicates'} && !$run{'checksum-ffps'}){
 		say "  Generating checksums:";
 		print "   File: $FFP_FILE.ffp: ";
 	}
@@ -1201,20 +1218,16 @@ sub generate_checksums {
 	else {
 		say 'skipped';
 	}
-	if (!$run{'duplicates'}){
+	if (!$run{'no-md5'} && !$run{'duplicates'}){
 		print "   File: $MD5_FILE.md5: ";
-		if (!$run{'no-md5'}){
-			generate_md5();
-		}
-		else {
-			say 'skipped';
-		}
+		generate_md5();
 	}
 }
 sub generate_ffp {
 	my ($error_message,@output);
 	# system("$COMMAND_METAFLAC --show-md5sum *.flac > $FFP_FILE.ffp");
-	@output = qx($COMMAND_METAFLAC --show-md5sum *.flac);
+	# explicit --with-filename required in cases of 1 flac in directory
+	@output = qx($COMMAND_METAFLAC --with-filename --show-md5sum *.flac);
 	if ($? == -1 || $? > 0){
 		$error_message = "$COMMAND_METAFLAC returned error: $?";
 		main::error_handler('application-error', $error_message,1);
@@ -1224,12 +1237,13 @@ sub generate_ffp {
 		if ($run{'duplicates'}){
 			$ffp_dupes{$print_src} = \@output;
 		}
-		elsif (!$b_test){
+		elsif (!$b_test && !$run{'checksum-ffps'}){
 			main::writer("$FFP_FILE.ffp",\@output);
 			say 'created for ' . scalar(@output) . ' files';
 		}
 		else {
-			say "\n   Files: " . scalar(@output), "\n    ", join("\n    ", @output);
+			say '' if !$run{'duplicates'} && !$run{'checksum-ffps'};
+			say "   Files: " . scalar(@output), "\n    ", join("\n    ", @output);
 		}
 	}
 }
@@ -2599,16 +2613,18 @@ sub check_application_paths {
 	else {
 		# Note: -AK but not -AV
 		if ($run{'checksum'} || $run{'checksum-verify'}){
-			if (!grep {$_ eq $COMMAND_MD5} @app_paths){
-				push(@app_paths,$COMMAND_MD5);
+			if (!$run{'no-md5'}){
+				if (!grep {$_ eq $COMMAND_MD5} @app_paths){
+					push(@app_paths,$COMMAND_MD5);
+				}
+				# Added: Odd @2011-03-23 01:55:28
+				if (! -x "$COMMAND_MD5"){
+					$b_error = 1;
+					$error_message .= "\n $COMMAND_MD5 not found. Required to generate ";
+					$error_message .= "md5 checksum files.";
+				}
 			}
-			# Added: Odd @2011-03-23 01:55:28
-			if (! -x "$COMMAND_MD5"){
-				$b_error = 1;
-				$error_message .= "\n $COMMAND_MD5 not found. Required to generate ";
-				$error_message .= "md5 checksum files.";
-			}
-			if ($run{'checksum'}){
+			if ($run{'checksum'} && !$run{'no-ffp'}){
 				if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
 					push(@app_paths,$COMMAND_METAFLAC);
 				}
@@ -2619,7 +2635,7 @@ sub check_application_paths {
 					$error_message .= "ffp checksum files.";
 				}
 			}
-			if ($run{'checksum-verify'}){
+			if ($run{'checksum-verify'} && !$run{'no-ffp'}){
 				if (!grep {$_ eq $COMMAND_FLAC} @app_paths){
 					push(@app_paths,$COMMAND_FLAC);
 				}
@@ -3044,7 +3060,7 @@ sub show_options {
 	$output .= "Examples: $self_name -q 8 --destination /music/main/ogg\n";
 	$output .= "$self_name --input flac --output ogg -a md5\n";
 	$output .= "$self_name --copy doc,docx,bmp\n";
-	$output .= $line_small;
+	$output .= $line_small . "\n";
 	$output .= "Syncing options:\n";
 	$output .= "--append, -a      Add extension type(s) to existing extension copy list.\n";
 	$output .= "                  1 or more, comma separated, no spaces.\n";
@@ -3053,8 +3069,8 @@ sub show_options {
 	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
 	$output .= "                  remove that set of files or directories. Exits at end.\n";
 	$output .= "                  optional value 'sync' is used: --clean sync\n";
-	$output .= "--codec           [libfdk-aac|aac] -o aac/m4a only, if you want to use\n";
-	$output .= "                  alternate codec.\n";
+	$output .= "--codec           {libfdk-aac|aac} - if you want to use alternate codec.\n";
+	$output .= "                  Output -o aac/m4a only\n";
 	$output .= "--copy, -c        List of alternate data types to copy to Output type\n";
 	$output .= "                  directories. Comma separated, no spaces. See sample above.\n";
 	$output .= "                  Current copy types: ";
@@ -3078,10 +3094,10 @@ sub show_options {
 	$output .= "                  if they already exist.\n";
 	$output .= "--fork, -F        [0-x] - Number of forks/threads to use. 0 default, disables.\n";
 	$output .= "                  Requires Perl module: Parallel::ForkManager. Current: $FORK\n";
-	$output .= "--input, -i       Input type: aif,flac,raw,shn,wav. shn requires codec shorten. \n";
+	$output .= "--input, -i       Input type: {aif,flac,raw,shn,wav}. shn requires codec shorten. \n";
 	$output .= "                  raw,shn only output to flac.\n";
 	$output .= "                  Current value: $INPUT_TYPE\n";
-	$output .= "--output, -o      Output type: aac, flac. m4a, mp3, ogg, opus. aac/m4a/mp3\n";
+	$output .= "--output, -o      Output type: {aac, flac. m4a, mp3, ogg, opus. aac/m4a/mp3}\n";
 	$output .= "                  require input type flac. To preserve flac tags for aac, use\n";
 	$output .= "                  m4a. Current value: $OUTPUT_TYPE\n";
 	$output .= "--quality n, -q n flac: n between 0 and 8. 8 best, but > 4 generally pointless.\n";
@@ -3091,7 +3107,7 @@ sub show_options {
 	$output .= "                  mp3: n between 0-9. Variable bit rate, 0 best quality.\n";
 	$output .= "                  Current values: $QUALITY_AAC (aac/m4a); $QUALITY_MP3 (mp3); \n";
 	$output .= "                  $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
-	$output .= "--resample        [bit depth:sample rate khz] - Supports bit depth 16|20|24 and\n";
+	$output .= "--resample        {bit depth:sample rate khz} - Supports bit depth 16|20|24 and\n";
 	$output .= "                  sample rates 44.1|48|88.2|96|192. Read manual for more info.\n";
 	$output .= "                  Example --resample 16:48\n";
 	$output .= "--resample-override\n";
@@ -3099,10 +3115,10 @@ sub show_options {
 	$output .= "                  1-655 khz sampling rates (decimals ok).\n";
 	$output .= "--source, -s      Path to the top-most directory containing your source files.\n";
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
-	$output .= "--source-glob, -g [Path inside -s directory with wildcards]\n";
+	$output .= "--source-glob, -g {Path inside -s directory with wildcards}\n";
 	$output .= "                  Wildcard path, using *, paths relative to -s path.\n";
 	$output .= "                  Allows work on only a subset of directories in -s path.\n";
-	$output .= $line_small;
+	$output .= $line_small . "\n";
 	$output .= "Specialized options (tagging, checksums, prefills, etc):\n";
 	$output .= "--aggregate, -G   [filename|extension] Copy file name or extension type to\n";
 	$output .= "                  --destination directory. If no argument given, copies over\n";
@@ -3112,8 +3128,10 @@ sub show_options {
 	$output .= "                  (extension): acxi -d ~/music/cdinfo --aggregate jpg\n";
 	$output .= "                  (several): acxi -d ~/music/cdinfo --aggregate png,jpg,info.txt\n";
 	$output .= "--analyze, -Z     Analyze contents of directories, creates screen report per\n";
-	$output .= "                  file/directory. Currently only supports flac. Shows total time,\n";
-	$output .= "                  size, ffp avg kbs, etc. Similar to -Xq but prints to screen.\n";
+	$output .= "                  file/directory. Currently only supports flac. Shows total\n";
+	$output .= "                  time, size, ffp avg kbs, etc. Similar to -Xq but prints to\n";
+	$output .= "                  screen. -v2 adds ffp,changes to 1 key:value pair per line,\n";
+	$output .= "                  -v 3 adds precision.\n";
 	$output .= "--autotag, -A     Requires auto.tag formatted file in each directory. Flac only.\n";
 	$output .= "                  Deletes all existing tags, then creates a fully tagged set of\n";
 	$output .= "                  files.\n";
@@ -3122,7 +3140,7 @@ sub show_options {
 	$output .= "                  populated with file names for recording filled in already in\n";
 	$output .= "                  track listing. Preserves existing REPLAYGAIN values. Not\n";
 	$output .= "                  recommended, use -S or -M instead.\n";
-	$output .= "--autotag-create-multi, -M [disc ID]\n";
+	$output .= "--autotag-create-multi, -M {disc ID}\n";
 	$output .= "                  Required argument tells logic how to determine your disc\n";
 	$output .= "                  numbering method. % is used to indicate the value is a number\n";
 	$output .= "                  between 1-9. @ is used to indicate a letter between A-Z. \n";
@@ -3147,6 +3165,7 @@ sub show_options {
 	$output .= "                  Delete all existing .ffp, .md5, .ffp.txt, and md5.txt files\n";
 	$output .= "                  before creating the new checksum files. Files only deleted in\n";
 	$output .= "                  directories where flac files are found.\n";
+	$output .= "--checksum-ffps   Prints only ffps to screen, turns off md5 tests\n";
 	$output .= "--checksum-verify, -V\n";
 	$output .= "                  Verifies FLAC files and confirms MD5 file data matches actual\n";
 	$output .= "                  files found. Can be run alone or with --checksum options.\n";
@@ -3154,18 +3173,18 @@ sub show_options {
 	$output .= "                  blame $self_name if this creates unintended consequences!!\n";
 	$output .= "--dupes,--duplicates\n";
 	$output .= "                  Test a directory of many releases for duplicated ffp files.\n";             
-	$output .= "--image, -I [jpg,png image file name|remove]\n";
+	$output .= "--image, -I {jpg,png image file name|remove}\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
 	$output .= "--infofix, -X [dnqtuw]\n";
 	$output .= "                  Fix info.txt files. Use any combination. Always cleans white\n";
 	$output .= "                  space issues.\n";
-	$output .= "                  d: make iso date: YYYY-MM-DD from various random date formats;\n";
-	$output .= "                  n: make tracknumbering 'NN. ' (0 padded) or 'N-NN. ';\n";
-	$output .= "                  q: add FLAC/Quality: /[quality] items to info file;\n";
-	$output .= "                  t: fix upper/lower case track titles;\n";
-	$output .= "                  u: fix entire file upper/lower;\n";
-	$output .= "                  w: write changes to file. \n";
+	$output .= "                  d: make iso date: YYYY-MM-DD from various random date formats\n";
+	$output .= "                  n: make track numbering 'NN. ' (0 padded) or 'N-NN. '\n";
+	$output .= "                  q: add FLAC/Quality: /[quality] items to info file\n";
+	$output .= "                  t: fix upper/lower case track titles\n";
+	$output .= "                  u: fix entire file upper/lower\n";
+	$output .= "                  w: write changes to file\n";
 	$output .= "                  t and u use Title upper case main words.\n";
 	$output .= "--info-rating {2-xxx}\n";
 	$output .= "                  Change default rating value for --infofix q. Current: $INFO_RATING;\n";
@@ -3177,11 +3196,11 @@ sub show_options {
 	$output .= "                  Expert use only.\n";
 	$output .= "--prefill, -E     Attempt to prefill auto.tag file using info.txt data. See man\n";
 	$output .= "                  for required syntax and structure of data in info file.\n";
-	$output .= "--prefill-file [file name]\n";
+	$output .= "--prefill-file {file name}\n";
 	$output .= "                  Alternate file name to use for --prefill.\n";
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
 	
-	$output .= "--recurse [0-xx]  Set directory recursion levels. Default infinite. Useful\n";
+	$output .= "--recurse {0-xx}  Set directory recursion levels. Default infinite. Useful\n";
 	$output .= "                  for having syncing or checksum tools ignore sub directories.\n";
 	$output .= "--remove-images, -R\n";
 	$output .= "                  Remove all embedded images and image padding from file\n";
@@ -3189,9 +3208,9 @@ sub show_options {
 	$output .= "--remove-padding, -P\n";
 	$output .= "                  For --autotag and --tag also removes block padding. Slows.\n";
 	$output .= "                  tagging down significantly.\n";
-	$output .= "--start [0-xx]    For auto.tag, starts tag numbering of tracks at supplied\n";
+	$output .= "--start {0-xx}    For auto.tag, starts tag numbering of tracks at supplied\n";
 	$output .= "                  integer value. Useful if tracks start at 00.flac or 07.flac\n";
-	$output .= "--tag, -T         [\"TAG1%:tag value^^TAG2%:tag value]\n";
+	$output .= "--tag, -T         {\"TAG1%:tag value^^TAG2%:tag value}\n";
 	$output .= "                  Updates one or more recordings with the supplied FLAC\n";
 	$output .= "                  tag/value pairs. Removes existing sets of the given type.\n";
 	$output .= "                  Use ^^ to separate tag key/value pairs, and %: to separate\n";
@@ -3201,7 +3220,7 @@ sub show_options {
 		$output .= "                  Current values: $self_name: $SELF_DIRECTORY\n";
 		$output .= "                  man $self_name.1: $MAN_DIRECTORY\n";
 	}
-	$output .= $line_small;
+	$output .= $line_small . "\n";
 	$output .= "Display output and debugging options:\n";
 	$output .= "--debug           Trigger advanced output debugging data. Same as -v 4\n";
 	$output .= "--help, -h        This help menu.\n";
@@ -3210,7 +3229,7 @@ sub show_options {
 	$output .= "--test            Test copy, sync, autotag, checksum without actually doing \n";
 	$output .= "                  the action. Also activates -v3 for more verbose outputs.\n";
 	$output .= "--version         Show $self_name version.\n";
-	$output .= "--verbosity, -v   [0-4] Dynamically set VERBOSITY. Current value: $VERBOSITY\n";
+	$output .= "--verbosity, -v   {0-4} Dynamically set VERBOSITY. Current value: $VERBOSITY\n";
 	$output .= "                  0: Turns off all output, except for error messages.\n";
 	$output .= "                  1: Basic single line per operation output, default value.\n";
 	$output .= "                  2: Without full verbosity of -v3, no flac/lame/oggenc/opusenc\n";
@@ -3219,7 +3238,7 @@ sub show_options {
 	$output .= "                  lame/oggenc/opusenc conversion process for aac, m4a, mp3, ogg,\n";
 	$output .= "                  or opus output.\n";
 	$output .= "                  4: Adds some debugger output. Same as --debug.\n";
-	$output .= $line_small;
+	$output .= $line_small . "\n";
 	$output .= "User Configs ";
 	if (!$CONFIG_DIRECTORY){
 		$output .= "(checked in this order):\n/etc/$self_name.conf\n";
@@ -3550,6 +3569,22 @@ sub get_options{
 		# $run{'autotag'} = 0;
 		$test{'checksum'} = 1;
 		$test{'checksum-delete'} = 1;
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		$OUTPUT_TYPE = 'UNSET';
+		},
+	'checksum-ffps|ffps' => sub { 
+		$run{'checksum'} = 1;
+		$run{'checksum-verify'} = 0;
+		$run{'analyze'} = 0;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$run{'duplicates'} = 0;
+		# $run{'autotag'} = 0;
+		$run{'checksum-ffps'} = 1;
+		$run{'no-md5'} = 1;
+		$test{'checksum'} = 1;
+		$test{'checksum-generate'} = 1;
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';

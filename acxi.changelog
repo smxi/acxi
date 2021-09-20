@@ -20,6 +20,10 @@ case, for -T, that was required, not to clean up. Search and replace can be
 dangerous sometimes. This regression was probably introduced around 3.4.00 or 
 so.
 
+2. In cases of 1 single flac file, -K and --ffps would skip filename, required 
+explicit --with-filename for metaflac output. Default is to print file name only
+when > 1 flac files found.
+
 --------------------------------------------------------------------------------
 FIXES:
 
@@ -59,8 +63,8 @@ size, and average kbs of all flacs in directory. Depending it may be possible to
 extend this to other than flac.
 
 -v1 (default) shows flac data in one line; -v 2 makes key: value pairs, one per 
-line; -v 3 adds raw full seconds and file size in bytes to time/size info for 
-file and totals.
+line, adds ffp hash signature; -v 3 adds raw full seconds and file size in bytes 
+to time/size info for file and totals.
 
 4. Going along with --analyze, -Xq now includes avg kbs, total time and size of 
 flacs, per directory of flacs.
@@ -74,6 +78,11 @@ acxi -s ./ -g 'BandName*' -V
 Will only verify folders tarting with BandName. Remember to always quote the 
 value otherwise your shell will expand the wild cards!! Accepts standard 
 globbing options like {one,two,three}, [0-9], etc.
+
+6. New refined feature: --checksum-ffps/--ffps. Improves previous method of:
+ acxi -s./ -K --no-md5sum --test
+which is awkward. Prints output to screen, turns off md5 generation. Good for 
+bulk ffp generation, output redirect to file, etc.
 
 --------------------------------------------------------------------------------
 CHANGES:
