@@ -1,6 +1,7 @@
 README for acxi - a command line audio file conversion tool
 
-See https://github.com/smxi/acxi/raw/stable/acxi.changelog for changes.
+See the acxi.changelog for changes: 
+https://github.com/smxi/acxi/raw/stable/acxi.changelog
 
 See https://smxi.org/docs/acxi-man.htm for the HTML version of the the man 
 page. 
