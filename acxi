@@ -576,7 +576,7 @@ sub get_tag_files {
 			say Cwd::getcwd();
 			system 'pwd';
 		}
-		say "Processing: $print_file...";
+		say "Processing: $print_file";
 		process_tags();
 		$b_dest_changed = 1;
 	}
@@ -1179,7 +1179,7 @@ sub process_directories {
 			say 'cwd: ', Cwd::getcwd();
 			system 'pwd';
 		}
-		say " Processing: $print_src...";
+		say " Processing: $print_src";
 		@files = main::globber("*.{flac,FLAC,Flac}");
 		# say "\n", Data::Dumper::Dumper \@files;
 		if (grep -f, @files){
