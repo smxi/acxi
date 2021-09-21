@@ -3169,13 +3169,14 @@ sub show_options {
 	$output .= "                  Delete all existing .ffp, .md5, .ffp.txt, and md5.txt files\n";
 	$output .= "                  before creating the new checksum files. Files only deleted in\n";
 	$output .= "                  directories where flac files are found.\n";
-	$output .= "--checksum-ffps   Prints only ffps to screen, turns off md5 tests\n";
+	$output .= "--checksum-ffps, --ffps\n";
+	$output .= "                  Prints only ffps to screen, turns off md5 tests\n";
 	$output .= "--checksum-verify, -V\n";
 	$output .= "                  Verifies FLAC files and confirms MD5 file data matches actual\n";
 	$output .= "                  files found. Can be run alone or with --checksum options.\n";
 	$output .= "--dot             Also sync files and directories starting with a '.'. Don't\n";
 	$output .= "                  blame $self_name if this creates unintended consequences!!\n";
-	$output .= "--dupes,--duplicates\n";
+	$output .= "--duplicates, --dupes\n";
 	$output .= "                  Test a directory of many releases for duplicated ffp files.\n";             
 	$output .= "--image, -I {jpg,png image file name|remove}\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
