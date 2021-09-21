@@ -1128,7 +1128,7 @@ sub get_replaygain {
 ## Checksums 
 {
 package Checksums;
-my ($print_src,%ffp_dupes);
+my ($print_src,%raw_ffps);
 sub process {
 	say $line_large;
 	my $type = 'checksum processing';
@@ -1238,7 +1238,7 @@ sub generate_ffp {
 	else {
 		chomp (@output);
 		if ($run{'duplicates'}){
-			$ffp_dupes{$print_src} = \@output;
+			$raw_ffps{$print_src} = \@output;
 		}
 		elsif (!$b_test && !$run{'checksum-ffps'}){
 			main::writer("$FFP_FILE.ffp",\@output);
@@ -1442,14 +1442,14 @@ sub delete_checksums {
 	}
 }
 sub check_ffp_duplicates {
-	# say Data::Dumper::Dumper \%ffp_dupes;
+	# say Data::Dumper::Dumper \%raw_ffps;
 	my (%dupes,%orig,@ffps);
 	my ($count,$i,$pad) = (0,0,2);
 	say $line_small;
 	say "Starting duplicate verification...";
-	foreach my $dir (sort keys %ffp_dupes){
+	foreach my $dir (sort keys %raw_ffps){
 		# say 'd1: ', $dir;
-		foreach my $item (@{$ffp_dupes{$dir}}){
+		foreach my $item (@{$raw_ffps{$dir}}){
 			my @track = split(/:/,$item);
 			if (!grep {$_ eq $track[-1]} @ffps){
 				push(@ffps, $track[-1]);
@@ -1479,13 +1479,18 @@ sub check_ffp_duplicates {
 		say $line_small;
 		say "These were first found in:";
 		foreach my $dir (sort keys %dupes){
-			# say 'd2: ', $dir;
+			 #say 'd2: ', $dir;
 			foreach my $item (@{$dupes{$dir}}){
 				my $ffp = (split(/:/,$item))[-1];
 				FFP:
-				foreach my $dir1 (sort keys %ffp_dupes){
-					next if $dir eq $dir1;
-					foreach my $item1 (@{$ffp_dupes{$dir1}}){
+				foreach my $dir1 (sort keys %raw_ffps){
+					# say 'd3: ', $dir1;
+					# this fails in instance where dupes are in same dir
+					# next if $dir eq $dir1;
+					FFP1:
+					# say 'd4: ', $dir1;
+					foreach my $item1 (@{$raw_ffps{$dir1}}){
+						next FFP1 if $dir eq $dir1 && $item eq $item1;
 						my $ffp1 = (split(/:/,$item1))[-1];
 						if ($ffp eq $ffp1){
 							if ($VERBOSITY > 2){
