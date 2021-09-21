@@ -3482,6 +3482,7 @@ sub get_options{
 		$run{'checksum-verify'} = 0;
 		$run{'sync'} = 0;
 		$run{'clean'} = 0;
+		$run{'no-md5'} = 1;
 		$test{'checksum'} = 1;
 		$test{'analyze'} = 1;
 		$b_check_dest = 0;
