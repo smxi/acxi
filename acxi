@@ -1133,7 +1133,7 @@ sub process {
 	say $line_large;
 	my $type = 'checksum processing';
 	if ($run{'analyze'}){
-		$type = 'flac tests';
+		$type = 'flac analysis';
 	}
 	elsif ($run{'duplicates'}){
 		$type = 'ffp duplicate tests';
