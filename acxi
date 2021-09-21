@@ -3089,7 +3089,7 @@ sub show_options {
 	$output .= "                  will be excluded. Can also be path to a file of excludes.\n";
 	$output .= "                  Sample: --exclude='artwork^^Daisy Queen^^Bon Jovi'\n";
 	$output .= "                  Sample: --exclude='/home/me/music/excludes/$EXCLUDE_BASE.txt\n";
-	$output .= "--exclude-append, -X\n";
+	$output .= "--exclude-append, -y\n";
 	$output .= "                  Append an item to the list of excludes or file.\n";
 	$output .= "                  Sample: --exclude-append='My Sharona^^Dancing Queen'\n";
 	$output .= "--ffmpeg          Force flac to ogg/opus conversions to use ffmpeg. Useful if\n";
@@ -3104,7 +3104,8 @@ sub show_options {
 	$output .= "--output, -o      Output type: {aac, flac. m4a, mp3, ogg, opus. aac/m4a/mp3}\n";
 	$output .= "                  require input type flac. To preserve flac tags for aac, use\n";
 	$output .= "                  m4a. Current value: $OUTPUT_TYPE\n";
-	$output .= "--quality n, -q n flac: n between 0 and 8. 8 best, but > 4 generally pointless.\n";
+	$output .= "--quality, -q {n} Qualities for output types:\n";
+	$output .= "                  flac: n between 0 and 8. 8 best, but > 4 generally pointless.\n";
 	$output .= "                  aac/m4a: n between 10 and 500. 500 best quality.\n";           
 	$output .= "                  ogg: n between -1 and 10. Fractions ok. 10 best quality.\n";
 	$output .= "                  opus: n between 6-256. Variable bit rate. 256 best quality.\n";
@@ -3228,8 +3229,8 @@ sub show_options {
 	$output .= "Display output and debugging options:\n";
 	$output .= "--debug           Trigger advanced output debugging data. Same as -v 4\n";
 	$output .= "--help, -h        This help menu.\n";
-	$output .= "--quiet           Turns off all screen output, except for error messages.\n";
-	$output .= "                  Same as -v 0\n";
+	$output .= "--quiet           Turns off most screen output, except for error messages.\n";
+	$output .= "                  Only disables screen output is logical to do so. Same as -v 0\n";
 	$output .= "--test            Test copy, sync, autotag, checksum without actually doing \n";
 	$output .= "                  the action. Also activates -v3 for more verbose outputs.\n";
 	$output .= "--version         Show $self_name version.\n";
@@ -3448,7 +3449,7 @@ sub get_options{
 	my (@args) = @_;
 	my (%test,$msg);
 	# single letters used:
-	# aAcCdDEfFgGhiIKMoPqRsSTUvVxXZ
+	# aAcCdDEfFgGhiIKMoPqRsSTUvVxXyZ
 	GetOptions (
 	'G|aggregate:s' => sub { 
 		my ($opt,$arg) = @_;
@@ -3657,7 +3658,7 @@ sub get_options{
 		$EXCLUDE = $arg;
 		$test{'sync'} = 1;
 		},
-	'exclude-append:s' => sub { 
+	'y|exclude-append:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires exclude list.",1) if ! $arg;
 		$exclude_append = $arg },

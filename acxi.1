@@ -2,40 +2,55 @@
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
+Most of the commonly used options have short forms to make typing the commands
+faster.
 .IP * 2
-Syncing: \fBacxi\fR [\fB\-a\fR {extensions}] [\fB\-\-clean\fR] 
-[\fB\-\-codec\fR {aac|libfdk_aac2}] [\fB\-\-copy\fR {extensions}] 
-[\fB\-d\fR {destination-path}]  [\fB\-\-exclude\fR] 
-[\fB\-\-exclude\-append\fR {filename|extension}] 
-[\fB\-f\fR] [\fB\-\-fork\fR {0-xx}]
-[\fB\-i\fR {flac|raw|shn|wave}] [\fB\-o\fR {flac|mp3|ogg|opus}] 
-[\fB\-q\fR {NUMBER}] [\fB\-\-resample\fR {bit-depth:sample-rate}]
-[\fB\-s\fR {source\-path}] 
+Directories: \fBacxi\fR 
+[\fB\-\-destination\fR, \fB\-d\fR {destination-path}] 
+[\fB\-\-source\fR, \fB\-s\fR {source\-path}] 
+[\fB\-\-source\-glob\fR, \fB\-g\fR {relative path}]
 .IP * 2
-Tagging: \fBacxi\fR [\fB\-\-aggregate\fR [file name|extension]] 
-[\fB\-\-autotag\fR] [\fB\-\-autotag\-create\fR] 
-[\fB\-\-autotag\-create\-single\fR] 
-[\fB\-\-autotag\-create\-multi\fR {filename start ID}]
-[\fB\-\-image\fR {cover image filename}]
-[\fB\-\-infofix\fR [d|n|q|t|u|w]] 
-[\fB\-\-info\-rating\fR {2\-xxx}
-[\fB\-\-prefill\fR] [\fB\-\-prefill\-file\fR {release info file name}] 
-[\fB\-\-no\-replaygain\fR] [\fB\-\-recurse\fR {-1-xx}] 
-[\fB\-\-remove\-images\fR] [\fB\-\-remove\-padding\fR] 
-[\fB\-\-start\fR {0-xx}] [\fB\-\-tag\fR {"TAG1%:tag value^^TAG2%:tag value"}] 
-.IP * 2
-Checksums: \fBacxi\fR [\fB\-\-analyze\fR] [\fB\-\-checksum\fR] 
-[\fB\-\-checksum\-delete\fR] [\fB\-\-checksum\-ffps\fR, \fB\-\-ffps\fR] 
-[\fB\-\-checksum\-verify\fR] [\fB\-\-duplicates\fR, \fB\-\-dupes\fR]
+Checksums: \fBacxi\fR [\fB\-\-analyze\fR, \fB\-Z\fR] 
+[\fB\-\-checksum\fR, \fB\-K\fR] [\fB\-\-checksum\-delete\fR, \fB\-D\fR] 
+[\fB\-\-checksum\-ffps\fR, \fB\-\-ffps\fR] 
+[\fB\-\-checksum\-verify\fR, \fB\-V\fR] 
+[\fB\-\-duplicates\fR, \fB\-\-dupes\fR]
 [\fB\-\-no\-ffp\fR] [\fB\-\-no\-md5\fR]
 .IP * 2
-Output Controls: \fBacxi\fR [\fB\-v\fR {0-3}] [\fB\-\-quiet\fR] 
-[\fB\-\-debug\fR] 
+Syncing: \fBacxi\fR [\fB\-\-append\fR, \fB\-a\fR {extensions}] 
+[\fB\-\-clean\fR] [\fB\-\-codec\fR {aac|libfdk_aac2}] 
+[\fB\-\-copy\fR, \fB\-c\fR {extensions}] [\fB\-\-dot\fR] 
+[\fB\-\-exclude\fR, \fB\-x\fR {filename|extension}] 
+[\fB\-\-exclude\-append\fR, \fB\-y\fR {filename|extension}] 
+[\fB\-\-force\fR, \fB\-f\fR] [\fB\-\-fork\fR, \fB\-F\fR {0-xx}]
+[\fB\-\-input\fR, \fB\-i\fR {flac|raw|shn|wave}] 
+[\fB\-\-output\fR, \fB\-d\fR {flac|mp3|ogg|opus}] [\fB\-\-no\-dot\fR] 
+[\fB\-\-quality\fR\fR, \fB\-q\fR {NUMBER}] 
+[\fB\-\-resample\fR {bit-depth:sample-rate}]
 .IP * 2
-Miscellaneous:  [\fB\-h\fR] [\fB\-U\fR] [\fB\-v\fR] 
-[\fB\-\-dot\fR] [\fB\-\-no\-dot\fR] [\fB\-\-source\-glob\fR {relative path}]
+Tagging: \fBacxi\fR [\fB\-\-autotag\fR, \fB\-A\fR] 
+[\fB\-\-autotag\-create\fR, \fB\-C\fR] 
+[\fB\-\-autotag\-create\-single\fR, \fB\-S\fR] 
+[\fB\-\-autotag\-create\-multi\fR, \fB\-M\fR {filename start ID}]
+[\fB\-\-image\fR, \fB\-I\fR {cover image filename}]
+[\fB\-\-infofix\fR, \fB\-X\fR [d|n|q|t|u|w]] 
+[\fB\-\-info\-rating\fR {2\-xxx}
+[\fB\-\-prefill\fR, \fB\-E\fR] 
+[\fB\-\-prefill\-file\fR {release info file name}] 
+[\fB\-\-no\-replaygain\fR] [\fB\-\-recurse\fR {-1-xx}] 
+[\fB\-\-remove\-images\fR, \fB\-R\fR] [\fB\-\-remove\-padding\fR, \fB\-P\fR] 
+[\fB\-\-start\fR {0-xx}] 
+[\fB\-\-tag\fR, \fB\-T\fR] {"TAG1%:tag value^^TAG2%:tag value"}] 
 .IP * 2
-Debugging: \fBacxi\fR [\fB\-\-debug\fR]  [\fB\-\-nlink\fR] 
+Info: \fBacxi\fR [\fB\-\-help\fR, \fB\-h\fR] [\fB\-\-version\fR] 
+.IP * 2
+Miscellaneous: \fBacxi\fR [\fB\-\-aggregate\fR, \fB\-G\fR [file name|extension]]
+[\fB\-\-update\fR, \fB\-U\fR]
+.IP * 2
+Output Controls: \fBacxi\fR [\fB\-\-verbosity\fR, \fB\-v\fR {0-3}] 
+[\fB\-\-quiet\fR] [\fB\-\-debug\fR] 
+.IP * 2
+Debugging: \fBacxi\fR [\fB\-\-debug\fR] [\fB\-\-nlink\fR] 
 [\fB\-\-no\-nlink\fR] [\fB\-\-test\fR] 
 
 .SH DESCRIPTION
@@ -45,11 +60,12 @@ output format, and to a different directory location.
 
 Supports lossless input formats aiff/flac/raw/shn/wav. Output formats are flac, 
 ogg, opus, aac/m4a, or mp3. aif/raw/shn can only output to flac. aac, m4a, mp3 
-can only have flac as input format.
+can only have flac as input format. Resampling can only have flac as input and
+output formats.
 
-By default, it will also copy over most common filetypes like .gif, .jpg, .png, 
-and .txt. You can change the defaults using a configuration file, or the 
-\fB\-c\fR or \fB\-a\fR options..
+By default, syncing will also copy over most common filetypes like gif, jpg, 
+png, and txt. You can change the defaults using a configuration file, or using 
+the \fB\-c\fR or \fB\-a\fR options.
 
 The destination directory cannot be the same as the source directory, but it can 
 be inside of the source directory.
@@ -72,6 +88,8 @@ acxi fully platform agnostic.
 (Debian/Ubuntu package: \fBlibfdk_aac2\fR) or native \fBffmpeg aac\fR codec. 
 Source file must be flac. To transfer tags, \fBm4a\fR must be used.
 .IP * 2
+\fBFLAC\fR resampling requires \fBffmpeg\fR.
+.IP * 2
 \fBOgg\fR encoding requires \fBoggenc\fR (Debian/Ubuntu package: 
 \fBvorbis-tools\fR).
 .IP * 2
@@ -84,24 +102,24 @@ flac. MP3 encoding does not support wav or raw input formats.
 \fBSHN \-> \fBFLAC\fR conversion requires the codec \fBshorten\fR and 
 \fBffmpeg\fR.
 .IP * 2
-\fB\-\-autotag\fR, \fB\-\-tag\fR, and \fB\-\-image\fR require \fBmetaflac\fR for 
-\fBVORBIS\fR tagging.
+\fB\-\-analyze\fR, \fB\-\-duplicates\fR, \fB\-\-ffps\fR, and \fB\-\-infofix q\fR 
+require \fBmetaflac\fR. 
 .IP * 2
-\fB\-\-checksum\fR \fB\-\-checksum\-delete\fR require \fBmetaflac\fR and 
+\fB\-\-autotag\fR, \fB\-\-tag\fR, \fB\-\-image\fR, and \fB\-\-image\-remove\fR 
+require \fBmetaflac\fR for \fBVORBIS\fR tagging.
+.IP * 2
+\fB\-\-checksum\fR and \fB\-\-checksum\-delete\fR require \fBmetaflac\fR and 
 \fBmd5sum\fR (or any comparable program that generates md5sums). 
 .IP * 2
-\fB\-\-checksum\-verify\fR require \fBflac\fR executable and \fBmd5sum\fR (or 
-any comparable program that generates md5 hashes). 
+\fB\-\-checksum\-verify\fR requires the \fBflac\fR executable and \fBmd5sum\fR 
+(or any comparable program that generates md5 hashes). 
 .IP * 2
 \fB\-\-fork\fR requires Perl module \fBParallel::ForkManager\fR. 
-.IP * 2
-\fB\-\-infofix q\fR, \fB\-\-analyze\fR, and \fB\-\-duplicates\fR require 
-\fBmetaflac\fR. 
 .IP * 2
 \fB\-\-infofix [t|u]\fR require Perl module \fBText::Autoformat\fR. 
 .IP * 2
 \fB\-U\fR Self-updater requires \fBcurl\fR. 
-.PP
+
 In theory, acxi 3.x should run on Windows and Macs, but I have not tested that, 
 but as long as the source/destination directory paths and the 
 application/configuration paths are correct, it should 'just work'.
@@ -114,15 +132,13 @@ For example:
 Note that some options have long and short forms. The short form is used when 
 available in examples in order to keep things simple.
 
-All tagging or checksum options (\fB\-A\fR, \fB\-C\fR, \fB\-D\fR, \fB\-E\fR, 
-\fB\-G\fR, \fB\-I\fR, \fB\-K\fR, \fB\-M\fR, \fB\-P\fR, \fB\-R\fR, \fB\-S\fR, 
-\fB\-T\fR, \fB\-V\fR) must have an explicit source (\fB\-s\fR) location supplied 
-to avoid errors.
-
+All tagging or checksum options (\fB\-A\fR, \fB\-C\fR, \fB\-\-dupes\fR, 
+\fB\-D\fR, \fB\-E\fR, \fB\-\-ffps\fR, \fB\-G\fR, \fB\-I\fR, \fB\-K\fR, 
+\fB\-M\fR, \fB\-P\fR, \fB\-R\fR, \fB\-S\fR, \fB\-T\fR, \fB\-V\fR, \fB\-Z\fR) 
+must have an explicit source (\fB\-s\fR) location supplied to avoid errors.
 .SH OPTIONS
-
 .TP
-.B \-\-aggregate [filename|extension]\fR
+.B \-\-aggregate, \fB\-G\fR [filename|extension]\fR
 Collect all the \fBauto.tag\fR files in a source directory and send to a target 
 directory. Useful to collect data for a large collection. You can supply a list 
 of comma separated items: jpg,info.txt,myart.png
@@ -133,17 +149,21 @@ If no extra argument is supplied, it will default to collecting all the
 \fBauto.tag\fR files in the source directory.
 
 Sample 1 (collects all auto.tag files): 
+.EX
 \fBacxi \-\-aggregate \-s my\-music -d music\-data\fR
-
+.EE
 Sample 2 (collects all supplied filename): 
+.EX
 \fBacxi \-\-aggregate info.txt \-s my\-music -d music\-data\fR
-
+.EE
 Sample 3 (collects all files of type jpg): 
+.EX
 \fBacxi \-\-aggregate jpg \-s my\-music -d music\-data\fR
-
-Sampe 4 (collects multiple values):
+.EE
+Sample 4 (collects multiple values):
+.EX
 \fBacxi \-\-aggregate jpg,info.txt,png \-s my\-music -d music\-data\fR
-
+.EE
 .TP
 .B \-\-analyze\fR, \fB\-Z\fR
 Similar to \fB\-Xq\fR, except creates per file/directory reports with screen 
@@ -154,16 +174,15 @@ print out each type found, which can be useful to see if different sampling
 rates or sample bit sizes were used.
 
 To write to a file, use something like this:
-
+.EX
 \fBacxi -s./ \-\-analyze 2&>1 | tee analyze.txt\fR
-
+.EE
 The tee will allow the output to also scroll on screen while it runs, which is
 helpful in many cases. Otherwise just redirect output to file directly.
 
 \fB\-v 2\fR wraps per file data to key: value pair lines, adds ffp signature; 
 \fB\-v 3\fR adds raw non rounded seconds and file size in bytes to all size / 
 time results.
-
 .TP
 .B \-\-append\fR, \fB\-a  {extensions}\fR
 Takes one or more comma separated extensions. Do not use whitespaces in this 
@@ -405,7 +424,7 @@ If you want to temporarily suspend exclude actions one time, use:
 \fB\-\-exclude='UNSET'\fR
 
 .TP
-.B \-\-exclude\-append\fR, \fB\-X  {items}\fR
+.B \-\-exclude\-append\fR, \fB\-y  {items}\fR
 Append an item to the list of excludes or file. Only accepts string values, not 
 a file path.
 
@@ -438,7 +457,7 @@ result of running it with multiple forks.
 
 .TP
 .B \-\-help\fR, \fB\-h\fR
-This help menu.
+The help / options menu.
 
 .TP
 .B \-\-image\fR, \fB\-I {cover image file name|remove}\fR
@@ -461,7 +480,8 @@ Samples:
 .nf
 \fBacxi \-s ./ \-\-image='cover.jpg'
 acxi \-s ./ \-\-image remove
-acxi \-s ./ \-I cover.jpg \-\-remove\-images\fR
+acxi \-s ./ \-I cover.jpg \-\-remove\-images
+acxi \-s ./ \-RI cover.jpg\fR
 .fi
 
 .TP
@@ -675,7 +695,9 @@ files will not result in redoing those files unless you use the \fB\-f\fR /
 
 .TP
 .B \-\-quiet\fR, \fB\-\-silent\fR
-Turns off all screen output, except for error messages. Same as \fB\-v 0\fR
+Turns off most screen output, except for error messages. Same as \fB\-v 0\fR.
+Not used for all features since it makes no sense to turn off screen output for
+features that require screen output, like \fB\-Z\fR.
 
 .TP
 .B \-\-recurse {number}\fR
@@ -1077,7 +1099,6 @@ directory that \fBacxi\fR is in.
 
 .SH BUGS
 Please report bugs using the following resources.
-
 .TP
 .B Issue Report
 File an issue report:
@@ -1085,7 +1106,7 @@ File an issue report:
 .TP
 .B Forums
 Post on acxi forums:
-.I https://techpatterns.com/forums/about1491.html
+\UR https://techpatterns.com/forums/about1491.html
 .TP
 .B IRC
 You can also visit

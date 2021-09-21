@@ -147,11 +147,19 @@ Starting sync of: StartDirectory
 Exception is when the action uses print, not say, and the results of the action 
 are printed on same line after the ...
 
+2. Changed --exclude-append short form to -y, inconsistent to use -X, and want 
+-X for --infofix short form. Actually this was also a bug, -X short had never 
+been used for --exclude-append though it was supposed to have been, so no loss 
+to anyone.
+
 --------------------------------------------------------------------------------
 DOCUMENTATION:
 
 1. Updated man, help for --duplicates, --analyze, --ffps, --resample, 
 --resample-override.
+
+2. Redid top SYNOPSIS section to include short forms, that makes it easier to
+use as a reminder tool. Reordered items as well to be more clear.
 
 --------------------------------------------------------------------------------
 CODE:
@@ -162,7 +170,7 @@ line output scenarios. 'print' is used now when we do NOT want a linebreak at
 end of line, and in other more complex scenarios where it is appropriate.
 
 2. Moved -G/--aggregate logic to package Aggregate, it's not really related to 
-autotagging. Moved -I --infofix to package InfoFix, Moved -Z / --analyze, and , 
+autotagging. Moved -X/--infofix to package InfoFix, Moved -Z/--analyze, and, 
 -Xq logic to Analyze package. AutoTag and Checksums were getting too much 
 clutter in them. 
 
