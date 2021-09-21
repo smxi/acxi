@@ -532,19 +532,19 @@ package AutoTag;
 sub run_tagger {
 	say $line_large;
 	if ($run{'embed-image'}){
-		say 'Starting image embedding in ' . main::sourcer($SOURCE_DIRECTORY) . '...';
+		say 'Starting image embedding in: ' . main::sourcer($SOURCE_DIRECTORY);
 		image_embedder();
 		say $line_small;
 		say 'Completed image embedding.';
 	}
 	if ($run{'update-tag'}){
-		say 'Starting tag update in ' . main::sourcer($SOURCE_DIRECTORY) . '...';
+		say 'Starting tag update in: ' . main::sourcer($SOURCE_DIRECTORY);
 		tag_updater();
 		say $line_small;
 		say 'Completed tag update.';
 	}
 	else {
-		say 'Starting auto-tagging in ' . main::sourcer($SOURCE_DIRECTORY) . '...';
+		say 'Starting auto-tagging in: ' . main::sourcer($SOURCE_DIRECTORY);
 		get_tag_files();
 		say $line_small;
 		say 'Completed auto-tagging.';
@@ -553,7 +553,7 @@ sub run_tagger {
 }
 sub create {
 	say $line_large;
-	say "Creating $TAG_FILE in " . main::sourcer("$SOURCE_DIRECTORY");
+	say "Creating $TAG_FILE in: " . main::sourcer("$SOURCE_DIRECTORY");
 	make_tag_file();
 	say $line_small;
 	say 'Completed file creation.';
@@ -1141,7 +1141,7 @@ sub process {
 	elsif ($run{'checksum-ffps'}){
 		$type = 'ffp collection';
 	}
-	say "Starting $type in: " . main::sourcer("$SOURCE_DIRECTORY") . '...';
+	say "Starting $type in: " . main::sourcer("$SOURCE_DIRECTORY");
 	process_directories();
 	say $line_small;
 	say "Completed $type.";
@@ -1543,7 +1543,7 @@ package CleanCollection;
 
 sub process {
 	say $line_large;
-	say "Starting cleanup of " . main::sourcer("$DESTINATION_DIRECTORY") . '...';
+	say "Starting cleanup of: " . main::sourcer("$DESTINATION_DIRECTORY");
 	process_type('directory');
 	process_type('file');
 	say $line_small;
@@ -1605,7 +1605,7 @@ sub process {
 	my (@files,$item,$print_src,$result);
 	$list_type = 'dir';
 	say $line_small;
-	say "Checking directories for $INFO_FILE...";
+	say "Checking directories for: $INFO_FILE";
 	@found_list = ();
 	chdir "$start_dir";
 	File::Find::find(\&main::wanted, @source_glob);
@@ -1622,7 +1622,7 @@ sub process {
 			say 'cwd: ', Cwd::getcwd();
 			system 'pwd';
 		}
-		say " Processing: $print_src...";
+		say " Processing: $print_src";
 		if (-r "$INFO_FILE"){
 			# say $line_small;
 			say "  Working on file: $INFO_FILE";
@@ -1817,12 +1817,12 @@ sub process {
 	my (@extension_files);
 	eval $print_line_heavy;
 	if ($VERBOSITY > 1){
-		say 'Syncing ' . main::sourcer("$DESTINATION_DIRECTORY") . ' (destination) with';
-		say '  ' . main::sourcer("$SOURCE_DIRECTORY") . ' (source)...';
+		say 'Syncing: ' . main::sourcer("$DESTINATION_DIRECTORY") . ' (destination) with:';
+		say '  ' . main::sourcer("$SOURCE_DIRECTORY") . ' (source)';
 	}
 	elsif ($VERBOSITY > 0){
-		say 'Starting sync of ' . main::sourcer("$SOURCE_DIRECTORY");
-		say ' to ' . main::sourcer("$DESTINATION_DIRECTORY");
+		say 'Starting sync of: ' . main::sourcer("$SOURCE_DIRECTORY");
+		say ' to: ' . main::sourcer("$DESTINATION_DIRECTORY");
 	}
 	update_directories();
 	$list_type = 'file';
