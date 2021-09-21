@@ -1141,7 +1141,7 @@ sub process {
 	elsif ($run{'checksum-ffps'}){
 		$type = 'ffp collection';
 	}
-	say "Starting $type in " . main::sourcer("$SOURCE_DIRECTORY") . '...';
+	say "Starting $type in: " . main::sourcer("$SOURCE_DIRECTORY") . '...';
 	process_directories();
 	say $line_small;
 	say "Completed $type.";
