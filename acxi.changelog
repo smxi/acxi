@@ -112,7 +112,7 @@ resampling.
 In general, do not resample to greater bit depths or sampling rates, that's 
 pointless.
 
-Note that if you resample 12, 96, or 48khz originals to 44.1 khz, the CD audio 
+Note that if you resample 192, 96, or 48khz originals to 44.1 khz, the CD audio 
 standard, you end up messing up the samples because almost all of them have to 
 be synthesized, but if you use a sample rate that evenly divides with the start, 
 no dithering or other undesirable results will occur, generally speaking.
