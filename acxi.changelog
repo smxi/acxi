@@ -6,11 +6,15 @@ Date: 2021-??-??
 RELEASE NOTES:
 --------------------------------------------------------------------------------
 
+Big update, lots of fixes, new features, enhanced features, cleaned up output, 
+you name it, this one has it! Huge usability and processing speed improvements, 
+with a focus on large bulk processing actions, and with -g globbing option, 
+running bulk actions on a subset of directories.
 
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
 
-1. -E does not work in bulk jobs, only per directory.
+1. -E does not work in bulk jobs, only per flac directory.
 
 --------------------------------------------------------------------------------
 BUGS:
@@ -20,9 +24,9 @@ case, for -T, that was required, not to clean up. Search and replace can be
 dangerous sometimes. This regression was probably introduced around 3.4.00 or 
 so.
 
-2. In cases of 1 single flac file, -K and --ffps would skip filename, required 
-explicit --with-filename for metaflac output. Default is to print file name only
-when > 1 flac files found.
+2. In cases of 1 single flac file, -K and --ffps would skip filename and show 
+only the ffp hash. Metaflac required explicit --with-filename for metaflac 
+output. Default is to print file name only when > 1 flac files found.
 
 --------------------------------------------------------------------------------
 FIXES:
@@ -45,6 +49,11 @@ certain conditions, though windows support is only theoretical.
 
 6. Added error handler for trying to run -E/--prefill on any bulk job, flac 
 files must be present in the given --source directory or it exits with error.
+
+7. Fixed output for various features, corrected indentation errors, removed ... 
+in some cases, added : for directory name processing features.
+
+8. Polished up option mis-use error handling, polished up validation logic.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
@@ -75,23 +84,74 @@ Requires --source, wild card path must be within --source, like:
 
 acxi -s ./ -g 'BandName*' -V
 
-Will only verify folders tarting with BandName. Remember to always quote the 
+Will only verify folders starting with BandName. Remember to always quote the 
 value otherwise your shell will expand the wild cards!! Accepts standard 
 globbing options like {one,two,three}, [0-9], etc.
+
+This is really useful if you want to carry out any acxi action/option on only a 
+subset of directories inside of a larger collection, for example, setting the 
+ARTIST tag value for all directories of that artist in that main directory.
+
+acxi -s ./ -g '{FredDolans,Fred Dolans,Fred_Dolans}*' -T "ARTIST%:Fred Dolans"
 
 6. New refined feature: --checksum-ffps/--ffps. Improves previous method of:
  acxi -s./ -K --no-md5sum --test
 which is awkward. Prints output to screen, turns off md5 generation. Good for 
 bulk ffp generation, output redirect to file, etc.
 
+7. Finally added --resample {bits:khz} and --resample-override. This is useful 
+for resampling 24 bit flacs to 16 bit, for example. Note that in general you 
+want to resample to a sampling rate that evenly divides the starting rate, for 
+example, with 24 bit, 192 or 96 khz original, resample to 16:48, or if for some 
+reason you actually have 88.2khz sampling rate, resample to 16:44.1. Or if your 
+starting sampling rate is 48khz, use 16:48.
+
+Use -Z option to determine sample rates and bit depth of original you are 
+resampling.
+
+In general, do not resample to greater bit depths or sampling rates, that's 
+pointless.
+
+Note that if you resample 12, 96, or 48khz originals to 44.1 khz, the CD audio 
+standard, you end up messing up the samples because almost all of them have to 
+be synthesized, but if you use a sample rate that evenly divides with the start, 
+no dithering or other undesirable results will occur, generally speaking.
+
+--resample supports 16|20|24 bit and 44.1|48|88.2|96|192 defaults, which are in 
+general the only ones you'd ever want to use. Syntax sample: 
+
+--resample 16:48
+
+--resample-override switch allows you to use the almost full range of options in 
+--resample, 4-32 bits, 1-655 khz sampling rate.
+
 --------------------------------------------------------------------------------
 CHANGES:
 
+1. Small changes in output, got rid of some '...' in processing / checking 
+directory outputs, added ':' anytime the action references checking or 
+processing a directory, that makes it more consistent and predictable overall.
+
+Sample: 
+Checking myDirectory...
+becomes: 
+Checking: myDirectory.
+
+Sample:
+Starting sync of StartDirectory
+ to EndDirectory
+becomes:
+Starting sync of: StartDirectory
+ to: EndDirectory
+
+Exception is when the action uses print, not say, and the results of the action 
+are printed on same line after the ...
 
 --------------------------------------------------------------------------------
 DOCUMENTATION:
 
-1. Updated man, help for --duplicates, --analyze.
+1. Updated man, help for --duplicates, --analyze, --ffps, --resample, 
+--resample-override.
 
 --------------------------------------------------------------------------------
 CODE:
@@ -102,8 +162,9 @@ line output scenarios. 'print' is used now when we do NOT want a linebreak at
 end of line, and in other more complex scenarios where it is appropriate.
 
 2. Moved -G/--aggregate logic to package Aggregate, it's not really related to 
-autotagging. Moved -I --infofix to package InfoFix, Moved -Z --analyze logic to 
-Analyze package. AutoTag and Checksums were getting too much clutter in them. 
+autotagging. Moved -I --infofix to package InfoFix, Moved -Z / --analyze, and , 
+-Xq logic to Analyze package. AutoTag and Checksums were getting too much 
+clutter in them. 
 
 3. Renamed/simplified launch/trigger subs names in Packages, forgot to do that 
 when I made the classes for 3.0.0.

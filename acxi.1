@@ -87,14 +87,16 @@ flac. MP3 encoding does not support wav or raw input formats.
 \fB\-\-autotag\fR, \fB\-\-tag\fR, and \fB\-\-image\fR require \fBmetaflac\fR for 
 \fBVORBIS\fR tagging.
 .IP * 2
-\fB\-\-checksum\fR and \fB\-\-checksum\-delete\fR require \fBffmpeg\fR and 
-\fBmd5sum\fR (or any comparable program that generates md5sums). Md5 generating 
-logic may be moved to straight Perl to remove the md5 program requirement.
+\fB\-\-checksum\fR \fB\-\-checksum\-delete\fR require \fBmetaflac\fR and 
+\fBmd5sum\fR (or any comparable program that generates md5sums). 
 .IP * 2
 \fB\-\-checksum\-verify\fR require \fBflac\fR executable and \fBmd5sum\fR (or 
 any comparable program that generates md5 hashes). 
 .IP * 2
-\fB\-\-infofix q\fR and \fB\-\-analyze\fR require \fBmetaflac\fR. 
+\fB\-\-fork\fR requires Perl module \fBParallel::ForkManager\fR. 
+.IP * 2
+\fB\-\-infofix q\fR, \fB\-\-analyze\fR, and \fB\-\-duplicates\fR require 
+\fBmetaflac\fR. 
 .IP * 2
 \fB\-\-infofix [t|u]\fR require Perl module \fBText::Autoformat\fR. 
 .IP * 2
