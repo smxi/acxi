@@ -1139,7 +1139,7 @@ sub process {
 		$type = 'ffp duplicate tests';
 	}
 	elsif ($run{'checksum-ffps'}){
-		$type = 'ffp generation';
+		$type = 'ffp collection';
 	}
 	say "Starting $type in " . main::sourcer("$SOURCE_DIRECTORY") . '...';
 	process_directories();
