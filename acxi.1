@@ -294,7 +294,7 @@ Do not use together with other cleaning/syncing options. Can be used with
 Prints checksums to screen, disables md5 generation and output. Useful for 
 generating large lists of ffps for a collection.
 
-Same as: \fBacxi \-K \-\-no\-md5 \-\-test\fB
+Similar to: \fBacxi \-K \-\-no\-md5 \-\-test\fB
 
 Sample (prints to screen, redirects stderr to stdout, prints to file):
 .nf
@@ -369,7 +369,7 @@ consequences. Note that if you do find unintended consequences, you should be
 able to filter those out using additional \fB\-\-exclude\fR lists.
 
 .TP
-.B \-\-dupes\fR, \fB\-\-duplicates\fR
+.B \-\-duplicates\fR, \fB\-\-dupes\fR
 Check your collection for duplicated flac files or releases, helpful to find 
 repeated items in your collection. Note that in cases of only 1 file matching, 
 it's in theory possible for that to be a random coincidence, so always confirm 
@@ -378,7 +378,7 @@ duplicated.
 
 For larger directories/collections, use 
 
-\fBacxi -s./ \-\-duplicates 2&>1 | tee duplicates.txt\fR
+\fBacxi -s./ \-\-dupes 2>&1 | tee duplicates.txt\fR
 
 The tee will allow the output to also scroll on screen while it runs, which is
 helpful to see what's going on. Otherwise just redirect output to file directly.
