@@ -632,7 +632,7 @@ sub process_tags {
 			# $temp =~ s/\\\$/\$/g;
 			# $temp =~ s/\\\"/"/g;
 			$temp = main::unescape_item("$temp");
-			print " Tagging \"$temp\"... ";
+			print " Tagging \"$temp\"...";
 			main::error_handler('file-missing',"Missing file: $temp",1) if ! -e "$temp";
 			# note: must be set here, not in qx to avoid quote errors
 			# single quotes, in case contains $ symbol
@@ -671,11 +671,11 @@ sub process_tags {
 					main::error_handler('application-error', $error_message,1);
 				}
 				else {
-					say 'File tagged';
+					say '  File tagged';
 				}
 			}
 			else {
-				say 'Test mode, no tag';
+				say '  Test mode, no tag';
 			}
 			# say File::stat::stat("$working[1]")->size;
 		}
@@ -2468,6 +2468,7 @@ sub error_handler {
 	my ($br,$error_text) = ("\n",'');
 	state $b_valid = 1;
 	state $error_no = 0;
+	# validation error block:
 	if ($error eq 'unsupported-type'){$error_no = 2;$b_valid=0;}
 	elsif ($error eq 'dest-dir'){$error_no = 1;$b_valid=0;}
 	elsif ($error eq 'dest-eq-src-dir'){$error_no = 9;$b_valid=0;$br=''}
@@ -2478,6 +2479,8 @@ sub error_handler {
 	elsif ($error eq 'bad-nlink'){$error_no = 9;$b_valid=0;}
 	elsif ($error eq 'bad-resample'){$error_no = 9;$b_valid=0;}
 	elsif ($error eq 'bad-exclude-file'){$error_no = 19;$b_valid=0;}
+	elsif ($error eq 'prefill-error'){$error_no = 32;$b_valid=0;}
+	# end validation error block
 	elsif ($error eq 'self-updater'){$error_no = 17;}
 	elsif ($error eq 'open'){$error_no = 14;}
 	elsif ($error eq 'file-exists'){$error_no = 16;}
@@ -2492,9 +2495,6 @@ sub error_handler {
 	elsif ($error eq 'autotag-multi'){$error_no = 18;}
 	elsif ($error eq 'track-counts'){$error_no = 30;}
 	elsif ($error eq 'analyze'){$error_no = 31;}
-	elsif ($error eq 'prefill-error'){$error_no = 32;}
-	elsif ($error eq 'missing-perl-module'){$error_no = 10;
-		$message = "Perl Module not found in system: $message";}
 	if ($error eq 'validation-errors'){
 		if (!$b_valid){
 			$message = "${br}Failed pretests. Please correct the listed errors.";
@@ -2676,9 +2676,8 @@ sub check_application_paths {
 				push(@app_paths,'Module Text::Autoformat');
 			}
 			if (!main::check_module('Text::Autoformat')){
-				main::error_handler('missing-perl-module', 'Text::Autoformat',1);
 				$b_error = 1;
-				$error_message .= "\n Perl module ext::Autoformat not found. Required ";
+				$error_message .= "\n Perl module Text::Autoformat not found. Required ";
 				$error_message .= "for -Xt / -Xu.";
 			}
 			else {
@@ -2763,7 +2762,9 @@ sub check_fork {
 	# note: tests show fork == 1 slower than no forking!!
 	if (!$b_error && $FORK > 0){
 		if (!main::check_module('Parallel::ForkManager')){
-			main::error_handler('missing-perl-module', 'Parallel::ForkManager',1);
+			$b_error = 1;
+			$error_message .= "\n Perl module Parallel::ForkManager not found. Required ";
+			$error_message .= "for --fork / -F.";
 		}
 		else {
 			import Parallel::ForkManager;
