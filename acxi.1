@@ -48,36 +48,34 @@ Miscellaneous: \fBacxi\fR [\fB\-\-aggregate\fR, \fB\-G\fR [file name|extension]]
 [\fB\-\-update\fR, \fB\-U\fR]
 .IP * 2
 Output Controls: \fBacxi\fR [\fB\-\-verbosity\fR, \fB\-v\fR {0-3}] 
-[\fB\-\-quiet\fR] [\fB\-\-debug\fR] 
+[\fB\-\-quiet\fR]
 .IP * 2
 Debugging: \fBacxi\fR [\fB\-\-debug\fR] [\fB\-\-nlink\fR] 
 [\fB\-\-no\-nlink\fR] [\fB\-\-test\fR] 
-
 .SH DESCRIPTION
 \fBacxi\fR is a command line audio conversion program and audio processing 
 program. It converts and syncs all desired source lossless files to the desired 
 output format, and to a different directory location. 
-
+.PP
 Supports lossless input formats aiff/flac/raw/shn/wav. Output formats are flac, 
 ogg, opus, aac/m4a, or mp3. aif/raw/shn can only output to flac. aac, m4a, mp3 
 can only have flac as input format. Resampling can only have flac as input and
 output formats.
-
+.PP
 By default, syncing will also copy over most common filetypes like gif, jpg, 
 png, and txt. You can change the defaults using a configuration file, or using 
 the \fB\-c\fR or \fB\-a\fR options.
-
+.PP
 The destination directory cannot be the same as the source directory, but it can 
 be inside of the source directory.
-
+.PP
 It can also generate or verify md5 and ffp checksum files if required, as well 
 as tag/embed images using \fBauto.tag\fR or \fB\-\-tag\fR / \fB\-\-image 
 [filename]\fR methods.
-
+.PP
 \fBacxi\fR runs pretests on each start to make sure input and output directories 
 are valid, conversion programs for input and output formatting programs are 
 present, and other user values are correct.
-
 .SH DEPENDENCIES
 For backward compatibility, acxi requires only Perl 5.010 (or newer), so it 
 should run on anything. Several features (copy, make directory, find files) were 
@@ -90,14 +88,14 @@ Source file must be flac. To transfer tags, \fBm4a\fR must be used.
 .IP * 2
 \fBFLAC\fR resampling requires \fBffmpeg\fR.
 .IP * 2
+\fBMP3\fR encoding requires: \fBlame\fR and \fBflac\fR. Source file must be 
+flac. MP3 encoding does not support wav or raw input formats.
+.IP * 2
 \fBOgg\fR encoding requires \fBoggenc\fR (Debian/Ubuntu package: 
 \fBvorbis-tools\fR).
 .IP * 2
 \fBOpus\fR encoding requires \fBopusenc\fR (Debian/Ubuntu package: 
 \fBopus-tools\fR).
-.IP * 2
-\fBMP3\fR encoding requires: \fBlame\fR and \fBflac\fR. Source file must be 
-flac. MP3 encoding does not support wav or raw input formats.
 .IP * 2
 \fBSHN \-> \fBFLAC\fR conversion requires the codec \fBshorten\fR and 
 \fBffmpeg\fR.
@@ -119,19 +117,19 @@ require \fBmetaflac\fR for \fBVORBIS\fR tagging.
 \fB\-\-infofix [t|u]\fR require Perl module \fBText::Autoformat\fR. 
 .IP * 2
 \fB\-U\fR Self-updater requires \fBcurl\fR. 
-
+.PP
 In theory, acxi 3.x should run on Windows and Macs, but I have not tested that, 
 but as long as the source/destination directory paths and the 
 application/configuration paths are correct, it should 'just work'.
-
 .SH USING OPTIONS
 For example:
-.B acxi
-\fB\-o mp3\fR or \fBacxi \-fo opus\fR or \fBacxi \-d /home/you/music\fR
-
+.EX
+\fBacxi \-o mp3\fR or \fBacxi \-fo opus\fR or \fBacxi \-d /home/you/music\fR
+.EE
+.PP
 Note that some options have long and short forms. The short form is used when 
 available in examples in order to keep things simple.
-
+.PP
 All tagging or checksum options (\fB\-A\fR, \fB\-C\fR, \fB\-\-dupes\fR, 
 \fB\-D\fR, \fB\-E\fR, \fB\-\-ffps\fR, \fB\-G\fR, \fB\-I\fR, \fB\-K\fR, 
 \fB\-M\fR, \fB\-P\fR, \fB\-R\fR, \fB\-S\fR, \fB\-T\fR, \fB\-V\fR, \fB\-Z\fR) 
