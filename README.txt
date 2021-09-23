@@ -1,13 +1,22 @@
-README for acxi - a command line audio file conversion tool
+README for acxi - a command line audio processing tool.
 
-See the acxi.changelog for changes: 
+================================================================================
+DOCUMENTATION RESOURCES
+--------------------------------------------------------------------------------
+
+acxi.changelog: 
 https://github.com/smxi/acxi/raw/stable/acxi.changelog
+For complete, up to date, current state of acxi development, features, and 
+fixes.
 
-See https://smxi.org/docs/acxi-man.htm for the HTML version of the the man 
-page. 
+HTML man page:
+https://smxi.org/docs/acxi-man.htm
+This is highly recommended for new users since it fairly complete and explains 
+most things reasonably completely, and has examples, etc.
 
-See https://smxi.org/docs/acxi-options.htm for HTML version of help menu 
-options.
+HTML help menu:
+https://smxi.org/docs/acxi-options.htm 
+Useful to get a quick overview of acxi options.
 
 ================================================================================
 INSTALLATION
