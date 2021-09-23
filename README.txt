@@ -57,9 +57,8 @@ extended. Changes will not break existing configurations.
 --------------------------------------------------------------------------------
 TEST ACTIONS:
 
-Using the --test option allows you to see what acxi would have done for 
-synching, tagging, and checksum creation actions, without actually running 
-those.
+Using the --test option allows you to see what acxi would have done for syncing, 
+tagging, and checksum creation actions, without actually running those.
 
 --------------------------------------------------------------------------------
 SYNCING:
