@@ -133,7 +133,7 @@ The --checksum-ffps/--ffps option allows you to generate on screen full listing
 of all recordings in a directory, with file lists, ffp checksums, and track 
 counts per directory.
 
-The --analyze-Z option creates a per directory report of flac file sizes, times, 
+The --analyze/-Z option creates a per directory report of flac file sizes, times, 
 kbps, then a summary report per directory of hte total size, time, average kbps. 
 This report, as with --dupes, prints to screen, and can be redirected to a file.
 
