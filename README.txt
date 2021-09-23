@@ -123,8 +123,7 @@ Read the man page for more on auto tagging and info file processing.
 CHECKSUMS AND TESTS:
 
 acxi can generate new checksum files (--checksum/-K) (md5 and ffp), and verify 
-existing md5 hashes and flac file integrity (--checksum-verify/-V), embed cover 
-art into existing tagged files, and much more.
+existing md5 hashes and flac file integrity (--checksum-verify/-V).
 
 The --duplicates/--dupes option allows bulk checks of a collection for duplicate 
 flac files.
