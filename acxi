@@ -2996,9 +2996,9 @@ sub check_verbosity {
 	if ($VERBOSITY > 0){
 		print main::dotify("Checking verbosity output level");
 	}
-	if ($VERBOSITY !~ m/^([0-4])$/){
+	if ($VERBOSITY !~ m/^([0-3])$/){
 		$b_error = 1;
-		$error_message .= "\n VERBOSITY only supports 0-4. ";
+		$error_message .= "\n VERBOSITY only supports 0-3. ";
 		$error_message .= "You used: $VERBOSITY";
 	}
 	if ($b_error){
