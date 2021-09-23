@@ -1713,7 +1713,7 @@ sub run_fixes {
 	}
 	print '  Processing completed. ';
 	if (!$run{'infofix-write'}){
-		say "Write changes to $INFO_FILE by adding 'w':";
+		say "Write following changes to $INFO_FILE by adding 'w':";
 		say $line_small;
 		print "   Fix: ";
 		say join("\n   Fix: ",@prepped);
