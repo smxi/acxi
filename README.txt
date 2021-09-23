@@ -137,66 +137,11 @@ kbps, then a summary report per directory of hte total size, time, average kbps.
 This report, as with --dupes, prints to screen, and can be redirected to a file.
 
 --------------------------------------------------------------------------------
-SCREEN OUTPUT:
-
-You can change the screen output verbosity using the following options:
-
-* none (--quiet, -v 0)
-
-* single line (-v 1)
-
-* verbose (-v 2)
-
-* full, with all conversion tool outputs (-v 3)
-
---------------------------------------------------------------------------------
 ERROR CORRECTION AND VALIDATION:
 
 In order to avoid as many possible user error situations as possible, acxi tries 
 to verify and validate all requested operations, and exit if an impossible 
 situation is requested, or if incorrect or not valid data was supplied.
-
-================================================================================
-DEPENDENCIES
---------------------------------------------------------------------------------
-
-For backward compatibility, acxi requires only Perl 5.010 (or newer), so it 
-should run on anything. Several features (copy, make directory, find files) were 
-moved from *nix commands to Perl native commands in version 3, which should make 
-acxi fully platform agnostic.
-
-* AAC/M4A encoding requires: ffmpeg with either native aac codec, or libfdk_aac 
-(best, Debian/Ubuntu package libfdk-aac2). If you want to preserve tags, use 
-m4a, if you use aac they will not transfer.
-
-* MP3 encoding requires: lame and flac (if source file is a flac, MP3 encoding 
-does not support wav or raw formats).
-  
-* Ogg encoding requires oggenc (Debian/Ubuntu package: vorbis-tools).
-
-* Opus encoding requires opusenc (Debian/Ubuntu package: opus-tools).
-  
-* SHN -> FLAC conversion requires the codec 'shorten' and ffmpeg.
-
-* --autotag requires metaflac plus a specially formatted auto.tag file placed 
-inside each album/collection directory.
-
-* --checksum/--checksum-delete checksum generation require metaflac and md5sum 
-(or a comparable md5 generating command line utility).
-  
-* --checksum-verify requires md5sum (or comparable tool) and flac.
-
-* --analyze, --duplicates, and --ffps require metaflac.
-
-* --image, --remove-images require metaflac.
-  
-* -U self updater requires curl, and valid paths for currently installed acxi 
-and acxi.1 man page. Will not update if both acxi and acxi.1 are not present on 
-your system, and correct paths set.
-
-In theory, acxi 3.x should run on Windows and Macs, but I have not tested that, 
-but as long as the source/destination directory paths and the 
-application/configuration paths are correct, it should 'just work'.
 
 ================================================================================
 CONFIGURATION AND USE
@@ -288,15 +233,72 @@ QUALITY_OPUS=160
 See man page for full list and explanation of configuratin options.
 
 --------------------------------------------------------------------------------
-VERBOSITY:
+SCREEN OUTPUT VERBOSITY:
 
-Screen verbosity output values can be set in configuration files using 
+You can change the screen output verbosity using the following options:
 
-VERBOSITY=[0-3].
+* none (--quiet, -v 0)
+
+* single line (-v 1)
+
+* verbose (-v 2)
+
+* full, with all conversion tool outputs (-v 3)
+
+Screen verbosity output values can be set in configuration file using:
+
+VERBOSITY=[0-3]
 
 ================================================================================
-AAC
+DEPENDENCIES
 --------------------------------------------------------------------------------
+
+For backward compatibility, acxi requires only Perl 5.010 (or newer), so it 
+should run on anything. Several features (copy, make directory, find files) were 
+moved from *nix commands to Perl native commands in version 3, which should make 
+acxi fully platform agnostic.
+
+* AAC/M4A encoding requires: ffmpeg with either native aac codec, or libfdk_aac 
+(best, Debian/Ubuntu package libfdk-aac2). If you want to preserve tags, use 
+m4a, if you use aac they will not transfer.
+
+* MP3 encoding requires: lame and flac (if source file is a flac, MP3 encoding 
+does not support wav or raw formats).
+  
+* Ogg encoding requires oggenc (Debian/Ubuntu package: vorbis-tools).
+
+* Opus encoding requires opusenc (Debian/Ubuntu package: opus-tools).
+  
+* SHN -> FLAC conversion requires the codec 'shorten' and ffmpeg.
+
+* --autotag requires metaflac plus a specially formatted auto.tag file placed 
+inside each album/collection directory.
+
+* --checksum/--checksum-delete checksum generation require metaflac and md5sum 
+(or a comparable md5 generating command line utility).
+  
+* --checksum-verify requires md5sum (or comparable tool) and flac.
+
+* --analyze, --duplicates, and --ffps require metaflac.
+
+* --image, --remove-images require metaflac.
+  
+* -U self updater requires curl, and valid paths for currently installed acxi 
+and acxi.1 man page. Will not update if both acxi and acxi.1 are not present on 
+your system, and correct paths set.
+
+In theory, acxi 3.x should run on Windows and Macs, but I have not tested that, 
+but as long as the source/destination directory paths and the 
+application/configuration paths are correct, it should 'just work'.
+
+================================================================================
+SPECIAL NOTES ABOUT CODECS
+--------------------------------------------------------------------------------
+
+There's a few things that need to be done to use some of the codecs.
+
+--------------------------------------------------------------------------------
+AAC:
 
 You can usually install the Frauenhofer libfdk_aac codec if you use the proper 
 non-free repositories. In Debian/Ubuntu, the package is libfdk_aac2. Otherwise 
@@ -310,9 +312,9 @@ FFMPEG does not transfer tags when the file format is aac, but it does when it's
 m4a, so if you have tagged flac source files, then use m4a instead of aac and 
 most of your tags will transfer fine automatically.
 
-================================================================================
-SHN SHORTEN
 --------------------------------------------------------------------------------
+SHN SHORTEN:
+
 Finding the shorten codec can be a pain, here's a few sources that may help. You 
 probably already have the codec if you have shn files and have been playing 
 them.
