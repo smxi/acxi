@@ -556,7 +556,12 @@ sub create {
 	say "Creating $TAG_FILE in: " . main::sourcer("$SOURCE_DIRECTORY");
 	make_tag_file();
 	say $line_small;
-	say 'Completed file creation.';
+	if (!$b_test){
+		say 'Completed file creation.';
+	}
+	else {
+		say 'End Test Output.';
+	}
 	say $line_large;
 }
 sub get_tag_files {
@@ -991,7 +996,8 @@ sub populate_tag_file {
 		$counter++;
 	}
 	if ($b_test){
-		say join "\n", @tags;
+		say "$line_small\nStart Test Output\n$line_small\n";
+		say join("\n", @tags),"\n";
 	}
 	else {
 		main::writer($TAG_FILE,\@tags);
