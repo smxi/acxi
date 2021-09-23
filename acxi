@@ -78,12 +78,12 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.4.01';
-my $self_date='2021-09-21';
+my $self_date='2021-09-22';
 
 ## GLOBALS ##
 my %run;
 $run{'sync'} = 1;
-my ($b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test);
+my ($b_debug,$b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test);
 my ($print_line_heavy,$print_line_large,$print_line_small);
 my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
 $silent_opus) = (7,'','','','','');
@@ -353,7 +353,7 @@ sub aggregate {
 			# say 'path: ', $path;
 		}
 		say $file_working;
-		say $file if $VERBOSITY > 3;
+		say $file if $b_debug;
 		File::Copy::copy($file, $path) if !$b_test;
 		push @files, $file;
 		$path = '';
@@ -572,7 +572,7 @@ sub get_tag_files {
 		$working_dir = File::Basename::dirname($item);
 		chdir "$start_dir";
 		chdir "$working_dir";
-		if ($VERBOSITY > 3){
+		if ($b_debug){
 			say Cwd::getcwd();
 			system 'pwd';
 		}
@@ -595,7 +595,7 @@ sub process_tags {
 		@working=split /%:/, $_;
 		# say Data::Dumper::Dumper \@working;
 		next if ! $working[1];
-		say "@working" if $VERBOSITY > 3;
+		say "@working" if $b_debug;
 		# $working[1] =~ s/"/\\\"/g;
 		# $working[1] =~ s/\$/\\\$/g;
 		$working[1] = main::escape_item("$working[1]");
@@ -638,7 +638,7 @@ sub process_tags {
 			# single quotes, in case contains $ symbol
 			# say File::stat::stat("$working[1]")->size;
 			$cmd = qq($COMMAND_METAFLAC --remove-all-tags $padding "$working[1]");
-			say "\n", $cmd if $VERBOSITY > 3;
+			say "\n", $cmd if $b_debug;
 			if (!$b_test){
 				qx($cmd);
 				if ($? > 0){
@@ -662,7 +662,7 @@ sub process_tags {
 				$set{$_} = 0;
 			}
 			$cmd = qq($COMMAND_METAFLAC $args "$working[1]");
-			say "\n", $cmd if $VERBOSITY > 3;
+			say "\n", $cmd if $b_debug;
 			$b_tracks = 1;
 			if (!$b_test){
 				qx($cmd);
@@ -754,7 +754,7 @@ sub make_tag_file {
 	else {
 		say "none found. Proceeding.";
 	}
-	if ($VERBOSITY > 3){
+	if ($b_debug){
 		say 'cwd: ', Cwd::getcwd();
 		system 'pwd';
 		say "start1: $start_dir"
@@ -829,7 +829,7 @@ sub populate_tag_file {
 	my ($b_first,$j,$holder,$starter) = (1,0,'','');
 	my $counter=$start;
 	%info = prefill_data() if $run{'prefill'};
-	say Data::Dumper::Dumper \%info if $b_test;
+	say Data::Dumper::Dumper \%info if $b_debug;
 	my @collection = (
 	'## RECORDING NAME/CREATORS ##',
 	'ALBUM','# Name to sort under','ALBUMSORT',
@@ -1024,7 +1024,7 @@ sub image_embedder{
 			@image_args = image_handler("$item",("$embed_image"));
 			$args = join ' ', @image_args;
 			$cmd = qq($COMMAND_METAFLAC $args "$item");
-			say "\n", $cmd if $VERBOSITY > 3;
+			say "\n", $cmd if $b_debug;
 			if (!$b_test){
 				qx($cmd);
 				if ($? > 0){
@@ -1058,7 +1058,7 @@ sub image_remover {
 			main::error_handler('application-error', $error_message,1);
 		}
 	}
-	say "\n", $cmd if $VERBOSITY > 3;
+	say "\n", $cmd if $b_debug;
 }
 # note: metaflac is ignring type integer and assigning 3, not sure why
 sub image_handler {
@@ -1162,7 +1162,7 @@ sub process_directories {
 	@found_list = ();
 	chdir "$start_dir";
 	File::Find::find(\&main::wanted, @source_glob);
-	say 'start dir: ', $start_dir if $VERBOSITY > 3;
+	say 'start dir: ', $start_dir if $b_debug;
 	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		my $b_valid;
 		$print_src = $item;
@@ -1173,7 +1173,7 @@ sub process_directories {
 		# }
 		chdir "$start_dir";
 		chdir "$item";
-		if ($VERBOSITY > 3){
+		if ($b_debug){
 			say 'srcdir: ', $SOURCE_DIRECTORY;
 			say 'item: ', $item;
 			say 'cwd: ', Cwd::getcwd();
@@ -1211,7 +1211,7 @@ sub generate_checksums {
 	else {
 		say "  Collecting ffps...";
 	}
-	if ($VERBOSITY > 3){
+	if ($b_debug){
 		say 'cwd: ', Cwd::getcwd();
 		system('pwd');
 	}
@@ -1290,7 +1290,7 @@ sub verify_flacs {
 	my @results = qx($COMMAND_FLAC -wt *.flac 2>&1);
 	$err_nu = $?;
 	chomp @results;
-	if ($VERBOSITY > 3){
+	if ($b_debug){
 		say "\@result count: ", scalar @results, "\n  ", join("\n  ",@results);
 	}
 	@results = grep {
@@ -1614,14 +1614,14 @@ sub process {
 	@found_list = ();
 	chdir "$start_dir";
 	File::Find::find(\&main::wanted, @source_glob);
-	say 'start dir: ', $start_dir if $VERBOSITY > 3;
+	say 'start dir: ', $start_dir if $b_debug;
 	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		my $b_valid;
 		$print_src = $item;
 		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 		chdir "$start_dir";
 		chdir "$item";
-		if ($VERBOSITY > 3){
+		if ($b_debug){
 			say 'srcdir: ', $SOURCE_DIRECTORY;
 			say 'item: ', $item;
 			say 'cwd: ', Cwd::getcwd();
@@ -3232,14 +3232,14 @@ sub show_options {
 	}
 	$output .= $line_small . "\n";
 	$output .= "Display output and debugging options:\n";
-	$output .= "--debug           Trigger advanced output debugging data. Same as -v 4\n";
+	$output .= "--debug           Trigger advanced output debugging data.\n";
 	$output .= "--help, -h        This help menu.\n";
 	$output .= "--quiet           Turns off most screen output, except for error messages.\n";
 	$output .= "                  Only disables screen output is logical to do so. Same as -v 0\n";
-	$output .= "--test            Test copy, sync, autotag, checksum without actually doing \n";
-	$output .= "                  the action. Also activates -v3 for more verbose outputs.\n";
+	$output .= "--test            Test copy, sync, autotag, checksum without actually doing\n";
+	$output .= "                  the action.\n";
 	$output .= "--version         Show $self_name version.\n";
-	$output .= "--verbosity, -v   {0-4} Dynamically set VERBOSITY. Current value: $VERBOSITY\n";
+	$output .= "--verbosity, -v   {0-3} Dynamically set VERBOSITY. Current value: $VERBOSITY\n";
 	$output .= "                  0: Turns off all output, except for error messages.\n";
 	$output .= "                  1: Basic single line per operation output, default value.\n";
 	$output .= "                  2: Without full verbosity of -v3, no flac/lame/oggenc/opusenc\n";
@@ -3247,7 +3247,6 @@ sub show_options {
 	$output .= "                  3: Full output, including full verbosity of ffmpeg/flac/\n";
 	$output .= "                  lame/oggenc/opusenc conversion process for aac, m4a, mp3, ogg,\n";
 	$output .= "                  or opus output.\n";
-	$output .= "                  4: Adds some debugger output. Same as --debug.\n";
 	$output .= $line_small . "\n";
 	$output .= "User Configs ";
 	if (!$CONFIG_DIRECTORY){
@@ -3634,7 +3633,7 @@ sub get_options{
 		$test{'sync'} = 1;
 		},
 	'debug' => sub { 
-		$VERBOSITY = 4},
+		$b_debug = 1;},
 	'd|destination:s' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
@@ -3868,7 +3867,6 @@ sub get_options{
 		$test{'tag'} = 1;
 		},
 	'test' => sub { 
-		$VERBOSITY = 3;
 		$b_test = 1 },
 	'U|update'=> sub { 
 		$run{'update'} = 1; 

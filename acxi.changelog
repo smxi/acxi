@@ -1,4 +1,55 @@
 ================================================================================
+Version: 3.4.02
+Patch: 
+Date: 2021-??-??
+--------------------------------------------------------------------------------
+RELEASE NOTES:
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+KNOWN ISSUES:
+
+
+--------------------------------------------------------------------------------
+BUGS:
+
+
+--------------------------------------------------------------------------------
+FIXES:
+
+
+--------------------------------------------------------------------------------
+ENHANCEMENTS:
+
+
+--------------------------------------------------------------------------------
+CHANGES:
+
+1. --test no longer activates --verbosity 3, that was creating annoying output
+in situations where --test is being used to generate screen only output, for
+example: acxi -s./ -SE --test
+
+Now --test just tests, which was its intended role, and you can tell add what -v 
+levels you want. 
+
+2. --debug no longer alters $VERBOSITY levels, it just sets a $b_debug flag. 
+This disconnects --test, --debug, and -v actions completely.
+
+--------------------------------------------------------------------------------
+DOCUMENTATION:
+
+
+--------------------------------------------------------------------------------
+CODE:
+
+1. Removed some weight from --test and --debug, see CHANGES 1,2. Changed 
+if $VERBOSITY > 3 tests to if $b_debug. Removed VERBOSITY connection to --test.
+
+--------------------------------------------------------------------------------
+-- Harald Hope - Wed, 22 Sep 2021 22:00:17 -0700
+
+================================================================================
 Version: 3.4.01
 Patch: 
 Date: 2021-09-21

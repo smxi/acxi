@@ -846,8 +846,7 @@ Sample: \fBacxi \-s ./ \-\-tag "COMMENT%:UNSET^^ARTIST%:Black Sabbath"\fR
 .TP
 .B \-\-test\fR
 Test your configurations, copy, sync, checksum, and tagging actions without 
-actually doing the operations. Activates \fB \-v 3\fR as well for more 
-complete output.
+actually doing the operations. 
 
 .TP
 .B \-\-update\fR, \fB\-U\fR
@@ -857,11 +856,11 @@ curl, acxi and man page acxi.1. Requires \fBcurl\fR.
 
 .TP
 .B \-\-verbosity\fR, \fB\-v {0-4}\fR
-Dynamically set . Helps for debugging certain types of issues where you 
-might want to see the full level 3 debugging information from audio codec 
-conversions for example. 
+Dynamically set . Helps for debugging certain types of issues where you might 
+advanced highly verbose debugging information. 
 
-\fB0\fR \- shuts off all output except errors. Same as \fB\-\-quiet\fR.
+\fB0\fR \- shuts off most output except errors. Same as \fB\-\-quiet\fR. Not 
+useful or used for all features.
 
 \fB1\fR \- basic single line output.
 
@@ -869,8 +868,8 @@ conversions for example.
 
 \fB3\fR \- full output, incuding all conversion tool output.
 
-\fB4\fR \- debug output, includes some extra debugging data. Don't use in 
-general. Same as \fB\-\-debug\fR.
+For other technical data, use \fB\-\-debug\fR, but not unless you know why you 
+are doing it, that output can vary widely.
 
 .TP
 .B \-\-version\fR
@@ -1064,8 +1063,6 @@ need to change it.
 \fB\-\-fork\fR conversion output may be ordered somewhat randomly since it shows 
 each thread's results as it completes as well as when it started.
 
-\fB4\fR \- debug \-  all available plus some specialized debugging information.
-
 .TP
 .B ADVANCED
 The following are advanced options which should only be used if you know what 
@@ -1101,10 +1098,11 @@ Please report bugs using the following resources.
 .B Issue Report
 File an issue report:
 .I https://github.com/smxi/acxi/issues
+
 .TP
 .B Forums
 Post on acxi forums:
-\UR https://techpatterns.com/forums/about1491.html
+.I https://techpatterns.com/forums/about1491.html
 .TP
 .B IRC
 You can also visit
@@ -1118,8 +1116,7 @@ or
 
 .SH  AUTHOR AND CONTRIBUTORS TO CODE
 
-.B acxi
-is a fork and full rewrite of flac2ogg.pl.
+\fBacxi\fR is a fork and full rewrite of \fBflac2ogg.pl\fR.
 
 Copyright (c) Harald Hope, 2010\-2021
 
