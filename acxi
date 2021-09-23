@@ -1490,12 +1490,9 @@ sub check_ffp_duplicates {
 				my $ffp = (split(/:/,$item))[-1];
 				FFP:
 				foreach my $dir1 (sort keys %raw_ffps){
-					# say 'd3: ', $dir1;
-					# this fails in instance where dupes are in same dir
-					# next if $dir eq $dir1;
 					FFP1:
-					# say 'd4: ', $dir1;
 					foreach my $item1 (@{$raw_ffps{$dir1}}){
+						# check dirs and items to allow for dupes in same directory
 						next FFP1 if $dir eq $dir1 && $item eq $item1;
 						my $ffp1 = (split(/:/,$item1))[-1];
 						if ($ffp eq $ffp1){
@@ -1722,8 +1719,8 @@ sub run_fixes {
 	else {
 		say "Writing changes to $INFO_FILE:";
 		say "  $line_small";
-		print '   ';
-		say join("\n   ",@prepped);
+		print '  | ';
+		say join("\n  | ",@prepped);
 		my $contents = join("\r\n",@prepped);
 		open(my $fh, '>', $INFO_FILE) or die "failed to open for writing: $INFO_FILE";
 		print $fh $contents;;

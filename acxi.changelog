@@ -1,11 +1,14 @@
 ================================================================================
-Version: 3.4.02
+Version: 3.5.00
 Patch: 
 Date: 2021-??-??
 --------------------------------------------------------------------------------
 RELEASE NOTES:
 --------------------------------------------------------------------------------
 
+This is the final tidying up of the new features introduced and evolved in 
+3.4.01, and given the number of new features, and changes, this also will be 
+rolled into next major version, 3.5.00.
 
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
@@ -14,6 +17,10 @@ KNOWN ISSUES:
 --------------------------------------------------------------------------------
 BUGS:
 
+1. In one case, --test, by triggering -v3, would trip a debugger that should 
+have been a --debug switch, and since there was no internal actual $b_debug, 
+there was no way to run pure debugger switches internally. This is now 
+corrected.
 
 --------------------------------------------------------------------------------
 FIXES:
@@ -36,15 +43,28 @@ levels you want.
 2. --debug no longer alters $VERBOSITY levels, it just sets a $b_debug flag. 
 This disconnects --test, --debug, and -v actions completely.
 
+3. Changed line starter for -X from 'Fix: ' to '|: ', and for -Xw, ' ' to '| '. 
+That looks a lot cleaner, and creates a nice box effect around the info file 
+output block. The '|: ' and '| ' also make it more clear when the action was 
+written and when not, without being visually messy.
+
 --------------------------------------------------------------------------------
 DOCUMENTATION:
 
+1. Updated --test, --debug, --verbosity, and CONFIG items to account for the 
+changes in use of internal VERBOSITY and b_test/b_debug flags.
+
+2. Refactored and made more useful README.txt, now it's updated to focus on all 
+the acxi features, not just the syncing part, and also is divided into sections 
+better, and is more readable, with enough information to get users started.
 
 --------------------------------------------------------------------------------
 CODE:
 
 1. Removed some weight from --test and --debug, see CHANGES 1,2. Changed 
 if $VERBOSITY > 3 tests to if $b_debug. Removed VERBOSITY connection to --test.
+
+2. Removed some development debuggers and fixed some comments for logic.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Wed, 22 Sep 2021 22:00:17 -0700
