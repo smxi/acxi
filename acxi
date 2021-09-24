@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.4.01';
-my $self_date='2021-09-22';
+my $self_date='2021-09-24';
 
 ## GLOBALS ##
 my %run;
@@ -1656,6 +1656,14 @@ sub run_fixes {
 	$upper .= 'Ma|Md|Mkw|Mo|Nc|Nh|Nj|Nm|Nyc?|Pa|Ri|Sbd?|Sf|Shn|Tn|Usa|Ut|Wa|';
 	$upper .= 'Wav|Wi|Va|Vt';
 	foreach my $row (@data){
+		if ($run{'infofix-lower'}){
+			# set to lower, and make upper first character of each line.
+			$row = ucfirst(lc($row));
+			# make each item following period upper case first
+			$row =~ s/(\.\s+)(\w)/$1\u\L$2/g;
+			# replace known standard 'words' with UC variants
+			$row =~ s/\b($upper)\b/\U$1/gi;
+		}
 		if ($run{'infofix-upper'}){
 			foreach my $style (qw(highlight)){
 				$row = Text::Autoformat::autoformat($row, {case => $style, left=>1, right=>1000});
@@ -3194,6 +3202,7 @@ sub show_options {
 	$output .= "                  Fix info.txt files. Use any combination. Always cleans white\n";
 	$output .= "                  space issues.\n";
 	$output .= "                  d: make iso date: YYYY-MM-DD from various random date formats\n";
+	$output .= "                  l: Set all lowercase, then apply simple upper case first fixes.\n";
 	$output .= "                  n: make track numbering 'NN. ' (0 padded) or 'N-NN. '\n";
 	$output .= "                  q: add FLAC/Quality: /[quality] items to info file\n";
 	$output .= "                  t: fix upper/lower case track titles\n";
@@ -3710,8 +3719,9 @@ sub get_options{
 		my ($opt,$arg) = @_;
 		$run{'infofix'} = 1;
 		if ($arg){
-			if ($arg =~ /^[dnqutw]+$/i){
+			if ($arg =~ /^[dlnqutw]+$/i){
 				$run{'infofix-date'} = 1 if $arg =~ /d/i;
+				$run{'infofix-lower'} = 1 if $arg =~ /l/i;
 				$run{'infofix-no'} = 1 if $arg =~ /n/i;
 				$run{'infofix-quality'} = 1 if $arg =~ /q/i;
 				$run{'infofix-title'} = 1 if $arg =~ /t/i;

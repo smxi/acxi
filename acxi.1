@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-09\-21" acxi "acxi manual"
+.TH ACXI 1 "2021\-09\-24" acxi "acxi manual"
 .SH NAME
 acxi  \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -33,7 +33,7 @@ Tagging: \fBacxi\fR [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-autotag\-create\-single\fR, \fB\-S\fR] 
 [\fB\-\-autotag\-create\-multi\fR, \fB\-M\fR {filename start ID}]
 [\fB\-\-image\fR, \fB\-I\fR {cover image filename}]
-[\fB\-\-infofix\fR, \fB\-X\fR [d|n|q|t|u|w]] 
+[\fB\-\-infofix\fR, \fB\-X\fR [d|l|n|q|t|u|w]] 
 [\fB\-\-info\-rating\fR {2\-xxx}
 [\fB\-\-prefill\fR, \fB\-E\fR] 
 [\fB\-\-prefill\-file\fR {release info file name}] 
@@ -483,12 +483,12 @@ acxi \-s ./ \-RI cover.jpg\fR
 .fi
 
 .TP
-.B \-\-infofix\fR, \fB\-X [d|n|q|t|u|w]\fR
+.B \-\-infofix\fR, \fB\-X [d|l|n|q|t|u|w]\fR
 Correct common corruptions to info.txt files. Only to correct these common 
 issues:
 
 * Entire file is uppercase (this happens surprisingly often). Applies smart 
-Autoformat fix for Upper/lower case, not recommended if the file has a lot of 
+Autoformat fix (\fBu\fR) for Upper/lower case, not recommended if the file has a lot of 
 text in it. Perfect for titles and most standard values, but not for paragraghs
 of text.
 
@@ -507,26 +507,31 @@ Values (can be combined):
 
 * no option \- clean white space issues. Default action, always runs.
 
-* d \- set date to ISO format YYYY\-MM\-DD
+* \fBd\fR \- set date to ISO format YYYY\-MM\-DD
 
-* n \- fix track numbering to be consistent '0X. ' or 'Y-0X'
+* \fBl\fR \- more simplistic upper case first, lower case rest. Good for info 
+files that have all upper case, but a lot of sentences. You will have to go back 
+in and correct items. Good in combination with  \fBt\fR.
 
-* q \- add in 2 technical quality info lines after top header. Reads flac file 
-in directory to determine bit rate, sampling frequency, and channels. Requires 
-track file name starts with D-NN or ends with D-NN.flac. Exits if it can't find 
-a match. Quality is /[rating] number and can be changed from default if desired.
+* \fBn\fR \- fix track numbering to be consistent '0X. ' or 'Y-0X'
+
+* \fBq\fR \- add in 2 technical quality info lines after top header. Reads flac 
+file in directory to determine bit rate, sampling frequency, and channels. 
+Requires track file name starts with D-NN or ends with D-NN.flac. Exits if it 
+can't find a match. Quality is /[rating] number and can be changed from default 
+if desired.
 .nf
 \fBFLAC: 16/44.1 (2 channels)
 Quality: /4 ()\fR
 .fi
 
-* t \- smart upper case first track titles only. Requires Perl module 
+* \fBt\fR \- smart upper case first track titles only. Requires Perl module 
 \fBText::Autoformat\fR.
 
-* u \- run upper case first smart fix. Requires Perl module 
+* \fBu\fR \- run upper case first smart fix. Requires Perl module 
 \fBText::Autoformat\fR.
 
-* w \- write changes to info file.
+* \fBw\fR \- write changes to info file.
 
 With no \fBw\fR supplied, will just show what would have happened, with \fBw\fR, 
 writes fixes to file.

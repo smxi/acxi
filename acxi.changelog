@@ -29,6 +29,12 @@ FIXES:
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
+1. Added -Xl (el, not uc eye), sets all lines lower case, then upper cases 
+anything found after a '.'. Good for cases where the entire file is upper case, 
+but it's got a lot of sentences, and you don't want the upper case first of all 
+primary words that u gives you. Requires in most cases going back in and 
+re-uppercasing some items, but it's less work to do it this way for extreme 
+cases.
 
 --------------------------------------------------------------------------------
 CHANGES:
