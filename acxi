@@ -2442,7 +2442,8 @@ sub grab {
 	chomp(@content);
 	say $line_small;
 	print "Verifying $self_name.1 data... ";
-	if (! grep {/\Qis a fork and full rewrite of flac2ogg.pl.\E/} @content){
+	# have to keep legacy test for a while
+	if (!grep {/\.\\" EOF||\Qis a fork and full rewrite of flac2ogg.pl.\E/} @content){
 		main::error_handler('self-updater',"Man update error: Download data corrupted.",1);
 	}
 	else {
