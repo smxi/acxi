@@ -3203,7 +3203,7 @@ sub show_options {
 	$output .= "                  Fix info.txt files. Use any combination. Always cleans white\n";
 	$output .= "                  space issues.\n";
 	$output .= "                  d: make iso date: YYYY-MM-DD from various random date formats\n";
-	$output .= "                  l: Set all lowercase, then apply simple upper case first fixes.\n";
+	$output .= "                  l: Set all lowercase, and apply simple upper case first fixes.\n";
 	$output .= "                  n: make track numbering 'NN. ' (0 padded) or 'N-NN. '\n";
 	$output .= "                  q: add FLAC/Quality: /[quality] items to info file\n";
 	$output .= "                  t: fix upper/lower case track titles\n";
