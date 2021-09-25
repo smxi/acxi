@@ -80,6 +80,9 @@ if $VERBOSITY > 3 tests to if $b_debug. Removed VERBOSITY connection to --test.
 ago. That's required to validate man download via -U, it was using a test on a 
 string in the man page, which isn't a good idea since that can change. 
 
+4. Got rid of white space between negation ! and all items except things like 
+-f, -d, -r.
+
 --------------------------------------------------------------------------------
 -- Harald Hope - Wed, 24 Sep 2021 17:30:17 -0700
 

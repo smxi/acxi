@@ -599,7 +599,7 @@ sub process_tags {
 	foreach (@tags){
 		@working=split /%:/, $_;
 		# say Data::Dumper::Dumper \@working;
-		next if ! $working[1];
+		next if !$working[1];
 		say "@working" if $b_debug;
 		# $working[1] =~ s/"/\\\"/g;
 		# $working[1] =~ s/\$/\\\$/g;
@@ -1577,7 +1577,7 @@ sub process_type {
 			say "Delete $type result: $result" if $VERBOSITY > 1;
 		}
 	}
-	main::print_not_found("$type-cleaned") if ! $b_deleted;
+	main::print_not_found("$type-cleaned") if !$b_deleted;
 }
 sub confirm_deletion {
 	my ($type) = @_;
@@ -1886,7 +1886,7 @@ sub update_directories {
 		$dest_dir = $DESTINATION_DIRECTORY . $path_separator . $dir;
 		# say "d2:$dir";
 		# check to see if the destination dir already exists
-		if (! stat("$dest_dir")){
+		if (!stat("$dest_dir")){
 			# stat failed so create the directory
 			eval $print_line_small;
 			if ($VERBOSITY > 1){
@@ -1902,7 +1902,7 @@ sub update_directories {
 			say "Create Directory result: $result" if $VERBOSITY > 1;
 		}
 	}
-	main::print_not_found('dirs') if ! $b_created;
+	main::print_not_found('dirs') if !$b_created;
 }
 
 sub update_files {
@@ -1911,7 +1911,7 @@ sub update_files {
 	my ($dest_info,$dest_mod_time,$src_info, $src_mod_time) = ('',0,'',0);
 	my $pm = new Parallel::ForkManager($FORK) if $b_fork;
 	foreach $file (sort { "\L$a" cmp "\L$b" } @found_list){
-		next if ! $file;
+		next if !$file;
 		$dest_file = $src_file = $file;
 		# say "\nIF: $src_file";
 		$dest_file =~ s|^$SOURCE_DIRECTORY|$DESTINATION_DIRECTORY|;
@@ -1967,7 +1967,7 @@ sub update_files {
 	# the parent.. otherwise terminating the parent force kills 
 	# all the forks 
 	$pm->wait_all_children if $b_fork;
-	main::print_not_found('files') if ! $b_created;
+	main::print_not_found('files') if !$b_created;
 }
 
 sub copy_file {
@@ -2168,7 +2168,7 @@ sub get_flac_tags {
 	}
 	# create missing hash keys
 	foreach (@tags){
-		$tag_list{$_} = '' if ! defined $tag_list{$_};
+		$tag_list{$_} = '' if !defined $tag_list{$_};
 	}
 	# say Dumper \%tag_list;
 	return %tag_list;
@@ -2313,7 +2313,7 @@ sub wanted {
 			# say "$working :: $path_separator :: re: $recurse c: $count";
 		}
 		if (! -r $File::Find::name || $b_skip){
-			if (! grep { $_ eq $File::Find::name } @pruned){
+			if (!grep { $_ eq $File::Find::name } @pruned){
 				say $line_small if !$b_first;
 				$b_first = 1;
 				my $message = ($b_skip) ? 'recursion': 'unreadable';
@@ -2424,7 +2424,7 @@ sub grab {
 	chomp(@content);
 	say $line_small;
 	print "Verifying $self_name data... ";
-	if (! grep {/###\*\*EOF\*\*###/} @content){
+	if (!grep {/###\*\*EOF\*\*###/} @content){
 		main::error_handler('self-updater',"Self update error: Download data corrupted.",1);
 	}
 	else {
@@ -3650,7 +3650,7 @@ sub get_options{
 		$b_debug = 1;},
 	'd|destination:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
+		error_handler('missing-arg',"$opt requires path.",1) if !$arg;
 		$DESTINATION_DIRECTORY = $arg;
 		$test{'destination'} = 1;
 		},
@@ -3672,14 +3672,14 @@ sub get_options{
 		$OUTPUT_TYPE = 'UNSET';},
 	'x|exclude:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires exclude list or file.",1) if ! $arg;
+		error_handler('missing-arg',"$opt requires exclude list or file.",1) if !$arg;
 		$arg = '' if uc($arg) eq 'UNSET';
 		$EXCLUDE = $arg;
 		$test{'sync'} = 1;
 		},
 	'y|exclude-append:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires exclude list.",1) if ! $arg;
+		error_handler('missing-arg',"$opt requires exclude list.",1) if !$arg;
 		$exclude_append = $arg },
 	'f|force' => sub { 
 		$b_force = 1 },
@@ -3757,7 +3757,7 @@ sub get_options{
 	},
 	'i|input:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires type.",1) if ! $arg;
+		error_handler('missing-arg',"$opt requires type.",1) if !$arg;
 		$test{'input'} = 1;
 		$INPUT_TYPE = $arg;
 		$test{'sync'} = 1;
@@ -3776,7 +3776,7 @@ sub get_options{
 		$run{'no-replaygain'} = 1 },
 	'o|output:s' => sub {
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires type.",1) if ! $arg;
+		error_handler('missing-arg',"$opt requires type.",1) if !$arg;
 		$test{'output'} = 1;
 		$OUTPUT_TYPE = $arg;
 		$test{'sync'} = 1;
@@ -3793,7 +3793,7 @@ sub get_options{
 		},
 	'prefill-file:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires file name.",1) if ! $arg;
+		error_handler('missing-arg',"$opt requires file name.",1) if !$arg;
 		$INFO_FILE = $arg;
 		$test{'info'} = 1;
 		$test{'prefill'} = 1;
@@ -3843,13 +3843,13 @@ sub get_options{
 		$run{'resample-override'} = 1; },
 	's|source:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
+		error_handler('missing-arg',"$opt requires path.",1) if !$arg;
 		$SOURCE_DIRECTORY = $arg;
 		$test{'source'} = 1;
 		},
 	'g|source-glob:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires path.",1) if ! $arg;
+		error_handler('missing-arg',"$opt requires path.",1) if !$arg;
 		$run{'source-glob'} = $arg;
 		$test{'source-glob'} = 1;
 		},
