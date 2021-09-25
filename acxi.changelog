@@ -66,6 +66,8 @@ changes in use of internal VERBOSITY and b_test/b_debug flags.
 the acxi features, not just the syncing part, and also is divided into sections 
 better, and is more readable, with enough information to get users started.
 
+3. Cleaned up double spaces in man page.
+
 --------------------------------------------------------------------------------
 CODE:
 
@@ -245,8 +247,6 @@ DOCUMENTATION:
 
 2. Redid top SYNOPSIS section to include short forms, that makes it easier to
 use as a reminder tool. Reordered items as well to be more clear.
-
-3. Cleaned up double spaces in man page.
 
 --------------------------------------------------------------------------------
 CODE:
