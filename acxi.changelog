@@ -77,10 +77,8 @@ if $VERBOSITY > 3 tests to if $b_debug. Removed VERBOSITY connection to --test.
 2. Removed some development debuggers and fixed some comments for logic.
 
 3. Added EOF closing comment to man page, should have implemented that years 
-ago. That's required to validate man download via -U, it was currently using a 
-string in the man page, which isn't a good idea since that can change. Have to 
-leave old validation logic in however so people with previous acxi versions can 
-get updates, will remove the string test in a few years if I remember.
+ago. That's required to validate man download via -U, it was using a test on a 
+string in the man page, which isn't a good idea since that can change. 
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Wed, 24 Sep 2021 17:30:17 -0700
