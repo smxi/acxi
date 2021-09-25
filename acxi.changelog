@@ -1,7 +1,7 @@
 ================================================================================
 Version: 3.5.00
 Patch: 
-Date: 2021-??-??
+Date: 2021-09-24
 --------------------------------------------------------------------------------
 RELEASE NOTES:
 --------------------------------------------------------------------------------
@@ -13,6 +13,7 @@ rolled into next major version, 3.5.00.
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
 
+1. No new ones.
 
 --------------------------------------------------------------------------------
 BUGS:
@@ -25,6 +26,7 @@ corrected.
 --------------------------------------------------------------------------------
 FIXES:
 
+1. None this release.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
@@ -72,8 +74,14 @@ if $VERBOSITY > 3 tests to if $b_debug. Removed VERBOSITY connection to --test.
 
 2. Removed some development debuggers and fixed some comments for logic.
 
+3. Added EOF closing comment to man page, should have implemented that years 
+ago. That's required to validate man download via -U, it was currently using a 
+string in the man page, which isn't a good idea since that can change. Have to 
+leave old validation logic in however so people with previous acxi versions can 
+get updates, will remove the string test in a few years if I remember.
+
 --------------------------------------------------------------------------------
--- Harald Hope - Wed, 22 Sep 2021 22:00:17 -0700
+-- Harald Hope - Wed, 24 Sep 2021 17:30:17 -0700
 
 ================================================================================
 Version: 3.4.01
@@ -237,6 +245,8 @@ DOCUMENTATION:
 
 2. Redid top SYNOPSIS section to include short forms, that makes it easier to
 use as a reminder tool. Reordered items as well to be more clear.
+
+3. Cleaned up double spaces in man page.
 
 --------------------------------------------------------------------------------
 CODE:

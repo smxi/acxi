@@ -1,6 +1,6 @@
 .TH ACXI 1 "2021\-09\-24" acxi "acxi manual"
 .SH NAME
-acxi  \- Command line audio conversion tool
+acxi \- Command line audio conversion tool
 .SH SYNOPSIS
 Most of the commonly used options have short forms to make typing the commands
 faster.
@@ -182,7 +182,7 @@ helpful in many cases. Otherwise just redirect output to file directly.
 \fB\-v 3\fR adds raw non rounded seconds and file size in bytes to all size / 
 time results.
 .TP
-.B \-\-append\fR, \fB\-a  {extensions}\fR
+.B \-\-append\fR, \fB\-a {extensions}\fR
 Takes one or more comma separated extensions. Do not use whitespaces in this 
 list. These will be appended on to the current list being used on a one time 
 basis. This can be useful if you want to copy over a specific file type for one 
@@ -357,7 +357,7 @@ before it starts syncing.
 Currently only supported for aac/m4a output using ffmpeg.
 
 .TP
-.B \-\-copy\fR, \fB\-c  {extensions}\fR
+.B \-\-copy\fR, \fB\-c {extensions}\fR
 Comma separated list of extensions for file types you want to sync to your lossy 
 music directory. Overrides default values. Use lowercase, but it's case 
 insensitive internally. Do not include the period in the extension.
@@ -402,7 +402,7 @@ The tee will allow the output to also scroll on screen while it runs, which is
 helpful to see what's going on. Otherwise just redirect output to file directly.
 
 .TP
-.B \-\-exclude\fR, \fB\-x  {items}\fR
+.B \-\-exclude\fR, \fB\-x {items}\fR
 Exclude a list of unique strings separated by ^^, or a full path to an exclude 
 file whose name includes the value set in \fB$EXCLUDE_BASE\fR. 
 
@@ -422,7 +422,7 @@ If you want to temporarily suspend exclude actions one time, use:
 \fB\-\-exclude='UNSET'\fR
 
 .TP
-.B \-\-exclude\-append\fR, \fB\-y  {items}\fR
+.B \-\-exclude\-append\fR, \fB\-y {items}\fR
 Append an item to the list of excludes or file. Only accepts string values, not 
 a file path.
 
@@ -511,7 +511,7 @@ Values (can be combined):
 
 * \fBl\fR \- more simplistic upper case first, lower case rest. Good for info 
 files that have all upper case, but a lot of sentences. You will have to go back 
-in and correct items. Good in combination with  \fBt\fR.
+in and correct items. Good in combination with \fBt\fR.
 
 * \fBn\fR \- fix track numbering to be consistent '0X. ' or 'Y-0X'
 
@@ -657,7 +657,7 @@ Use together with \fB\-M\fR or \fB\-S\fR to prepopulate the \fBALBUM,\fR
 \fBTITLE\fR fields as well. Note that \fBALBUMARTIST\fR is filled with 
 \fBARTIST\fR name.
 
-Use the  \fB\-\-test\fR option to make sure the data will prefill as expected
+Use the \fB\-\-test\fR option to make sure the data will prefill as expected
 before actually creating the \fBauto.tag\fR file.
 
 Samples: 
@@ -669,14 +669,14 @@ Samples:
 .TP
 .B \-\-prefill\-file {file name}\fR
 An alternate file name to use for prefill. Note that file MUST be .txt, and 
-should not be anything other than  ASCII or UTF8, otherwise you will get ungood 
+should not be anything other than ASCII or UTF8, otherwise you will get ungood 
 results.
 
 .TP
 .B \-\-quality\fR, \fB\-q {number}\fR
 Set compression quality level.
 
-\fBaac/m4a\fR \-  n can be an integer between 10\-500 (bitrate). 500 is largest 
+\fBaac/m4a\fR \- n can be an integer between 10\-500 (bitrate). 500 is largest 
 file/highest quality.
 
 \fBflac\fR \- n can be an integer between 0\-8, 0 is largest file / fastest 
@@ -689,7 +689,7 @@ file / highest quality.
 \fBogg\fR \- n can be between \-1 and 10. 10 is the largest file/highest 
 quality. Fractions are allowed, e.g. \fB\-o ogg \-q 7.54\fR
 
-\fBopus\fR \-  n can be an integer between 6\-256 (bitrate). 256 is largest 
+\fBopus\fR \- n can be an integer between 6\-256 (bitrate). 256 is largest 
 file/highest quality.
 
 Note that using a higher or lower quality than you used to create the compressed 
@@ -784,7 +784,7 @@ Path to the top-most directory containing your source files (eg, flac).
 .TP
 .B \-\-source\-glob\fR, \fB\-g {path relative to \-s path}\fR
 Accepts wild card paths if you only want to update or check certain directories 
-within the main  \fB\-\-source\fR working directory. Requires \fB\-\-source\fR, 
+within the main \fB\-\-source\fR working directory. Requires \fB\-\-source\fR, 
 wild card path must be within \fB-\-source\fR.
 
 Sample:
@@ -1064,7 +1064,7 @@ need to change it.
 
 \fB2\fR \- verbose \- but without the actual conversion data from codecs
 
-\fB3\fR \- full \-  all available information. Note: with \fB\-F\fR / 
+\fB3\fR \- full \- all available information. Note: with \fB\-F\fR / 
 \fB\-\-fork\fR conversion output may be ordered somewhat randomly since it shows 
 each thread's results as it completes as well as when it started.
 
@@ -1117,15 +1117,15 @@ or
 \fRchannel:\fI #smxi\fR to post issues. Libera is probably best for acxi issues.
 
 .SH HOMEPAGE
-.I  https://github.com/smxi/acxi
+.I https://github.com/smxi/acxi
 
-.SH  AUTHOR AND CONTRIBUTORS TO CODE
+.SH AUTHOR AND CONTRIBUTORS TO CODE
 .\" don't change this line until new acxi out for a while, used for -U test
 acxi is a fork and full rewrite of flac2ogg.pl.
 
 Copyright (c) Harald Hope, 2010\-2021
 
-Initial forking logic:  prupert. 2019-07
+Initial forking logic: prupert. 2019-07
 
 Initial MP3 tagging logic: Odd Eivind Ebbesen \- \fIwww.oddware.net\fR \- 
 <oddebb at gmail dot com>
