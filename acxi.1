@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-09\-24" acxi "acxi manual"
+.TH ACXI 1 "2021\-09\-27" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -315,9 +315,9 @@ generating large lists of ffps for a collection.
 Similar to: \fBacxi \-K \-\-no\-md5 \-\-test\fR
 
 Sample (prints to screen, redirects stderr to stdout, prints to file):
-.nf
+.EX
 \fBacxi \-s ./ \-\-ffps 2>&1 | tee ffps.txt\fB
-.fi
+.EE
 
 .TP
 .B \-\-checksum\-verify\fR, \fB\-V\fR
@@ -337,6 +337,15 @@ not present in the source music directories. Will show you the directories or
 files to be removed before deleting them, and you have to confirm the deletion 
 of each set two times before it will actually delete it. If used with optional 
 value \fBsync\fR, will proceed to sync actions, otherwise exits after cleaning.
+
+The paths provided by \fB\-s\fR and \fB\-d\fR must be relative to either root or \fB$HOME\fR:
+.EX
+\fBacxi \-\-clean \-s /home/fred/music \-d /home/fred/music/opus\fR
+.EE
+OR
+.EX
+\fBacxi \-\-clean \-s ~/music \-d ~/music/opus\fR
+.EE
 
 Take care with this one, if you have other compressed formats in your compressed 
 directory than your default $OUTPUT_TYPE format, it will want to delete all 
@@ -376,7 +385,7 @@ a developer or something like that.
 .TP
 .B \-\-destination, \fB\-d {path}\fR
 Full path to the directory where you want the processed lossy (eg, ogg) files to 
-go.
+go. Cannot start with \fB../\fR.
 
 .TP
 .B \-\-dot\fR
@@ -779,7 +788,8 @@ can if you add this override switch.
 
 .TP
 .B \-\-source\fR, \fB\-s {path}\fR
-Path to the top-most directory containing your source files (eg, flac).
+Path to the top-most directory containing your source files (eg, flac). Cannot 
+start with \fB../\fR.
 
 .TP
 .B \-\-source\-glob\fR, \fB\-g {path relative to \-s path}\fR

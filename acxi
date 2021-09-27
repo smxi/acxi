@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.00';
-my $self_date='2021-09-24';
+my $self_date='2021-09-27';
 
 ## GLOBALS ##
 my %run;
@@ -2488,6 +2488,8 @@ sub error_handler {
 	state $error_no = 0;
 	# validation error block:
 	if ($error eq 'unsupported-type'){$error_no = 2;$b_valid=0;}
+	elsif ($error eq 'clean-dest-src'){$error_no = 1;$b_valid=0;}
+	elsif ($error eq 'dest-src-2-dot'){$error_no = 9;$b_valid=0;}
 	elsif ($error eq 'dest-dir'){$error_no = 1;$b_valid=0;}
 	elsif ($error eq 'dest-eq-src-dir'){$error_no = 9;$b_valid=0;$br=''}
 	elsif ($error eq 'missing-app'){$error_no = 3;$b_valid=0;}
@@ -2991,6 +2993,20 @@ sub check_src_dest_directories {
 	} 
 	elsif ($VERBOSITY > 0){
 		say 'Directories: exist';
+	}
+	if ($SOURCE_DIRECTORY =~ m|^\.\.$path_separator| || 
+	 ($b_check_dest && $DESTINATION_DIRECTORY =~ m|^\.\.$path_separator|)){
+		$error_message = "Path for -d/-s cannot start with ..$path_separator";
+		main::error_handler('dest-src-2-dot',$error_message,0);
+	}
+	if ($b_check_dest && $run{'clean'} && 
+	 ($DESTINATION_DIRECTORY !~ m%^(~$path_separator|$path_separator)% || 
+	 $SOURCE_DIRECTORY !~ m%^(~$path_separator|$path_separator)%)){
+		$error_message = "--clean option -s/-d paths must start with ";
+		$error_message .= "'~$path_separator' or '$path_separator' .\n";
+		$error_message .= " OK: -s /home/you/music -d /home/you/music/opus OR\n";
+		$error_message .= "     -s ~/music -d ~/music/opus";
+		main::error_handler('clean-dest-src',$error_message,0);
 	}
 	if ($b_check_dest && !$b_error && $DESTINATION_DIRECTORY eq $SOURCE_DIRECTORY){
 		$error_message = "Destination directory cannot be same as Source directory!";

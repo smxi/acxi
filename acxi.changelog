@@ -1,4 +1,53 @@
 ================================================================================
+Version: 3.5.01
+Patch: 
+Date: 2021-??-??
+--------------------------------------------------------------------------------
+RELEASE NOTES:
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+KNOWN ISSUES:
+
+
+--------------------------------------------------------------------------------
+BUGS:
+
+1. See Fix 1, needs to enforce path syntax for --clean -s/-d, otherwise will 
+offer to delete your entire destination.
+
+--------------------------------------------------------------------------------
+FIXES:
+
+1. Found issue with --clean, -s and -d require either full relative to user HOME 
+or full path (~/music, /home/user/music). Never tested other path possibilities 
+so never noticed these when not complete path. Also added protection against 
+starting -d/-s paths with ../. That leads to very unpredictable results. 
+
+Both of these are handled now in Validation.
+
+--------------------------------------------------------------------------------
+ENHANCEMENTS:
+
+
+--------------------------------------------------------------------------------
+CHANGES:
+
+
+--------------------------------------------------------------------------------
+DOCUMENTATION:
+
+1. Man update for -s/-d path syntax for --clean, and -s/-d not using ../.
+
+--------------------------------------------------------------------------------
+CODE:
+
+
+--------------------------------------------------------------------------------
+-- Harald Hope - Mon, 27 Sep 2021 14:22:26 -0700
+
+================================================================================
 Version: 3.5.00
 Patch: 
 Date: 2021-09-24
