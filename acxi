@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.00';
-my $self_date='2021-09-27';
+my $self_date='2021-10-07';
 
 ## GLOBALS ##
 my %run;
@@ -132,6 +132,7 @@ my $CONFIG_DIRECTORY='';
 #### -------------------------------------------------------------------
 my $COMMAND_FLAC = '/usr/bin/flac'; 
 my $COMMAND_FFMPEG = '/usr/bin/ffmpeg';
+my $COMMAND_FFPROBE = '/usr/bin/ffprobe';
 my $COMMAND_LAME = '/usr/bin/lame';
 my $COMMAND_OGG = '/usr/bin/oggenc';
 my $COMMAND_OPUS = '/usr/bin/opusenc';
@@ -375,27 +376,28 @@ sub aggregate {
 {
 package Analyze;
 my ($avg_kbs,$total_size,$total_size_raw,$total_time) = (0,0,0,0);
-my ($flac_info) = ('');
+my ($source_info) = ('');
 my ($type,$ref,@files,@info,%results);
 sub run {
 	($type,$ref) = @_;
 	my $dir = Cwd::getcwd; # resolves sym links
-	# the caller has looped into directory with info file and flacs
+	# the caller has looped into directory with info file and input files
 	if ($type eq 'info'){
-		@files = main::globber('*.flac');
+		@files = main::globber('*.' . $INPUT_TYPE);
 	}
 	# the caller is generating the flac list and passing it in here
 	else {
 		@files = @$ref;
 	}
+	#	print Data::Dumper::Dumper \@files;
 	if (!@files){
-		main::error_handler('analyze',"No flac files found for quality test!\n",1);
+		main::error_handler('analyze',"No $INPUT_TYPE files found for quality test!\n",1);
 	}
 	else {
 		undef(%results);
 		undef(@info);
 		($avg_kbs,$total_size,$total_size_raw,$total_time) = (0,0,0,0);
-		($flac_info) = ('');
+		($source_info) = ('');
 		process();
 		if ($type eq 'info'){
 			return info_data(); # returns updated INFO_FILE page contents array
@@ -406,40 +408,26 @@ sub run {
 	}
 }
 sub process {
-	foreach my $flac_file (@files){
-		# say "Getting metaflac for file: $flac_file";
-		my @real;
-		my $escaped = main::escape_item("$flac_file");
-		my @flac = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps --show-total-samples --show-md5sum "$escaped");
-		if (scalar @flac != 5){
-			main::error_handler('analyze',"Metaflac failed to get 4 items from file:\n '$flac_file'",0);
+	foreach my $source_file (@files){
+		# say "Getting metaflac for file: $source_file";
+		my ($size,$duration,$channels,$sample_rate,$bps,$kbs,$total_samples,$md5sum);
+		my $escaped = main::escape_item("$source_file");
+		# metaflac is MUCH faster than ffprobe. at least 25-30x faster!!
+		if (lc($INPUT_TYPE eq 'flac' && !$run{'ffprobe'})){
+			($size,$duration,$channels,$sample_rate,$bps,$kbs,$md5sum) = process_metaflac($source_file,$escaped);
 		}
-		foreach (@flac){
-			$_ =~ s/[\r\n]//g;
-			push(@real,$_);
+		else {
+			($size,$duration,$channels,$sample_rate,$bps,$kbs,$md5sum) = process_ffprobe($source_file,$escaped);
 		}
-		# say Data::Dumper::Dumper \@flac;
-		if (@real && scalar @real > 3){
-			my $duration = ($real[3]/$real[1]);
-			$total_time += $duration;
-			my @stat = stat($flac_file);
-			# stat returns size in bytes
-			my $size = $stat[7];
-			$total_size += $size;
-			# in kilobits per second, not bytes
-			my $kbs = $size/$duration/1000*8;
-			$kbs = sprintf("%.0f",$kbs);
-			# say "$stat[7] $stat[11] $stat[12]";
-			# say "s: $size kbs: $kbs";
-			# say "duration: $duration seconds";
-			if ($type eq 'data' || !$flac_info){
-				my $flac_data = $real[2] . '/' . sprintf("%.1f", $real[1]/1000);
-				$flac_info = "FLAC: $flac_data";
-				$flac_info .= " ($real[0] channels)";
+		if ($size && $duration){
+			if ($type eq 'data' || !$source_info){
+				my $source_data = $bps . '/' . sprintf("%.1f", $sample_rate/1000);
+				$source_info = uc($INPUT_TYPE) . ": $source_data";
+				$source_info .= " ($channels channels)";
 				if ($type eq 'data'){
-					$flac_data .= '/' . $real[0] . 'ch';
-					if (!grep {$_ eq $flac_data} @info){
-						push(@info,$flac_data);
+					$source_data .= '/' . $channels . 'ch';
+					if (!grep {$_ eq $source_data} @info){
+						push(@info,$source_data);
 					}
 				}
 			}
@@ -452,19 +440,83 @@ sub process {
 					$time_print .= " ($raw_time seconds)"; 
 					$size_print .= " ($raw_size B)";
 				}
-				$results{$flac_file} = [$flac_info,$time_print,$size_print,$kbs_print];
-				if ($VERBOSITY > 1){
-					my $ffp_print = 'ffp: ' . $real[4];
-					splice(@{$results{$flac_file}},1,0,$ffp_print);
+				$results{$source_file} = [$source_info,$time_print,$size_print,$kbs_print];
+				# only metaflac stores the hash
+				if ($VERBOSITY > 1 && lc($INPUT_TYPE) eq 'flac'){
+					$md5sum ||= 'N/A';
+					my $ffp_print = 'ffp: ' . $md5sum;
+					splice(@{$results{$source_file}},1,0,$ffp_print);
 				}
 			}
 		}
 	}
-	# say "Result: $flac_info";
+	# say "Result: $source_info";
 	$avg_kbs = sprintf("%.0f",$total_size*8/$total_time/1000);
 	# back to KiB
 	$total_size_raw = $total_size;
 	$total_size = $total_size/1024;
+}
+
+sub process_ffprobe {
+	my ($source_file,$escaped) = @_;
+	my (%outcome,@source);
+	my ($size,$duration,$channels,$sample_rate,$bps,$kbs,$md5sum) = (0,0,0,0,0,0,'');
+	@source = qx($COMMAND_FFPROBE -v quiet -print_format flat -show_format -show_streams "$escaped");
+	if (scalar @source < 20){
+		main::error_handler('analyze',"Ffprobe failed to get valid results from file:\n '$source_file'",0);
+	}
+	else {
+		foreach (@source){
+			$_ =~ s/[\r\n]|"//g;
+			my @split = split(/\s*=\s*/,$_);
+			$outcome{$split[0]} = $split[1];
+		}
+		# ($size,$duration,$channels,$sample_rate,$bps,$kbs,$md5sum) = 
+		$size = $outcome{'format.size'} if defined $outcome{'format.size'};
+		$total_size += $size;
+		$duration = $outcome{'format.duration'} if defined $outcome{'format.duration'};
+		$total_time += $duration;
+		if (defined $outcome{'streams.stream.0.sample_fmt'}){
+			$outcome{'streams.stream.0.sample_fmt'} =~ s/^s//;
+			$bps = $outcome{'streams.stream.0.sample_fmt'};
+		}
+		$sample_rate = $outcome{'streams.stream.0.sample_rate'} if defined $outcome{'streams.stream.0.sample_rate'};
+		$channels = $outcome{'streams.stream.0.channels'} if defined $outcome{'streams.stream.0.channels'};
+		if (defined $outcome{'format.bit_rate'}){
+			$kbs = $outcome{'format.bit_rate'};
+			$kbs = sprintf("%.0f",$kbs/1000);
+		}
+	}
+	return ($size,$duration,$channels,$sample_rate,$bps,$kbs,$md5sum);
+}
+sub process_metaflac {
+	my ($source_file,$escaped) = @_;
+	my (@real);
+	my ($size,$duration,$kbs) = (0,0,0);
+	my @source = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps --show-total-samples --show-md5sum "$escaped");
+	if (scalar @source != 5){
+		main::error_handler('analyze',"Metaflac failed to get 4 items from file:\n '$source_file'",0);
+	}
+	else {
+		foreach (@source){
+			$_ =~ s/[\r\n]//g;
+			push(@real,$_);
+		}
+		# say Data::Dumper::Dumper \@source;
+		$duration = ($real[3]/$real[1]);
+		$total_time += $duration;
+		my @stat = stat($source_file);
+		# stat returns size in bytes
+		$size = $stat[7];
+		$total_size += $size;
+		# in kilobits per second, not bytes
+		$kbs = $size/$duration/1000*8;
+		$kbs = sprintf("%.0f",$kbs);
+		# say "$stat[7] $stat[11] $stat[12]";
+		# say "s: $size kbs: $kbs";
+		# say "duration: $duration seconds";
+	}
+	return ($size,$duration,$real[0],$real[1],$real[2],$kbs,$real[4]);
 }
 # this will be inserted into $INFO_FILE
 sub info_data {
@@ -474,11 +526,11 @@ sub info_data {
 		$counter++;
 		$b_head = 0 if $b_head && $counter > 1 && /^\s*$/;
 		# put the block under the top band info header block
-		if (!$b_inserted && !$b_head && $flac_info && $counter > 3){
+		if (!$b_inserted && !$b_head && $source_info && $counter > 3){
 			my $quality = "Quality: /$INFO_RATING ()";
 			push(@data,(
 			'',
-			$flac_info,
+			$source_info,
 			$quality,
 			'Time: ' . main::print_time($total_time),
 			'Size: ' . main::print_size($total_size),
@@ -499,12 +551,12 @@ sub generate_output {
 		$time .= " ($total_time seconds)"; 
 		$size .= " ($total_size_raw B)"; 
 	}
-	say '  Generating flac data:';
+	say '  Generating ' . lc($INPUT_TYPE) . ' data:';
 	$time = '  Time: ' . $time;
 	$size = '  Size: ' . $size;
 	$avg_kbs = '  Average kb/s: ' . $avg_kbs;
 	my $track_count = '  Tracks: ' . scalar @files;
-	my $flac_data = '  Info: ' . join(', ',sort @info);
+	my $source_data = '  Info: ' . join(', ',sort @info);
 	foreach my $key (sort keys %results){
 		say "   File: $key:";
 		if ($VERBOSITY > 1){
@@ -514,7 +566,7 @@ sub generate_output {
 			say '    ', join(' ',@{$results{$key}});
 		}
 	}
-	say $flac_data if defined $flac_data;
+	say $source_data if defined $source_data;
 	say $time if defined $time;
 	say $size if defined $size;
 	say $avg_kbs if defined $avg_kbs;
@@ -1139,7 +1191,7 @@ sub process {
 	say $line_large;
 	my $type = 'checksum processing';
 	if ($run{'analyze'}){
-		$type = 'flac analysis';
+		$type = lc($INPUT_TYPE) . ' analysis';
 	}
 	elsif ($run{'duplicates'}){
 		$type = 'ffp duplicate tests';
@@ -1154,7 +1206,7 @@ sub process {
 	say $line_large;
 }
 sub process_directories {
-	my (@files,$item,$result);
+	my ($result);
 	my $qualify = '';
 	if ($run{'no-ffp'}){
 		$qualify .= " (Skipping ffp processing)";
@@ -1169,7 +1221,9 @@ sub process_directories {
 	chdir "$start_dir";
 	File::Find::find(\&main::wanted, @source_glob);
 	say 'start dir: ', $start_dir if $b_debug;
-	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
+	my $file_type = lc($INPUT_TYPE) . ',' . uc($INPUT_TYPE) . ',';
+	$file_type .= ucfirst(lc($INPUT_TYPE)); # flac,FLAC,Flac
+	foreach my $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		my $b_valid;
 		$print_src = $item;
 		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
@@ -1186,7 +1240,7 @@ sub process_directories {
 			system 'pwd';
 		}
 		say " Processing: $print_src";
-		@files = main::globber("*.{flac,FLAC,Flac}");
+		my @files = main::globber("*.{$file_type}");
 		# say "\n", Data::Dumper::Dumper \@files;
 		if (grep -f, @files){
 			if (!$run{'analyze'}){
@@ -2222,18 +2276,19 @@ sub globber {
 sub print_size {
 	my ($size) = $_[0];
 	return 'Error' unless $size;
-	my ($j,$k) = ($VERBOSITY < 2) ? (1,2): (2,3);
+	my ($k,$m,$g) = ($VERBOSITY < 2) ? (0,1,2): (1,2,3);
 	my ($unit);
 	if ($size < 1024){
 		$unit = 'KiB';
+		$size = sprintf("%.${k}f",$size);
 	}
 	elsif ($size < 1024**3) {
 		$unit = 'MiB';
-		$size = sprintf("%.${j}f",$size/1024);
+		$size = sprintf("%.${m}f",$size/1024);
 	}
 	else {
 		$unit = 'GiB';
-		$size = sprintf("%.${k}f",$size/1024**3);
+		$size = sprintf("%.${g}f",$size/1024**3);
 	}
 	return "$size $unit";
 }
@@ -2681,14 +2736,27 @@ sub check_application_paths {
 			}
 		}
 		if ($run{'infofix-quality'} || $run{'analyze'}){
-			if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
-				push(@app_paths,$COMMAND_METAFLAC);
+			if ($run{'ffprobe'} || lc($INPUT_TYPE) ne 'flac'){
+				if (!grep {$_ eq $COMMAND_FFPROBE} @app_paths){
+					push(@app_paths,$COMMAND_FFPROBE);
+				}
+				# Added: Odd @2011-03-23 01:55:28
+				if (! -x "$COMMAND_FFPROBE"){
+					$b_error = 1;
+					$error_message .= "\n $COMMAND_FFPROBE not found. Required for ";
+					$error_message .= "analyzing $INPUT_TYPE files.";
+				}
 			}
-			# Added: Odd @2011-03-23 01:55:28
-			if (! -x "$COMMAND_METAFLAC"){
-				$b_error = 1;
-				$error_message .= "\n $COMMAND_METAFLAC not found. Required for ";
-				$error_message .= "analyzing $INPUT_TYPE files.";
+			else {
+				if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
+					push(@app_paths,$COMMAND_METAFLAC);
+				}
+				# Added: Odd @2011-03-23 01:55:28
+				if (! -x "$COMMAND_METAFLAC"){
+					$b_error = 1;
+					$error_message .= "\n $COMMAND_METAFLAC not found. Required for ";
+					$error_message .= "analyzing $INPUT_TYPE files.";
+				}
 			}
 		}
 		if ($run{'infofix-title'} || $run{'infofix-upper'}){
@@ -2804,24 +2872,33 @@ sub check_in_out_types {
 		eval $print_line_large;
 		print main::dotify("Checking input and output types");
 	}
-	if ($run{'ffmpeg'} && ($INPUT_TYPE !~ /^(flac)$/ || $OUTPUT_TYPE !~ m/^(flac|ogg|opus)$/i)){
+	if ($run{'ffmpeg'} && ($INPUT_TYPE !~ /^(flac)$/ || 
+	 $OUTPUT_TYPE !~ m/^(flac|ogg|opus)$/i)){
 		$b_error = 1;
 		$error_message .= "\n The --ffmpeg input/output type combination you entered is not supported: ";
 		$error_message .= "in: $INPUT_TYPE out: $OUTPUT_TYPE";
 	}
-	if ($INPUT_TYPE !~ m/^(aiff?|flac|mp3|raw|shn|wav)$/i){
+	if ((!$run{'analyze'} && !$run{'infofix-quality'}) && 
+	 $INPUT_TYPE !~ m/^(aiff?|flac|mp3|raw|shn|wav)$/i){
 		$b_error = 1;
 		$error_message .= "\n The input type you entered is not supported: ";
 		$error_message .= "$INPUT_TYPE";
 	}
-	if (($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'} || 
-	 $run{'analyze'} || $run{'info-quality'} || $run{'resample'}) && 
+	if ((!$run{'analyze'} && !$run{'infofix-quality'}) && ($run{'checksum'} || 
+	 $run{'checksum-verify'} || $run{'autotag'} || $run{'resample'}) && 
 	 $INPUT_TYPE !~ m/^(flac)$/i){
 		$b_error = 1;
 		$error_message .= "\n The input type you entered is not supported for ";
-		$error_message .= "\n analyze/checksum/resample/tagging operations: ";
+		$error_message .= "\n checksum/resample/tagging operations: ";
 		$error_message .= "$INPUT_TYPE";
 	}
+# 	if (($run{'analyze'} || $run{'info-quality'}) && 
+# 	 $INPUT_TYPE !~ m/^(flac)$/i){
+# 		$b_error = 1;
+# 		$error_message .= "\n The input type you entered is not supported for ";
+# 		$error_message .= "\n analyzeg operations: ";
+# 		$error_message .= "$INPUT_TYPE";
+# 	}
 	if ($b_check_out){
 		if ($OUTPUT_TYPE !~ m/^(aac|flac|m4a|mp3|ogg|opus)$/i){
 			$b_error = 1;
@@ -3166,10 +3243,10 @@ sub show_options {
 	$output .= "                  (extension): acxi -d ~/music/cdinfo --aggregate jpg\n";
 	$output .= "                  (several): acxi -d ~/music/cdinfo --aggregate png,jpg,info.txt\n";
 	$output .= "--analyze, -Z     Analyze contents of directories, creates screen report per\n";
-	$output .= "                  file/directory. Currently only supports flac. Shows total\n";
-	$output .= "                  time, size, ffp avg kbs, etc. Similar to -Xq but prints to\n";
-	$output .= "                  screen. -v2 adds ffp,changes to 1 key:value pair per line,\n";
-	$output .= "                  -v 3 adds precision.\n";
+	$output .= "                  file/directory. Uses default input type, or -i type. Shows\n";
+	$output .= "                  total time, size, ffp avg kbs, etc. Similar to -Xq but prints\n";
+	$output .= "                  to screen. -v2 adds ffp (flac only), changes to 1 key:value\n";
+	$output .= "                  pair per line. -v 3 adds precision.\n";
 	$output .= "--autotag, -A     Requires auto.tag formatted file in each directory. Flac only.\n";
 	$output .= "                  Deletes all existing tags, then creates a fully tagged set of\n";
 	$output .= "                  files.\n";
@@ -3211,7 +3288,8 @@ sub show_options {
 	$output .= "--dot             Also sync files and directories starting with a '.'. Don't\n";
 	$output .= "                  blame $self_name if this creates unintended consequences!!\n";
 	$output .= "--duplicates, --dupes\n";
-	$output .= "                  Test a directory of many releases for duplicated ffp files.\n";             
+	$output .= "                  Test a directory of many releases for duplicated ffp files.\n";     
+	$output .= "--ffprobe         Force use of ffprobe for FLAC analysis in -Z/-Xq\n";
 	$output .= "--image, -I {jpg,png image file name|remove}\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
@@ -3701,6 +3779,8 @@ sub get_options{
 		$b_force = 1 },
 	'ffmpeg' => sub { 
 		$run{'ffmpeg'} = 1 },
+	'ffprobe' => sub { 
+		$run{'ffprobe'} = 1 },
 	'F|fork:i' => sub { 
 		my ($opt,$arg) = @_;
 		error_handler('missing-arg',"$opt requires fork count integer.",1) if not defined $arg;
@@ -3923,6 +4003,9 @@ sub get_options{
 		my ($opt) = @_;
 		error_handler('unsupported-option', "Unsupported option: $opt",1); }
 	);
+	if ($test{'analyze'} || $run{'infofix-quality'}){
+		$test{'sync'} = 0;
+	}
 	# prevent tagging/checksum operations without explicitly set source
 	if (!$test{'source'} && ($test{'tag'} || $test{'tag-create'} || 
 	$test{'info'} || $test{'aggregate'} || $test{'checksum'})){
@@ -3987,6 +4070,12 @@ sub get_options{
 	if (($test{'duplicates'} || $test{'checksum-ffps'}) && $run{'no-ffp'}){
 		error_handler('invalid-options', 
 		 "You cannot use --no-ffp with --duplicates or --checksum-verify.",1);
+	}
+	if (($test{'analyze'} || $run{'infofix-quality'}) && 
+	 ($test{'checksum-generate'} || $test{'checksum-verify'} || 
+	 $test{'checksum-delete'})){
+		error_handler('invalid-options', 
+		 "You cannot use -Z/-Xq with --checksum or --checksum-verify.",1);
 	}
 	if ($test{'checksum'} && $run{'no-ffp'} && $run{'no-md5'}){
 		error_handler('invalid-options', 

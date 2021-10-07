@@ -10,6 +10,8 @@ RELEASE NOTES:
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
 
+1. -Z -v2 only shows ffp/hash data for metaflac/FLAC sourced data. That's how it 
+is, the data is not preesnt in ffprobe sourced intput file data.
 
 --------------------------------------------------------------------------------
 BUGS:
@@ -27,22 +29,35 @@ starting -d/-s paths with ../. That leads to very unpredictable results.
 
 Both of these are handled now in Validation.
 
+2. In size tool, failed to round KiB values.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
+1. Big upgrade for -Z/-Xq, now accepts all input types. Non FLAC input types use 
+ffprobe. FLAC defaults to using metaflac for data, non FLAC types use ffprobe. 
+Using the --ffprobe option forces FLAC analysis to use ffprobe, which is easily 
+10-30x slower than metaflac, and also doesn't contain the flac ffp md5 hash 
+signatures.
 
 --------------------------------------------------------------------------------
 CHANGES:
 
+1. Validaiton now permits non flac types for -Z/-Xq options.
 
 --------------------------------------------------------------------------------
 DOCUMENTATION:
 
 1. Man update for -s/-d path syntax for --clean, and -s/-d not using ../.
 
+2. Man/help update for expansion of -Z/-Xq input types, and for --ffprobe 
+override option.
+
 --------------------------------------------------------------------------------
 CODE:
 
+1. Refactored package Analyze to support non flac input types, and also to show 
+proper input type being processed.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Mon, 27 Sep 2021 14:22:26 -0700

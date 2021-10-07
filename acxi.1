@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-09\-27" acxi "acxi manual"
+.TH ACXI 1 "2021\-10\-07" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -14,7 +14,7 @@ Checksums: \fBacxi\fR [\fB\-\-analyze\fR, \fB\-Z\fR]
 [\fB\-\-checksum\fR, \fB\-K\fR] [\fB\-\-checksum\-delete\fR, \fB\-D\fR] 
 [\fB\-\-checksum\-ffps\fR, \fB\-\-ffps\fR] 
 [\fB\-\-checksum\-verify\fR, \fB\-V\fR] 
-[\fB\-\-duplicates\fR, \fB\-\-dupes\fR]
+[\fB\-\-duplicates\fR, \fB\-\-dupes\fR] [\fB\-\-ffprobe\fR]
 [\fB\-\-no\-ffp\fR] [\fB\-\-no\-md5\fR]
 .IP * 2
 Syncing: \fBacxi\fR [\fB\-\-append\fR, \fB\-a\fR {extensions}] 
@@ -101,7 +101,10 @@ flac. MP3 encoding does not support wav or raw input formats.
 \fBffmpeg\fR.
 .IP * 2
 \fB\-\-analyze\fR, \fB\-\-duplicates\fR, \fB\-\-ffps\fR, and \fB\-\-infofix q\fR 
-require \fBmetaflac\fR. 
+require \fBmetaflac\fR (with the following exception).
+.IP * 2
+\fB\-\-analyze\fR, \fB\-\-infofix q\fR require \fBffprobe\fR for non \fBflac \fR 
+input types, or if using \fB\-\-ffprobe\fR option with \fBflac\fR.
 .IP * 2
 \fB\-\-autotag\fR, \fB\-\-tag\fR, \fB\-\-image\fR, and \fB\-\-image\-remove\fR 
 require \fBmetaflac\fR for \fBVORBIS\fR tagging.
@@ -165,9 +168,9 @@ Sample 4 (collects multiple values):
 .TP
 .B \-\-analyze\fR, \fB\-Z\fR
 Similar to \fB\-Xq\fR, except creates per file/directory reports with screen 
-output. Shows flac file quality (sample bit size, sampling rate, and channels), 
+output. Shows input tye file quality (sample bit size, sampling rate, and channels), 
 size, duration, kb/s, and also per directory summaries of those values. In 
-directory summary, if more than one flac quality type found in directory, will 
+directory summary, if more than one input file quality type found in directory, will 
 print out each type found, which can be useful to see if different sampling 
 rates or sample bit sizes were used.
 
@@ -178,9 +181,13 @@ To write to a file, use something like this:
 The tee will allow the output to also scroll on screen while it runs, which is
 helpful in many cases. Otherwise just redirect output to file directly.
 
-\fB\-v 2\fR wraps per file data to key: value pair lines, adds ffp signature; 
-\fB\-v 3\fR adds raw non rounded seconds and file size in bytes to all size / 
-time results.
+\fB\-v 2\fR wraps per file data to key: value pair lines, adds ffp signature 
+(flac only); \fB\-v 3\fR adds raw non rounded seconds and file size in bytes to 
+all size / time results.
+
+Note that default for flac is metaflac, unless you use \fB\-\-ffprobe\fR, which 
+does not have hashes. Use metaflac for flac, it's about 25x or more faster than 
+ffprobe!!
 .TP
 .B \-\-append\fR, \fB\-a {extensions}\fR
 Takes one or more comma separated extensions. Do not use whitespaces in this 
@@ -436,6 +443,12 @@ Append an item to the list of excludes or file. Only accepts string values, not
 a file path.
 
 Sample: \fB\-\-exclude\-append='My Sharona^^Dancing Queen'\fR
+
+.TP
+.B \-\-ffprobe\fR
+Force \fB\-\-analyze\fR and \fB\-\-infofix q\fR to use ffprobe instead of 
+metaflac for flac files. Useless!!! Incredibly slow, but just in case you want 
+to confirm the outputs of the two, or something. My tests showed 30x slower.
 
 .TP
 .B \-\-force\fR, \fB\-f\fR

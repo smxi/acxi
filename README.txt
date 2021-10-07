@@ -141,9 +141,10 @@ The --checksum-ffps/--ffps option allows you to generate on screen full listing
 of all recordings in a directory, with file lists, ffp checksums, and track 
 counts per directory.
 
-The --analyze/-Z option creates a per directory report of flac file sizes, times, 
-kbps, then a summary report per directory of hte total size, time, average kbps. 
-This report, as with --dupes, prints to screen, and can be redirected to a file.
+The --analyze/-Z option creates a per directory report of given input type file 
+sizes, times, kbps, then a summary report per directory of hte total size, time, 
+average kbps. This report, as with --dupes, prints to screen, and can be 
+redirected to a file.
 
 --------------------------------------------------------------------------------
 ERROR CORRECTION AND VALIDATION:
@@ -291,6 +292,8 @@ inside each album/collection directory.
 * --analyze, --duplicates, and --ffps require metaflac.
 
 * --image, --remove-images require metaflac.
+
+* --analyze, -Xq if not flac, or flac + --ffprobe, require ffprobe.
   
 * -U self updater requires curl, and valid paths for currently installed acxi 
 and acxi.1 man page. Will not update if both acxi and acxi.1 are not present on 
