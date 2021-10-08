@@ -52,6 +52,9 @@ Used ffmpeg list: https://ffmpeg.org/ffmpeg-resampler.html
 Types: 0; rectangular; triangular; triangular_hp; lipshitz; shibata; 
 low_shibata; high_shibata; f_weighted; modified_e_weighted; improved_e_weighted
 
+3. Added standard override default config file: /etc/acxi.conf.d/acxi.conf
+to list of config files to check. That's in case distros ever package it.
+
 --------------------------------------------------------------------------------
 CHANGES:
 
@@ -74,9 +77,11 @@ CODE:
 proper input type being processed. Changed a few other components for this as
 well, like Checksums, Validation, get_options().
 
-2. Moved get_options into new package OptionsHandler, the verify section was
-getting a bit unwieldy, best to have it be in its own sub. This also aligns
-inxi and acxi in style, which is good.
+2. Moved get_options into new package OptionsHandler, the verify section was 
+getting a bit unwieldy, best to have it be in its own sub. This also aligns inxi 
+and acxi in style, which is good.
+
+3. Sorted configuration items.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Mon, 27 Sep 2021 14:22:26 -0700

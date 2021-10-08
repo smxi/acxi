@@ -3496,22 +3496,24 @@ sub set_display_data {
 package UserConfigs;
 
 sub set {
-	my (@config_files,$file,$user_config);
+	my (@config_files,$file);
 	# set list of supported config files
-	@config_files = ("/etc/$self_name.conf");
+	@config_files = (
+	"/etc/$self_name.conf",
+	"/etc/$self_name.conf.d/$self_name.conf"
+	);
 	if ($ENV{'XDG_CONFIG_HOME'} && -r "$ENV{XDG_CONFIG_HOME}/$self_name.conf"){
-		$user_config = "$ENV{'XDG_CONFIG_HOME'}/$self_name.conf";
+		push(@config_files,"$ENV{'XDG_CONFIG_HOME'}/$self_name.conf");
 	}
 	elsif (-r "$ENV{HOME}/.config/$self_name.conf"){
-		$user_config = "$ENV{HOME}/.config/$self_name.conf";
+		push(@config_files,"$ENV{HOME}/.config/$self_name.conf");
 	}
 	elsif (-r "$ENV{HOME}/.$self_name.conf"){
-		$user_config = "$ENV{HOME}/.$self_name.conf";
+		push(@config_files,"$ENV{HOME}/.$self_name.conf");
 	}
 	elsif (-r "$CONFIG_DIRECTORY/$self_name.conf"){
-		$user_config = "$CONFIG_DIRECTORY/$self_name.conf";
+		push(@config_files,"$CONFIG_DIRECTORY/$self_name.conf");
 	}
-	@config_files = (@config_files,$user_config) if $user_config;
 	foreach $file (@config_files){
 		next unless -r $file && open (my $fh,'<',$file);
 		while (<$fh>){
@@ -3530,39 +3532,27 @@ sub set {
 }
 sub assign_value {
 	my ($var,$value) = @_;
-	if ($var eq 'COMMAND_CURL'){$COMMAND_CURL = $value;}
+	if ($var eq 'CLEAN'){
+		$value = get_boolean($value);
+		if ($value =~ /^[10]$/){
+			$run{'clean'} = $value;
+			$run{'clean-sync'} = $value;
+		}}
+	elsif ($var eq 'CODEC_AAC'){$CODEC_AAC = $value;}
+	elsif ($var eq 'COMMAND_CURL'){$COMMAND_CURL = $value;}
 	elsif ($var eq 'COMMAND_FLAC'){$COMMAND_FLAC = $value;}
 	elsif ($var eq 'COMMAND_FFMPEG'){$COMMAND_FFMPEG = $value;}
 	elsif ($var eq 'COMMAND_LAME'){$COMMAND_LAME = $value;}
 	elsif ($var eq 'COMMAND_METAFAC'){$COMMAND_METAFLAC = $value;}
 	elsif ($var eq 'COMMAND_OGG'){$COMMAND_OGG = $value;}
 	elsif ($var eq 'COMMAND_OPUS'){$COMMAND_OPUS = $value;}
-	elsif ($var eq 'CLEAN'){
-		$value = get_boolean($value);
-		if ($value =~ /^[10]$/){
-			$run{'clean'} = $value;
-			$run{'clean-sync'} = $value;
-		}}
-	elsif ($var eq 'SOURCE_DIRECTORY' || $var eq 'DIR_PREFIX_SOURCE'){
-		$SOURCE_DIRECTORY = $value;}
-	elsif ($var eq 'DESTINATION_DIRECTORY' || $var eq 'DIR_PREFIX_DEST'){
-		$DESTINATION_DIRECTORY = $value;}
-	elsif ($var eq 'MAN_DIRECTORY'){$MAN_DIRECTORY = $value}
-	elsif ($var eq 'SELF_DIRECTORY'){$SELF_DIRECTORY = $value}
-	elsif ($var eq 'INPUT_TYPE'){$INPUT_TYPE = $value;}
-	# LOG_LEVEL is legacy name, leave in always.
-	elsif ($var eq 'LOG_LEVEL' || $var eq 'VERBOSITY'){$VERBOSITY = $value;}
-	elsif ($var eq 'OUTPUT_TYPE'){$OUTPUT_TYPE = $value;}
-	elsif ($var eq 'CODEC_AAC'){$CODEC_AAC = $value;}
-	# legacy configs, sets both
-	elsif ($var eq 'QUALITY'){$QUALITY_OGG = $value;$QUALITY_MP3 = $value}
-	elsif ($var eq 'QUALITY_AAC'){$QUALITY_AAC = $value}
-	elsif ($var eq 'QUALITY_FLAC'){$QUALITY_FLAC = $value}
-	elsif ($var eq 'QUALITY_MP3'){$QUALITY_MP3 = $value}
-	elsif ($var eq 'QUALITY_OGG'){$QUALITY_OGG = $value;}
-	elsif ($var eq 'QUALITY_OPUS'){$QUALITY_OPUS = $value;}
 	elsif ($var eq 'COPY_TYPES' || $var eq 'USER_TYPES'){
 		$COPY_TYPES = $value;}
+	elsif ($var eq 'DESTINATION_DIRECTORY' || $var eq 'DIR_PREFIX_DEST'){
+		$DESTINATION_DIRECTORY = $value;}
+	elsif ($var eq 'EXCLUDE'){$EXCLUDE = $value}
+	elsif ($var eq 'EXCLUDE_BASE'){$EXCLUDE_BASE = $value}
+	elsif ($var eq 'DITHER'){$DITHER = $value}
 	elsif ($var eq 'DONT_USE_NLINK'){$DONT_USE_NLINK = $value}
 	elsif ($var eq 'DOT'){
 		$value = get_boolean($value);
@@ -3571,10 +3561,23 @@ sub assign_value {
 	elsif ($var eq 'FFP_FILE'){$FFP_FILE = $value}
 	elsif ($var eq 'INFO_FILE'){$INFO_FILE = $value}
 	elsif ($var eq 'INFO_RATING'){$INFO_RATING = $value}
+	elsif ($var eq 'INPUT_TYPE'){$INPUT_TYPE = $value;}
+	elsif ($var eq 'MAN_DIRECTORY'){$MAN_DIRECTORY = $value}
 	elsif ($var eq 'MD5_FILE'){$MD5_FILE = $value}
+	elsif ($var eq 'OUTPUT_TYPE'){$OUTPUT_TYPE = $value;}
+	# legacy configs, sets both
+	elsif ($var eq 'QUALITY'){$QUALITY_OGG = $value;$QUALITY_MP3 = $value}
+	elsif ($var eq 'QUALITY_AAC'){$QUALITY_AAC = $value}
+	elsif ($var eq 'QUALITY_FLAC'){$QUALITY_FLAC = $value}
+	elsif ($var eq 'QUALITY_MP3'){$QUALITY_MP3 = $value}
+	elsif ($var eq 'QUALITY_OGG'){$QUALITY_OGG = $value;}
+	elsif ($var eq 'QUALITY_OPUS'){$QUALITY_OPUS = $value;}
+	elsif ($var eq 'SELF_DIRECTORY'){$SELF_DIRECTORY = $value}
+	elsif ($var eq 'SOURCE_DIRECTORY' || $var eq 'DIR_PREFIX_SOURCE'){
+		$SOURCE_DIRECTORY = $value;}
 	elsif ($var eq 'TAG_FILE'){$TAG_FILE = $value}
-	elsif ($var eq 'EXCLUDE'){$EXCLUDE = $value}
-	elsif ($var eq 'EXCLUDE_BASE'){$EXCLUDE_BASE = $value}
+	# LOG_LEVEL is legacy name, leave in always.
+	elsif ($var eq 'VERBOSITY' || $var eq 'LOG_LEVEL'){$VERBOSITY = $value;}
 }
 sub get_boolean {
 	my ($value) = @_;
