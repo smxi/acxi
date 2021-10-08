@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.00';
-my $self_date='2021-10-07';
+my $self_date='2021-10-08';
 
 ## GLOBALS ##
 my %run;
@@ -211,6 +211,16 @@ my $CODEC_AAC = 'libfdk_aac';
 # If you want no copying done, simply change to: $COPY_TYPES = 'none';
 my $COPY_TYPES = 'gif,jpg,jpeg,png,txt';
 
+# Option: --dither - changes default dither type for > 16 bit to 16 bit 
+# resamplings. Only change if you know why. 
+# https://ffmpeg.org/ffmpeg-resampler.html
+# Values: rectangular; triangular; triangular_hp [with high pass];
+# lipshitz [noise shaping]; shibata [noise shaping]; 
+# low_shibata [low noise shaping]; high_shibata [high noise shaping];
+# f_weighted [noise shaping]; modified_e_weighted [noise shaping];
+# improved_e_weighted [noise shaping];
+my $DITHER = 'shibata';
+
 #### -------------------------------------------------------------------
 #### AUTO TAGGING
 #### -------------------------------------------------------------------
@@ -284,7 +294,7 @@ my $SELF_DIRECTORY='/usr/local/bin';
 
 sub main {
 	UserConfigs::set();
-	get_options();
+	OptionsHandler::get();
 	set_display_data();
 	SelfUpdater::update() if $run{'update'};
 	Validation::run();
@@ -2034,8 +2044,8 @@ sub copy_file {
 	}
 	eval $print_line_small;
 	if ($VERBOSITY > 1){
-		say "COPY: $src_print ==> ";
-		say "      $dest_print"; 
+		say "COPY: $src_print";
+		say " ==> $dest_print"; 
 	}
 	elsif ($VERBOSITY > 0){
 		print "\nCopying $src_print...";
@@ -2050,10 +2060,12 @@ sub copy_file {
 sub convert_file { 
 	my ($src_file, $dest_file) = @_;
 	my ($src_print,$dest_print) = ($src_file,$dest_file);
-	my ($result,$cmd,$action) = (1000,'','unset'); 
+	my ($result,$cmd,$action,$type) = (1000,'','unset',$OUTPUT_TYPE); 
 	my ($encoding,$encoded) = ('Encoding','Encoded');
 	if ($run{'resample'}){
 		($encoding,$encoded) = ('Resampling','Resampled');
+		my $rate = sprintf("%0.1f",$run{'resample'}->[1]/1000) + 0;
+		$type = $run{'resample'}->[0] . ':' . $rate;
 	}
 	# escape characters for conversion processing
 	$src_file = main::escape_item("$src_file");
@@ -2073,12 +2085,12 @@ sub convert_file {
 	if (!$b_fork){
 		eval $print_line_small;
 		if ($VERBOSITY > 1){
-			say uc($encoding) . ": $src_print ==> ";
-			say "        $dest_print"; 
+			say uc($encoding) . ": $src_print";
+			say " ==> $dest_print"; 
 		}
 		elsif ($VERBOSITY > 0){
 			# add line break only when file exists
-			print main::dotify("\n$encoding $src_print to $OUTPUT_TYPE");
+			print main::dotify("\n$encoding $src_print to $type");
 		}
 	}
 	if ($OUTPUT_TYPE eq 'aac' || $OUTPUT_TYPE eq 'm4a'){
@@ -2103,6 +2115,11 @@ sub convert_file {
 		}
 		elsif ($run{'resample'}){
 			$sample_data = '-sample_fmt s' . $run{'resample'}->[0] . ' -ar ' . $run{'resample'}->[1];
+			# note: 0, none, is default
+			if ($run{'resample'}->[0] < 24 && $DITHER){
+				$action .= ":$DITHER";
+				$sample_data .= " -dither_method $DITHER";
+			}
 		}
 		$cmd = qq($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" -compression_level $quality $sample_data "$dest_file");
 		if (!$b_test){
@@ -2147,13 +2164,13 @@ sub convert_file {
 	if ($b_fork){
 		eval $print_line_small;
 		if ($VERBOSITY > 1){
-			say uc($encoded) . ": $src_print ==> ";
-			say "        $dest_print"; 
+			say uc($encoded) . ": $src_print";
+			say " ==> $dest_print"; 
 			say "$action result: $result";
 		}
 		elsif ($VERBOSITY > 0){
 			# add line break only when file exists
-			print main::dotify("\n$encoded $src_print to $OUTPUT_TYPE");
+			print main::dotify("\n$encoded $src_print to $type");
 		}
 	}
 	# this return only works with non forking
@@ -3014,6 +3031,9 @@ sub check_quality{
 # check only runs if $run{'resample'} loaded
 sub check_resample {
 	my ($b_error,$error_message) = (0,'');
+	my $dithers = '0|rectangular|triangular|triangular_hp|lipshitz|shibata|';
+	$dithers .= 'low_shibata|high_shibata|f_weighted|modified_e_weighted|d'; 
+	$dithers .= 'improved_e_weighte';
 	if ($VERBOSITY > 0){
 		eval $print_line_large;
 		print main::dotify("Checking resample values");
@@ -3022,7 +3042,7 @@ sub check_resample {
 		if ($run{'resample'}->[0] !~ /(16|20|24)/ || 
 		 $run{'resample'}->[1] !~ /(44\.1|48|88\.2|96|192)/){
 			$b_error = 1;
-			$error_message = 'Invalid resample values. Supported bit depths: 16/20/24; ';
+			$error_message = 'Invalid resample values. Supported bit depths: 16/20/24;';
 			$error_message .= "\n sample rates: 44.1/48/88.2/96/192";
 		}
 	}
@@ -3033,6 +3053,12 @@ sub check_resample {
 			$error_message = 'Invalid resample values. Supported bit depths: 4-32; ';
 			$error_message .= "\n sample rates: 1-655khz";
 		}
+	}
+	# only apply dither when bit depth < 24
+	if ($run{'resample'}->[0] < 24 && $DITHER !~ /^($dithers)$/) {
+		$b_error = 1;
+		$error_message .= "\n" if $error_message;
+		$error_message = 'Invalid dither type. See --help or man for supported types;';
 	}
 	if ($b_error){
 		main::error_handler('bad-resample',$error_message,0);
@@ -3194,6 +3220,10 @@ sub show_options {
 	$output .= "--destination, -d Path to the directory where you want the processed\n";
 	$output .= "                  (eg, ogg) files to go.\n";
 	$output .= "                  Current value: $DESTINATION_DIRECTORY\n";
+	$output .= "--dither          Alternate dither type for resampling. Possible values:\n";
+	$output .= "                  [0|rectangular|triangular|triangular_hp|lipshitz|shibata|\n";
+	$output .= "                  low_shibata|high_shibata|f_weighted|modified_e_weighted|’\n";
+	$output .= "                  improved_e_weighted]. Current: $DITHER\n";
 	$output .= "--exclude, -x     Exclude a list of unique strings separated by ^^. Excludes\n";
 	$output .= "                  sync/copy action to destination directory. Replaces\n";
 	$output .= "                  \$EXCLUDE values if present. Anything matching in file path\n";
@@ -3557,12 +3587,14 @@ sub get_boolean {
 
 # Get Options and set values, this overrides defaults 
 # from top globals and config files
-sub get_options{
-	my (@args) = @_;
-	my (%test,$msg);
+# OptionsHandler
+{
+package OptionsHandler;
+my (%test,$msg);
+sub get{
 	# single letters used:
 	# aAcCdDEfFgGhiIKMoPqRsSTUvVxXyZ
-	GetOptions (
+	Getopt::Long::GetOptions (
 	'G|aggregate:s' => sub { 
 		my ($opt,$arg) = @_;
 		if ($arg){
@@ -3631,7 +3663,7 @@ sub get_options{
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /%|@/){
 			$msg = "$opt requires multidisk file name identifier. See -h.";
-			error_handler('missing-arg',$msg,1);
+			main::error_handler('missing-arg',$msg,1);
 		}
 		$autotag_multi = $arg;
 		$run{'autotag-create'} = 1;
@@ -3730,7 +3762,7 @@ sub get_options{
 		},
 	'codec:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires codec.",1) if !$arg;
+		main::error_handler('missing-arg',"$opt requires codec.",1) if !$arg;
 		$codec = $arg;
 		$test{'sync'} = 1;
 		},
@@ -3744,10 +3776,14 @@ sub get_options{
 		$b_debug = 1;},
 	'd|destination:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires path.",1) if !$arg;
+		main::error_handler('missing-arg',"$opt requires path.",1) if !$arg;
 		$DESTINATION_DIRECTORY = $arg;
 		$test{'destination'} = 1;
 		},
+	'dither:s' => sub { 
+		my ($opt,$arg) = @_;
+		main::error_handler('missing-arg',"$opt requires value.",1) if !defined $arg;
+		$DITHER = $arg;},
 	'dot' => sub { 
 		$run{'dot'} = 1;},
 	'dupes|duplicates' => sub { 
@@ -3766,14 +3802,14 @@ sub get_options{
 		$OUTPUT_TYPE = 'UNSET';},
 	'x|exclude:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires exclude list or file.",1) if !$arg;
+		main::error_handler('missing-arg',"$opt requires exclude list or file.",1) if !$arg;
 		$arg = '' if uc($arg) eq 'UNSET';
 		$EXCLUDE = $arg;
 		$test{'sync'} = 1;
 		},
 	'y|exclude-append:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires exclude list.",1) if !$arg;
+		main::error_handler('missing-arg',"$opt requires exclude list.",1) if !$arg;
 		$exclude_append = $arg },
 	'f|force' => sub { 
 		$b_force = 1 },
@@ -3783,7 +3819,7 @@ sub get_options{
 		$run{'ffprobe'} = 1 },
 	'F|fork:i' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires fork count integer.",1) if not defined $arg;
+		main::error_handler('missing-arg',"$opt requires fork count integer.",1) if not defined $arg;
 		$FORK = $arg;
 		$test{'sync'} = 1;
 		},
@@ -3791,12 +3827,12 @@ sub get_options{
 	'full' => sub { 
 		$VERBOSITY = 3 },
 	'h|help|?' => sub { 
-		show_options();},
+		main::show_options();},
 	'I|image:s' => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /(\.png|\.jpe?g|^remove)$/i){
 			$msg = "$opt requires a cover image file name. See -h.";
-			error_handler('missing-arg',$msg,1);
+			main::error_handler('missing-arg',$msg,1);
 		}
 		$embed_image = $arg;
 		$run{'remove-images'} = 1 if $embed_image eq 'remove';
@@ -3827,7 +3863,7 @@ sub get_options{
 			}
 			else {
 				$msg = "For $opt use no arguments, or d n u t w. See -h.";
-				error_handler('missing-arg',$msg,1);
+				main::error_handler('missing-arg',$msg,1);
 			}
 		}
 		$run{'autotag'} = 0;
@@ -3846,14 +3882,14 @@ sub get_options{
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg < 2){
 			$msg = "$opt requires rating integer > 1. See -h.";
-			error_handler('missing-arg',$msg,1);
+			main::error_handler('missing-arg',$msg,1);
 		}
 		$INFO_RATING = $arg;
 		$test{'info-rating'} = 1;
 	},
 	'i|input:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires type.",1) if !$arg;
+		main::error_handler('missing-arg',"$opt requires type.",1) if !$arg;
 		$test{'input'} = 1;
 		$INPUT_TYPE = $arg;
 		$test{'sync'} = 1;
@@ -3872,7 +3908,7 @@ sub get_options{
 		$run{'no-replaygain'} = 1 },
 	'o|output:s' => sub {
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires type.",1) if !$arg;
+		main::error_handler('missing-arg',"$opt requires type.",1) if !$arg;
 		$test{'output'} = 1;
 		$OUTPUT_TYPE = $arg;
 		$test{'sync'} = 1;
@@ -3889,7 +3925,7 @@ sub get_options{
 		},
 	'prefill-file:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires file name.",1) if !$arg;
+		main::error_handler('missing-arg',"$opt requires file name.",1) if !$arg;
 		$INFO_FILE = $arg;
 		$test{'info'} = 1;
 		$test{'prefill'} = 1;
@@ -3897,7 +3933,7 @@ sub get_options{
 	'q|quality:f' => sub { 
 		my ($opt,$arg) = @_;
 		if (!defined $arg || $arg !~ /^-?[0-9\.]+$/){
-			error_handler('missing-arg',"$opt requires number.",1);
+			main::error_handler('missing-arg',"$opt requires number.",1);
 		}
 		# validate these later
 		$QUALITY_AAC = $arg;
@@ -3914,7 +3950,7 @@ sub get_options{
 		my ($opt,$arg) = @_;
 		if (!defined $arg){
 			$msg = "$opt requires directory recursion level value. See -h.";
-			error_handler('missing-arg',$msg,1);
+			main::error_handler('missing-arg',$msg,1);
 		}
 		$recurse = $arg},
 	'R|remove-images' => sub { 
@@ -3931,7 +3967,7 @@ sub get_options{
 			$run{'resample'} = [$1,$2];
 		}
 		else {
-			error_handler('missing-arg',"Incorrect syntax for $opt: bits:khz, see -h or man.",1);
+			main::error_handler('missing-arg',"Incorrect syntax for $opt: bits:khz, see -h or man.",1);
 		}
 		$test{'resample'} = 1;
 		},
@@ -3939,13 +3975,13 @@ sub get_options{
 		$run{'resample-override'} = 1; },
 	's|source:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires path.",1) if !$arg;
+		main::error_handler('missing-arg',"$opt requires path.",1) if !$arg;
 		$SOURCE_DIRECTORY = $arg;
 		$test{'source'} = 1;
 		},
 	'g|source-glob:s' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt requires path.",1) if !$arg;
+		main::error_handler('missing-arg',"$opt requires path.",1) if !$arg;
 		$run{'source-glob'} = $arg;
 		$test{'source-glob'} = 1;
 		},
@@ -3953,7 +3989,7 @@ sub get_options{
 		my ($opt,$arg) = @_;
 		if (!defined $arg || $start < 0){
 			$msg = "$opt requires track number start value. See -h.";
-			error_handler('missing-arg',$msg,1);
+			main::error_handler('missing-arg',$msg,1);
 		}
 		$start = $arg;
 		$test{'tag-create'} = 1;
@@ -3962,7 +3998,7 @@ sub get_options{
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /%:/){
 			$msg = "$opt requires TAG%:value sets. See -h.";
-			error_handler('missing-arg',$msg,1);
+			main::error_handler('missing-arg',$msg,1);
 		}
 		@tags = split /\Q^^\E/, $arg;
 		$run{'update-tag'} = 1;
@@ -3995,92 +4031,97 @@ sub get_options{
 		$VERBOSITY = 2 },
 	'v|verbosity|log:i' => sub { 
 		my ($opt,$arg) = @_;
-		error_handler('missing-arg',"$opt verbosity integer.",1) if not defined $arg;
+		main::error_handler('missing-arg',"$opt verbosity integer.",1) if not defined $arg;
 		$VERBOSITY = $arg; },
 	'version' => sub { 
-		show_version(); },
+		main::show_version(); },
 	'<>' => sub {
 		my ($opt) = @_;
-		error_handler('unsupported-option', "Unsupported option: $opt",1); }
+		main::error_handler('unsupported-option', "Unsupported option: $opt",1); }
 	);
+	verify_selections();
+}
+sub verify_selections {
 	if ($test{'analyze'} || $run{'infofix-quality'}){
 		$test{'sync'} = 0;
 	}
 	# prevent tagging/checksum operations without explicitly set source
 	if (!$test{'source'} && ($test{'tag'} || $test{'tag-create'} || 
 	$test{'info'} || $test{'aggregate'} || $test{'checksum'})){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "Explicit --source is required for all tagging/checksum options.",1);
 	}
 	# prevent running any tagging options with syncing options
 	if (($test{'clean'} || $test{'sync'}) && ($test{'tag'} || $test{'tag-create'} || 
 	$test{'info'} || $test{'checksum'})){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "Tagging/checksum options cannot be used with clean/sync options.",1);
 	}
 	if ($test{'infofix'} && ($test{'prefill'} && $test{'tag-create'})){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "Info Fix cannot be combined with any other option except --source.",1);
 	}
 	if ($test{'info-rating'} && !$test{'infofix'}){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "--info-rating can only be used with --infofix.",1);
 	}
 	if ($test{'source-glob'} && !$test{'source'}){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "--source-glob/-g must be used with --source/-s.",1);
 	}
 	if ($test{'source-glob'} && ($test{'clean'} || $test{'prefill'})){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "--source-glob/-g cannot be used with --clean/--prefill.",1);
 	}
 	# prefill options require tag-create options
 	if ($test{'prefill'} && !$test{'tag-create'}){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "Prefill requires either --autotag-create-multi or --autotag-create-single.",1);
 	}
 	# aggregate requires destination and cannot be used with any other action
 	if ($test{'aggregate'} && (!$test{'destination'} || ($test{'sync'} || 
 	$test{'tag'} || $test{'tag-create'} || $test{'info'} || $test{'checksum'}))){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "Aggregate requires destination and cannot be combined with any other actions.",1);
 	}
 	# checksum can only be run with tagging/image, like -AD -AK
 	if ($test{'checksum'} && ($test{'sync'} || $run{'test'} || $test{'tag-create'} || 
 	$test{'info'})){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "Checksum options cannot be used with clean/sync/image/auto.tag-create options.",1);
 	}
 	# tagging can only be used with checksum or other tagging options like -I, -R
 	if ($test{'tag'} && ($test{'sync'} || $test{'clean'} || $test{'tag-create'})){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "Tagging cannot be used with tag-create/aggregate/clean/sync options.",1);
 	}
 	# creating auto.tag cannot be combined with sync, checksum, or tagging
 	if ($test{'tag-create'} && ($test{'sync'} || $test{'clean'} || $test{'checksum'} || 
 	$test{'tag'})){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "autotag-create cannot be used with tagging/image/clean/sync/checksum options.",1);
 	}
 	# try to protect against ffmpeg being used with any non sync option
 	if (!$test{'sync'} && $run{'ffmpeg'}){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "You can only use --ffmpeg with sync operations.",1);
 	}
 	if (($test{'duplicates'} || $test{'checksum-ffps'}) && $run{'no-ffp'}){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "You cannot use --no-ffp with --duplicates or --checksum-verify.",1);
 	}
 	if (($test{'analyze'} || $run{'infofix-quality'}) && 
 	 ($test{'checksum-generate'} || $test{'checksum-verify'} || 
 	 $test{'checksum-delete'})){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "You cannot use -Z/-Xq with --checksum or --checksum-verify.",1);
 	}
 	if ($test{'checksum'} && $run{'no-ffp'} && $run{'no-md5'}){
-		error_handler('invalid-options', 
+		main::error_handler('invalid-options', 
 		 "You cannot use both --no-ffp and --no-md5 with checksum options.",1);
 	}
+}
+# End OptionsHandler
 }
 
 #########################################################################

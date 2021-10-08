@@ -6,12 +6,15 @@ Date: 2021-??-??
 RELEASE NOTES:
 --------------------------------------------------------------------------------
 
+Bug fix for --clean, completed some options that were started but were slightly
+incomplete, like -Z now supports all input types, and --resample now applies
+a decent default Shibata dithering when resampling down to 16 bit.
 
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
 
 1. -Z -v2 only shows ffp/hash data for metaflac/FLAC sourced data. That's how it 
-is, the data is not preesnt in ffprobe sourced intput file data.
+is, the data is not present in ffprobe sourced intput file data.
 
 --------------------------------------------------------------------------------
 BUGS:
@@ -35,15 +38,26 @@ Both of these are handled now in Validation.
 ENHANCEMENTS:
 
 1. Big upgrade for -Z/-Xq, now accepts all input types. Non FLAC input types use 
-ffprobe. FLAC defaults to using metaflac for data, non FLAC types use ffprobe. 
-Using the --ffprobe option forces FLAC analysis to use ffprobe, which is easily 
-10-30x slower than metaflac, and also doesn't contain the flac ffp md5 hash 
-signatures.
+ffprobe. FLAC defaults to using metaflac for data. Using the --ffprobe option 
+forces FLAC analysis to use ffprobe, which is easily 10-30x slower than 
+metaflac, and also doesn't contain the flac ffp md5 hash signatures.
+
+2. Added default dither type if resampling to < 24 bit depth of Shibata. Added 
+configuration and --dither item to allow users to change dither type. For 
+--resample only. Default type is shibata, which puts noise at higher 
+frequencies. Note that ffmpeg did not apply dithering by default.
+
+Used ffmpeg list: https://ffmpeg.org/ffmpeg-resampler.html
+
+Types: 0; rectangular; triangular; triangular_hp; lipshitz; shibata; 
+low_shibata; high_shibata; f_weighted; modified_e_weighted; improved_e_weighted
 
 --------------------------------------------------------------------------------
 CHANGES:
 
-1. Validaiton now permits non flac types for -Z/-Xq options.
+1. Validation now permits non flac input types for -Z/-Xq options.
+
+2. For -v2 cleaned up syncing output a bit. Added resample info for -v2 as well.
 
 --------------------------------------------------------------------------------
 DOCUMENTATION:
@@ -57,7 +71,12 @@ override option.
 CODE:
 
 1. Refactored package Analyze to support non flac input types, and also to show 
-proper input type being processed.
+proper input type being processed. Changed a few other components for this as
+well, like Checksums, Validation, get_options().
+
+2. Moved get_options into new package OptionsHandler, the verify section was
+getting a bit unwieldy, best to have it be in its own sub. This also aligns
+inxi and acxi in style, which is good.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Mon, 27 Sep 2021 14:22:26 -0700
@@ -115,9 +134,9 @@ levels you want.
 2. --debug no longer alters $VERBOSITY levels, it just sets a $b_debug flag. 
 This disconnects --test, --debug, and -v actions completely.
 
-3. Changed line starter for -X from 'Fix: ' to '|: ', and for -Xw, ' ' to '| '. 
+3. Changed line starter for -X from 'Fix: ' to '; : ', and for -Xw, ' ' to ';  '. 
 That looks a lot cleaner, and creates a nice box effect around the info file 
-output block. The '|: ' and '| ' also make it more clear when the action was 
+output block. The '; : ' and ';  ' also make it more clear when the action was 
 written and when not, without being visually messy.
 
 --------------------------------------------------------------------------------
@@ -269,7 +288,7 @@ standard, you end up messing up the samples because almost all of them have to
 be synthesized, but if you use a sample rate that evenly divides with the start, 
 no dithering or other undesirable results will occur, generally speaking.
 
---resample supports 16|20|24 bit and 44.1|48|88.2|96|192 defaults, which are in 
+--resample supports 16; 20; 24 bit and 44.1; 48; 88.2; 96; 192 defaults, which are in 
 general the only ones you'd ever want to use. Syntax sample: 
 
 --resample 16:48

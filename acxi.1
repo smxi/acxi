@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-10\-07" acxi "acxi manual"
+.TH ACXI 1 "2021\-10\-08" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -19,8 +19,8 @@ Checksums: \fBacxi\fR [\fB\-\-analyze\fR, \fB\-Z\fR]
 .IP * 2
 Syncing: \fBacxi\fR [\fB\-\-append\fR, \fB\-a\fR {extensions}] 
 [\fB\-\-clean\fR] [\fB\-\-codec\fR {aac|libfdk_aac2}] 
-[\fB\-\-copy\fR, \fB\-c\fR {extensions}] [\fB\-\-dot\fR] 
-[\fB\-\-exclude\fR, \fB\-x\fR {filename|extension}] 
+[\fB\-\-copy\fR, \fB\-c\fR {extensions}] [\fB\-\-dither\fR {dither\-type}]
+[\fB\-\-dot\fR] [\fB\-\-exclude\fR, \fB\-x\fR {filename|extension}] 
 [\fB\-\-exclude\-append\fR, \fB\-y\fR {filename|extension}] 
 [\fB\-\-force\fR, \fB\-f\fR] [\fB\-\-fork\fR, \fB\-F\fR {0-xx}]
 [\fB\-\-input\fR, \fB\-i\fR {flac|raw|shn|wave}] 
@@ -393,6 +393,30 @@ a developer or something like that.
 .B \-\-destination, \fB\-d {path}\fR
 Full path to the directory where you want the processed lossy (eg, ogg) files to 
 go. Cannot start with \fB../\fR.
+
+.TP
+.B \-\-dither {dither-type}\fR
+Use with --resample and if you want to use a different dither type than default shebata. 
+Possible values:
+.nf
+\fB0\fR \- no dither
+\fBrectangular\fR \- rectangular dither
+\fBtriangular\fR \- rectangular dither
+\fBtriangular_hp\fR \- triangular dither with high pass 
+\fBlipshitz\fR \- Lipshitz noise shaping dither
+\fBshibata\fR \- Shibata noise shaping dither (default value)
+\fBlow_shibata\fR \- low Shibata noise shaping dither
+\fBhigh_shibata\fR \-  high Shibata noise shaping dither
+\fBf_weighted\fR \- f-weighted noise shaping dither
+\fBmodified_e_weighted\fR \- modified-e-weighted noise shaping dither
+\fBimproved_e_weighted\fR \- improved-e-weighted noise shaping dither
+.fi
+
+Read more on these dither types here: 
+\fIhttps://ffmpeg.org/ffmpeg-resampler.html\fR
+
+Dithering is only applied if being resampled to sample depth of less than 24 
+bit.
 
 .TP
 .B \-\-dot\fR
@@ -954,6 +978,9 @@ The following set your system path for the required applications:
 \fBCOMMAND_FFMPEG\fR \- Sample: \fBCOMMAND_FFMPEG=/usr/bin/ffmpeg\fR (default 
 path)
 
+\fBCOMMAND_FFPROBE\fR \- Sample: \fBCOMMAND_FFPROBE=/usr/bin/ffprobe\fR (default 
+path)
+
 \fBCOMMAND_FLAC\fR \- Sample: \fBCOMMAND_FLAC=/usr/bin/flac\fR (default path)
 
 \fBCOMMAND_LAME\fR \- Sample: \fBCOMMAND_LAME=/usr/bin/lame\fR (default path)
@@ -1016,6 +1043,8 @@ Changing quality levels will not redo existing files.
 \fBCOPY_TYPES\fR \- Sample: \fBCOPY_TYPES=doc,docx,bmp,jpg,jpeg\fR Use this to 
 override the default file types acxi will sync. Set to 'none', if you only want 
 to sync the music files, not copy over images, text files, etc.
+
+\fBDITHER\fR \- see \fB\-\-dither\fR for supported values and use.
 
 \fBINPUT_TYPE\fR \- Sample: \fBINPUT_TYPE=flac\fR 
 
