@@ -934,11 +934,13 @@ acxi will read its configuration/initialization files in the following order.
 
 .TP
 .B STANDARD DETECTION
-\fB/etc/acxi.conf\fR contains the default configurations. These can be 
-overridden by user configurations found in one of the following locations, in 
-this order of priority: \fB$XDG_CONFIG_HOME/acxi.conf\fR, 
-\fB$HOME/.conf/acxi.conf\fR, and, as last default, \fB$HOME/.acxi.conf\fR, 
-i.e.:
+\fB/etc/acxi.conf\fR contains the default configurations. Also checks 
+\fB/etc/acxi.conf.d/acxi.conf\fR as global override for \fB/etc/acxi.conf\fR  
+config file. Useful in cases if distros ever package acxi.
+
+These can be overridden by user configurations found in one of the following 
+locations, in this order of priority: \fB$XDG_CONFIG_HOME/acxi.conf\fR, 
+\fB$HOME/.conf/acxi.conf\fR, and, as last default, \fB$HOME/.acxi.conf\fR, i.e.:
 
 \fB$XDG_CONFIG_HOME/acxi.conf\fR > \fB$HOME/.conf/acxi.conf\fR >
 \fB$HOME/.acxi.conf\fR

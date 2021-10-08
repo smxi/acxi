@@ -281,8 +281,12 @@ does not support wav or raw formats).
   
 * SHN -> FLAC conversion requires the codec 'shorten' and ffmpeg.
 
+* FLAC -> FLAC (including --resample) requires ffmpeg.
+
 * --autotag requires metaflac plus a specially formatted auto.tag file placed 
 inside each album/collection directory.
+
+* --image, --remove-images require metaflac.
 
 * --checksum/--checksum-delete checksum generation require metaflac and md5sum 
 (or a comparable md5 generating command line utility).
@@ -291,9 +295,7 @@ inside each album/collection directory.
 
 * --analyze, --duplicates, and --ffps require metaflac.
 
-* --image, --remove-images require metaflac.
-
-* --analyze, -Xq if not flac, or flac + --ffprobe, require ffprobe.
+* --analyze, -Xq if input type not flac, or flac + --ffprobe, require ffprobe.
   
 * -U self updater requires curl, and valid paths for currently installed acxi 
 and acxi.1 man page. Will not update if both acxi and acxi.1 are not present on 
