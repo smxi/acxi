@@ -44,8 +44,10 @@ metaflac, and also doesn't contain the flac ffp md5 hash signatures.
 
 2. Added default dither type if resampling to < 24 bit depth of Shibata. Added 
 configuration and --dither item to allow users to change dither type. For 
---resample only. Default type is shibata, which puts noise at higher 
-frequencies. Note that ffmpeg did not apply dithering by default.
+--resample only. 
+
+Default type is shibata, which puts noise at higher frequencies. Note that 
+ffmpeg does not apply dithering by default.
 
 Used ffmpeg list: https://ffmpeg.org/ffmpeg-resampler.html
 
