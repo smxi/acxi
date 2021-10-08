@@ -272,6 +272,8 @@ acxi fully platform agnostic.
 (best, Debian/Ubuntu package libfdk-aac2). If you want to preserve tags, use 
 m4a, if you use aac they will not transfer.
 
+* FLAC -> FLAC (including --resample) requires ffmpeg.
+
 * MP3 encoding requires: lame and flac (if source file is a flac, MP3 encoding 
 does not support wav or raw formats).
   
@@ -280,8 +282,6 @@ does not support wav or raw formats).
 * Opus encoding requires opusenc (Debian/Ubuntu package: opus-tools).
   
 * SHN -> FLAC conversion requires the codec 'shorten' and ffmpeg.
-
-* FLAC -> FLAC (including --resample) requires ffmpeg.
 
 * --autotag requires metaflac plus a specially formatted auto.tag file placed 
 inside each album/collection directory.
