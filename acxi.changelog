@@ -10,6 +10,13 @@ RELEASE NOTES:
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
 
+1. -Z is slightly awkward to use because it only handles one input type at a 
+time, for example, if you had a directory filled with m4a, mp3, and aac files, 
+you'd have to run -Z once per type to get the full report. That may be not be 
+resolvable because adding > 1 input type lists would create issues in the 
+validation that would be a headache to resolve, but it might be something that 
+can be worked around. It does handle various syntaxes, like .FLAC, .Flac, and 
+.flac, but that's as far as it goes.
 
 --------------------------------------------------------------------------------
 BUGS:
@@ -22,15 +29,16 @@ FIXES:
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
-1. For -Z, -v 0 turns off per file report, and only shows summary per directory.
+1. For -Z, -v 0 turns off the per file reports, and only shows the summary per 
+directory. This is useful to just gain a quick overview of what you have in a 
+collection.
 
 2. For --resample, now shows bit depth:sample rate for each start file, and the
 target resample rate, like: ....file.flac 24:96 to 16:48
 
 This can be useful to avoid errors and unexpected results, for example, if you 
 failed to run -Z analyze on resample source, you'd still see you maybe made a 
-mistake on the rate. This leverages the refactor in 3.5.01 of the resample 
-logic.
+mistake on the rate. 
 
 --------------------------------------------------------------------------------
 CHANGES:
@@ -45,6 +53,11 @@ source file sample rate data.
 --------------------------------------------------------------------------------
 CODE:
 
+1. The ease of implementing the new --resample output option is a direct result 
+of the refactor of the -Z analyze feature, by splitting out the metaflac data 
+logic into its own function, that then became available to call to from other 
+parts of acxi, which it wasn't before the refactor. I've never seen a case where 
+a good refactor didn't open the door to more functionality.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Sat, 09 Oct 2021 14:59:35 -0700
