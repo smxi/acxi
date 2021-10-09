@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.01';
-my $self_date='2021-10-08';
+my $self_date='2021-10-09';
 
 ## GLOBALS ##
 my %run;
@@ -567,13 +567,15 @@ sub generate_output {
 	$avg_kbs = '  Average kb/s: ' . $avg_kbs;
 	my $track_count = '  Tracks: ' . scalar @files;
 	my $source_data = '  Info: ' . join(', ',sort @info);
-	foreach my $key (sort keys %results){
-		say "   File: $key:";
-		if ($VERBOSITY > 1){
-			say '    ', join("\n    ",@{$results{$key}});
-		}
-		else {
-			say '    ', join(' ',@{$results{$key}});
+	if ($VERBOSITY > 0){
+		foreach my $key (sort keys %results){
+			say "   File: $key:";
+			if ($VERBOSITY > 1){
+				say '    ', join("\n    ",@{$results{$key}});
+			}
+			else {
+				say '    ', join(' ',@{$results{$key}});
+			}
 		}
 	}
 	say $source_data if defined $source_data;
@@ -3275,8 +3277,9 @@ sub show_options {
 	$output .= "--analyze, -Z     Analyze contents of directories, creates screen report per\n";
 	$output .= "                  file/directory. Uses default input type, or -i type. Shows\n";
 	$output .= "                  total time, size, ffp avg kbs, etc. Similar to -Xq but prints\n";
-	$output .= "                  to screen. -v2 adds ffp (flac only), changes to 1 key:value\n";
-	$output .= "                  pair per line. -v 3 adds precision.\n";
+	$output .= "                  to screen. -v0 shows only per directory summary data;\n";
+	$output .= "                  -v2 adds ffp (flac only), changes to 1 key:value pair per line;\n";
+	$output .= "                  -v 3 adds precision.\n";
 	$output .= "--autotag, -A     Requires auto.tag formatted file in each directory. Flac only.\n";
 	$output .= "                  Deletes all existing tags, then creates a fully tagged set of\n";
 	$output .= "                  files.\n";
