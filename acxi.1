@@ -86,7 +86,8 @@ acxi fully platform agnostic.
 (Debian/Ubuntu package: \fBlibfdk_aac2\fR) or native \fBffmpeg aac\fR codec. 
 Source file must be flac. To transfer tags, \fBm4a\fR must be used.
 .IP * 2
-\fBFLAC\fR resampling requires \fBffmpeg\fR.
+\fBFLAC\fR resampling requires \fBffmpeg\fR and \fBmetaflac\fR (for source file 
+sample rate data).
 .IP * 2
 \fBMP3\fR encoding requires: \fBlame\fR and \fBflac\fR. Source file must be 
 flac. MP3 encoding does not support wav or raw input formats.
@@ -808,6 +809,10 @@ IMPORTANT: use the \fB\-Z\fR analyze option first to make sure what the bit
 depth and sampling rate of your files are before using this resampling option. 
 \fB\-\-resample\fR and \fB\-\-analyze\fR are meant to be used together to avoid 
 errors, and so you always can be sure of what you are actually dealing with.
+
+Output for \fB\-v1\fR shows source file bit-depth:sample-rate and resample 
+bit-depth:sample-rate per file. \fB\-v2\fR adds dither type to output resample 
+data.
 
 Sample:
 .nf

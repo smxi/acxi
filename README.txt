@@ -272,7 +272,9 @@ acxi fully platform agnostic.
 (best, Debian/Ubuntu package libfdk-aac2). If you want to preserve tags, use 
 m4a, if you use aac they will not transfer.
 
-* FLAC -> FLAC (including --resample) requires ffmpeg.
+* FLAC -> FLAC requires ffmpeg. 
+
+* FLAC resampling requires ffmpeg and metaflac (for source file sample data).
 
 * MP3 encoding requires: lame and flac (if source file is a flac, MP3 encoding 
 does not support wav or raw formats).

@@ -24,6 +24,14 @@ ENHANCEMENTS:
 
 1. For -Z, -v 0 turns off per file report, and only shows summary per directory.
 
+2. For --resample, now shows bit depth:sample rate for each start file, and the
+target resample rate, like: ....file.flac 24:96 to 16:48
+
+This can be useful to avoid errors and unexpected results, for example, if you 
+failed to run -Z analyze on resample source, you'd still see you maybe made a 
+mistake on the rate. This leverages the refactor in 3.5.01 of the resample 
+logic.
+
 --------------------------------------------------------------------------------
 CHANGES:
 

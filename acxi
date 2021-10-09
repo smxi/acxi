@@ -2064,14 +2064,21 @@ sub convert_file {
 	my ($src_print,$dest_print) = ($src_file,$dest_file);
 	my ($result,$cmd,$action,$type) = (1000,'','unset',$OUTPUT_TYPE); 
 	my ($encoding,$encoded) = ('Encoding','Encoded');
-	if ($run{'resample'}){
-		($encoding,$encoded) = ('Resampling','Resampled');
-		my $rate = sprintf("%0.1f",$run{'resample'}->[1]/1000) + 0;
-		$type = $run{'resample'}->[0] . ':' . $rate;
-	}
 	# escape characters for conversion processing
 	$src_file = main::escape_item("$src_file");
 	$dest_file = main::escape_item("$dest_file");
+	if ($run{'resample'}){
+		($encoding,$encoded) = ('Resampling','Resampled');
+		# ($size,$duration,$channels,$sample_rate,$bps,$kbs,$md5sum);
+		my @analyze = Analyze::process_metaflac($src_print,$src_file);
+		my $rate = sprintf("%0.1f",$run{'resample'}->[1]/1000) + 0;
+		$type = $run{'resample'}->[0] . ':' . $rate;
+		$rate = sprintf("%0.1f",$analyze[3]/1000) + 0;
+		$type = "$analyze[4]:$rate to $type"
+	}
+	else {
+		$type = "to $type";
+	}
 # 	$src_file =~ s/"/\\"/g;
 # 	$dest_file =~ s/"/\\"/g;
 # 	$src_file =~ s/`/\\`/g;
@@ -2092,7 +2099,7 @@ sub convert_file {
 		}
 		elsif ($VERBOSITY > 0){
 			# add line break only when file exists
-			print main::dotify("\n$encoding $src_print to $type");
+			print main::dotify("\n$encoding $src_print $type");
 		}
 	}
 	if ($OUTPUT_TYPE eq 'aac' || $OUTPUT_TYPE eq 'm4a'){
@@ -2107,7 +2114,7 @@ sub convert_file {
 		}
 	}
 	elsif ($OUTPUT_TYPE eq 'flac'){
-		$action = (!$run{'resample'}) ? 'To flac' : 'to ' . $run{'resample'}->[0] . ':' . $run{'resample'}->[1];
+		$action = (!$run{'resample'}) ? 'To flac' : $type;
 		# note: sample depth is taken usually from originating file, like shn or wav, but 
 		# mp3 does not seem to do this in my tests, and outputs to 24 bit
 		# note that -aq / -q:a does not seem to do anything, and ffmpeg reverts to default 5 level
@@ -2129,6 +2136,7 @@ sub convert_file {
 			$result = $?;
 		}
 		else {
+			say '' if $VERBOSITY == 1;
 			say "Would have run: $cmd";
 		}
 	}
@@ -2172,7 +2180,7 @@ sub convert_file {
 		}
 		elsif ($VERBOSITY > 0){
 			# add line break only when file exists
-			print main::dotify("\n$encoded $src_print to $type");
+			print main::dotify("\n$encoded $src_print $type");
 		}
 	}
 	# this return only works with non forking
@@ -2645,6 +2653,15 @@ sub check_application_paths {
 			if (! -x "$COMMAND_FFMPEG"){
 				$b_error = 1;
 				$error_message .= "\n Encoding application not available: $COMMAND_FFMPEG";
+			}
+			if ($run{'resample'}){
+				if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
+					push(@app_paths,$COMMAND_METAFLAC);
+				}
+				if (! -x "$COMMAND_METAFLAC"){
+					$b_error = 1;
+					$error_message .= "\n Sample rate application not available: $COMMAND_METAFLAC";
+				}
 			}
 		}
 		elsif ($OUTPUT_TYPE eq 'ogg' || $OUTPUT_TYPE eq 'opus'){
