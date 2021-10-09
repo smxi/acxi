@@ -39,6 +39,8 @@ CHANGES:
 --------------------------------------------------------------------------------
 DOCUMENTATION:
 
+1. Updated man, help, for revised -Z -v0 option, and for using metaflac for 
+source file sample rate data.
 
 --------------------------------------------------------------------------------
 CODE:
