@@ -792,18 +792,19 @@ To get best results, always make sure to resample to a sampling rate that
 divides evenly into the original sampling rate, for example, if the original is 
 96khz sampling rate, 24 bit, resample to 48khz, 16 bit (96/2 == 48). 
 
-If you use values that do not divide evenly, you have to deal with dithering 
-issues and other headaches, and your audio will not be as good as it could be. 
-Note that 44.1 is only required for Audio CDs, and in most cases, the cd burning 
-software can deal with that itself, unless you want to force it using acxi.
+If you use values that do not divide evenly, you have to deal with synthesizing 
+sample issues (depending on how the resampling is done, of course), and your 
+audio will not be as good as it could be. Note that 44.1 is only required for 
+Audio CDs, and in most cases, the cd burning software can deal with that itself, 
+unless you want to force it using acxi.
 
 In short, if you have 192 or 96 khz originals, resample them to 48 khz. If you 
-have for some strange reason 88.2 khz, resample it to 44.1. Do not sample 
-upwards, it's just wasted bytes, for example, there is no reason to resample 
-from 44.1 to 88.2. In almost all cases, if you need to work like that, use a 
-dedicated DAW program like Audacity and let it do the resamplings to higher 
-levels in its native mode, then after you have worked on the project, save it, 
-and export to normal sampling rates and bit depths.
+have 88.2 khz, resample it to 44.1. Do not sample upwards, it's just wasted 
+bytes, for example, there is no reason to resample from 44.1 to 88.2. In almost 
+all cases, if you need to work like that, use a dedicated DAW program like 
+Audacity and let it do the resamplings to higher levels in its native mode, then 
+after you have worked on the project, save it, and export to normal sampling 
+rates and bit depths.
 
 IMPORTANT: use the \fB\-Z\fR analyze option first to make sure what the bit 
 depth and sampling rate of your files are before using this resampling option. 
@@ -812,7 +813,8 @@ errors, and so you always can be sure of what you are actually dealing with.
 
 Output for \fB\-v1\fR shows source file bit-depth:sample-rate and resample 
 bit-depth:sample-rate per file. \fB\-v2\fR adds dither type to output resample 
-data.
+data. Dither (\fBshibata\fR default, use \fB\-\-dither {type}\fR for alternates) 
+is added when sampling from bit depths of 24 or more to less than 24.
 
 Sample:
 .nf

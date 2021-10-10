@@ -2064,13 +2064,14 @@ sub convert_file {
 	my ($src_print,$dest_print) = ($src_file,$dest_file);
 	my ($result,$cmd,$action,$type) = (1000,'','unset',$OUTPUT_TYPE); 
 	my ($encoding,$encoded) = ('Encoding','Encoded');
+	my (@analyze);
 	# escape characters for conversion processing
 	$src_file = main::escape_item("$src_file");
 	$dest_file = main::escape_item("$dest_file");
 	if ($run{'resample'}){
 		($encoding,$encoded) = ('Resampling','Resampled');
 		# ($size,$duration,$channels,$sample_rate,$bps,$kbs,$md5sum);
-		my @analyze = Analyze::process_metaflac($src_print,$src_file);
+		@analyze = Analyze::process_metaflac($src_print,$src_file);
 		my $rate = sprintf("%0.1f",$run{'resample'}->[1]/1000) + 0;
 		$type = $run{'resample'}->[0] . ':' . $rate;
 		$rate = sprintf("%0.1f",$analyze[3]/1000) + 0;
@@ -2105,8 +2106,8 @@ sub convert_file {
 	if ($OUTPUT_TYPE eq 'aac' || $OUTPUT_TYPE eq 'm4a'){
 		$action = "To $OUTPUT_TYPE";
 		if (!$b_test){
-			# note: sample depth is taken usually from originating file, like shn or wav, but 
-			# mp3 does not seem to do this in my tests, and outputs to 24 bit
+			# note: sample depth is taken usually from originating file, like shn or
+			# wav, but mp3 does not seem to do this in my tests, and outputs to 24 bit
 			# note that -aq / -q:a does not seem to do anything, and ffmpeg reverts to default 5 level
 			my $sample_depth = ($INPUT_TYPE eq 'mp3') ? '-sample_fmt s16' : '';
 			qx($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" -b:a ${quality}k -c:a $codec $sample_depth "$dest_file");
@@ -2124,8 +2125,8 @@ sub convert_file {
 		}
 		elsif ($run{'resample'}){
 			$sample_data = '-sample_fmt s' . $run{'resample'}->[0] . ' -ar ' . $run{'resample'}->[1];
-			# note: 0, none, is default
-			if ($run{'resample'}->[0] < 24 && $DITHER){
+			# note: 0, none, is default for ffmpeg. Don't use dither when bit depth the same
+			if ($run{'resample'}->[0] < 24 && $run{'resample'}->[0] != $analyze[4]){
 				$action .= ":$DITHER";
 				$sample_data .= " -dither_method $DITHER";
 			}

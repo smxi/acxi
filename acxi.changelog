@@ -25,6 +25,7 @@ BUGS:
 --------------------------------------------------------------------------------
 FIXES:
 
+1. Added protection against resampling using dither if bit depths are the same.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
