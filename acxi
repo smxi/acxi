@@ -1908,7 +1908,12 @@ sub process {
 		say ' to: ' . main::sourcer("$DESTINATION_DIRECTORY");
 	}
 	if ($run{'source-glob'}){
-		say " using source globbing pattern: $run{'source-glob'}"
+		if (!@source_glob){
+			say "  No source globbing matches found for pattern: $run{'source-glob'}";
+		}
+		else {
+			say " using source globbing pattern: $run{'source-glob'}";
+		}
 	}
 	update_directories();
 	$list_type = 'file';
