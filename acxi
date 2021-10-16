@@ -1907,6 +1907,9 @@ sub process {
 		say 'Starting sync of: ' . main::sourcer("$SOURCE_DIRECTORY");
 		say ' to: ' . main::sourcer("$DESTINATION_DIRECTORY");
 	}
+	if ($run{'source-glob'}){
+		say " using source globbing pattern: $run{'source-glob'}"
+	}
 	update_directories();
 	$list_type = 'file';
 	foreach (@extension_list){
