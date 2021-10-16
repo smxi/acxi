@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-10\-09" acxi "acxi manual"
+.TH ACXI 1 "2021\-10\-15" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -839,8 +839,9 @@ start with \fB../\fR.
 .TP
 .B \-\-source\-glob\fR, \fB\-g {path relative to \-s path}\fR
 Accepts wild card paths if you only want to update or check certain directories 
-within the main \fB\-\-source\fR working directory. Requires \fB\-\-source\fR, 
-wild card path must be within \fB-\-source\fR.
+within the main \fB\-\-source\fR working directory. Requires \fB\-\-source\fR 
+(or pre-configured \fBSOURCE_DIRECTORY\fR), wild card path must be within 
+\fB-\-source\fR.
 
 Sample:
 .nf

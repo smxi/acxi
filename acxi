@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.01';
-my $self_date='2021-10-09';
+my $self_date='2021-10-15';
 
 ## GLOBALS ##
 my %run;
@@ -2295,7 +2295,7 @@ sub escape_item {
 # bsd glob, which returns space agnostic globs, as you'd expect. 
 sub globber {
 	# my @files = glob qq{"$_[0]"};
-	# say Data::Dumper::Dumper @files;
+	# say Data::Dumper::Dumper \@files;
 	# say $_[0];
 	# return @files;
 	return <$_[0]>;
@@ -3451,8 +3451,13 @@ sub set_basic_data {
 		# say $start_dir;
 		chdir $SOURCE_DIRECTORY;
 		my @temp = globber($run{'source-glob'});
+		# say Data::Dumper::Dumper \@temp;exit;
+		# There is a highly non-intuitive globber behavior, it returns the path 
+		# for the glob result even if it doesn't exist, which seems like bug.
 		foreach (@temp){
-			push(@source_glob,$SOURCE_DIRECTORY . $path_separator . $_);
+			if (-e  $SOURCE_DIRECTORY . $path_separator . $_){
+				push(@source_glob,$SOURCE_DIRECTORY . $path_separator . $_);
+			}
 		}
 		# say Data::Dumper::Dumper \@source_glob;exit;
 		chdir $start_dir;
@@ -4089,7 +4094,7 @@ sub verify_selections {
 		main::error_handler('invalid-options', 
 		 "--info-rating can only be used with --infofix.",1);
 	}
-	if ($test{'source-glob'} && !$test{'source'}){
+	if ($test{'source-glob'} && ! -e $SOURCE_DIRECTORY){
 		main::error_handler('invalid-options', 
 		 "--source-glob/-g must be used with --source/-s.",1);
 	}

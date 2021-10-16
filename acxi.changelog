@@ -6,6 +6,8 @@ Date: 2021-??-??
 RELEASE NOTES:
 --------------------------------------------------------------------------------
 
+Refinements, fine tunings. The rule that a successful refactor always opens the 
+door to more possibilities remains valid!
 
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
@@ -26,6 +28,10 @@ BUGS:
 FIXES:
 
 1. Added protection against resampling using dither if bit depths are the same.
+
+2. Discovered a very strange globbing behavior, returns non existing matches
+to the globbing pattern, no idea how that can happen since it's a glob of the 
+path/directory. Added test exists before putting results in source array.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
