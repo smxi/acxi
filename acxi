@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.01';
-my $self_date='2021-10-15';
+my $self_date='2021-11-01';
 
 ## GLOBALS ##
 my %run;
@@ -2117,9 +2117,17 @@ sub convert_file {
 			# note: sample depth is taken usually from originating file, like shn or
 			# wav, but mp3 does not seem to do this in my tests, and outputs to 24 bit
 			# note that -aq / -q:a does not seem to do anything, and ffmpeg reverts to default 5 level
-			my $sample_depth = ($INPUT_TYPE eq 'mp3') ? '-sample_fmt s16' : '';
-			qx($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" -b:a ${quality}k -c:a $codec $sample_depth "$dest_file");
+			# my $sample_depth = ($INPUT_TYPE eq 'mp3') ? '-sample_fmt s16' : '';
+			# $sample_depth 
+			# To get rid of: Could not find tag for codec h264 in stream #0 error
+			# -map a:0 is needed to specify that there shouldn't be a video track. 
+			my $map = ($OUTPUT_TYPE eq 'm4a') ? '-map a:0' : '';
+			qx($COMMAND_FFMPEG $silent_ffmpeg -y -i "$src_file" -b:a ${quality}k $map -c:a $codec "$dest_file");
 			$result = $?;
+		}
+		else {
+			say '' if $VERBOSITY == 1;
+			say "Would have run: $cmd";
 		}
 	}
 	elsif ($OUTPUT_TYPE eq 'flac'){
@@ -2157,6 +2165,10 @@ sub convert_file {
 			qx($cmd);
 			$result = $?;
 		}
+		else {
+			say '' if $VERBOSITY == 1;
+			say "Would have run: $cmd";
+		}
 	}
 	elsif ($OUTPUT_TYPE eq 'ogg'){
 		$action = 'To ogg';
@@ -2172,6 +2184,10 @@ sub convert_file {
 				$result = $?;
 			}
 		}
+		else {
+			say '' if $VERBOSITY == 1;
+			say "Would have run: $cmd";
+		}
 	}
 	elsif ($OUTPUT_TYPE eq 'opus'){
 		$action = 'To opus';
@@ -2179,6 +2195,22 @@ sub convert_file {
 			qx($COMMAND_OPUS $silent_opus --bitrate $quality "$src_file" "$dest_file");
 			$result = $?;
 		}
+		else {
+			say '' if $VERBOSITY == 1;
+			say "Would have run: $cmd";
+		}
+	}
+	if ($result && $result != 1000){
+		my $msg = "Encoding:\n $src_file\n";
+		$msg .= "  to $OUTPUT_TYPE failed with error number: $result\n";
+		if ($b_fork){
+			$msg .=  "Cannot stop when using Forking. ";
+		}
+		else {
+			$msg .=  "Cannot continue, please correct issue. ";
+		}
+		$msg .=  "Try using -v3 to pinpoint actual error event.";
+		main::error_handler('convert',$msg,1);
 	}
 	if ($b_fork){
 		eval $print_line_small;
@@ -2192,6 +2224,7 @@ sub convert_file {
 			print main::dotify("\n$encoded $src_print $type");
 		}
 	}
+	
 	# this return only works with non forking
 	return ($result,$action); 
 }
@@ -2606,6 +2639,7 @@ sub error_handler {
 	elsif ($error eq 'autotag-multi'){$error_no = 18;}
 	elsif ($error eq 'track-counts'){$error_no = 30;}
 	elsif ($error eq 'analyze'){$error_no = 31;}
+	elsif ($error eq 'convert'){$error_no = 32;}
 	if ($error eq 'validation-errors'){
 		if (!$b_valid){
 			$message = "${br}Failed pretests. Please correct the listed errors.";
@@ -2655,7 +2689,7 @@ sub check_application_paths {
 		print main::dotify("Checking required tools paths");
 	}
 	if ($b_check_out){
-		if ($OUTPUT_TYPE =~ /^(aac|flac|m4a)$/){
+		if ($OUTPUT_TYPE =~ /^(aac|flac|m4a)$/i){
 			if (!grep {$_ eq $COMMAND_FFMPEG} @app_paths){
 				push(@app_paths,$COMMAND_FFMPEG);
 			}
@@ -2673,9 +2707,9 @@ sub check_application_paths {
 				}
 			}
 		}
-		elsif ($OUTPUT_TYPE eq 'ogg' || $OUTPUT_TYPE eq 'opus'){
+		elsif ($OUTPUT_TYPE =~ /^(ogg|opus)$/i){
 			if (!$run{'ffmpeg'}){
-				if ($OUTPUT_TYPE eq 'ogg'){
+				if (lc($OUTPUT_TYPE) eq 'ogg'){
 					if (!grep {$_ eq $COMMAND_OGG} @app_paths){
 						push(@app_paths,$COMMAND_OGG);
 					}
@@ -2684,7 +2718,7 @@ sub check_application_paths {
 						$error_message .= "\n Encoding application not available: $COMMAND_OGG";
 					}
 				}
-				elsif ($OUTPUT_TYPE eq 'opus'){
+				elsif (lc($OUTPUT_TYPE) eq 'opus'){
 					if (!grep {$_ eq $COMMAND_OPUS} @app_paths){
 						push(@app_paths,$COMMAND_OPUS);
 					}
@@ -2706,7 +2740,7 @@ sub check_application_paths {
 				}
 			}
 		}
-		elsif ($OUTPUT_TYPE eq 'mp3'){
+		elsif (lc($OUTPUT_TYPE) eq 'mp3'){
 			if (!grep {$_ eq $COMMAND_LAME} @app_paths){
 				push(@app_paths,$COMMAND_LAME);
 			}

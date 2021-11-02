@@ -20,9 +20,17 @@ validation that would be a headache to resolve, but it might be something that
 can be worked around. It does handle various syntaxes, like .FLAC, .Flac, and 
 .flac, but that's as far as it goes.
 
+2. If using forking on syncing job, and error handler for failed sync action
+kicks in, can't stop forking, that's too complicated to deal with for now. 
+
 --------------------------------------------------------------------------------
 BUGS:
 
+1. FLAC to m4a conversions were failing without error handling. Added error 
+handler to syncing section, with caveat it can't exit while forking is being 
+used. It will now print out an error message, if forking, alerting that it can't
+be stopped, if no forking, will exit as expected. Issue was flac to m4a requires
+one further option for ffmpeg.
 
 --------------------------------------------------------------------------------
 FIXES:
@@ -32,6 +40,9 @@ FIXES:
 2. Discovered a very strange globbing behavior, returns non existing matches
 to the globbing pattern, no idea how that can happen since it's a glob of the 
 path/directory. Added test exists before putting results in source array.
+
+3. aac/m4a codec pre-test was case sensitive, made case insensitive. Some 
+validation -eq tests for out/input types were not case insensitive.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
