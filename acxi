@@ -462,12 +462,12 @@ sub process {
 					$size_print .= " ($raw_size B)";
 				}
 				$results{$source_file} = [$source_info,$time_print,$size_print,$kbs_print];
-				if ($raw_time < $Z_MIN_TIME){
+				if ($Z_MIN_TIME && $raw_time < $Z_MIN_TIME){
 					my $msg = "track time (". sprintf("%0.2f",$raw_time);
 					$msg .= " s) less than $Z_MIN_TIME s";
 					push(@{$alerts{$source_file}},$msg); 
 				}
-				if (($raw_size/1024) < $Z_MIN_SIZE && $INPUT_TYPE !~ /^(aac|m4a|mp3|ogg|opus)$/){
+				if ($Z_MIN_SIZE && ($raw_size/1024) < $Z_MIN_SIZE && $INPUT_TYPE !~ /^(aac|m4a|mp3|ogg|opus)$/){
 					my $msg = "track size (" . main::print_size($raw_size/1024);
 					$msg .= ") less than $Z_MIN_SIZE KiB";
 					push(@{$alerts{$source_file}},$msg); 
