@@ -222,22 +222,32 @@ my $COPY_TYPES = 'gif,jpg,jpeg,png,txt';
 my $DITHER = 'shibata';
 
 #### -------------------------------------------------------------------
+#### ANALYZE
+#### -------------------------------------------------------------------
+
+# These are used for --analyze/-Z possible file error detection.
+# If file values are less than this, prints alert message. To disable, simply
+# set both to 0.
+my $Z_MIN_SIZE = 1000; # lossless only, in KiB
+my $Z_MIN_TIME = 10; # in seconds
+
+#### -------------------------------------------------------------------
 #### AUTO TAGGING
 #### -------------------------------------------------------------------
 # For -P/--prefill, can be overridden with config or --prefill-file []
-my $INFO_FILE='info.txt';
+my $INFO_FILE = 'info.txt';
 # For -Xf, the rating shown in Quality: /[rating] item.
 my $INFO_RATING = 4;
 # This is the file that contains the syntax found in auto.tag file. But
 # you can call it something else if you prefer.
-my $TAG_FILE='auto.tag';
+my $TAG_FILE = 'auto.tag';
 
 #### -------------------------------------------------------------------
 #### CHECKSUM DATA
 #### -------------------------------------------------------------------
 # These are the file names MINUS the .ffp / .md5 extensions.
-my $FFP_FILE='fingerprints';
-my $MD5_FILE='md5sums';
+my $FFP_FILE = 'fingerprints';
+my $MD5_FILE = 'md5sums';
 
 #### -------------------------------------------------------------------
 #### VERBOSITY LEVELS
@@ -280,9 +290,9 @@ my $ALLOW_UPDATES = 1;
 # this will be used to update the program and man page. You must have 
 # write permissions to the file locations. Linux or BSD only.
 # do not end paths with /
-my $COMMAND_CURL='/usr/bin/curl';
-my $MAN_DIRECTORY='/usr/local/share/man/man1';
-my $SELF_DIRECTORY='/usr/local/bin';
+my $COMMAND_CURL = '/usr/bin/curl';
+my $MAN_DIRECTORY = '/usr/local/share/man/man1';
+my $SELF_DIRECTORY = '/usr/local/bin';
 
 #########################################################################
 ### END USER MODIFIABLE VALUES ###
@@ -387,7 +397,7 @@ sub aggregate {
 package Analyze;
 my ($avg_kbs,$total_size,$total_size_raw,$total_time) = (0,0,0,0);
 my ($source_info) = ('');
-my ($type,$ref,@files,@info,%results);
+my ($type,$ref,%alerts,@files,@info,%results);
 sub run {
 	($type,$ref) = @_;
 	my $dir = Cwd::getcwd; # resolves sym links
@@ -404,6 +414,7 @@ sub run {
 		main::error_handler('analyze',"No $INPUT_TYPE files found for quality test!\n",1);
 	}
 	else {
+		undef(%alerts);
 		undef(%results);
 		undef(@info);
 		($avg_kbs,$total_size,$total_size_raw,$total_time) = (0,0,0,0);
@@ -451,6 +462,16 @@ sub process {
 					$size_print .= " ($raw_size B)";
 				}
 				$results{$source_file} = [$source_info,$time_print,$size_print,$kbs_print];
+				if ($raw_time < $Z_MIN_TIME){
+					my $msg = "track time (". sprintf("%0.2f",$raw_time);
+					$msg .= " s) less than $Z_MIN_TIME s";
+					push(@{$alerts{$source_file}},$msg); 
+				}
+				if (($raw_size/1024) < $Z_MIN_SIZE && $INPUT_TYPE !~ /^(aac|m4a|mp3|ogg|opus)$/){
+					my $msg = "track size (" . main::print_size($raw_size/1024);
+					$msg .= ") less than $Z_MIN_SIZE KiB";
+					push(@{$alerts{$source_file}},$msg); 
+				}
 				# only metaflac stores the hash
 				if ($VERBOSITY > 1 && lc($INPUT_TYPE) eq 'flac'){
 					$md5sum ||= 'N/A';
@@ -576,6 +597,12 @@ sub generate_output {
 			else {
 				say '    ', join(' ',@{$results{$key}});
 			}
+		}
+	}
+	if (%alerts){
+		foreach my $key (sort keys %alerts){
+			say "  ALERT: File: $key:";
+			say '   ', join("\n   ",@{$alerts{$key}});
 		}
 	}
 	say $source_data if defined $source_data;
@@ -3646,6 +3673,8 @@ sub assign_value {
 	elsif ($var eq 'TAG_FILE'){$TAG_FILE = $value}
 	# LOG_LEVEL is legacy name, leave in always.
 	elsif ($var eq 'VERBOSITY' || $var eq 'LOG_LEVEL'){$VERBOSITY = $value;}
+	elsif ($var eq 'Z_MIN_TIME'){$Z_MIN_TIME = $value}
+	elsif ($var eq 'Z_MIN_SIZE'){$Z_MIN_SIZE = $value}
 }
 sub get_boolean {
 	my ($value) = @_;

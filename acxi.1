@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-10\-15" acxi "acxi manual"
+.TH ACXI 1 "2021\-11\-01" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -1080,6 +1080,18 @@ the largest file size / highest quality.
 256 is the largest file size / highest quality / best bitrate.
 
 .TP
+.B ANALYZE
+These two values allow you to customize default -Z ALERT warnings about possible
+incorrect file size and time duration values. Useful for finding accidentally
+corrupted or otherwise incorrect files.
+
+\fBZ_MIN_SIZE\fR \- Sample: \fBZ_MIN_SIZE=900\fR Minimum size (in KiB) of 
+lossless file. Not used for lossy files. Set to 0 to disable.
+
+\fBZ_MIN_TIME\fR \- Sample: \fBZ_MIN_TIME=8\fR Minimum time/duration audio file. 
+Set to 0 to disable.
+
+.TP
 .B AUTO\-TAGGING
 These only apply to the \fB\-\-autotag\fR option, and set a different name for 
 the default auto.tag filename. The filename must be unique and never occur in 
@@ -1112,6 +1124,8 @@ files to have.
 \fBMD5_FILE\fR \- Sample: \fBMD5_FILE=checksum\fR This is the name of the 
 generated .md5 file, not including the .md5 extension, you want your md5 
 checksum files to have.
+
+
 
 .TP
 .B VERBOSITY LEVELS
