@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.01';
-my $self_date='2021-12-05';
+my $self_date='2021-12-06';
 
 ## GLOBALS ##
 my %run;
@@ -1046,11 +1046,15 @@ sub populate_tag_file {
 			@info_working = @{$info{'tracks'}};
 		}
 		else {
-			main::error_handler('track-counts',"Prefill track count mismatch: Files: " . scalar(@$files) . 
-			 '; Info Tracks: ' . scalar(@{$info{'tracks'}}),1);
+			main::error_handler('track-counts','Prefill track count mismatch: Files: ' . 
+			scalar(@$files) . '; Info Tracks: ' . scalar(@{$info{'tracks'}}),1);
 		}
 	}
-	my $k = (!$run{'multiartist'}) ? 0 : 1;
+	my ($k,$ma_split) = (0,'');
+	if ($run{'multiartist'}){
+		$k = 1;
+		$ma_split = $run{'multiartist'}->[1];
+	}
 	foreach (@$files){
 		my @track_working = @track;
 		if ($run{'autotag-multi'} && scalar @multi > 1){
@@ -1084,7 +1088,11 @@ sub populate_tag_file {
 				$track_working[$k+2] = $track[$k+2] . $title;
 			}
 			else {
-				my ($one,$two) = split(/\s+$run{'multiartist'}->[1]\s+/,$title,2);
+				my ($one,$two) = split(/\s+\Q$ma_split\E\s+/,$title,2);
+				if (!defined $one || !defined $two){
+					main::error_handler('multiartist-split','Multiartist splits: ' .
+					'split pattern \'' . $ma_split . '\' not found in: ' . $title,1);
+				}
 				($one,$two) = ($run{'multiartist'}->[0] eq 'at') ? ($one,$two):($two,$one);
 				$track_working[$k+0] = $track[$k+0] . $one;
 				$track_working[$k+2] = $track[$k+2] . $two;
@@ -2680,6 +2688,7 @@ sub error_handler {
 	elsif ($error eq 'track-counts'){$error_no = 30;}
 	elsif ($error eq 'analyze'){$error_no = 31;}
 	elsif ($error eq 'convert'){$error_no = 32;}
+	elsif ($error eq 'multiartist-split'){$error_no = 33;}
 	if ($error eq 'validation-errors'){
 		if (!$b_valid){
 			$message = "${br}Failed pretests. Please correct the listed errors.";
@@ -3439,10 +3448,12 @@ sub show_options {
 	$output .= "                  t and u use Title upper case main words.\n";
 	$output .= "--info-rating {2-xxx}\n";
 	$output .= "                  Change default rating value for --infofix q. Current: $INFO_RATING;\n";
-	$output .= "--multiartist, --ma {[AT|TI]:separator}\n";
-	$output .= "                  Use with --prefill, if the source titles contain artist/title.\n";
-	$output .= "                  AT is Artist sep Title, TA is Title sep Artist. Separator is\n";
-	$output .= "                  one or more non-space characters that separate artist from title.\n";
+	$output .= "--multiartist, --ma {[at|ti]:separator}\n";
+	$output .= "                  Use with --prefill if track titles in info file contain artist\n";
+	$output .= "                  and song name. Examples:\n";
+	$output .= "                  \'at:-\' (2. Artist - Title); \'ta\:\\' (2. Title \\ Artist)\n";
+	$output .= "                  Separator: one or more non-space characters that separate the\n";
+	$output .= "                  two. Must not be present in the first part.\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-dot          Override user configuration setting for DOT (--dot) [default].\n";
 	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";

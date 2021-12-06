@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-11\-01" acxi "acxi manual"
+.TH ACXI 1 "2021\-12\-06" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -38,6 +38,7 @@ Tagging: \fBacxi\fR [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-image\fR, \fB\-I\fR {cover image filename}]
 [\fB\-\-infofix\fR, \fB\-X\fR [d|l|n|q|t|u|w]] 
 [\fB\-\-info\-rating\fR {2\-xxx}
+[\fB\-\-multiartist\fR, \fB\-\-ma\fR {[at|ta]:separator}]
 [\fB\-\-prefill\fR, \fB\-E\fR] 
 [\fB\-\-prefill\-file\fR {release info file name}] 
 [\fB\-\-no\-replaygain\fR] [\fB\-\-recurse\fR {-1-xx}] 
@@ -618,6 +619,47 @@ Supports flac to flac for cases where you might want to redo flac files to known
 quality/compression levels, or redo them using current flac codecs.
 
 Tags transfer from AIF files that are tagged to FLAC files in my tests.
+
+.TP
+.B \-\-multiartist\fR, \fB\-\-ma\fR {[at|ta]:separator}\fR
+Use with \fB\-\-prefill\fR if the recording is multiartist, and the source info 
+file is in Artist [separator] Title or Title [separator] Artist format. Note 
+that all track titles must be in the same format, and the first item before the 
+separator cannot contain the separator.
+
+* \fBat\fR \- Artist [sep] Title
+.br
+* \fBta\fR \- Title [sep] Artist
+
+Only include the actual non space character(s) used to separate the two items.
+
+.nf
+Example (info file track title format: 23. Band Name / Song):
+\fBpinxi \-s ./ \-SE \-\-ma 'at:/'\fR
+Example (info file track title format: 23. Band Name - Song-Name):
+\fBpinxi \-s ./ \-SE \-\-ma 'at:-'\fR
+Example  (info file track title format: 22. Song \\ Band Name):
+\fBpinxi \-s ./ \-SE \-\-ma 'ta:\\'\fR
+Example (info file track title format: 03. Song \\\\ Band Name):
+\fBpinxi \-s ./ \-SE \-\-ma 'ta:\\\\'\fR
+.fi
+
+Not OK (info file track title format: 23. Band-Name - Song). This would result 
+in the following:
+.br
+Artist: \fBBand\fR
+.br
+Title: \fBName - Song\fR
+
+If you have such a conflict, simply change separators in the info file to 
+a character that does not occur in the first item.
+
+You must use single quotes around the argument or things like backslashes may 
+behave oddly. Do not include whitespaces in the separator value. The separator
+itself cannot contain a whitespace.
+
+If the match fails for some reason, \fBacxi\fR will exit with error message 
+telling you which track title and separator failed.
 
 .TP
 .B \-\-nlink\fR

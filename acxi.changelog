@@ -90,6 +90,7 @@ separate it, and everything after first occurance as Title or Artist.
 --------------------------------------------------------------------------------
 CHANGES:
 
+1. No changes.
 
 --------------------------------------------------------------------------------
 DOCUMENTATION:
@@ -99,6 +100,8 @@ source file sample rate data.
 
 2. Added help/man documentation for --z-min-size/--z-min-size, and for 
 Z_MIN_SIZE/Z_MIN_TIME configuration items.
+
+3. Added help/man documentation for --multiartist/--ma.
 
 --------------------------------------------------------------------------------
 CODE:
