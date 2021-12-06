@@ -77,7 +77,7 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $self_name='acxi';
-my $self_version='3.5.01';
+my $self_version='3.5.02';
 my $self_date='2021-12-06';
 
 ## GLOBALS ##
