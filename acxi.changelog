@@ -81,11 +81,12 @@ These will print out summary ALERT items per file found, right above the main
 summary area at end of per track output. While no tests will ever be perfect,
 the goal is to minimize possible failure points that might creep in unnoticed.
 
-4. New feature, prefill with Album Artist track titles. Requires syntax:
---multiartist [AT|TA]:[separator]. Use --ma for short form. Assuming separator
--, then AT means: Artist - Title, and TA: Title - Artist. Do not include spaces
-in separator, just the actual character used. Will pick first occurance of it to
-separate it, and everything after first occurance as Title or Artist.
+4. New feature, prefill with Album Artist track titles. Requires syntax: 
+--multiartist [at|ta]:[separator]. Use --ma for short form. Assuming separator 
+-, then 'at' means: Artist - Title, and 'ta' means: Title - Artist. Do not 
+include spaces in separator, just the actual character used. Will pick first 
+occurance of it to separate it, and everything after first occurance as Title or 
+Artist.
 
 --------------------------------------------------------------------------------
 CHANGES:
