@@ -4024,6 +4024,7 @@ sub get{
 		}
 		else {
 			$run{'multiartist'} = [split(/:/,$arg)];
+			$run{'multiartist'}->[0] = lc($run{'multiartist'}->[0]);
 			$test{'multiartist'} = 1;
 		}},
 	'no-dot' => sub { 
