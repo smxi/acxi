@@ -83,10 +83,15 @@ the goal is to minimize possible failure points that might creep in unnoticed.
 
 4. New feature, prefill with Album Artist track titles. Requires syntax: 
 --multiartist [at|ta]:[separator]. Use --ma for short form. Assuming separator 
--, then 'at' means: Artist - Title, and 'ta' means: Title - Artist. Do not 
-include spaces in separator, just the actual character used. Will pick first 
-occurance of it to separate it, and everything after first occurance as Title or 
-Artist.
+'-', then 'at:-' means: Artist - Title, and 'ta:-' means: Title - Artist. Do not 
+include spaces in separator, just the actual character(s) used. Will pick first 
+occurance of provided separator value to split track title, and everything after 
+first occurance as either Title or Artist.
+
+This uses the numbered track title listing in the info file that --prefill uses, 
+like so:
+01. Band Name / Track Title
+
 
 --------------------------------------------------------------------------------
 CHANGES:
