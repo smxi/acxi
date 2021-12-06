@@ -3448,7 +3448,7 @@ sub show_options {
 	$output .= "                  t and u use Title upper case main words.\n";
 	$output .= "--info-rating {2-xxx}\n";
 	$output .= "                  Change default rating value for --infofix q. Current: $INFO_RATING;\n";
-	$output .= "--multiartist, --ma {[at|ti]:separator}\n";
+	$output .= "--multiartist, --ma {[at|ta]:separator}\n";
 	$output .= "                  Use with --prefill if track titles in info file contain artist\n";
 	$output .= "                  and song name. Examples:\n";
 	$output .= "                  \'at:-\' (2. Artist - Title); \'ta\:\\' (2. Title \\ Artist)\n";
