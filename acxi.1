@@ -9,13 +9,16 @@ Directories: \fBacxi\fR
 [\fB\-\-destination\fR, \fB\-d\fR {destination-path}] 
 [\fB\-\-source\fR, \fB\-s\fR {source\-path}] 
 [\fB\-\-source\-glob\fR, \fB\-g\fR {relative path}]
+.IP * 2\fBacxi\fR 
+Analyze: 
+[\fB\-\-z\-min\-size\fR {0\-xxx}] [\fB\-\-z\-min\-time\fR {0\-xxx}]
 .IP * 2
 Checksums: \fBacxi\fR [\fB\-\-analyze\fR, \fB\-Z\fR] 
 [\fB\-\-checksum\fR, \fB\-K\fR] [\fB\-\-checksum\-delete\fR, \fB\-D\fR] 
 [\fB\-\-checksum\-ffps\fR, \fB\-\-ffps\fR] 
 [\fB\-\-checksum\-verify\fR, \fB\-V\fR] 
 [\fB\-\-duplicates\fR, \fB\-\-dupes\fR] [\fB\-\-ffprobe\fR]
-[\fB\-\-no\-ffp\fR] [\fB\-\-no\-md5\fR]
+[\fB\-\-no\-ffp\fR] [\fB\-\-no\-md5\fR] 
 .IP * 2
 Syncing: \fBacxi\fR [\fB\-\-append\fR, \fB\-a\fR {extensions}] 
 [\fB\-\-clean\fR] [\fB\-\-codec\fR {aac|libfdk_aac2}] 
@@ -936,6 +939,18 @@ are doing it, that output can vary widely.
 .B \-\-version\fR
 Show acxi version.
 
+.TP
+.B \-\-z\-min\-size {number}\fR
+Override default value for  \f\-\-analyze\fR min lossless file size alert.
+Number is integer KiB, 0\-xxx. 0 disables this test. Can be set in config file,
+see config section.
+
+.TP
+.B \-\-z\-min\-time {number}\fR
+Override default value for  \f\-\-analyze\fR min file duration alert. Number is 
+integer seconds, 0\-xxx. 0 disables this test. Can be set in config file, see 
+config section.
+
 .SH CONFIGURATION FILE
 You can see by running \fBacxi \-h\fR the configuration file locations.
 
@@ -1085,11 +1100,12 @@ These two values allow you to customize default -Z ALERT warnings about possible
 incorrect file size and time duration values. Useful for finding accidentally
 corrupted or otherwise incorrect files.
 
-\fBZ_MIN_SIZE\fR \- Sample: \fBZ_MIN_SIZE=900\fR Minimum size (in KiB) of 
-lossless file. Not used for lossy files. Set to 0 to disable.
+\fBZ_MIN_SIZE\fR \- Sample: \fBZ_MIN_SIZE=900\fR Minimum size (in KiB) in 
+integers of lossless file. Not used for lossy files. Set to 0 to disable. See\fB 
+\-\-z\-min\-size\fR
 
-\fBZ_MIN_TIME\fR \- Sample: \fBZ_MIN_TIME=8\fR Minimum time/duration audio file. 
-Set to 0 to disable.
+\fBZ_MIN_TIME\fR \- Sample: \fBZ_MIN_TIME=8\fR Minimum time/duration in integer 
+seconds of audio file. Set to 0 to disable. See\fB \-\-z\-min\-time\fR
 
 .TP
 .B AUTO\-TAGGING
@@ -1124,8 +1140,6 @@ files to have.
 \fBMD5_FILE\fR \- Sample: \fBMD5_FILE=checksum\fR This is the name of the 
 generated .md5 file, not including the .md5 extension, you want your md5 
 checksum files to have.
-
-
 
 .TP
 .B VERBOSITY LEVELS

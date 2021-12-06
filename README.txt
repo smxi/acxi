@@ -326,7 +326,11 @@ https://trac.ffmpeg.org/wiki/Encode/AAC
 
 FFMPEG does not transfer tags when the file format is aac, but it does when it's 
 m4a, so if you have tagged flac source files, then use m4a instead of aac and 
-most of your tags will transfer fine automatically.
+most of your tags will transfer fine automatically. 
+
+Personally I have no interest in mapping tags to propietary non free formats in
+AAC, so if anyone wants to create a function to do that, feel free. See the mp3
+tag mapper feature for ideas. But really, just use m4a and call it a good.
 
 --------------------------------------------------------------------------------
 SHN SHORTEN:

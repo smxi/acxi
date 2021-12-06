@@ -78,7 +78,7 @@ use Data::Dumper;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.01';
-my $self_date='2021-11-01';
+my $self_date='2021-12-05';
 
 ## GLOBALS ##
 my %run;
@@ -965,6 +965,7 @@ sub populate_tag_file {
 	'# To make the value empty use: UNSET as the field value.',
 	'# TRACKNUMBER and FILE required, title not known?: suggest TITLE%:Unknown ');
 	my @track = ('','TRACKNUMBER','TITLE','VERSION','PART','FILE');
+	splice(@track, 1, 0, 'ARTIST') if $run{'multiartist'};
 	@collection = map {$_ .= '%:' if /^[A-Z]/; $_;} @collection;
 	if (%info && @collection){
 		my @working;
@@ -1049,6 +1050,7 @@ sub populate_tag_file {
 			 '; Info Tracks: ' . scalar(@{$info{'tracks'}}),1);
 		}
 	}
+	my $k = (!$run{'multiartist'}) ? 0 : 1;
 	foreach (@$files){
 		my @track_working = @track;
 		if ($run{'autotag-multi'} && scalar @multi > 1){
@@ -1073,10 +1075,21 @@ sub populate_tag_file {
 			}
 		}
 		if ($run{'autotag-single'} || $run{'autotag-multi'}){
-			$track_working[1] = $track[1] . $counter;
+			$track_working[$k+1] = $track[$k+1] . $counter;
 		}
-		$track_working[5] = $track[5] . $_;
-		$track_working[2] = $track[2] . shift(@info_working) if @info_working;
+		$track_working[$k+5] = $track[$k+5] . $_;
+		if (@info_working){
+			my $title = shift(@info_working);
+			if (!$run{'multiartist'}){
+				$track_working[$k+2] = $track[$k+2] . $title;
+			}
+			else {
+				my ($one,$two) = split(/\s+$run{'multiartist'}->[1]\s+/,$title,2);
+				($one,$two) = ($run{'multiartist'}->[0] eq 'at') ? ($one,$two):($two,$one);
+				$track_working[$k+0] = $track[$k+0] . $one;
+				$track_working[$k+2] = $track[$k+2] . $two;
+			}
+		}
 		if (!$run{'no-replaygain'}){
 			@replaygain = get_replaygain(main::escape_item("$_"));
 			# we want the replaygain data right before FILE
@@ -2279,7 +2292,7 @@ sub flac2mp3_cmd {
 	}
 	$lame_params .= ' --ta "' . $tags{'ARTIST'} . '"';
 	$lame_params .= ' --tl "' . $tags{'ALBUM'} . '"';
-	$lame_params .= ' --tt "'. $tags{'TITLE'} . '"';
+	$lame_params .= ' --tt "' . $tags{'TITLE'} . '"';
 	$lame_params .= ' --tg "' . $tags{'GENRE'} . '"';
 	$lame_params .= ' --ty "' . $tags{'DATE'} . '"';
 	$lame_params .= ' --tn "' . $tags{'TRACKNUMBER'} . '"';
@@ -3426,6 +3439,10 @@ sub show_options {
 	$output .= "                  t and u use Title upper case main words.\n";
 	$output .= "--info-rating {2-xxx}\n";
 	$output .= "                  Change default rating value for --infofix q. Current: $INFO_RATING;\n";
+	$output .= "--multiartist, --ma {[AT|TI]:separator}\n";
+	$output .= "                  Use with --prefill, if the source titles contain artist/title.\n";
+	$output .= "                  AT is Artist sep Title, TA is Title sep Artist. Separator is\n";
+	$output .= "                  one or more non-space characters that separate artist from title.\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-dot          Override user configuration setting for DOT (--dot) [default].\n";
 	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";
@@ -3458,6 +3475,10 @@ sub show_options {
 		$output .= "                  Current values: $self_name: $SELF_DIRECTORY\n";
 		$output .= "                  man $self_name.1: $MAN_DIRECTORY\n";
 	}
+	$output .= "--z-min-size {0-xxx}\n";
+	$output .= "                  Use with -Z. Change min lossless file size for ALERT.\n";
+	$output .= "--z-min-time {0-xxx}\n";
+	$output .= "                  Use with -Z. Change min audio file time for ALERT.\n";
 	$output .= $line_small . "\n";
 	$output .= "Display output and debugging options:\n";
 	$output .= "--debug           Trigger advanced output debugging data.\n";
@@ -3996,6 +4017,15 @@ sub get{
 		},
 	'link' => sub { 
 		$DONT_USE_NLINK = 0 },
+	'multiartist|ma:s' => sub { 
+		my ($opt,$arg) = @_;
+		if (!$arg || $arg !~ /^(at|ta):\S+$/i){
+			main::error_handler('missing-arg',"$opt AT|TA:[separator].",1);
+		}
+		else {
+			$run{'multiartist'} = [split(/:/,$arg)];
+			$test{'multiartist'} = 1;
+		}},
 	'no-dot' => sub { 
 		$run{'dot'} = 0;},
 	'no-ffp' => sub { 
@@ -4135,6 +4165,24 @@ sub get{
 		$VERBOSITY = $arg; },
 	'version' => sub { 
 		main::show_version(); },
+	'z-min-size:i' => sub { 
+		my ($opt,$arg) = @_;
+		if (!defined $arg){
+			$msg = "$opt requires minimum size in KiB. See -h.";
+			main::error_handler('missing-arg',$msg,1);
+		}
+		else {
+			$Z_MIN_SIZE = $arg;
+		}},
+	'z-min-time:i' => sub { 
+		my ($opt,$arg) = @_;
+		if (!defined $arg){
+			$msg = "$opt requires minimum time in seconds. See -h.";
+			main::error_handler('missing-arg',$msg,1);
+		}
+		else {
+			$Z_MIN_TIME = $arg;
+		}},
 	'<>' => sub {
 		my ($opt) = @_;
 		main::error_handler('unsupported-option', "Unsupported option: $opt",1); }
@@ -4177,6 +4225,10 @@ sub verify_selections {
 	if ($test{'prefill'} && !$test{'tag-create'}){
 		main::error_handler('invalid-options', 
 		 "Prefill requires either --autotag-create-multi or --autotag-create-single.",1);
+	}
+	if ($test{'multiartist'} && !$test{'prefill'}){
+		main::error_handler('invalid-options', 
+		 "MultiArtist requires --prefill.",1);
 	}
 	# aggregate requires destination and cannot be used with any other action
 	if ($test{'aggregate'} && (!$test{'destination'} || ($test{'sync'} || 

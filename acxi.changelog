@@ -23,14 +23,23 @@ can be worked around. It does handle various syntaxes, like .FLAC, .Flac, and
 2. If using forking on syncing job, and error handler for failed sync action
 kicks in, can't stop forking, that's too complicated to deal with for now. 
 
+3. The acxi documentation that suggests that AAC doesn't support tagging isn't 
+accurate, it does, but it's another proprietary format that requires mapping 
+known tags to aac format, similar to mp3. Also, apple has its own further 
+proprietary format, which I have zero interest in spending/wasting time chasing 
+after. Basically as far as acxi is concerned, since m4a tagging is native and 
+'just works' and can use aac as the audio data in the m4a container, I can see 
+no reason to waste time adding support for another erratic and inconsistent 
+proprietary tagging format. 
+
 --------------------------------------------------------------------------------
 BUGS:
 
 1. FLAC to m4a conversions were failing without error handling. Added error 
 handler to syncing section, with caveat it can't exit while forking is being 
-used. It will now print out an error message, if forking, alerting that it can't
-be stopped, if no forking, will exit as expected. Issue was flac to m4a requires
-one further option for ffmpeg.
+used. It will now print out an error message, if forking, alerting that it can't 
+stop itself, if no forking, will exit as expected. Issue was flac to m4a 
+requires one further option for ffmpeg.
 
 --------------------------------------------------------------------------------
 FIXES:
@@ -58,6 +67,26 @@ This can be useful to avoid errors and unexpected results, for example, if you
 failed to run -Z analyze on resample source, you'd still see you maybe made a 
 mistake on the rate. 
 
+3. For -Z, added feature to show possible incorrect lossy audio file sizes, and
+for all audio formats, possible incorrect duration of track. Defaults are 1000
+KiB for size, and 10 seconds for time. Added --z-min-size and --z-min-time as
+overrides, and also configuration items Z_MIN_SIZE / Z_MIN_TIME for permanent
+changing of values. 0 in either disables that test.
+
+Defaults are 10 seconds min time for all audio files in directory, and 1000 KiB 
+min size for all lossless audio files in directory for the supplied --input 
+type.
+
+These will print out summary ALERT items per file found, right above the main 
+summary area at end of per track output. While no tests will ever be perfect,
+the goal is to minimize possible failure points that might creep in unnoticed.
+
+4. New feature, prefill with Album Artist track titles. Requires syntax:
+--multiartist [AT|TA]:[separator]. Use --ma for short form. Assuming separator
+-, then AT means: Artist - Title, and TA: Title - Artist. Do not include spaces
+in separator, just the actual character used. Will pick first occurance of it to
+separate it, and everything after first occurance as Title or Artist.
+
 --------------------------------------------------------------------------------
 CHANGES:
 
@@ -67,6 +96,9 @@ DOCUMENTATION:
 
 1. Updated man, help, for revised -Z -v0 option, and for using metaflac for 
 source file sample rate data.
+
+2. Added help/man documentation for --z-min-size/--z-min-size, and for 
+Z_MIN_SIZE/Z_MIN_TIME configuration items.
 
 --------------------------------------------------------------------------------
 CODE:
