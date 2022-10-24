@@ -895,7 +895,7 @@ sub prefill_data {
 	my ($b_top_block,$info) = (1,{});
 	my $data = InfoFix::open_info_file('prefill');
 	my $counter = 0;
-	my $fields = 'Artiste?|Band|City|Club|Country|Date|Festival|Location|State|Lieu|Taper|Venue|Ville';
+	my $fields = 'Artiste?s?|Band|City|Club|Country|Date|Festival|Location|State|Lieu|Taper|Venue|Ville';
 	foreach (@$data){
 		$counter++;
 		$_ = main::trimmer($_);
@@ -933,7 +933,7 @@ sub prefill_data {
 				}
 			}
 			else {
-				if ($field_name =~ /^(Artiste?|Band)$/i){
+				if ($field_name =~ /^(Artiste?s?|Band)$/i){
 					$info->{'artist'} = $field_value;
 				}
 				elsif ($field_name =~ /^(Club|Festival|Lieu|Venue)$/i){
@@ -945,7 +945,10 @@ sub prefill_data {
 					else {
 						$info->{'location'} = $field_value;
 					}
-					$info->{'venue'} = $field_value;
+					# we don't want to use venue if it's a full string: club,city,state
+					if ($field_value !~ /,/){
+						$info->{'venue'} = $field_value;
+					}
 				}
 				elsif ($field_name =~ /^(City|Country|Location|State|Ville)$/i){
 					if ($info->{'location'}){
