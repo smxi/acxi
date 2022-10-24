@@ -1,4 +1,4 @@
-.TH ACXI 1 "2021\-12\-06" acxi "acxi manual"
+.TH ACXI 1 "2022\-10\-22" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -719,8 +719,18 @@ you want to preserve flac tags in your aac audio file.
 .TP
 .B \-\-prefill\fR, \fB\-E\fR
 Will attempt to populate \fBauto.tag\fR file using data from \fBinfo.txt\fR file 
-located in flac directory. Note that the data must have an extremely specific 
-syntax for the prefill feature to work:
+located in flac directory. 
+
+Two distinct methods are used for Artist, Venue, Location, and Date 
+pre\-filling. 
+
+No non Band name, Date, Location info can be on first lines of file before first 
+blank line for either pre\-fill method. 
+
+.B Automatic Detection of Fields
+
+Automatic detection requires that the data must have an extremely specific 
+syntax for this type of prefill to work:
 
 * Band name must be first line in file. 
 
@@ -729,8 +739,15 @@ line, and must be in first 6 lines of file.
 
 * Location can be 1 or more lines not starting with \fB19|20XX\fR on lines 2-6. 
 
-* No non Band name, Date, Location info can be on first lines of file before 
-first blank line.
+.B Using Existing Field Names
+
+Alternately, if the first line contains a known field name, like Artist, Band, 
+etc, followed by a ':' and a value, it will prefill using those values and field 
+names. This tends to be more reliable.
+
+Will also prefill VENUE tag if venue field name found.
+
+.B Both Methods
 
 * Performers list must be preceded by a line starting with \fBBand:\fR, 
 \fBLineup:\fR, \fBLine\-up:\fR, or \fBBand Lineup\fR, \fBBand Line\-up\fR, 
@@ -746,9 +763,9 @@ Should always be run in the flac folder with \fB\-s./\fR or unexpected results
 could occur.
 
 Use together with \fB\-M\fR or \fB\-S\fR to prepopulate the \fBALBUM,\fR 
-\fBARTIST\fR, \fBALBUMARTIST\fR, \fBPERFORMER\fR, \fBDATE\fR, \fBYEAR\fR, and 
-\fBTITLE\fR fields as well. Note that \fBALBUMARTIST\fR is filled with 
-\fBARTIST\fR name.
+\fBARTIST\fR, \fBALBUMARTIST\fR, \fBPERFORMER\fR, \fBDATE\fR,  \fBLOCATION\fR,  
+\fBVENUE\fR (field name method only), \fBYEAR\fR, and \fBTITLE\fR fields as 
+well. Note that \fBALBUMARTIST\fR is filled with \fBARTIST\fR name.
 
 Use the \fB\-\-test\fR option to make sure the data will prefill as expected
 before actually creating the \fBauto.tag\fR file.
@@ -983,13 +1000,13 @@ Show acxi version.
 
 .TP
 .B \-\-z\-min\-size {number}\fR
-Override default value for  \f\-\-analyze\fR min lossless file size alert.
+Override default value for \fB\-\-analyze\fR min lossless file size alert.
 Number is integer KiB, 0\-xxx. 0 disables this test. Can be set in config file,
 see config section.
 
 .TP
 .B \-\-z\-min\-time {number}\fR
-Override default value for  \f\-\-analyze\fR min file duration alert. Number is 
+Override default value for \fB\-\-analyze\fR min file duration alert. Number is 
 integer seconds, 0\-xxx. 0 disables this test. Can be set in config file, see 
 config section.
 

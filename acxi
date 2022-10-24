@@ -3,7 +3,7 @@
 # acxi - audio conversion program
 #########################################################################
 
-# Copyright (c) 2010-2021 - Harald Hope - smxi.org 
+# Copyright (c) 2010-2022 - Harald Hope - smxi.org 
 # Home page: https://github.com/smxi/acxi
 # Forum support: https://techpatterns.com/forums/about1491.html
 # Download url: https://smxi.org/acxi
@@ -63,6 +63,7 @@ use File::Glob qw(:bsd_glob);
 use File::Path qw(rmtree make_path);
 use Cwd qw(getcwd);
 use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
 # use File::Copy::Recursive qw(fcopy rcopy dircopy fmove rmove dirmove);
 # use feature 'unicode_strings';
 # use open qw(:std :utf8); # don't use
@@ -77,24 +78,34 @@ use Data::Dumper;
 
 ## SELF INFO ##
 my $self_name='acxi';
-my $self_version='3.5.02';
-my $self_date='2021-12-06';
+my $self_version='3.5.03';
+my $self_date='2022-10-22';
 
 ## GLOBALS ##
-my %run;
-$run{'sync'} = 1;
+## Booleans
 my ($b_debug,$b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test);
-my ($print_line_heavy,$print_line_large,$print_line_small);
-my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
-$silent_opus) = (7,'','','','','');
-my ($codec,$embed_image,$extension,$exclude_append,@excludes,@excludes_stripped,
-@extension_list,@found_list,$list_type,@source_glob,@tags,$start_dir);
-# default: recurse infinite for File::Find; start tag list track numbers at 1
-my ($padding,$recurse,$start) = ('',-1,1);
 my ($b_check_dest,$b_check_out) = (1,1);
 my $b_win = ($^O =~ /win/i) ? 1 : 0; # detect if $^O returns windows 
-my $path_separator = ($b_win) ? '\\' : '/';
+
+## Undefined Scalars
+my ($print_line_heavy,$print_line_large,$print_line_small);
+my ($codec,$embed_image,$extension,$exclude_append,$list_type,$start_dir);
+
+## Defined Scalars
+my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
+$silent_opus) = (7,'','','','','');
+# default: recurse infinite for File::Find; start tag list track numbers at 1
+my ($padding,$recurse,$start) = ('',-1,1);
+
+## Data Storage Arrays
+my (@excludes,@excludes_stripped,@extension_list,@found_list,@source_glob,@tags);
+
+## Execution Switches Hash
+my %run;
+$run{'sync'} = 1; # set default to sync collection
+
 ## CONSTANTS ##
+my $path_separator = ($b_win) ? '\\' : '/';
 my $line_heavy = "===========================================================================";
 my $line_small = "-----------------------------------------------------------------";
 my $line_large = "---------------------------------------------------------------------------";
@@ -118,7 +129,7 @@ my $line_large = "--------------------------------------------------------------
 # update the values below every time acxi updates.
 #
 # Anything in configs or in this section will be overridden if you use
-# a startup argument.
+# a startup argument which replaces that item's value.
 #### -------------------------------------------------------------------
 #### CUSTOM CONFIGURATION FILE LOCATION
 #### -------------------------------------------------------------------
@@ -421,7 +432,8 @@ sub run {
 		($source_info) = ('');
 		process();
 		if ($type eq 'info'){
-			return info_data(); # returns updated INFO_FILE page contents array
+			info_data(); # updated INFO_FILE page contents array ref
+			return $ref;
 		}
 		else {
 			generate_output(); # print output to screen
@@ -573,7 +585,7 @@ sub info_data {
 		}
 		push(@data,$_);
 	}
-	return @data;
+	$ref = \@data if @data;
 }
 sub generate_output {
 	my $time = main::print_time($total_time);
@@ -878,54 +890,117 @@ sub make_tag_file {
 }
 
 sub prefill_data {
-	my ($b_performer,%info);
+	my ($b_performer,$b_fields,$field_name,$field_value);
 	# no blank lines in band/location/date block, stop after first blank line.
-	my ($b_top_block) = (1);
-	my @data = InfoFix::open_info_file('prefill');
+	my ($b_top_block,$info) = (1,{});
+	my $data = InfoFix::open_info_file('prefill');
 	my $counter = 0;
-	foreach (@data){
+	my $fields = 'Artiste?|Band|City|Club|Country|Date|Festival|Location|State|Lieu|Taper|Venue|Ville';
+	foreach (@$data){
 		$counter++;
 		$_ = main::trimmer($_);
 		$b_top_block = 0 if !$_;
-		if ($counter == 1){
-			$info{'artist'} = $_;
+		# we only want values where something exists, found french syntax, other 
+		# languages will be added if people want them.
+		if ($b_top_block && /^($fields)\s*:\s*(.+)$/i){
+			$b_fields = 1;
+			$field_name = $1;
+			$field_value = $2;
 		}
-		elsif ($b_top_block && $counter < 7 && $_ !~ /^(19|20)[0-9]{2}-/){
-			$_ =~ s/,$//;
-			$info{'location'} .= ', ' . $_ if $info{'location'};
-			$info{'location'} = $_ if !$info{'location'};
+		if ($b_top_block){
+			if (!$b_fields){
+				if ($counter == 1){
+					$info->{'artist'} = $_;
+				}
+				elsif ($counter < 7 && $_ !~ /^(19|20)[0-9]{2}-/){
+					$_ =~ s/,$//;
+					if ($info->{'location'}){
+						if ($info->{'location'} !~ /\Q$_\E/i){
+							$info->{'location'} .= ', ' . $_ ;
+						}
+					}
+					else {
+						$info->{'location'} = $_;
+					}
+					
+				}
+				elsif ($counter < 7 && 
+				$_ =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
+					$info->{'date-print'} = $1;
+					$info->{'date-print'} .= $4 if $4;
+					$info->{'date'} = $1;
+					$info->{'year'} = $2;
+				}
+			}
+			else {
+				if ($field_name =~ /^(Artiste?|Band)$/i){
+					$info->{'artist'} = $field_value;
+				}
+				elsif ($field_name =~ /^(Club|Festival|Lieu|Venue)$/i){
+					if ($info->{'location'}){
+						if ($info->{'location'} !~ /\Q$field_value\E/i){
+							$info->{'location'} .= ', ' . $field_value;
+						}
+					}
+					else {
+						$info->{'location'} = $field_value;
+					}
+					$info->{'venue'} = $field_value;
+				}
+				elsif ($field_name =~ /^(City|Country|Location|State|Ville)$/i){
+					if ($info->{'location'}){
+						if ($info->{'location'} !~ /\Q$field_value\E/i){
+							$info->{'location'} .= ', ' . $field_value;
+						}
+					}
+					else {
+						$info->{'location'} = $field_value;
+					}
+				}
+				elsif ($field_name =~ /^(Date)$/i &&
+				$field_value =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
+					$info->{'date-print'} = $1;
+					$info->{'date-print'} .= $4 if $4;
+					$info->{'date'} = $1;
+					$info->{'year'} = $2;
+				}
+				elsif ($field_name =~ /^(Taper)$/i){
+					$info->{'taper'} = $field_value;
+				}
+			}
 		}
-		elsif ($b_top_block && $counter < 7 && $_ =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
-			$info{'date-print'} = $1;
-			$info{'date-print'} .= $4 if $4;
-			$info{'date'} = $1;
-			$info{'year'} = $2;
-		}
-		elsif (!$b_top_block && $counter > 4 && $_ =~ /^([1-6]-[0-9]{1,2}|[0-9]{1,2})\.\s(.*?)(\s+[\[\(][0-9:\.\s]+[\]\)]\s*)?$/){
-			push(@{$info{'tracks'}},$2);
-		}
-		elsif ($counter > 8 && /^(Band|(Band\s)?Line[\s-]?up|(Band\s)?Members|Performers|Personnel):/i){
-			$b_performer = 1;
-			next;
-		}
-		if ($b_performer && $_){
-			push(@{$info{'performers'}},$_);
-		}
-		elsif ($b_performer && !$_){
-			$b_performer = 0;
+		elsif (!$b_top_block){
+			if (($b_fields || $counter > 4) && 
+			$_ =~ /^([1-6]-[0-9]{1,2}|[0-9]{1,2})\.\s(.*?)(\s+[\[\(][0-9:\.\s]+[\]\)]\s*)?$/){
+				push(@{$info->{'tracks'}},$2);
+			}
+			elsif (($b_fields || $counter > 8) && 
+			/^(Band|(Band\s)?Line[\s-]?up|(Band\s)?Members|Performers|Personnel):/i){
+				$b_performer = 1;
+				next;
+			}
+			if ($b_performer && $_){
+				push(@{$info->{'performers'}},$_);
+			}
+			elsif ($b_performer && !$_){
+				$b_performer = 0;
+			}
+			if (!$info->{'taper'} && $_ =~ /^(Taper)\s*:\s*(.*)/i){
+				$info->{'taper'} = $2;
+			}
 		}
 	}
-	$info{'location'} =~ s/,\s*$// if $info{'location'};
-	# say Data::Dumper::Dumper \%info;
-	return %info;
+	$info->{'location'} =~ s/,\s*$// if $info->{'location'};
+	# say Data::Dumper::Dumper $info;
+	return $info;
 }
 sub populate_tag_file {
 	my ($files) = @_;
-	my (@multi,@replaygain,@tags,%info);
+	my (@multi,@replaygain,@tags,$info);
 	my ($b_first,$j,$holder,$starter) = (1,0,'','');
 	my $counter=$start;
-	%info = prefill_data() if $run{'prefill'};
-	say Data::Dumper::Dumper \%info if $b_debug;
+	$info = prefill_data() if $run{'prefill'};
+	say Data::Dumper::Dumper $info if $b_debug;
 	my @collection = (
 	'## RECORDING NAME/CREATORS ##',
 	'ALBUM','# Name to sort under','ALBUMSORT',
@@ -946,7 +1021,7 @@ sub populate_tag_file {
 	'## RECORDING INFO ##',
 	# note: VENUE and LABEL better handled by xiph spec: LOCATION and ORGANIZATION
 	# Include YEAR to make conversion to mp3 tagging cleaner
-	'GENRE','RATING','DATE','YEAR','LOCATION','PRODUCER','PUBLISHER',
+	'GENRE','RATING','DATE','YEAR','LOCATION','VENUE','PRODUCER','PUBLISHER',
 	'CDDB','ISRC',
 	'# e.g. record label, taper group,, etc. ','ORGANIZATION',
 	'## TECHNICAL INFORMATION ##',
@@ -967,31 +1042,37 @@ sub populate_tag_file {
 	my @track = ('','TRACKNUMBER','TITLE','VERSION','PART','FILE');
 	splice(@track, 1, 0, 'ARTIST') if $run{'multiartist'};
 	@collection = map {$_ .= '%:' if /^[A-Z]/; $_;} @collection;
-	if (%info && @collection){
+	if ($info && %$info && @collection){
 		my @working;
 		foreach my $item (@collection){
-			if ($item =~ /^ARTIST%:/ && $info{'artist'}){
-				$item .= $info{'artist'};
+			if ($item =~ /^ARTIST%:/ && $info->{'artist'}){
+				$item .= $info->{'artist'};
 			}
-			elsif ($item =~ /^ALBUMARTIST%:/ && $info{'artist'}){
-				$item .= $info{'artist'};
+			elsif ($item =~ /^ALBUMARTIST%:/ && $info->{'artist'}){
+				$item .= $info->{'artist'};
 			}
-			elsif ($item =~ /^ALBUM%:/ && ($info{'date-print'} || $info{'location'})){
-				$item .= $info{'date-print'} . ', ' if $info{'date-print'};
-				$item .= $info{'location'} if $info{'location'};
+			elsif ($item =~ /^ALBUM%:/ && ($info->{'date-print'} || $info->{'location'})){
+				$item .= $info->{'date-print'} . ', ' if $info->{'date-print'};
+				$item .= $info->{'location'} if $info->{'location'};
 				$item =~ s/,\s*$//;
 			}
-			elsif ($item =~ /^DATE%:/ && $info{'date'}){
-				$item .= $info{'date'};
+			elsif ($item =~ /^DATE%:/ && $info->{'date'}){
+				$item .= $info->{'date'};
 			}
-			elsif ($item =~ /^YEAR%:/ && $info{'year'}){
-				$item .= $info{'year'};
+			elsif ($item =~ /^YEAR%:/ && $info->{'year'}){
+				$item .= $info->{'year'};
 			}
-			elsif ($item =~ /^LOCATION%:/ && $info{'location'}){
-				$item .= $info{'location'};
+			elsif ($item =~ /^LOCATION%:/ && $info->{'location'}){
+				$item .= $info->{'location'};
 			}
-			elsif ($item =~ /^PERFORMER%:/ && $info{'performers'}){
-				$item .= shift @{$info{'performers'}} if @{$info{'performers'}};
+			elsif ($item =~ /^PRODUCER%:/ && $info->{'taper'}){
+				$item .= $info->{'taper'};
+			}
+			elsif ($item =~ /^VENUE%:/ && $info->{'venue'}){
+				$item .= $info->{'venue'};
+			}
+			elsif ($item =~ /^PERFORMER%:/ && $info->{'performers'}){
+				$item .= shift @{$info->{'performers'}} if @{$info->{'performers'}};
 			}
 			push(@working,$item);
 		}
@@ -1040,14 +1121,14 @@ sub populate_tag_file {
 	@tags = (@collection,@disc);
 	@track = map {$_ .= '%:' if /^[A-Z]/; $_;} @track;
 	my (@disc_working,@info_working);
-	if ($info{'tracks'}){
-		if (scalar(@{$info{'tracks'}}) == scalar(@$files)){
+	if ($info->{'tracks'}){
+		if (scalar(@{$info->{'tracks'}}) == scalar(@$files)){
 			say "File/$INFO_FILE track counts match: " . scalar(@$files);
-			@info_working = @{$info{'tracks'}};
+			@info_working = @{$info->{'tracks'}};
 		}
 		else {
 			main::error_handler('track-counts','Prefill track count mismatch: Files: ' . 
-			scalar(@$files) . '; Info Tracks: ' . scalar(@{$info{'tracks'}}),1);
+			scalar(@$files) . '; Info Tracks: ' . scalar(@{$info->{'tracks'}}),1);
 		}
 	}
 	my ($k,$ma_split) = (0,'');
@@ -1761,15 +1842,15 @@ sub process {
 sub run_fixes {
 	my (@prepped);
 	my ($newlines) = (0);
-	my @data = open_info_file('info-fixes');
-	@data = date_fix(\@data) if $run{'infofix-date'};
-	@data = Analyze::run('info',\@data) if $run{'infofix-quality'};
+	my $data = open_info_file('info-fixes');
+	date_fix($data) if $run{'infofix-date'};
+	$data = Analyze::run('info',$data) if $run{'infofix-quality'};
 	# say Data::Dumper::Dumper \@data;
 	# we want these to be set to uppercase again after autoformat runs
 	my $upper = 'Aud|Cdr?|Sd?b|Ips|Eac|Ak|Az|Ca|Co|Ct|Dc|De|Dk|Fl|Flac|Hd|Hi|Il|';
 	$upper .= 'Ma|Md|Mkw|Mo|Nc|Nh|Nj|Nm|Nyc?|Pa|Ri|Sbd?|Sf|Shn|Tn|Usa|Ut|Wa|';
 	$upper .= 'Wav|Wi|Va|Vt';
-	foreach my $row (@data){
+	foreach my $row (@$data){
 		if ($run{'infofix-lower'}){
 			# set to lower, and make upper first character of each line.
 			$row = ucfirst(lc($row));
@@ -1905,11 +1986,11 @@ sub date_fix {
 		}
 		push(@data,$_);
 	}
-	return @data;
+	$ref = \@data if @data;
 }
 sub open_info_file {
 	my ($source) = @_;
-	my (@data);
+	my $data = [];
 	my ($in1) = ('  ');
 	if ($source eq 'prefill'){
 		chdir "$start_dir";
@@ -1923,16 +2004,16 @@ sub open_info_file {
 	else {
 		open(my $fh, '<', $INFO_FILE) or 
 		main::error_handler('open', "Failed to open: $INFO_FILE with error:\n:$!",1);
-		chomp(@data = <$fh>);
+		chomp(@$data = <$fh>);
 		close $fh if $fh;
 		say 'File found and read';
-		my $count = scalar @data;
+		my $count = scalar @$data;
 		if ($count < 15){
 			main::error_handler('info-file',"$INFO_FILE only had $count lines",1);
 		}
-		push(@data,'') if @data;
+		push(@$data,'') if @$data;
 	}
-	return @data;
+	return $data;
 }
 }
 

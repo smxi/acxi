@@ -9,6 +9,10 @@ https://github.com/smxi/acxi/raw/stable/acxi.changelog
 For complete, up to date, current state of acxi development, features, and 
 fixes.
 
+HTML changelog:
+https://smxi.org/docs/acxi-changelog.htm
+If you find the HTML version of the changelog easier to read.
+
 HTML man page:
 https://smxi.org/docs/acxi-man.htm
 This is highly recommended for new users since it fairly complete and explains 

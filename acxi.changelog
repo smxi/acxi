@@ -1,4 +1,88 @@
 ================================================================================
+Version: 3.5.03
+Patch: 
+Date: 2022-10-22
+--------------------------------------------------------------------------------
+RELEASE NOTES:
+--------------------------------------------------------------------------------
+
+Long overdue update to use info file supplied Field Names: for artist, venue, 
+city, date, taper. This also allows preservation of that more useful syntax when 
+processing info files for data, which has always been a weak spot of this 
+feature.
+
+--------------------------------------------------------------------------------
+KNOWN ISSUES:
+
+1. The terms and names for the field names for prefill will require many more 
+iterations to get reasonably complete in terms of what people really use, but 
+since these are in the end always user generated string values, they will be
+subject to randomness, but we'll get it working usually for most cases, which is
+definitely an improvement.
+
+2. The order, likewise, will be somewhat random, so location in particular may
+be subject to some garbling in the output and will probably require cleanup, but
+still an improvement.
+
+--------------------------------------------------------------------------------
+BUGS:
+
+1. None known.
+
+--------------------------------------------------------------------------------
+FIXES:
+
+1. None
+
+--------------------------------------------------------------------------------
+ENHANCEMENTS:
+
+1. Use field names as triggers to switch to field: value parsing for top artist 
+venue city state date completion for auto.tag generation. This will result in 
+clearly more accurate prefills for those tag items, since we're relying on 
+actual field names, not position in file to identify the field.
+
+2. Added VENUE tag prefill, which is now possible with enhancement 1.
+
+3. Added support for Taper: in info file for prefill of PRODUCER tag. That can 
+be located either in top block, or anywhere else in file.
+
+--------------------------------------------------------------------------------
+CHANGES:
+
+1. None. Delightfully stable.
+
+--------------------------------------------------------------------------------
+DOCUMENTATION:
+
+1. Updated man page for auto.tag prefill using existing field names or automatic 
+detections.
+
+--------------------------------------------------------------------------------
+CODE:
+
+1. Starting process of switching to array/hash references when passed between 
+functions/classes (subs/packages).
+Done: 
+%info to $info hash ref:
+  AutoTag::populate_tag_file()
+  AutoTag::prefill_data()
+
+@data to $data array ref
+  Analyze::info_data() - added $ref return apart from info_data();
+  AutoTag::prefill_data()
+  InfoFix::date_fix() - removed return
+  InfoFix::open_info_file()
+  InfoFix::run_fixes()
+
+2. Reorganized top variables to be more obvious and easy to read/scan.
+
+3. Made Data::Dumper output sort alpha/numeric, makes debugging easier.
+
+--------------------------------------------------------------------------------
+-- Harald Hope - Sun, 23 Oct 2022 17:46:38 -0700
+
+================================================================================
 Version: 3.5.02
 Patch: 
 Date: 2021-12-06
