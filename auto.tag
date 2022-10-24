@@ -68,6 +68,7 @@ DATE%:
 # Format: YYYY
 YEAR%:
 LOCATION%:
+VENUE%:
 PRODUCER%:
 PUBLISHER%:
 # e.g.: label, taper group, etc.
