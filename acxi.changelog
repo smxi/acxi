@@ -1,4 +1,77 @@
 ================================================================================
+Version: 3.5.04
+Patch: 
+Date: 2022-11-05
+--------------------------------------------------------------------------------
+RELEASE NOTES:
+--------------------------------------------------------------------------------
+
+Bug fix, corrections, fine tunings for 0 sized files, or files with 0 audio 
+data.
+
+--------------------------------------------------------------------------------
+SPECIAL THANKS:
+
+1. Everyone helping make Free as in Libre audio possible! xiph.org, Ardour, 
+Audacity. We wouldn't have free audio codecs or tools if it weren't for the 
+years of effort by these people and organizations.
+
+--------------------------------------------------------------------------------
+KNOWN ISSUES:
+
+1. None currently.
+
+--------------------------------------------------------------------------------
+BUGS:
+
+1. For -Xq crashed Perl on 0 length file, was trying to divide by 0 without 
+verifying it was not a zero value first. Added in error handlers, made code
+easier to read.
+
+2. -Z failed to list 0 length/size files, and also failed to show the errors in
+ALERT section. That was only working for > 0 but < Min size/time
+
+--------------------------------------------------------------------------------
+FIXES:
+
+1. With Bug 1, for -Xq, failed to exit on error. We don't want to write bad data 
+to info-fix file! But we do want to not exit for batch -Z jobs, we just want to
+see the error in the output, but we don't want to terminate the analyze bulk 
+action.
+
+2. Show 0 sample/size/duration for -Z, and also show size in B when < 1 KiB. I
+had never considered the matter of < 1 KiB output as having value, but it does.
+
+--------------------------------------------------------------------------------
+ENHANCEMENTS:
+
+1. Added Byte (B) to KiB < 1 print_size(), that allows showing tiny file sizes 
+in error conditions, and avoids showing 0 KiB when it might be 86 Bytes (the 
+size of a 0 sample FLAC).
+
+--------------------------------------------------------------------------------
+CHANGES:
+
+1. Handles 0 size audio source files consistently.
+
+--------------------------------------------------------------------------------
+DOCUMENTATION:
+
+1. No updates.
+
+--------------------------------------------------------------------------------
+CODE:
+
+1. For process_ffprobe() and process_metaflac() changed returns to hash 
+reference. Yes, that's a touch slower than returning an array, but it's much 
+easier to read the code now.
+
+2. Change ffprobe value 'N/A' to undef to allow for easier testing of results.
+
+--------------------------------------------------------------------------------
+-- Harald Hope - Sat, 05 Nov 2022 14:07:00 -0700
+
+================================================================================
 Version: 3.5.03
 Patch: 
 Date: 2022-10-22

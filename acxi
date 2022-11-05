@@ -78,8 +78,8 @@ $Data::Dumper::Sortkeys = 1;
 
 ## SELF INFO ##
 my $self_name='acxi';
-my $self_version='3.5.03';
-my $self_date='2022-10-22';
+my $self_version='3.5.04';
+my $self_date='2022-11-05';
 
 ## GLOBALS ##
 ## Booleans
@@ -441,55 +441,59 @@ sub run {
 	}
 }
 sub process {
+	# If we hit error condition, we want to exit for -Xq, but not for -Z
+	my $b_exit = ($type eq 'info') ? 1: 0;
 	foreach my $source_file (@files){
 		# say "Getting metaflac for file: $source_file";
-		my ($size,$duration,$channels,$sample_rate,$bps,$kbs,$total_samples,$md5sum);
+		my $info;
 		my $escaped = main::escape_item("$source_file");
 		# metaflac is MUCH faster than ffprobe. at least 25-30x faster!!
 		if (lc($INPUT_TYPE eq 'flac' && !$run{'ffprobe'})){
-			($size,$duration,$channels,$sample_rate,$bps,$kbs,$md5sum) = process_metaflac($source_file,$escaped);
+			$info = process_metaflac($source_file,$escaped,$b_exit);
 		}
 		else {
-			($size,$duration,$channels,$sample_rate,$bps,$kbs,$md5sum) = process_ffprobe($source_file,$escaped);
+			$info = process_ffprobe($source_file,$escaped,$b_exit);
 		}
-		if ($size && $duration){
+		# We WANT to see 0 data results.
+		#if ($info->{'size'} && $info->{'duration'}){
 			if ($type eq 'data' || !$source_info){
-				my $source_data = $bps . '/' . sprintf("%.1f", $sample_rate/1000);
+				my $source_data = $info->{'bps'} . '/' . sprintf("%.1f", $info->{'sample-rate'}/1000);
 				$source_info = uc($INPUT_TYPE) . ": $source_data";
-				$source_info .= " ($channels channels)";
+				$source_info .= " ($info->{'channels'} channels)";
 				if ($type eq 'data'){
-					$source_data .= '/' . $channels . 'ch';
+					$source_data .= '/' . $info->{'channels'} . 'ch';
 					if (!grep {$_ eq $source_data} @info){
 						push(@info,$source_data);
 					}
 				}
 			}
-			if ($type eq 'data'){
-				my ($raw_time,$raw_size) = ($duration,$size);
-				my $time_print = 'time: ' . main::print_time($duration);
-				my $size_print = 'size: '. main::print_size($size/1024);
-				my $kbs_print = 'kbs: '. $kbs;
-				if ($VERBOSITY > 2){
-					$time_print .= " ($raw_time seconds)"; 
-					$size_print .= " ($raw_size B)";
-				}
-				$results{$source_file} = [$source_info,$time_print,$size_print,$kbs_print];
-				if ($Z_MIN_TIME && $raw_time < $Z_MIN_TIME){
-					my $msg = "track time (". sprintf("%0.2f",$raw_time);
-					$msg .= " s) less than $Z_MIN_TIME s";
-					push(@{$alerts{$source_file}},$msg); 
-				}
-				if ($Z_MIN_SIZE && ($raw_size/1024) < $Z_MIN_SIZE && $INPUT_TYPE !~ /^(aac|m4a|mp3|ogg|opus)$/){
-					my $msg = "track size (" . main::print_size($raw_size/1024);
-					$msg .= ") less than $Z_MIN_SIZE KiB";
-					push(@{$alerts{$source_file}},$msg); 
-				}
-				# only metaflac stores the hash
-				if ($VERBOSITY > 1 && lc($INPUT_TYPE) eq 'flac'){
-					$md5sum ||= 'N/A';
-					my $ffp_print = 'ffp: ' . $md5sum;
-					splice(@{$results{$source_file}},1,0,$ffp_print);
-				}
+		#}
+		if ($type eq 'data'){
+			my ($raw_time,$raw_size) = ($info->{'duration'},$info->{'size'});
+			my $time_print = 'time: ' . main::print_time($info->{'duration'});
+			my $size_print = 'size: '. main::print_size($info->{'size'}/1024);
+			my $kbs_print = 'kbs: '. $info->{'kbs'};
+			if ($VERBOSITY > 2){
+				$time_print .= " ($raw_time seconds)"; 
+				$size_print .= " ($raw_size B)";
+			}
+			$results{$source_file} = [$source_info,$time_print,$size_print,$kbs_print];
+			if ($Z_MIN_TIME && $raw_time < $Z_MIN_TIME){
+				my $msg = "track time (". sprintf("%0.2f",$raw_time);
+				$msg .= "s) less than ${Z_MIN_TIME}s";
+				push(@{$alerts{$source_file}},$msg); 
+			}
+			if ($Z_MIN_SIZE && ($raw_size/1024) < $Z_MIN_SIZE && 
+			$INPUT_TYPE !~ /^(aac|m4a|mp3|ogg|opus)$/){
+				my $msg = "track size (" . main::print_size($raw_size/1024);
+				$msg .= ") less than $Z_MIN_SIZE KiB";
+				push(@{$alerts{$source_file}},$msg); 
+			}
+			# only metaflac stores the hash
+			if ($VERBOSITY > 1 && lc($INPUT_TYPE) eq 'flac'){
+				$info->{'md5sum'} ||= 'N/A';
+				my $ffp_print = 'ffp: ' . $info->{'md5sum'};
+				splice(@{$results{$source_file}},1,0,$ffp_print);
 			}
 		}
 	}
@@ -501,65 +505,112 @@ sub process {
 }
 
 sub process_ffprobe {
-	my ($source_file,$escaped) = @_;
+	my ($source_file,$escaped,$b_exit) = @_;
 	my (%outcome,@source);
 	my ($size,$duration,$channels,$sample_rate,$bps,$kbs,$md5sum) = (0,0,0,0,0,0,'');
 	@source = qx($COMMAND_FFPROBE -v quiet -print_format flat -show_format -show_streams "$escaped");
 	if (scalar @source < 20){
-		main::error_handler('analyze',"Ffprobe failed to get valid results from file:\n '$source_file'",0);
+		main::error_handler('analyze',
+		"ffprobe failed to get valid results from file:\n '$source_file'",$b_exit);
 	}
 	else {
 		foreach (@source){
 			$_ =~ s/[\r\n]|"//g;
 			my @split = split(/\s*=\s*/,$_);
-			$outcome{$split[0]} = $split[1];
+			$outcome{$split[0]} = (!defined $split[1] || $split[1] eq 'N/A') ? undef : $split[1];
 		}
-		# ($size,$duration,$channels,$sample_rate,$bps,$kbs,$md5sum) = 
-		$size = $outcome{'format.size'} if defined $outcome{'format.size'};
-		$total_size += $size;
-		$duration = $outcome{'format.duration'} if defined $outcome{'format.duration'};
-		$total_time += $duration;
+		# say Data::Dumper::Dumper \@source;
+		if (!$outcome{'format.size'}){
+			main::error_handler('analyze',
+			"ffprobe: source size 0:\n '$source_file'",$b_exit) if $b_exit;
+		}
+		elsif (!$outcome{'format.duration'}){
+			main::error_handler('analyze',
+			"ffprobe: source duration 0:\n '$source_file'",$b_exit) if $b_exit;
+		}
+		if (defined $outcome{'format.size'}){
+			$size = $outcome{'format.size'};
+			$total_size += $size;
+		}
+		if (defined $outcome{'format.duration'}){
+			$duration = $outcome{'format.duration'};
+			$total_time += $duration;
+		}
 		if (defined $outcome{'streams.stream.0.sample_fmt'}){
 			$outcome{'streams.stream.0.sample_fmt'} =~ s/^s//;
 			$bps = $outcome{'streams.stream.0.sample_fmt'};
 		}
-		$sample_rate = $outcome{'streams.stream.0.sample_rate'} if defined $outcome{'streams.stream.0.sample_rate'};
-		$channels = $outcome{'streams.stream.0.channels'} if defined $outcome{'streams.stream.0.channels'};
+		if (defined $outcome{'streams.stream.0.sample_rate'}){
+			$sample_rate = $outcome{'streams.stream.0.sample_rate'};
+		}
+		if (defined $outcome{'streams.stream.0.channels'}){
+			$channels = $outcome{'streams.stream.0.channels'};
+		}
 		if (defined $outcome{'format.bit_rate'}){
 			$kbs = $outcome{'format.bit_rate'};
 			$kbs = sprintf("%.0f",$kbs/1000);
 		}
 	}
-	return ($size,$duration,$channels,$sample_rate,$bps,$kbs,$md5sum);
+	return {
+	'size' => $size,
+	'duration' => $duration,
+	'channels' => $channels,
+	'sample-rate' => $sample_rate,
+	'bps' => $bps,
+	'kbs' => $kbs,
+	'md5sum' => $md5sum
+	};
 }
 sub process_metaflac {
-	my ($source_file,$escaped) = @_;
+	my ($source_file,$escaped,$b_exit) = @_;
 	my (@real);
 	my ($size,$duration,$kbs) = (0,0,0);
 	my @source = qx($COMMAND_METAFLAC --show-channels --show-sample-rate --show-bps --show-total-samples --show-md5sum "$escaped");
 	if (scalar @source != 5){
-		main::error_handler('analyze',"Metaflac failed to get 4 items from file:\n '$source_file'",0);
+		main::error_handler('analyze',
+		"metaflac: failed to get 5 items from file:\n '$source_file'",$b_exit);
 	}
 	else {
 		foreach (@source){
 			$_ =~ s/[\r\n]//g;
 			push(@real,$_);
 		}
-		# say Data::Dumper::Dumper \@source;
-		$duration = ($real[3]/$real[1]);
-		$total_time += $duration;
+		# say $escaped . ' :: ', Data::Dumper::Dumper \@source;
+		# the file will have a size even if it's not valid
+		# stat returns size in bytes. 
 		my @stat = stat($source_file);
-		# stat returns size in bytes
+		# If has embedded image, will change values slightly, that's life.
 		$size = $stat[7];
 		$total_size += $size;
-		# in kilobits per second, not bytes
-		$kbs = $size/$duration/1000*8;
-		$kbs = sprintf("%.0f",$kbs);
-		# say "$stat[7] $stat[11] $stat[12]";
-		# say "s: $size kbs: $kbs";
-		# say "duration: $duration seconds";
+		# Don't show errors here for -Z, only -Xq
+		if (!$real[1]){
+			main::error_handler('analyze',
+			"metaflac: source sample rate 0:\n '$source_file'",$b_exit) if $b_exit;
+		}
+		elsif (!$real[3]){
+			main::error_handler('analyze',
+			"metaflac: source total samples count 0:\n '$source_file'",$b_exit) if $b_exit;
+		}
+		else {
+			$duration = ($real[3]/$real[1]);
+			$total_time += $duration;
+			# in kilobits per second, not bytes
+			$kbs = $size/$duration/1000*8;
+			$kbs = sprintf("%.0f",$kbs);
+		}
 	}
-	return ($size,$duration,$real[0],$real[1],$real[2],$kbs,$real[4]);
+	# say "$stat[7] $stat[11] $stat[12]";
+	# say "s: $size kbs: $kbs";
+	# say "duration: $duration seconds";
+	return {
+	'size' => $size,
+	'duration' => $duration,
+	'channels' => $real[0],
+	'sample-rate' => $real[1],
+	'bps' => $real[2],
+	'kbs' => $kbs,
+	'md5sum' => $real[4]
+	};
 }
 # this will be inserted into $INFO_FILE
 sub info_data {
@@ -2204,18 +2255,18 @@ sub convert_file {
 	my ($src_print,$dest_print) = ($src_file,$dest_file);
 	my ($result,$cmd,$action,$type) = (1000,'','unset',$OUTPUT_TYPE); 
 	my ($encoding,$encoded) = ('Encoding','Encoded');
-	my (@analyze);
+	my ($analyze);
 	# escape characters for conversion processing
 	$src_file = main::escape_item("$src_file");
 	$dest_file = main::escape_item("$dest_file");
 	if ($run{'resample'}){
 		($encoding,$encoded) = ('Resampling','Resampled');
-		# ($size,$duration,$channels,$sample_rate,$bps,$kbs,$md5sum);
-		@analyze = Analyze::process_metaflac($src_print,$src_file);
+		# keys: size,duration,channels,sample-rate,bps,kbs,md5sum;
+		$analyze = Analyze::process_metaflac($src_print,$src_file);
 		my $rate = sprintf("%0.1f",$run{'resample'}->[1]/1000) + 0;
 		$type = $run{'resample'}->[0] . ':' . $rate;
-		$rate = sprintf("%0.1f",$analyze[3]/1000) + 0;
-		$type = "$analyze[4]:$rate to $type"
+		$rate = sprintf("%0.1f",$analyze->{'sample-rate'}/1000) + 0;
+		$type = "$analyze->{'bps'}:$rate to $type"
 	}
 	else {
 		$type = "to $type";
@@ -2274,7 +2325,7 @@ sub convert_file {
 		elsif ($run{'resample'}){
 			$sample_data = '-sample_fmt s' . $run{'resample'}->[0] . ' -ar ' . $run{'resample'}->[1];
 			# note: 0, none, is default for ffmpeg. Don't use dither when bit depth the same
-			if ($run{'resample'}->[0] < 24 && $run{'resample'}->[0] != $analyze[4]){
+			if ($run{'resample'}->[0] < 24 && $run{'resample'}->[0] != $analyze->{'bps'}){
 				$action .= ":$DITHER";
 				$sample_data .= " -dither_method $DITHER";
 			}
@@ -2476,10 +2527,14 @@ sub globber {
 # args: 1 size in KiB
 sub print_size {
 	my ($size) = $_[0];
-	return 'Error' unless $size;
-	my ($k,$m,$g) = ($VERBOSITY < 2) ? (0,1,2): (1,2,3);
+	return 'Error' unless defined $size;
+	my ($b,$k,$m,$g) = ($VERBOSITY < 2) ? (0,0,1,2): (0,1,2,3);
 	my ($unit);
-	if ($size < 1024){
+	if ($size < 1){
+		$unit = 'B';
+		$size = $size * 1024;
+	}
+	elsif ($size < 1024){
 		$unit = 'KiB';
 		$size = sprintf("%.${k}f",$size);
 	}
