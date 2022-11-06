@@ -79,7 +79,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.04';
-my $self_date='2022-11-05';
+my $self_date='2022-11-06';
 
 ## GLOBALS ##
 ## Booleans
@@ -948,7 +948,7 @@ sub prefill_data {
 	my $counter = 0;
 	my $fields = 'Album|AlbumArtist|AlbumSort|Artiste?s?|Band|City|Club|Composer|';
 	$fields .= 'Country|Cover|Date|Event|Festival|Genre|Image|Location|Producer|';
-	$fields .= 'Lieu|State|Taper|Venue|Ville';
+	$fields .= 'Lieu|State|Taper|Venue|Ville|Year';
 	foreach (@$data){
 		$counter++;
 		$_ = main::trimmer($_);
@@ -1031,6 +1031,9 @@ sub prefill_data {
 					$info->{'date'} = $1;
 					$info->{'year'} = $2;
 				}
+				elsif ($field_name =~ /^(Year)$/i){
+					$info->{'year'} = $field_value;
+				}
 				elsif ($field_name =~ /^(Genre)$/i){
 					$info->{'genre'} = $field_value;
 				}
@@ -1074,7 +1077,7 @@ sub prefill_data {
 		}
 	}
 	$info->{'location'} =~ s/,\s*$// if $info->{'location'};
-	 say Data::Dumper::Dumper $info;
+	# say Data::Dumper::Dumper $info;
 	return $info;
 }
 sub populate_tag_file {
@@ -2095,7 +2098,8 @@ sub date_fix {
 			$dd = sprintf('%02d',$3);
 			$yyyy = $4;
 		}
-		elsif (/\b((19[4-9][0-9]|20[0-2][0-9])[\._-]?(0?[1-9]|1[0-2])[\._-]?(0?[1-9]|[12][0-9]|30|31))\b/){
+		# Change YYYY[._/-]MM[._/-]DD 2022-09-23 2022_09_23 2022.09.23 2022/09/23 
+		elsif (/\b((19[4-9][0-9]|20[0-3][0-9])[\.\/_-]?(0?[1-9]|1[0-2])[\._\/-]?(0?[1-9]|[12][0-9]|30|31))\b/){
 			$regex = $1;
 			$yyyy = $2;
 			$mm = sprintf('%02d',$3);

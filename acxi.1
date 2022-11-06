@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-11\-05" acxi "acxi manual"
+.TH ACXI 1 "2022\-11\-06" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -724,28 +724,71 @@ located in flac directory.
 Two distinct methods are used for Artist, Venue, Location, and Date 
 pre\-filling. 
 
-No non Band name, Date, Location info can be on first lines of file before first 
-blank line for either pre\-fill method. 
+No blank lines or unsupported data can be in top block for either pre\-fill method. 
 
 .B Automatic Detection of Fields
 
 Automatic detection requires that the data must have an extremely specific 
 syntax for this type of prefill to work:
 
-* Band name must be first line in file. 
+* Band/Artist name must be first line in file. 
 
-* Date must be iso \fBYYYY-MM-DD\fR formatted, and must be the first thing on its 
-line, and must be in first 6 lines of file. 
+* Date must be iso \fBYYYY\-MM\-DD\fR formatted, and must be the first thing on 
+its line, and must be in first 6 lines of file. See \fB\-Xd\fR to apply date 
+fixes. \fBYEAR\fR is generated from Date.
 
 * Location can be 1 or more lines not starting with \fB19|20XX\fR on lines 2-6. 
+Each non\-date item will be added one by one until it reaches the end of the 
+block, so make sure the block is in the order you want, or, better, use the 
+explicit field name method.
 
 .B Using Existing Field Names
 
-Alternately, if the first line contains a known field name, like Album, 
-AlbumArtist, Artist, Band, Composer, City, State, Country, Location, Event, 
-Festival, Venue, Date, Year, Producer, Taper, Genre, Cover/Image, followed by a 
-colon ':' and a value, it will prefill using those values and map those field 
-names to the proper tag name. This tends to be more reliable.
+Alternately, if the first line contains a supported field name folowed by a ':', 
+pre\-fill will switch to using field names to match to tag names. Note that the 
+field names are not case sensitive. This method is much more reliable than 
+auto\-detection.
+
+All field names must be followed by a ':'. Space before/after ':' optional, and 
+ignored. The value after the colon will be used as the tag value.
+
+If a field name should be added, just let us know what it is and we'll add it.
+
+Supported field names, and their corresponding tag name:
+
+.nf
+\fBALBUM\fR \- Album: 
+\fBALBUMARTIST\fR \- AlbumArtist
+\fBALBUMSORT\fR \- AlbumSort
+\fBARTIST\fR \- Artist, Artists, Artiste, Artistes, Band
+\fBCOMPOSER\fR \- Composer
+\fBDATE\fR \- Date
+\fBGENRE\fR \- Genre
+\fBIMAGE\fR \- Cover,Image
+\fBLOCATION\fR \- City, State, Country, Lieu, Location, Ville.
+\fBPRODUCER\fR \- Producer, Taper
+\fBVENUE\fR \- Club, Event, Festival, Venue
+\fBYEAR\fR \- Year
+.fi
+
+Notes:
+
+* \fBALBUM\fR is constructed out of \fBDATE\fR, \fBLOCATION\fR, \fBVENUE\fR  
+if \fBAlbum\fR not explicitly supplied.
+
+* \fBBand:\fR will trigger \fBARTIST\fR only if in top block, before first 
+empty line, since \fBBand:\fR can also be used to trigger \fBPERFORMERS\fR 
+prefill if not in top block.
+
+* \fBComposer:\fR is usually classical only, but up to you.
+
+* \fBVENUE\fR will also be added to \fBLOCATION\fR if no \fBALBUM\fR set.
+
+* See \fB\-Xd\fR for date fixes, prefill only accepts YYYY\-MM\-DD formatting.
+
+* \fBDATE\fR will be prepended to \fBALBUM\fR if no ALBUM supplied.
+
+* \fBYEAR\fR is generated from \fBDATE\fR if no Year: supplied. 
 
 Sample:
 .nf\fB
@@ -755,24 +798,19 @@ Year: 1975
 Cover: cover.jpg\fR
 .fi
 
-Let us know if a standard field name is not handled, and we'll add it.
-
-Adds these prefill tag options: \fBALBUM\fR (if no Album field name, constructs 
-from Date Location Venue strings), \fBALBUMARTIST\fR (with AlbumArtist, 
-otherwise uses Artist), \fBALBUMSORT\fR, \fBCOMPOSER\fR, 
-\fBIMAGE\fR, \fBPRODUCER\fR, \fBVENUE\fR.
-
 .B Both Methods
 
 * Performers list must be preceded by a line starting with \fBBand:\fR, 
 \fBLineup:\fR, \fBLine\-up:\fR, or \fBBand Lineup\fR, \fBBand Line\-up\fR, 
-\fBMembers:\fR, or \fBBand Members\fR, and must be followed by a blank line, 
-with no empty lines between performers.
+\fBMembers:\fR, or \fBBand Members\fR, and must be followed by the band members 
+list, with no empty lines between performers.
 
 * Track numbers must start with either \fBX-X.\fR, \fBX-XX.\fR (for multidisc), 
 \fBX.\fR or \fBXX.\fR where \fBX\fR is a number. The number of tracks listed 
 must correspoond to the total number of actual track files present. If they do 
 not match in counts, acxi will exit with an error.
+
+* Cover:/Image:, Genre:, Producer:/Taper: do not need to be in top block.
 
 Should always be run in the flac folder with \fB\-s./\fR or unexpected results 
 could occur.
