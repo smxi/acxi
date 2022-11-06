@@ -741,11 +741,26 @@ line, and must be in first 6 lines of file.
 
 .B Using Existing Field Names
 
-Alternately, if the first line contains a known field name, like Artist, Band, 
-etc, followed by a ':' and a value, it will prefill using those values and field 
-names. This tends to be more reliable.
+Alternately, if the first line contains a known field name, like Album, 
+AlbumArtist, Artist, Band, Composer, City, State, Country, Location, Event, 
+Festival, Venue, Date, Year, Producer, Taper, Genre, Cover/Image, followed by a 
+':' and a value, it will prefill using those values and map those field names to 
+the proper tag name. This tends to be more reliable.
 
-Will also prefill VENUE tag if venue field name found.
+Sample:
+.nf\fB
+Artist: The Band 
+Album: Darkness in the Sunlight
+Year: 1975
+Cover: cover.jpg\fR
+.fi
+
+Let us know if a standard field name is not handled, and we'll add it.
+
+Adds these prefill tag options: \fBALBUM\fR (if no Album field name, constructs 
+from Date Location Venue strings), \fBALBUMARTIST\fR (with AlbumArtist, 
+otherwise uses Artist), \fBALBUMSORT\fR, \fBCOMPOSER\fR, 
+\fBIMAGE\fR, \fBPRODUCER\fR, \fBVENUE\fR.
 
 .B Both Methods
 
@@ -762,10 +777,11 @@ not match in counts, acxi will exit with an error.
 Should always be run in the flac folder with \fB\-s./\fR or unexpected results 
 could occur.
 
-Use together with \fB\-M\fR or \fB\-S\fR to prepopulate the \fBALBUM,\fR 
-\fBARTIST\fR, \fBALBUMARTIST\fR, \fBPERFORMER\fR, \fBDATE\fR,  \fBLOCATION\fR,  
-\fBVENUE\fR (field name method only), \fBYEAR\fR, and \fBTITLE\fR fields as 
-well. Note that \fBALBUMARTIST\fR is filled with \fBARTIST\fR name.
+Use together with \fB\-M\fR or \fB\-S\fR to prepopulate the \fBALBUM (if no 
+Album field name, constructs from Date Location Venue strings),\fR \fBARTIST\fR, 
+\fBALBUMARTIST\fR (Uses Artist unless field name AlbumArtist used), 
+\fBPERFORMER\fR, \fBDATE\fR, \fBLOCATION\fR, \fBYEAR\fR, and track \fBTITLE\fR 
+fields as well. 
 
 Use the \fB\-\-test\fR option to make sure the data will prefill as expected
 before actually creating the \fBauto.tag\fR file.
@@ -1274,7 +1290,7 @@ or
 .\" don't change this line until new acxi out for a while, used for -U test
 acxi is a fork and full rewrite of flac2ogg.pl.
 
-Copyright (c) Harald Hope, 2010\-2021
+Copyright (c) Harald Hope, 2010\-2022
 
 Initial forking logic: prupert. 2019-07
 

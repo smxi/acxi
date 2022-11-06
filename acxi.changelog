@@ -7,7 +7,8 @@ RELEASE NOTES:
 --------------------------------------------------------------------------------
 
 Bug fix, corrections, fine tunings for 0 sized files, or files with 0 audio 
-data.
+data. Also more prefill field names, to let you fully auto-complete your 
+auto.tag file from the info file.
 
 --------------------------------------------------------------------------------
 SPECIAL THANKS:
@@ -49,6 +50,10 @@ ENHANCEMENTS:
 in error conditions, and avoids showing 0 KiB when it might be 86 Bytes (the 
 size of a 0 sample FLAC).
 
+2. Added Album, AlbumArtist, AlbumSort, Composer, Event, Genre, Cover/Image, 
+Producer to prefill field name options. This lets you use the info file to fully 
+complete the auto.tag file, no edits needed.
+
 --------------------------------------------------------------------------------
 CHANGES:
 
@@ -57,7 +62,8 @@ CHANGES:
 --------------------------------------------------------------------------------
 DOCUMENTATION:
 
-1. No updates.
+1. Updated man page for new supported prefill field names, and also listed most 
+of the supported ones.
 
 --------------------------------------------------------------------------------
 CODE:

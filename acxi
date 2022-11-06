@@ -946,7 +946,9 @@ sub prefill_data {
 	my ($b_top_block,$info) = (1,{});
 	my $data = InfoFix::open_info_file('prefill');
 	my $counter = 0;
-	my $fields = 'Artiste?s?|Band|City|Club|Country|Date|Festival|Location|State|Lieu|Taper|Venue|Ville';
+	my $fields = 'Album|AlbumArtist|AlbumSort|Artiste?s?|Band|City|Club|Composer|';
+	$fields .= 'Country|Cover|Date|Event|Festival|Genre|Image|Location|Producer|';
+	$fields .= 'Lieu|State|Taper|Venue|Ville';
 	foreach (@$data){
 		$counter++;
 		$_ = main::trimmer($_);
@@ -955,7 +957,7 @@ sub prefill_data {
 		# languages will be added if people want them.
 		if ($b_top_block && /^($fields)\s*:\s*(.+)$/i){
 			$b_fields = 1;
-			$field_name = $1;
+			$field_name = lc($1);
 			$field_value = $2;
 		}
 		if ($b_top_block){
@@ -973,7 +975,6 @@ sub prefill_data {
 					else {
 						$info->{'location'} = $_;
 					}
-					
 				}
 				elsif ($counter < 7 && 
 				$_ =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
@@ -987,7 +988,16 @@ sub prefill_data {
 				if ($field_name =~ /^(Artiste?s?|Band)$/i){
 					$info->{'artist'} = $field_value;
 				}
-				elsif ($field_name =~ /^(Club|Festival|Lieu|Venue)$/i){
+				elsif ($field_name =~ /^(Album)$/i){
+					$info->{'album'} = $field_value;
+				}
+				elsif ($field_name =~ /^(AlbumArtist)$/i){
+					$info->{'albumartist'} = $field_value;
+				}
+				elsif ($field_name =~ /^(AlbumSort)$/i){
+					$info->{'albumsort'} = $field_value;
+				}
+				elsif ($field_name =~ /^(Club|Event|Festival|Lieu|Venue)$/i){
 					if ($info->{'location'}){
 						if ($info->{'location'} !~ /\Q$field_value\E/i){
 							$info->{'location'} .= ', ' . $field_value;
@@ -1011,6 +1021,9 @@ sub prefill_data {
 						$info->{'location'} = $field_value;
 					}
 				}
+				elsif ($field_name =~ /^(Composer)$/i){
+					$info->{'composer'} = $field_value;
+				}
 				elsif ($field_name =~ /^(Date)$/i &&
 				$field_value =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
 					$info->{'date-print'} = $1;
@@ -1018,34 +1031,50 @@ sub prefill_data {
 					$info->{'date'} = $1;
 					$info->{'year'} = $2;
 				}
-				elsif ($field_name =~ /^(Taper)$/i){
-					$info->{'taper'} = $field_value;
+				elsif ($field_name =~ /^(Genre)$/i){
+					$info->{'genre'} = $field_value;
+				}
+				elsif ($field_name =~ /^(Producer|Taper)$/i){
+					$info->{'producer'} = $field_value;
+				}
+				elsif ($field_name =~ /^(Cover|Image)$/i){
+					$info->{'image'} = $field_value;
 				}
 			}
 		}
 		elsif (!$b_top_block){
+			# Start building tracks, note: on other lines can start with numbers like this!
 			if (($b_fields || $counter > 4) && 
 			$_ =~ /^([1-6]-[0-9]{1,2}|[0-9]{1,2})\.\s(.*?)(\s+[\[\(][0-9:\.\s]+[\]\)]\s*)?$/){
 				push(@{$info->{'tracks'}},$2);
 			}
+			# Start building performers
 			elsif (($b_fields || $counter > 8) && 
-			/^(Band|(Band\s)?Line[\s-]?up|(Band\s)?Members|Performers|Personnel):/i){
+			/^(Band|(Band\s)?Line[\s_-]?up|(Band\s)?Members|Performers|Personnel):/i){
 				$b_performer = 1;
 				next;
 			}
 			if ($b_performer && $_){
 				push(@{$info->{'performers'}},$_);
 			}
+			# first white space after performer list
 			elsif ($b_performer && !$_){
 				$b_performer = 0;
 			}
-			if (!$info->{'taper'} && $_ =~ /^(Taper)\s*:\s*(.*)/i){
-				$info->{'taper'} = $2;
+			# some random stuff if it wasn't in top block
+			if (!$info->{'producer'} && $_ =~ /^(Producer|Taper)\s*:\s*(.*)/i){
+				$info->{'producer'} = $2;
+			}
+			elsif (!$info->{'genre'} && $_ =~ /^(Genre)\s*:\s*(.*)$/i){
+				$info->{'genre'} = $2;
+			}
+			elsif (!$info->{'image'} && $_ =~ /^(Cover|Image)\s*:\s*(.*)$/i){
+				$info->{'image'} = $2;
 			}
 		}
 	}
 	$info->{'location'} =~ s/,\s*$// if $info->{'location'};
-	# say Data::Dumper::Dumper $info;
+	 say Data::Dumper::Dumper $info;
 	return $info;
 }
 sub populate_tag_file {
@@ -1099,34 +1128,77 @@ sub populate_tag_file {
 	if ($info && %$info && @collection){
 		my @working;
 		foreach my $item (@collection){
-			if ($item =~ /^ARTIST%:/ && $info->{'artist'}){
-				$item .= $info->{'artist'};
+			if ($item eq 'ARTIST%:'){
+				if ($info->{'artist'}){
+					$item .= $info->{'artist'};
+				}
 			}
-			elsif ($item =~ /^ALBUMARTIST%:/ && $info->{'artist'}){
-				$item .= $info->{'artist'};
+			elsif ($item eq 'ALBUMARTIST%:'){
+				if ($info->{'artist'} || $info->{'albumartist'}){
+					$item .= ($info->{'albumartist'}) ? $info->{'albumartist'} : $info->{'artist'};
+				}
 			}
-			elsif ($item =~ /^ALBUM%:/ && ($info->{'date-print'} || $info->{'location'})){
-				$item .= $info->{'date-print'} . ', ' if $info->{'date-print'};
-				$item .= $info->{'location'} if $info->{'location'};
-				$item =~ s/,\s*$//;
+			elsif ($item eq 'ALBUM%:'){
+				if ($info->{'album'} || $info->{'date-print'} || $info->{'location'}){
+					if ($info->{'album'}){
+						$item .= $info->{'album'};
+					}
+					else {
+						$item .= $info->{'date-print'} . ', ' if $info->{'date-print'};
+						$item .= $info->{'location'} if $info->{'location'};
+						$item =~ s/,\s*$//;
+					}
+				}
 			}
-			elsif ($item =~ /^DATE%:/ && $info->{'date'}){
-				$item .= $info->{'date'};
+			if ($item eq 'ALBUMSORT%:'){
+				if ($info->{'albumsort'}){
+					$item .= $info->{'albumsort'};
+				}
 			}
-			elsif ($item =~ /^YEAR%:/ && $info->{'year'}){
-				$item .= $info->{'year'};
+			elsif ($item eq 'COMPOSER%:'){
+				if ($info->{'composer'}){
+					$item .= $info->{'composer'};
+				}
 			}
-			elsif ($item =~ /^LOCATION%:/ && $info->{'location'}){
-				$item .= $info->{'location'};
+			elsif ($item eq 'DATE%:'){
+				if ($info->{'date'}){
+					$item .= $info->{'date'};
+				}
 			}
-			elsif ($item =~ /^PRODUCER%:/ && $info->{'taper'}){
-				$item .= $info->{'taper'};
+			elsif ($item eq 'YEAR%:'){
+				if ($info->{'year'}){
+					$item .= $info->{'year'};
+				}
 			}
-			elsif ($item =~ /^VENUE%:/ && $info->{'venue'}){
-				$item .= $info->{'venue'};
+			elsif ($item eq 'LOCATION%:'){
+				if ($info->{'location'}){
+					$item .= $info->{'location'};
+				}
 			}
-			elsif ($item =~ /^PERFORMER%:/ && $info->{'performers'}){
-				$item .= shift @{$info->{'performers'}} if @{$info->{'performers'}};
+			elsif ($item eq 'PRODUCER%:'){
+				if ($info->{'producer'}){
+					$item .= $info->{'producer'};
+				}
+			}
+			elsif ($item eq 'VENUE%:'){
+				if ($info->{'venue'}){
+					$item .= $info->{'venue'};
+				}
+			}
+			elsif ($item eq 'PERFORMER%:'){
+				if ($info->{'performers'} && @{$info->{'performers'}}){
+					$item .= shift @{$info->{'performers'}};
+				}
+			}
+			elsif ($item eq 'GENRE%:'){
+				if ($info->{'genre'}){
+					$item .= $info->{'genre'};
+				}
+			}
+			elsif ($item eq 'IMAGE%:'){
+				if ($info->{'image'}){
+					$item .= $info->{'image'};
+				}
 			}
 			push(@working,$item);
 		}
@@ -2062,7 +2134,7 @@ sub open_info_file {
 		close $fh if $fh;
 		say 'File found and read';
 		my $count = scalar @$data;
-		if ($count < 15){
+		if ($count < 10){
 			main::error_handler('info-file',"$INFO_FILE only had $count lines",1);
 		}
 		push(@$data,'') if @$data;
@@ -2528,11 +2600,11 @@ sub globber {
 sub print_size {
 	my ($size) = $_[0];
 	return 'Error' unless defined $size;
-	my ($b,$k,$m,$g) = ($VERBOSITY < 2) ? (0,0,1,2): (0,1,2,3);
+	my ($k,$m,$g) = ($VERBOSITY < 2) ? (0,1,2): (1,2,3);
 	my ($unit);
 	if ($size < 1){
 		$unit = 'B';
-		$size = $size * 1024;
+		$size = sprintf("%.0f", ($size * 1024));
 	}
 	elsif ($size < 1024){
 		$unit = 'KiB';
