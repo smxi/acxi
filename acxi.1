@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-11\-06" acxi "acxi manual"
+.TH ACXI 1 "2022\-11\-08" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -1195,14 +1195,14 @@ to sync the music files, not copy over images, text files, etc.
 
 \fBQUALITY_FLAC\fR \- Sample: \fBQUALITY_FLAC=5\fR Supported values: 0\-8. 0 is 
 the largest file size / fastest to run. 5 to 8 shows only a tiny decrease in 
-file size but a huge increase in time to process, so 4 is a good balance in 
+file size but a large increase in time to process, so 4 is a good balance in 
 general.
 
-\fBQUALITY_MP3\fR \- Sample: \fBQUALITY_MP3=2\fR Supported values: 0\-9. 0 is 
-the largest file size / highest quality.
+\fBQUALITY_MP3\fR \- Sample: \fBQUALITY_MP3=2\fR Supported values: 0\-9.999. 0 
+is the largest file size / highest quality. Decimals OK.
 
-\fBQUALITY_OGG\fR \- Sample: \fBQUALITY_OGG=8.25q\fR Supported values: \-1 to 
-10. 10 is the largest file size / highest quality. Supports fractions.
+\fBQUALITY_OGG\fR \- Sample: \fBQUALITY_OGG=8.25\fR Supported values: \-1 to 
+10. 10 is the largest file size / highest quality. Decimals OK.
 
 \fBQUALITY_OPUS\fR \- Sample: \fBQUALITY_OPUS=256\fR Supported values: 6\-256. 
 256 is the largest file size / highest quality / best bitrate.
@@ -1296,7 +1296,7 @@ changed for non\-GNU/Linux systems in most cases.
 
 \fBCOMMAND_CURL\fR \- Sample: \fBCOMMAND_CURL=/usr/local/bin\fR
 
-\fBMAN_DIRECTORY\fR \- Sample: \fBSELF_DIRECTORY=/usr/share/man/man1\fR This is 
+\fBMAN_DIRECTORY\fR \- Sample: \fBMAN_DIRECTORY=/usr/share/man/man1\fR This is 
 the directory the man page is in.
 
 \fBSELF_DIRECTORY\fR \- Sample: \fBSELF_DIRECTORY=/usr/bin\fR This is the 

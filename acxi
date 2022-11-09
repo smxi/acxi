@@ -79,7 +79,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.04';
-my $self_date='2022-11-06';
+my $self_date='2022-11-08';
 
 ## GLOBALS ##
 ## Booleans
@@ -3338,9 +3338,9 @@ sub check_quality{
 		}
 	}
 	elsif (lc($OUTPUT_TYPE) eq 'mp3'){
-		if ($QUALITY_MP3 !~ m/^[0-9]$/){
+		if ($QUALITY_MP3 !~ m/^[0-9](\.\d{1,3})?$/){
 			$b_error = 1;
-			$error_message .= "\n $OUTPUT_TYPE only supports 0-9 quality levels. ";
+			$error_message .= "\n $OUTPUT_TYPE only supports 0-9.999 quality levels. ";
 			$error_message .= "You entered: $QUALITY_MP3";
 		}
 		else {
@@ -3571,11 +3571,11 @@ sub show_options {
 	$output .= "                  require input type flac. To preserve flac tags for aac, use\n";
 	$output .= "                  m4a. Current value: $OUTPUT_TYPE\n";
 	$output .= "--quality, -q {n} Qualities for output types:\n";
-	$output .= "                  flac: n between 0 and 8. 8 best, but > 4 generally pointless.\n";
-	$output .= "                  aac/m4a: n between 10 and 500. 500 best quality.\n";           
-	$output .= "                  ogg: n between -1 and 10. Fractions ok. 10 best quality.\n";
-	$output .= "                  opus: n between 6-256. Variable bit rate. 256 best quality.\n";
-	$output .= "                  mp3: n between 0-9. Variable bit rate, 0 best quality.\n";
+	$output .= "                  flac: n 0-8. 8 smallest, but > 4 generally pointless.\n";
+	$output .= "                  aac/m4a: n 10-500. 500 best quality.\n";           
+	$output .= "                  ogg: n -1-10. 10 best quality. Decimals OK.\n";
+	$output .= "                  opus: n 6-256. Variable bit rate. 256 best quality.\n";
+	$output .= "                  mp3: n 0-9.999. Variable bit rate, 0 best quality. Decimals OK.\n";
 	$output .= "                  Current values: $QUALITY_AAC (aac/m4a); $QUALITY_MP3 (mp3); \n";
 	$output .= "                  $QUALITY_OGG (ogg); $QUALITY_OPUS (opus)\n";
 	$output .= "--resample        {bit depth:sample rate khz} - Supports bit depth 16|20|24 and\n";

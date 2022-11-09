@@ -26,6 +26,9 @@ FIXES:
 
 2. Removed prefill debugger.
 
+3. lame -V supports 0 - 9.999, not 9, though you'd never want to use 9.999 
+because it would really suck. Added decimal support.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
@@ -39,6 +42,8 @@ DOCUMENTATION:
 
 1. For --prefill/-E, improved field name documentation in man page, otherwise 
 who could guess? Tedious, but best to list the field names and rules.
+
+2. Fixed some man page typos and errors.
 
 --------------------------------------------------------------------------------
 CODE:
