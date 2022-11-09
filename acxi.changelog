@@ -45,6 +45,11 @@ who could guess? Tedious, but best to list the field names and rules.
 
 2. Fixed some man page typos and errors.
 
+3. Added sample acxi.conf file for packagers to include if they want. That's 
+helpful since you can't realistically run acxi without setting at least basic
+configurations, though you can if you have standard program locations, and use
+the CLI switches each time you run acxi, but that gets tedious.
+
 --------------------------------------------------------------------------------
 CODE:
 

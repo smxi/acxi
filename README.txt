@@ -165,6 +165,9 @@ acxi supports configuration files at either /etc/acxi.conf, or user override
 files $XDG_CONFIG_HOME/acxi.conf, $HOME/.acxi.conf, or $HOME/.config/acxi.conf. 
 The user configuration values override any /etc/acxi.conf values.
 
+Sample acxi.conf file included here if you want to use that in a package or as
+your configuration file.
+
 See the man page for complete explanations.
 
 If your system does not have the $HOME or $XDG_CONFIG_HOME environmental 
