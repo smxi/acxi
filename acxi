@@ -78,8 +78,8 @@ $Data::Dumper::Sortkeys = 1;
 
 ## SELF INFO ##
 my $self_name='acxi';
-my $self_version='3.5.04';
-my $self_date='2022-11-08';
+my $self_version='3.5.05';
+my $self_date='2022-11-09';
 
 ## GLOBALS ##
 ## Booleans
@@ -3668,7 +3668,9 @@ sub show_options {
 	$output .= "                  and song name. Examples:\n";
 	$output .= "                  \'at:-\' (2. Artist - Title); \'ta\:\\' (2. Title \\ Artist)\n";
 	$output .= "                  Separator: one or more non-space characters that separate the\n";
-	$output .= "                  two. Must not be present in the first part.\n";
+	$output .= "                  artist/title values. Separator must have 1 or more spaces on each\n";
+	$output .= "                  side in the info track title. Invalid: 'at:-' Band-Title\n";
+	$output .= "                  Valid: 'at:-' Band-Name - Title\n";
 	$output .= "--nlink           Set \$File::Find::dont_use_nlink = 0. Expert use only.\n";
 	$output .= "--no-dot          Override user configuration setting for DOT (--dot) [default].\n";
 	$output .= "--no-ffp          Skips ffp processing on --checksum or --checksum-verify.\n";

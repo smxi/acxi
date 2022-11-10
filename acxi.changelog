@@ -1,23 +1,30 @@
 ================================================================================
 Version: 3.5.05
 Patch: 
-Date: 2022-??-??
+Date: 2022-11-09
 --------------------------------------------------------------------------------
 RELEASE NOTES:
 --------------------------------------------------------------------------------
 
+A code and man and options cleanup, plus adding sample acxi.conf for packagers
+and users who might like to see what configs look like.
 
 --------------------------------------------------------------------------------
 SPECIAL THANKS:
 
+1. Xiph.org, for all their great work in support of free software audio. And all
+their cool little tools, like suishyball abx tester.
 
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
 
+1. Nothing really, adding support for DSD/DSF > FLAC conversion would be nice, 
+but is hardly critical or essential.
 
 --------------------------------------------------------------------------------
 BUGS:
 
+1. Nothing except debugger left in place by accident.
 
 --------------------------------------------------------------------------------
 FIXES:
@@ -32,10 +39,12 @@ because it would really suck. Added decimal support.
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
+1. Prefill improvements.
 
 --------------------------------------------------------------------------------
 CHANGES:
 
+1. No changes to speak of.
 
 --------------------------------------------------------------------------------
 DOCUMENTATION:
@@ -53,9 +62,10 @@ the CLI switches each time you run acxi, but that gets tedious.
 --------------------------------------------------------------------------------
 CODE:
 
+1. Some cleanups, but nothing major.
 
 --------------------------------------------------------------------------------
--- Harald Hope - Sun, 06 Nov 2022 13:34:27 -0800
+-- Harald Hope - Wed, 09 Nov 2022 16:30:27 -0800
 
 ================================================================================
 Version: 3.5.04

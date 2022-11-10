@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-11\-08" acxi "acxi manual"
+.TH ACXI 1 "2022\-11\-09" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -625,7 +625,8 @@ Tags transfer from AIF files that are tagged to FLAC files in my tests.
 Use with \fB\-\-prefill\fR if the recording is multiartist, and the source info 
 file is in Artist [separator] Title or Title [separator] Artist format. Note 
 that all track titles must be in the same format, and the first item before the 
-separator cannot contain the separator.
+separator cannot contain the separator. There must be 1 or more spaces before 
+and after the [sep] value in the info track string.
 
 * \fBat\fR \- Artist [sep] Title
 .br
@@ -644,7 +645,7 @@ Example (info file track title format: 03. Song \\\\ Band Name):
 \fBpinxi \-s ./ \-SE \-\-ma 'ta:\\\\'\fR
 .fi
 
-Not OK (info file track title format: 23. Band-Name - Song). This would result 
+Not OK (info file track title format: 23. Band \- Name - Song). This would result 
 in the following:
 .br
 Artist: \fBBand\fR
@@ -654,12 +655,16 @@ Title: \fBName - Song\fR
 If you have such a conflict, simply change separators in the info file to 
 a character that does not occur in the first item.
 
+However, this format: \fB23. Band\-Name - Song\fR works fine, since there are no 
+spaces around the first \-.
+
 You must use single quotes around the argument or things like backslashes may 
 behave oddly. Do not include whitespaces in the separator value. The separator
 itself cannot contain a whitespace.
 
 If the match fails for some reason, \fBacxi\fR will exit with error message 
-telling you which track title and separator failed.
+telling you which track title and separator failed. It will often be because 
+there was a space missing on one or both sides of the separator.
 
 .TP
 .B \-\-nlink\fR
