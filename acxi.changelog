@@ -59,6 +59,8 @@ helpful since you can't realistically run acxi without setting at least basic
 configurations, though you can if you have standard program locations, and use
 the CLI switches each time you run acxi, but that gets tedious.
 
+4. Added LICENSE.txt file. That's GPL v3 or later, as usual.
+
 --------------------------------------------------------------------------------
 CODE:
 
