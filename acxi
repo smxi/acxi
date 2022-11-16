@@ -89,8 +89,7 @@ my $b_win = ($^O =~ /win/i) ? 1 : 0; # detect if $^O returns windows
 
 ## Undefined Scalars
 my ($print_line_heavy,$print_line_large,$print_line_small);
-my ($codec,$copy_append,$embed_image,$extension,$exclude_append,$list_type,
-$start_dir);
+my ($codec,$embed_image,$extension,$exclude_append,$list_type,$start_dir);
 
 ## Defined Scalars
 my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
