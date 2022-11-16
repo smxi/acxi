@@ -3761,15 +3761,12 @@ sub set_basic_data {
 	if (defined $COPY_TYPES){
 		@extension_list = split(/,\s*/, $COPY_TYPES);
 	}
-	if ($copy_append){
-		push(@extension_list,split(/,\s*/, $copy_append));
-	}
 	$DESTINATION_DIRECTORY =~ s|$path_separator$||;
 	$SOURCE_DIRECTORY =~ s|$path_separator$||;
 	$CONFIG_DIRECTORY =~ s|$path_separator$|| if $CONFIG_DIRECTORY;
 	$INPUT_TYPE = lc($INPUT_TYPE) if $INPUT_TYPE;
 	$OUTPUT_TYPE = lc($OUTPUT_TYPE) if $OUTPUT_TYPE;
-	@extension_list = (@extension_list,$INPUT_TYPit wiE);
+	@extension_list = (@extension_list,$INPUT_TYPE);
 	$File::Find::dont_use_nlink = $DONT_USE_NLINK;
 	if ($run{'source-glob'}){
 		$run{'source-glob'} =~ s|$path_separator$||;
@@ -4128,10 +4125,6 @@ sub get{
 		$COPY_TYPES = $arg;
 		$test{'sync'} = 1;
 		},
-	'copy-append:s' => sub { 
-		my ($opt,$arg) = @_;
-		main::error_handler('missing-arg',"$opt requires append list.",1) if !$arg;
-		$copy_append = $arg },
 	'debug' => sub { 
 		$b_debug = 1;},
 	'd|destination:s' => sub { 
