@@ -1,7 +1,7 @@
 ================================================================================
-Version: 3.5.05
+Version: 3.5.06
 Patch: 
-Date: 2022-11-15
+Date: 2022-??-??
 --------------------------------------------------------------------------------
 RELEASE NOTES:
 --------------------------------------------------------------------------------
@@ -26,10 +26,9 @@ FIXES:
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
-1. New feature: --copy-append. Allows, like --exclude-append, to add one or more 
-extensions to copy extension list. Uses comma separated values.
+1. Added field name 'Artist / Band' to Artist prefill field name list. 
 
-2. Added field name 'Artist / Band' to Artist prefill field name list. 
+2. Added alternate --copy-append to --append/-a, to make it more obvious.
 
 --------------------------------------------------------------------------------
 CHANGES:

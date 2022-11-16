@@ -3530,8 +3530,10 @@ sub show_options {
 	$output .= "$self_name --copy doc,docx,bmp\n";
 	$output .= $line_small . "\n";
 	$output .= "Syncing options:\n";
-	$output .= "--append, -a      Add extension type(s) to existing extension copy list.\n";
+	$output .= "--append, --copy-append, -a\n";
+	$output .= "                  Add extension type(s) to existing extension copy list.\n";
 	$output .= "                  1 or more, comma separated, no spaces.\n";
+	$output .= "                  Sample: -a tag,pdf\n";
 	$output .= "--clean           Clean directories and files from destination not found in\n";
 	$output .= "                  source music directory. Will show you directories/files to\n";
 	$output .= "                  be deleted then ask you to confirm (twice) that you want to\n";
@@ -3539,13 +3541,12 @@ sub show_options {
 	$output .= "                  optional value 'sync' is used: --clean sync\n";
 	$output .= "--codec           {libfdk-aac|aac} - if you want to use alternate codec.\n";
 	$output .= "                  Output -o aac/m4a only\n";
-	$output .= "--copy, -c        List of alternate data types to copy to Output type\n";
-	$output .= "                  directories. Comma separated, no spaces. See sample above.\n";
+	$output .= "--copy, -c        Comma separated list of alternate data types to copy to Output\n";
+	$output .= "                  type directories. Comma separated, no spaces.\n";
 	$output .= "                  Current copy types: ";
 	$output .= (length(join(' ',@extension_list))>40) ? "\n                  " : '';
 	$output .= "@extension_list\n";
-	$output .= "--copy-append     Add comma separated extensions to list of copy extensions.\n";
-	$output .= "                  Sample: --copy-append tag,pdf\n";
+	$output .= "                  Sample: -c png,jpg,pdf,txt,tag\n";
 	$output .= "--destination, -d Path to the directory where you want the processed\n";
 	$output .= "                  (eg, ogg) files to go.\n";
 	$output .= "                  Current value: $DESTINATION_DIRECTORY\n";
@@ -3768,7 +3769,7 @@ sub set_basic_data {
 	$CONFIG_DIRECTORY =~ s|$path_separator$|| if $CONFIG_DIRECTORY;
 	$INPUT_TYPE = lc($INPUT_TYPE) if $INPUT_TYPE;
 	$OUTPUT_TYPE = lc($OUTPUT_TYPE) if $OUTPUT_TYPE;
-	@extension_list = (@extension_list,$INPUT_TYPE);
+	@extension_list = (@extension_list,$INPUT_TYPit wiE);
 	$File::Find::dont_use_nlink = $DONT_USE_NLINK;
 	if ($run{'source-glob'}){
 		$run{'source-glob'} =~ s|$path_separator$||;
@@ -3987,7 +3988,7 @@ sub get{
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';},
-	'a|append:s' => sub { 
+	'a|append|copy-append:s' => sub { 
 		my ($opt,$arg) = @_;
 		$COPY_TYPES .= ',' . $arg if $arg;},
 	'A|autotag' => sub { 

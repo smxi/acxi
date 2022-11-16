@@ -195,14 +195,15 @@ all size / time results.
 Note that default for flac is metaflac, unless you use \fB\-\-ffprobe\fR, which 
 does not have hashes. Use metaflac for flac, it's about 25x or more faster than 
 ffprobe!!
+
 .TP
-.B \-\-append\fR, \fB\-a {extensions}\fR
+.B \-\-append\fR, \fB\-\-copy\-append\fR, \fB\-a {extensions}\fR
 Takes one or more comma separated extensions. Do not use whitespaces in this 
 list. These will be appended on to the current list being used on a one time 
 basis. This can be useful if you want to copy over a specific file type for one 
 sync action without having to make a full list with \fB\-c\fR.
 
-Sample: \fBacxi \-a md5\fR will add md5 file type to copy list.
+Sample: \fBacxi \-a tag,md5\fR will add md5 and tag file type to copy list.
 
 .TP
 .B \-\-autotag\fR, \fB\-A\fR
@@ -390,13 +391,6 @@ Default values are: bmp doc docx gif jpg jpeg odt pdf png tif txt
 If you use no value, it will not copy anything.
 
 Sample: \fB\-c txt,pdf,png,jpg,jpeg,gif\fR
-
-.TP
-.B \-\-copy\-append {extensions}\fR
-Add to comma separated extensions to existing list of copy file extensions. This 
-will retain standard copy extensions, and just add the supplied extra ones.
-
-Sample:  \fB\-\-copy-append tag,pdf\fR
 
 .TP
 .B \-\-debug\fR
