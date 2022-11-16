@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-11\-09" acxi "acxi manual"
+.TH ACXI 1 "2022\-11\-15" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -22,8 +22,9 @@ Checksums: \fBacxi\fR [\fB\-\-analyze\fR, \fB\-Z\fR]
 .IP * 2
 Syncing: \fBacxi\fR [\fB\-\-append\fR, \fB\-a\fR {extensions}] 
 [\fB\-\-clean\fR] [\fB\-\-codec\fR {aac|libfdk_aac2}] 
-[\fB\-\-copy\fR, \fB\-c\fR {extensions}] [\fB\-\-dither\fR {dither\-type}]
-[\fB\-\-dot\fR] [\fB\-\-exclude\fR, \fB\-x\fR {filename|extension}] 
+[\fB\-\-copy\fR, \fB\-c\fR {extensions}] [\fB\-\-copy\-append \fR {extensions}] 
+[\fB\-\-dither\fR {dither\-type}] [\fB\-\-dot\fR] 
+[\fB\-\-exclude\fR, \fB\-x\fR {filename|extension}] 
 [\fB\-\-exclude\-append\fR, \fB\-y\fR {filename|extension}] 
 [\fB\-\-force\fR, \fB\-f\fR] [\fB\-\-fork\fR, \fB\-F\fR {0-xx}]
 [\fB\-\-input\fR, \fB\-i\fR {flac|raw|shn|wave}] 
@@ -389,6 +390,13 @@ Default values are: bmp doc docx gif jpg jpeg odt pdf png tif txt
 If you use no value, it will not copy anything.
 
 Sample: \fB\-c txt,pdf,png,jpg,jpeg,gif\fR
+
+.TP
+.B \-\-copy\-append {extensions}\fR
+Add to comma separated extensions to existing list of copy file extensions. This 
+will retain standard copy extensions, and just add the supplied extra ones.
+
+Sample:  \fB\-\-copy-append tag,pdf\fR
 
 .TP
 .B \-\-debug\fR

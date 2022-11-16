@@ -79,7 +79,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.05';
-my $self_date='2022-11-09';
+my $self_date='2022-11-15';
 
 ## GLOBALS ##
 ## Booleans
@@ -89,7 +89,8 @@ my $b_win = ($^O =~ /win/i) ? 1 : 0; # detect if $^O returns windows
 
 ## Undefined Scalars
 my ($print_line_heavy,$print_line_large,$print_line_small);
-my ($codec,$embed_image,$extension,$exclude_append,$list_type,$start_dir);
+my ($codec,$copy_append,$embed_image,$extension,$exclude_append,$list_type,
+$start_dir);
 
 ## Defined Scalars
 my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
@@ -3543,6 +3544,8 @@ sub show_options {
 	$output .= "                  Current copy types: ";
 	$output .= (length(join(' ',@extension_list))>40) ? "\n                  " : '';
 	$output .= "@extension_list\n";
+	$output .= "--copy-append     Add comma separated extensions to list of copy extensions.\n";
+	$output .= "                  Sample: --copy-append tag,pdf\n";
 	$output .= "--destination, -d Path to the directory where you want the processed\n";
 	$output .= "                  (eg, ogg) files to go.\n";
 	$output .= "                  Current value: $DESTINATION_DIRECTORY\n";
@@ -3756,6 +3759,9 @@ sub set_basic_data {
 	# if --copy/-c is set, then use that data instead of default copy types
 	if (defined $COPY_TYPES){
 		@extension_list = split(/,\s*/, $COPY_TYPES);
+	}
+	if ($copy_append){
+		push(@extension_list,split(/,\s*/, $copy_append));
 	}
 	$DESTINATION_DIRECTORY =~ s|$path_separator$||;
 	$SOURCE_DIRECTORY =~ s|$path_separator$||;
@@ -4121,6 +4127,10 @@ sub get{
 		$COPY_TYPES = $arg;
 		$test{'sync'} = 1;
 		},
+	'copy-append:s' => sub { 
+		my ($opt,$arg) = @_;
+		main::error_handler('missing-arg',"$opt requires append list.",1) if !$arg;
+		$copy_append = $arg },
 	'debug' => sub { 
 		$b_debug = 1;},
 	'd|destination:s' => sub { 
