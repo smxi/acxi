@@ -946,9 +946,9 @@ sub prefill_data {
 	my ($b_top_block,$info) = (1,{});
 	my $data = InfoFix::open_info_file('prefill');
 	my $counter = 0;
-	my $fields = 'Album|AlbumArtist|AlbumSort|Artiste?s?|Band|City|Club|Composer|';
-	$fields .= 'Country|Cover|Date|Event|Festival|Genre|Image|Location|Producer|';
-	$fields .= 'Lieu|State|Taper|Venue|Ville|Year';
+	my $fields = 'Album|AlbumArtist|AlbumSort|Artiste?s?|Artist\s*\/\s*Band|Band|';
+	$fields .= 'City|Club|Composer|Country|Cover|Date|Event|Festival|Genre|Image|';
+	$fields .= 'Location|Producer|Lieu|State|Taper|Venue|Ville|Year';
 	foreach (@$data){
 		$counter++;
 		$_ = main::trimmer($_);
@@ -985,7 +985,7 @@ sub prefill_data {
 				}
 			}
 			else {
-				if ($field_name =~ /^(Artiste?s?|Band)$/i){
+				if ($field_name =~ /^(Artiste?s?|Artist\s*\/\s*Band|Band)$/i){
 					$info->{'artist'} = $field_value;
 				}
 				elsif ($field_name =~ /^(Album)$/i){
