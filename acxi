@@ -79,7 +79,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.05';
-my $self_date='2022-11-15';
+my $self_date='2022-11-21';
 
 ## GLOBALS ##
 ## Booleans
@@ -941,7 +941,8 @@ sub make_tag_file {
 }
 
 sub prefill_data {
-	my ($b_performer,$b_fields,$field_name,$field_value);
+	my ($b_fields,$b_performer,$b_tracks_end,$b_tracks_start,
+	$field_name,$field_value);
 	# no blank lines in band/location/date block, stop after first blank line.
 	my ($b_top_block,$info) = (1,{});
 	my $data = InfoFix::open_info_file('prefill');
@@ -1046,10 +1047,17 @@ sub prefill_data {
 			}
 		}
 		elsif (!$b_top_block){
+			# see InfoFix::run_fixes as well if changing the terminator regex
+			if (!$b_tracks_end && $b_tracks_start && 
+			/^\s*[:^_<>]{1,}?(E[ST]L?|END([\s_-]?(SETLIST|TRACKS))?)?[:^_<>]{1,}\s*$/i){
+				$b_tracks_end = 1;
+			}
 			# Start building tracks, note: on other lines can start with numbers like this!
-			if (($b_fields || $counter > 4) && 
+			# but with terminator not issue after tracklist, but can be before.
+			if (($b_fields || $counter > 4) && !$b_tracks_end && 
 			$_ =~ /^([1-6]-[0-9]{1,2}|[0-9]{1,2})\.\s(.*?)(\s+[\[\(][0-9:\.\s]+[\]\)]\s*)?$/){
 				push(@{$info->{'tracks'}},$2);
+				$b_tracks_start = 1;
 			}
 			# Start building performers
 			elsif (($b_fields || $counter > 8) && 
@@ -1971,6 +1979,7 @@ sub process {
 sub run_fixes {
 	my (@prepped);
 	my ($newlines) = (0);
+	my ($b_tracks_end);
 	my $data = open_info_file('info-fixes');
 	date_fix($data) if $run{'infofix-date'};
 	$data = Analyze::run('info',$data) if $run{'infofix-quality'};
@@ -2010,8 +2019,13 @@ sub run_fixes {
 		else {
 			$newlines++;
 		}
+		# see AutoTag::prefill_data() as well if changing the terminator regex
+		if (!$b_tracks_end &&
+		$row =~ /^\s*[:^_<>]{1,}?(E[ST]L?|END([\s_-]?(SETLIST|TRACKS))?)?[:^_<>]{1,}\s*$/i){
+			$b_tracks_end = 1;
+		}
 		# 1-4 / 1-12 / 12 / 213
-		if (($run{'infofix-no'} || $run{'infofix-title'}) && 
+		if (($run{'infofix-no'} || $run{'infofix-title'}) && !$b_tracks_end &&
 		 $row =~ /^(\s*(([1-9]-)([0-9]{1,2})|([0-9]{1,2}|[0-9]{3}))(\]\s*|\.\s*|\s*-\s*|\s*\)\s*|:\s*|\s+))/){
 			# say "$1 '$6'";
 			if ($run{'infofix-no'}){

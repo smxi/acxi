@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-11\-15" acxi "acxi manual"
+.TH ACXI 1 "2022\-11\-21" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -568,7 +568,8 @@ Values (can be combined):
 files that have all upper case, but a lot of sentences. You will have to go back 
 in and correct items. Good in combination with \fBt\fR.
 
-* \fBn\fR \- fix track numbering to be consistent '0X. ' or 'Y-0X'
+* \fBn\fR \- fix track numbering to be consistent '0X. ' or 'Y-0X'. See 
+\fB\-\-prefill\fR track terminators for stopping at end of track listing.
 
 * \fBq\fR \- add in 2 technical quality info lines after top header. Reads flac 
 file in directory to determine bit rate, sampling frequency, and channels. 
@@ -581,7 +582,8 @@ Quality: /4 ()\fR
 .fi
 
 * \fBt\fR \- smart upper case first track titles only. Requires Perl module 
-\fBText::Autoformat\fR.
+\fBText::Autoformat\fR. See \fB\-\-prefill\fR track terminators for stopping at 
+end of track listing.
 
 * \fBu\fR \- run upper case first smart fix. Requires Perl module 
 \fBText::Autoformat\fR.
@@ -817,6 +819,39 @@ list, with no empty lines between performers.
 \fBX.\fR or \fBXX.\fR where \fBX\fR is a number. The number of tracks listed 
 must correspoond to the total number of actual track files present. If they do 
 not match in counts, acxi will exit with an error.
+
+* You can add a terminator to the Setlist/Tracks etc to stop creating and 
+counting tracks. This helps when there are numbered comments, numbered per track 
+notes, and so on, which could then trigger a track count mismatch exit error. 
+Also makes it so you don't have to do anything to the info file other than add 
+the terminator string. Not case sensitive. Supported:
+
+One or more: \fB:^_<>\fR followed by zero or one ES, ESL, ET, ETL, END, 
+END\-TRACKS, END_TRACKS, END TRACKS, END\-SETLIST, END_SETLIST, END SETLIST, 
+terminating in 1 or more \fB:^_<>\fR.
+
+Sample:
+.nf\fB
+Tracks:
+...
+09. Second to last Track
+10. Last track
+
+:::
+
+Comments:
+1. The first track was written by Jeff.
+2. The second track was written by Frank.
+...\fR
+.if
+
+Other track prefill terminators might be \fB^END:\fR, \fB:END_TRACKS:\fR, 
+\fB^_\fR, \fB<>\fR, and so on.
+
+Must be only characters on line. \fB\-\fR and \fB=\fR not supported because 
+syntax like \-\-\-\-\-\- is a very common part of info file track values.
+
+Also used with \fB\-Xn\fR and \fB\-Xt\fR.
 
 * Cover:/Image:, Genre:, Producer:/Taper: do not need to be in top block.
 
