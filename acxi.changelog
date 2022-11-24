@@ -58,6 +58,9 @@ times don't get included in the track TITLE info.
 6. Added {...} syntax for ignoring track times. Note that track times have to be
 at end of Title string, otherwise it's a pain to do the logic.
 
+7. Added .st5 and shntool.txt types to --checksum-delete. Those are almost 
+always from SHN files, and aren't relevant anymore.
+
 --------------------------------------------------------------------------------
 CHANGES:
 
