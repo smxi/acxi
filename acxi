@@ -79,7 +79,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.05';
-my $self_date='2022-11-22';
+my $self_date='2022-11-24';
 
 ## GLOBALS ##
 ## Booleans
@@ -2026,14 +2026,18 @@ sub run_fixes {
 		}
 		# 1-4 / 1-12 / 12 / 213
 		if (($run{'infofix-no'} || $run{'infofix-time'} || $run{'infofix-title'}) && !$b_tracks_end &&
-		 $row =~ /^(\s*(([1-9]-)([0-9]{1,2})|([0-9]{1,2}|[0-9]{3}))(\]\s*|\.\s*|\s*-\s*|\s*\)\s*|:\s*|\s+))/){
+		 $row =~ /^(\s*((d?[1-9][t-])([0-9]{1,2})|t?([0-9]{1,2}|[0-9]{3}))(\]\s*|\.\s*|\s*-\s*|\s*\)\s*|:\s*|\s+))/){
 			# say "$1 '$6'";
 			if ($run{'infofix-no'}){
 				# say "$1 $2 $3";
 				my $nu = (defined $4) ? $4 : $5;
 				my $disc = (defined $3) ? $3 : '';
 				my $pattern = $1;
-				if ($nu =~ /^([1-9])([0-9]{2})$/){
+				if ($pattern =~ /^d([1-9])t(\d{1,2})/){
+					$nu = $2;
+					$disc = $1 . '-';
+				}
+				elsif ($nu =~ /^([1-9])([0-9]{2})$/){
 					$nu = $2;
 					$disc = $1 . '-';
 				}
