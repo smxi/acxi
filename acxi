@@ -3679,6 +3679,8 @@ sub show_options {
 	$output .= "--image, -I {jpg,png image file name|remove}\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
+	$output .= "--info-file, --prefill-file {file name}\n";
+	$output .= "                  Alternate file name to use for --prefill or --infofix.\n";
 	$output .= "--infofix, -X [dnqtuw]\n";
 	$output .= "                  Fix info.txt files. Use any combination. Always cleans white\n";
 	$output .= "                  space issues.\n";
@@ -3709,8 +3711,6 @@ sub show_options {
 	$output .= "                  Expert use only.\n";
 	$output .= "--prefill, -E     Attempt to prefill auto.tag file using info.txt data. See man\n";
 	$output .= "                  for required syntax and structure of data in info file.\n";
-	$output .= "--prefill-file {file name}\n";
-	$output .= "                  Alternate file name to use for --prefill.\n";
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
 	
 	$output .= "--recurse {0-xx}  Set directory recursion levels. Default infinite. Useful\n";
@@ -4483,7 +4483,7 @@ sub verify_selections {
 	# info-file requires either prefill or infofix options
 	if ($test{'info-file'} && !$test{'autotag-create'} && !$test{'infofix'}){
 		main::error_handler('invalid-options', 
-		 "--info-file requires --infofix; --prefill-file requires --autotag-create.",1);
+		 "--info-file/--prefill-file require --infofix or --autotag-create.",1);
 	}
 	# prefill options require tag-create options
 	if ($test{'prefill'} && !$test{'autotag-create'}){

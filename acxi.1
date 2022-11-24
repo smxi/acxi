@@ -38,11 +38,11 @@ Tagging: \fBacxi\fR [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-autotag\-create\-single\fR, \fB\-S\fR] 
 [\fB\-\-autotag\-create\-multi\fR, \fB\-M\fR {filename start ID}]
 [\fB\-\-image\fR, \fB\-I\fR {cover image filename}]
+[\fB\-\-info\-file\fR, \fB\-\-prefill\-file\fR {release info file name}] 
 [\fB\-\-infofix\fR, \fB\-X\fR [d|l|m|n|q|t|u|w]] 
 [\fB\-\-info\-rating\fR {2\-xxx}
 [\fB\-\-multiartist\fR, \fB\-\-ma\fR {[at|ta]:separator}]
 [\fB\-\-prefill\fR, \fB\-E\fR] 
-[\fB\-\-prefill\-file\fR {release info file name}] 
 [\fB\-\-no\-replaygain\fR] [\fB\-\-recurse\fR {-1-xx}] 
 [\fB\-\-remove\-images\fR, \fB\-R\fR] [\fB\-\-remove\-padding\fR, \fB\-P\fR] 
 [\fB\-\-start\fR {0-xx}] 
@@ -539,6 +539,12 @@ acxi \-s ./ \-RI cover.jpg\fR
 .fi
 
 .TP
+.B \-\-info\-file\fR, \fB\-\-prefill\-file {file name}\fR
+An alternate file name to use for prefill or infofix. Note that file MUST have a 
+*.txt extension, and should not be anything other than ASCII or UTF8, otherwise 
+you will get ungood results.
+
+.TP
 .B \-\-infofix\fR, \fB\-X [d|l|n|q|t|u|w]\fR
 Correct common corruptions to info.txt files. Only to correct these common 
 issues:
@@ -878,10 +884,9 @@ Samples:
 \fBacxi \-s./ \-EM d%\-\fR [multi disc, file name sample: d2\-track04.flac];
 
 .TP
-.B \-\-prefill\-file {file name}\fR
-An alternate file name to use for prefill. Note that file MUST be .txt, and 
-should not be anything other than ASCII or UTF8, otherwise you will get ungood 
-results.
+.B \-\-prefill\-file\fR, \fB\-\-info\-file {file name}\fR
+.br
+See \fB\-\-info\-file\fR.
 
 .TP
 .B \-\-quality\fR, \fB\-q {number}\fR
