@@ -245,7 +245,7 @@ my $Z_MIN_TIME = 10; # in seconds
 #### -------------------------------------------------------------------
 #### AUTO TAGGING
 #### -------------------------------------------------------------------
-# For -P/--prefill, can be overridden with config or --prefill-file []
+# For -S/-M/--prefill/--infofix can be overridden with config or --info-file []
 my $INFO_FILE = 'info.txt';
 # For -Xf, the rating shown in Quality: /[rating] item.
 my $INFO_RATING = 4;
@@ -4033,7 +4033,7 @@ sub get{
 		$run{'clean'} = 0;
 		$run{'checksum'} = 0;
 		$run{'checksum-verify'} = 0;
-		$test{'tag-create'} = 1;
+		$test{'autotag-create'} = 1;
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';
@@ -4052,7 +4052,7 @@ sub get{
 		$run{'clean'} = 0;
 		$run{'checksum'} = 0;
 		$run{'checksum-verify'} = 0;
-		$test{'tag-create'} = 1;
+		$test{'autotag-create'} = 1;
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';
@@ -4065,7 +4065,7 @@ sub get{
 		$run{'clean'} = 0;
 		$run{'checksum'} = 0;
 		$run{'checksum-verify'} = 0;
-		$test{'tag-create'} = 1;
+		$test{'autotag-create'} = 1;
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';
@@ -4227,6 +4227,12 @@ sub get{
 		$b_check_out = 0;
 		$test{'tag'} = 1;
 		},
+	'info-file|prefill-file:s' => sub { 
+		my ($opt,$arg) = @_;
+		main::error_handler('missing-arg',"$opt requires file name.",1) if !$arg;
+		$INFO_FILE = $arg;
+		$test{'info-file'} = 1;
+		},
 	'X|infofix:s' => sub { 
 		my ($opt,$arg) = @_;
 		$run{'infofix'} = 1;
@@ -4313,13 +4319,6 @@ sub get{
 		$test{'info'} = 1;
 		$test{'prefill'} = 1;
 		},
-	'prefill-file:s' => sub { 
-		my ($opt,$arg) = @_;
-		main::error_handler('missing-arg',"$opt requires file name.",1) if !$arg;
-		$INFO_FILE = $arg;
-		$test{'info'} = 1;
-		$test{'prefill'} = 1;
-		},
 	'q|quality:f' => sub { 
 		my ($opt,$arg) = @_;
 		if (!defined $arg || $arg !~ /^-?[0-9\.]+$/){
@@ -4382,7 +4381,7 @@ sub get{
 			main::error_handler('missing-arg',$msg,1);
 		}
 		$start = $arg;
-		$test{'tag-create'} = 1;
+		$test{'autotag-create'} = 1;
 		},
 	'T|tag:s' => sub { 
 		my ($opt,$arg) = @_;
@@ -4454,18 +4453,18 @@ sub verify_selections {
 		$test{'sync'} = 0;
 	}
 	# prevent tagging/checksum operations without explicitly set source
-	if (!$test{'source'} && ($test{'tag'} || $test{'tag-create'} || 
+	if (!$test{'source'} && ($test{'tag'} || $test{'autotag-create'} || 
 	$test{'info'} || $test{'aggregate'} || $test{'checksum'})){
 		main::error_handler('invalid-options', 
 		 "Explicit --source is required for all tagging/checksum options.",1);
 	}
 	# prevent running any tagging options with syncing options
-	if (($test{'clean'} || $test{'sync'}) && ($test{'tag'} || $test{'tag-create'} || 
+	if (($test{'clean'} || $test{'sync'}) && ($test{'tag'} || $test{'autotag-create'} || 
 	$test{'info'} || $test{'checksum'})){
 		main::error_handler('invalid-options', 
 		 "Tagging/checksum options cannot be used with clean/sync options.",1);
 	}
-	if ($test{'infofix'} && ($test{'prefill'} && $test{'tag-create'})){
+	if ($test{'infofix'} && $test{'prefill'} && $test{'autotag-create'}){
 		main::error_handler('invalid-options', 
 		 "Info Fix cannot be combined with any other option except --source.",1);
 	}
@@ -4481,8 +4480,13 @@ sub verify_selections {
 		main::error_handler('invalid-options', 
 		 "--source-glob/-g cannot be used with --clean/--prefill.",1);
 	}
+	# info-file requires either prefill or infofix options
+	if ($test{'info-file'} && !$test{'autotag-create'} && !$test{'infofix'}){
+		main::error_handler('invalid-options', 
+		 "--info-file requires --infofix; --prefill-file requires --autotag-create.",1);
+	}
 	# prefill options require tag-create options
-	if ($test{'prefill'} && !$test{'tag-create'}){
+	if ($test{'prefill'} && !$test{'autotag-create'}){
 		main::error_handler('invalid-options', 
 		 "Prefill requires either --autotag-create-multi or --autotag-create-single.",1);
 	}
@@ -4492,23 +4496,23 @@ sub verify_selections {
 	}
 	# aggregate requires destination and cannot be used with any other action
 	if ($test{'aggregate'} && (!$test{'destination'} || ($test{'sync'} || 
-	$test{'tag'} || $test{'tag-create'} || $test{'info'} || $test{'checksum'}))){
+	$test{'tag'} || $test{'autotag-create'} || $test{'info'} || $test{'checksum'}))){
 		main::error_handler('invalid-options', 
 		 "Aggregate requires destination and cannot be combined with any other actions.",1);
 	}
 	# checksum can only be run with tagging/image, like -AD -AK
-	if ($test{'checksum'} && ($test{'sync'} || $run{'test'} || $test{'tag-create'} || 
+	if ($test{'checksum'} && ($test{'sync'} || $run{'test'} || $test{'autotag-create'} || 
 	$test{'info'})){
 		main::error_handler('invalid-options', 
 		 "Checksum options cannot be used with clean/sync/image/auto.tag-create options.",1);
 	}
 	# tagging can only be used with checksum or other tagging options like -I, -R
-	if ($test{'tag'} && ($test{'sync'} || $test{'clean'} || $test{'tag-create'})){
+	if ($test{'tag'} && ($test{'sync'} || $test{'clean'} || $test{'autotag-create'})){
 		main::error_handler('invalid-options', 
 		 "Tagging cannot be used with tag-create/aggregate/clean/sync options.",1);
 	}
 	# creating auto.tag cannot be combined with sync, checksum, or tagging
-	if ($test{'tag-create'} && ($test{'sync'} || $test{'clean'} || $test{'checksum'} || 
+	if ($test{'autotag-create'} && ($test{'sync'} || $test{'clean'} || $test{'checksum'} || 
 	$test{'tag'})){
 		main::error_handler('invalid-options', 
 		 "autotag-create cannot be used with tagging/image/clean/sync/checksum options.",1);

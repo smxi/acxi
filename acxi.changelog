@@ -6,14 +6,24 @@ Date: 2022-??-??
 RELEASE NOTES:
 --------------------------------------------------------------------------------
 
+A big prefill/infofix release. Many more possible info file syntaxes handled,
+new -X fix options, corrections, bug fixes.
 
 --------------------------------------------------------------------------------
 SPECIAL THANKS:
 
+1. All the pioneers over decades who helped create the entire concept of live 
+audience recordings, first and foremost, of course, the entire Grateful Dead 
+tape trading network, which created etree and archive.org type live concert 
+distribution, not to mention the original torrent tools to finally replace the
+awful tape dubbing that had been the only option before that. 
 
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
 
+1. Failing to use the Tracklist terminator strings can lead to the info file 
+getting unwanted changes to items after the set/track list. Solution of course
+is to just add the terminator, but it's worth mentioning anyway.
 
 --------------------------------------------------------------------------------
 BUGS:
@@ -30,6 +40,10 @@ FIXES:
 1. Forgot some words in -h for -M.
 
 2. For -Xn, added support for common legacy numbering syntaxes: d1t12, t12 
+
+3. Added optional --info-file for --prefill-file, that should also be active for
+--infofix, not just -S, -E autotag. Also fixed validation which was a little too
+tight on that combo.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
@@ -70,10 +84,13 @@ CHANGES:
 --------------------------------------------------------------------------------
 DOCUMENTATION:
 
+1. Man, help changes for new features, enhanced features, etc.
 
 --------------------------------------------------------------------------------
 CODE:
 
+1. Changed $test{'tag-create'} to $test{'autotag-create'} to make it consistent
+with the %run values, too confusing otherwise.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Tue, 15 Nov 2022 17:25:50 -0800
