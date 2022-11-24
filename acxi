@@ -2043,7 +2043,7 @@ sub run_fixes {
 			}
 			if ($run{'infofix-time'}){
 				# add parenthese, also change [..], {...} to (..)
-				$row =~ s/\s+(:?\d{1,2}(:\d{2}){1,2})(\s+|$)/ ($1)/;
+				$row =~ s/\s+:?(\d{1,2}(:\d{2}){1,2})(\s+|$)/ ($1)/;
 				$row =~ s/\)(\S)/) $1/; # add space after if not EOL.
 				$row =~ s/\s\s+/ /g; # make sure we didn't add in an extra space
 			}
