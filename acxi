@@ -79,7 +79,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.05';
-my $self_date='2022-11-21';
+my $self_date='2022-11-22';
 
 ## GLOBALS ##
 ## Booleans
@@ -1055,7 +1055,7 @@ sub prefill_data {
 			# Start building tracks, note: on other lines can start with numbers like this!
 			# but with terminator not issue after tracklist, but can be before.
 			if (($b_fields || $counter > 4) && !$b_tracks_end && 
-			$_ =~ /^([1-6]-[0-9]{1,2}|[0-9]{1,2})\.\s(.*?)(\s+[\[\(][0-9:\.\s]+[\]\)]\s*)?$/){
+			$_ =~ /^([1-6]-\d{1,2}|\d{1,2})\.\s(.*?)(\s+[\[\(\{][\d:\.\s]+[\]\)\}]\s*)?$/){
 				push(@{$info->{'tracks'}},$2);
 				$b_tracks_start = 1;
 			}
@@ -2025,7 +2025,7 @@ sub run_fixes {
 			$b_tracks_end = 1;
 		}
 		# 1-4 / 1-12 / 12 / 213
-		if (($run{'infofix-no'} || $run{'infofix-title'}) && !$b_tracks_end &&
+		if (($run{'infofix-no'} || $run{'infofix-time'} || $run{'infofix-title'}) && !$b_tracks_end &&
 		 $row =~ /^(\s*(([1-9]-)([0-9]{1,2})|([0-9]{1,2}|[0-9]{3}))(\]\s*|\.\s*|\s*-\s*|\s*\)\s*|:\s*|\s+))/){
 			# say "$1 '$6'";
 			if ($run{'infofix-no'}){
@@ -2040,6 +2040,12 @@ sub run_fixes {
 				$nu = sprintf('%02d',$nu);
 				$nu = $disc . $nu if $disc;
 				$row =~ s/^\Q$pattern\E/$nu. /;
+			}
+			if ($run{'infofix-time'}){
+				# add parenthese, also change [..], {...} to (..)
+				$row =~ s/\s+(\d{1,2}(:\d{2}){1,2})(\s+|$)/ ($1)/;
+				$row =~ s/\)(\S)/) $1/; # add space after if not EOL.
+				$row =~ s/\s\s+/ /g; # make sure we didn't add in an extra space
 			}
 			if ($run{'infofix-title'}){
 				foreach my $style (qw(highlight)){
@@ -2113,7 +2119,8 @@ sub date_fix {
 			$yyyy = $4;
 		}
 		# Change YYYY[._/-]MM[._/-]DD 2022-09-23 2022_09_23 2022.09.23 2022/09/23 
-		elsif (/\b((19[4-9][0-9]|20[0-3][0-9])[\.\/_-]?(0?[1-9]|1[0-2])[\._\/-]?(0?[1-9]|[12][0-9]|30|31))\b/){
+		# Note: [\.\/_-]? can lead to 1966-11-29 regex eq 1966-11 and mm eq 01 dd eq 01
+		elsif (/\b((19[4-9][0-9]|20[0-3][0-9])[\.\/_-](0?[1-9]|1[0-2])[\._\/-](0?[1-9]|[12][0-9]|30|31))\b/){
 			$regex = $1;
 			$yyyy = $2;
 			$mm = sprintf('%02d',$3);
@@ -2126,6 +2133,7 @@ sub date_fix {
 			$yyyy = '20' . $yyyy;
 		}
 		if ($mm && $dd && $yyyy){
+			# say "$regex $yyyy $mm $dd";
 			$_ =~ s/\Q$regex\E/$yyyy-$mm-$dd/i;
 		}
 		push(@data,$_);
@@ -3634,8 +3642,8 @@ sub show_options {
 	$output .= "                  numbering method. % is used to indicate the value is a number\n";
 	$output .= "                  between 1-9. @ is used to indicate a letter between A-Z. \n";
 	$output .= "                  Will complete TRACKTOTAL, DISCNUMBER, TRACKNUMBER values\n";
-	$output .= "                  in auto.tag file, which saves a time. See -E for more prefill\n";
-	$output .= "                  options.\n";
+	$output .= "                  in auto.tag file, which saves a lot of time. See -E for more\n";
+	$output .= "                  prefill options.\n";
 	$output .= "                  Samples: -M d% [d1track02.flac]; -M d\%- [d2-track04.flac];\n";
 	$output .= "                  -M % [112.flac]; -M 2015-03-21.d%. [2015-03-21.d1.t03.flac]\n";
 	$output .= "                  -M @ [A12.flac]; -M d\@- [da-track02.flac];\n";
@@ -3671,7 +3679,8 @@ sub show_options {
 	$output .= "                  Fix info.txt files. Use any combination. Always cleans white\n";
 	$output .= "                  space issues.\n";
 	$output .= "                  d: make iso date: YYYY-MM-DD from various random date formats\n";
-	$output .= "                  l: Set all lowercase, and apply simple upper case first fixes.\n";
+	$output .= "                  l: set all lowercase, and apply simple upper case first fixes.\n";
+	$output .= "                  m: add parentheses around track times in track title.\n";
 	$output .= "                  n: make track numbering 'NN. ' (0 padded) or 'N-NN. '\n";
 	$output .= "                  q: add FLAC/Quality: /[quality] items to info file\n";
 	$output .= "                  t: fix upper/lower case track titles\n";
@@ -4218,9 +4227,10 @@ sub get{
 		my ($opt,$arg) = @_;
 		$run{'infofix'} = 1;
 		if ($arg){
-			if ($arg =~ /^[dlnqutw]+$/i){
+			if ($arg =~ /^[dlmnqutw]+$/i){
 				$run{'infofix-date'} = 1 if $arg =~ /d/i;
 				$run{'infofix-lower'} = 1 if $arg =~ /l/i;
+				$run{'infofix-time'} = 1 if $arg =~ /m/i;
 				$run{'infofix-no'} = 1 if $arg =~ /n/i;
 				$run{'infofix-quality'} = 1 if $arg =~ /q/i;
 				$run{'infofix-title'} = 1 if $arg =~ /t/i;

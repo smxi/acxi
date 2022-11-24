@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-11\-21" acxi "acxi manual"
+.TH ACXI 1 "2022\-11\-22" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -38,7 +38,7 @@ Tagging: \fBacxi\fR [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-autotag\-create\-single\fR, \fB\-S\fR] 
 [\fB\-\-autotag\-create\-multi\fR, \fB\-M\fR {filename start ID}]
 [\fB\-\-image\fR, \fB\-I\fR {cover image filename}]
-[\fB\-\-infofix\fR, \fB\-X\fR [d|l|n|q|t|u|w]] 
+[\fB\-\-infofix\fR, \fB\-X\fR [d|l|m|n|q|t|u|w]] 
 [\fB\-\-info\-rating\fR {2\-xxx}
 [\fB\-\-multiartist\fR, \fB\-\-ma\fR {[at|ta]:separator}]
 [\fB\-\-prefill\fR, \fB\-E\fR] 
@@ -567,6 +567,9 @@ Values (can be combined):
 * \fBl\fR \- more simplistic upper case first, lower case rest. Good for info 
 files that have all upper case, but a lot of sentences. You will have to go back 
 in and correct items. Good in combination with \fBt\fR.
+
+* \fBm\fR \- add (..) around track time when it's included in track title at end 
+of Title string. Required for the prefill track title cleanup of track times. 
 
 * \fBn\fR \- fix track numbering to be consistent '0X. ' or 'Y-0X'. See 
 \fB\-\-prefill\fR track terminators for stopping at end of track listing.
