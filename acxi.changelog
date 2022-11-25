@@ -82,6 +82,19 @@ at end of Title string, otherwise it's a pain to do the logic.
 from SHN files, and aren't relevant anymore. Also added robots.txt because some 
 legacy file downloaders added that.
 
+8. Added option --prefill-tag/--pt/--pft to add temporary --prefill tag 
+completions, so you don't have to do the same thing over and over. Can be used 
+as option or configuration item. Remember to undo it when you are done with job 
+if you used the configuration option! Uses same syntax as --tag/-T.
+
+PREFILL_TAG=GENRE%:Heavy Metal^^IMAGE%:cover.jpg
+
+If you use the configuration item, remember to remove the value after you are 
+done with the current job, or it will always get used. These values override 
+everything else in prefill, so use with caution.
+
+--prefill-tag=UNSET unsets the configuration value temporarily.
+
 --------------------------------------------------------------------------------
 CHANGES:
 

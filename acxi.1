@@ -43,6 +43,7 @@ Tagging: \fBacxi\fR [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-info\-rating\fR {2\-xxx}
 [\fB\-\-multiartist\fR, \fB\-\-ma\fR {[at|ta]:separator}]
 [\fB\-\-prefill\fR, \fB\-E\fR] 
+[\fB\-\-prefill\-tag\fR, \fB\-\-pt\fR {tags}] 
 [\fB\-\-no\-replaygain\fR] [\fB\-\-recurse\fR {-1-xx}] 
 [\fB\-\-remove\-images\fR, \fB\-R\fR] [\fB\-\-remove\-padding\fR, \fB\-P\fR] 
 [\fB\-\-start\fR {0-xx}] 
@@ -895,6 +896,18 @@ Samples:
 See \fB\-\-info\-file\fR.
 
 .TP
+.B \-\-prefill\-tag\fR, \fB\-\-pft\fR, \fB\-\-p {tag-data}\fR
+Uses same syntax as \fB\-\-tag\fR. One or more tags to populate auto.tag in 
+prefill actions. See also configuration item \fBPREFILL_TAG\fR.
+
+Sample: \fB\-\-prefill\-tag "GENRE%:Heavy Metal^^IMAGE%:cover.jpg"\fR
+
+Value \fBUNSET\fR unsets \fBPREFILL_TAG\fR values, otherwise overrides those
+values.
+
+Supports same tags as \fB\-\-prefill\fR field names.s
+
+.TP
 .B \-\-quality\fR, \fB\-q {number}\fR
 Set compression quality level.
 
@@ -1291,6 +1304,11 @@ be used to populate the \fBauto.tag\fR fields.
 
 \fBINFO_RATING\fR \- Sample (default value): \fBINFO_RATING=4\fR. See 
 \fB\-\-info\-rating\fR. Used with \fB\-X q\fR. Must be greater than 1.
+
+\fBPREFILL_TAG\fR \- Same syntax as \fB\-\-tag\fR. Remember to clear this if you
+don't want these tags to be always used in prefill actions. 
+.br
+Sample: \fBPREFILL_TAG=TAG1%:value^^TAG2%:value\fR 
 
 \fBTAG_FILE\fR \- Sample: \fBTAG_FILE=autotags.tag\fR 
 

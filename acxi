@@ -130,9 +130,11 @@ my $line_large = "--------------------------------------------------------------
 #
 # Anything in configs or in this section will be overridden if you use
 # a startup argument which replaces that item's value.
+
 #### -------------------------------------------------------------------
 #### CUSTOM CONFIGURATION FILE LOCATION
 #### -------------------------------------------------------------------
+
 # NOTE: only use this if you are running Windows, or any OS without $HOME
 # or $XDG_CONFIG_HOME environmental variables. acxi will look for file:
 # acxi.conf inside that directory. 
@@ -141,6 +143,7 @@ my $CONFIG_DIRECTORY='';
 #### -------------------------------------------------------------------
 #### APPLICATION PATHS
 #### -------------------------------------------------------------------
+
 my $COMMAND_FLAC = '/usr/bin/flac'; 
 my $COMMAND_FFMPEG = '/usr/bin/ffmpeg';
 my $COMMAND_FFPROBE = '/usr/bin/ffprobe';
@@ -157,6 +160,7 @@ my $COMMAND_METAFLAC = '/usr/bin/metaflac';
 #### -------------------------------------------------------------------
 #### ASSIGN DIRECTORY PATHS
 #### -------------------------------------------------------------------
+
 # Options: -s/--source path -d/--destination path
 # $SOURCE_DIRECTORY is the original, working, like flac, wav, etc
 # $DESTINATION_DIRECTORY is the processed, ie, ogg, mp3
@@ -168,6 +172,7 @@ my $DESTINATION_DIRECTORY = '/path/to/your/output/directory';
 #### -------------------------------------------------------------------
 #### EXCLUDES
 #### -------------------------------------------------------------------
+
 # this is the unique part of the exclude file name, not including the 
 # .txt. All exclude file names used must contain this string value.
 my $EXCLUDE_BASE = 'acxi-exclude';
@@ -187,6 +192,7 @@ my $EXCLUDE = '';
 #### -------------------------------------------------------------------
 #### INPUT/OUTPUT
 #### -------------------------------------------------------------------
+
 # Options: -i/--input type ; -o/--output type
 # The following are NOT case sensitive,ie flac/FLAC, txt/TXT will be 
 # found. INPUT_TYPE and OUTPUT_TYPE will be forced to lower case 
@@ -245,10 +251,13 @@ my $Z_MIN_TIME = 10; # in seconds
 #### -------------------------------------------------------------------
 #### AUTO TAGGING
 #### -------------------------------------------------------------------
+
 # For -S/-M/--prefill/--infofix can be overridden with config or --info-file []
 my $INFO_FILE = 'info.txt';
 # For -Xf, the rating shown in Quality: /[rating] item.
 my $INFO_RATING = 4;
+# Uses --tag syntax: TAG%:value^^TAG%:value, remember to clear when done!
+my $PREFILL_TAG = '';
 # This is the file that contains the syntax found in auto.tag file. But
 # you can call it something else if you prefer.
 my $TAG_FILE = 'auto.tag';
@@ -256,6 +265,7 @@ my $TAG_FILE = 'auto.tag';
 #### -------------------------------------------------------------------
 #### CHECKSUM DATA
 #### -------------------------------------------------------------------
+
 # These are the file names MINUS the .ffp / .md5 extensions.
 my $FFP_FILE = 'fingerprints';
 my $MD5_FILE = 'md5sums';
@@ -263,6 +273,7 @@ my $MD5_FILE = 'md5sums';
 #### -------------------------------------------------------------------
 #### VERBOSITY LEVELS
 #### -------------------------------------------------------------------
+
 # Options: --quiet/--debug/-v, --verbosity 0-4
 # You can turn these to always on either here or in config file by setting to 
 # desired verbosity level here directly, or in config file. 
@@ -279,6 +290,7 @@ my $VERBOSITY = 1;
 #### -------------------------------------------------------------------
 #### ADVANCED
 #### -------------------------------------------------------------------
+
 # Options: --nlink --no-nlink
 # Only change to 0 if you encounter file tree failures. This is for File::Find
 # values:  0 - use nlink; 1 - don't use nlink [default, only change if you know
@@ -1093,6 +1105,7 @@ sub populate_tag_file {
 	my (@multi,@replaygain,@tags,$info);
 	my ($b_first,$j,$holder,$starter) = (1,0,'','');
 	my $counter=$start;
+	my $b_prefill_tag = ($run{'prefill-tag'} && %{$run{'prefill-tag'}}) ? 1 : 0;
 	$info = prefill_data() if $run{'prefill'};
 	say Data::Dumper::Dumper $info if $b_debug;
 	my @collection = (
@@ -1139,18 +1152,11 @@ sub populate_tag_file {
 	if ($info && %$info && @collection){
 		my @working;
 		foreach my $item (@collection){
-			if ($item eq 'ARTIST%:'){
-				if ($info->{'artist'}){
-					$item .= $info->{'artist'};
+			if ($item eq 'ALBUM%:'){
+				if ($b_prefill_tag && $run{'prefill-tag'}->{'ALBUM'}){
+					$item .= $run{'prefill-tag'}->{'ALBUM'};
 				}
-			}
-			elsif ($item eq 'ALBUMARTIST%:'){
-				if ($info->{'artist'} || $info->{'albumartist'}){
-					$item .= ($info->{'albumartist'}) ? $info->{'albumartist'} : $info->{'artist'};
-				}
-			}
-			elsif ($item eq 'ALBUM%:'){
-				if ($info->{'album'} || $info->{'date-print'} || $info->{'location'}){
+				elsif ($info->{'album'} || $info->{'date-print'} || $info->{'location'}){
 					if ($info->{'album'}){
 						$item .= $info->{'album'};
 					}
@@ -1161,39 +1167,68 @@ sub populate_tag_file {
 					}
 				}
 			}
-			if ($item eq 'ALBUMSORT%:'){
-				if ($info->{'albumsort'}){
+			elsif ($item eq 'ALBUMARTIST%:'){
+				if ($b_prefill_tag && $run{'prefill-tag'}->{'ALBUMARTIST'}){
+					$item .= $run{'prefill-tag'}->{'ALBUMARTIST'};
+				}
+				elsif ($info->{'artist'} || $info->{'albumartist'}){
+					$item .= ($info->{'albumartist'}) ? $info->{'albumartist'} : $info->{'artist'};
+				}
+			}
+			elsif ($item eq 'ALBUMSORT%:'){
+				if ($b_prefill_tag && $run{'prefill-tag'}->{'ALBUMSORT'}){
+					$item .= $run{'prefill-tag'}->{'ALBUMSORT'};
+				}
+				elsif ($info->{'albumsort'}){
 					$item .= $info->{'albumsort'};
 				}
 			}
+			elsif ($item eq 'ARTIST%:'){
+				if ($b_prefill_tag && $run{'prefill-tag'}->{'ARTIST'}){
+					$item .= $run{'prefill-tag'}->{'ARTIST'};
+				}
+				elsif ($info->{'artist'}){
+					$item .= $info->{'artist'};
+				}
+			}
 			elsif ($item eq 'COMPOSER%:'){
-				if ($info->{'composer'}){
+				if ($b_prefill_tag && $run{'prefill-tag'}->{'COMPOSER'}){
+					$item .= $run{'prefill-tag'}->{'COMPOSER'};
+				}
+				elsif ($info->{'composer'}){
 					$item .= $info->{'composer'};
 				}
 			}
 			elsif ($item eq 'DATE%:'){
-				if ($info->{'date'}){
+				if ($b_prefill_tag && $run{'prefill-tag'}->{'DATE'}){
+					$item .= $run{'prefill-tag'}->{'DATE'};
+				}
+				elsif ($info->{'date'}){
 					$item .= $info->{'date'};
 				}
 			}
-			elsif ($item eq 'YEAR%:'){
-				if ($info->{'year'}){
-					$item .= $info->{'year'};
+			elsif ($item eq 'GENRE%:'){
+				if ($b_prefill_tag && $run{'prefill-tag'}->{'GENRE'}){
+					$item .= $run{'prefill-tag'}->{'GENRE'};
+				}
+				elsif ($info->{'genre'}){
+					$item .= $info->{'genre'};
+				}
+			}
+			elsif ($item eq 'IMAGE%:'){
+				if ($b_prefill_tag && $run{'prefill-tag'}->{'IMAGE'}){
+					$item .= $run{'prefill-tag'}->{'IMAGE'};
+				}
+				elsif ($info->{'image'}){
+					$item .= $info->{'image'};
 				}
 			}
 			elsif ($item eq 'LOCATION%:'){
-				if ($info->{'location'}){
+				if ($b_prefill_tag && $run{'prefill-tag'}->{'LOCATION'}){
+					$item .= $run{'prefill-tag'}->{'LOCATION'};
+				}
+				elsif ($info->{'location'}){
 					$item .= $info->{'location'};
-				}
-			}
-			elsif ($item eq 'PRODUCER%:'){
-				if ($info->{'producer'}){
-					$item .= $info->{'producer'};
-				}
-			}
-			elsif ($item eq 'VENUE%:'){
-				if ($info->{'venue'}){
-					$item .= $info->{'venue'};
 				}
 			}
 			elsif ($item eq 'PERFORMER%:'){
@@ -1201,14 +1236,28 @@ sub populate_tag_file {
 					$item .= shift @{$info->{'performers'}};
 				}
 			}
-			elsif ($item eq 'GENRE%:'){
-				if ($info->{'genre'}){
-					$item .= $info->{'genre'};
+			elsif ($item eq 'PRODUCER%:'){
+				if ($b_prefill_tag && $run{'prefill-tag'}->{'PRODUCER'}){
+					$item .= $run{'prefill-tag'}->{'PRODUCER'};
+				}
+				elsif ($info->{'producer'}){
+					$item .= $info->{'producer'};
 				}
 			}
-			elsif ($item eq 'IMAGE%:'){
-				if ($info->{'image'}){
-					$item .= $info->{'image'};
+			elsif ($item eq 'VENUE%:'){
+				if ($b_prefill_tag && $run{'prefill-tag'}->{''}){
+					$item .= $run{'prefill-tag'}->{''};
+				}
+				elsif ($info->{'venue'}){
+					$item .= $info->{'venue'};
+				}
+			}
+			elsif ($item eq 'YEAR%:'){
+				if ($b_prefill_tag && $run{'prefill-tag'}->{'YEAR'}){
+					$item .= $run{'prefill-tag'}->{'YEAR'};
+				}
+				elsif ($info->{'year'}){
+					$item .= $info->{'year'};
 				}
 			}
 			push(@working,$item);
@@ -2009,6 +2058,7 @@ sub run_fixes {
 			$row =~ s/\bSB\b/SBD/g;
 		}
 		$row =~ s/[\r\n]+//g; # has to be AFTER autoformat
+		# $row =~ s/\t/ /g; # get rid of tabs.
 		$row =~ s/\s\s+/ /g;
 		$row =~ s/\s+$//g;
 		$row =~ s/\(\s+/\(/g;
@@ -3113,6 +3163,13 @@ sub check_application_paths {
 				$error_message .= "operations.";
 			}
 		}
+		if ($run{'prefill'} && $PREFILL_TAG){
+			if ($PREFILL_TAG !~ /%:/){
+				$b_error = 1;
+				$error_message .= "\n Bad value in PREFILL_TAG: $PREFILL_TAG. ";
+				$error_message .= "Missing '%:'. ";
+			}
+		}
 		if ($run{'infofix-quality'} || $run{'analyze'}){
 			if ($run{'ffprobe'} || lc($INPUT_TYPE) ne 'flac'){
 				if (!grep {$_ eq $COMMAND_FFPROBE} @app_paths){
@@ -3720,8 +3777,10 @@ sub show_options {
 	$output .= "                  Expert use only.\n";
 	$output .= "--prefill, -E     Attempt to prefill auto.tag file using info.txt data. See man\n";
 	$output .= "                  for required syntax and structure of data in info file.\n";
+	$output .= "--prefill-tag, --pft, --pt {tag data}\n";
+	$output .= "                  Uses same syntax as --tag. Adds tag+values to auto.tag.\n";
+	$output .= "                  Value 'UNSET' removes the PREFILL_TAG configuration value.\n";
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
-	
 	$output .= "--recurse {0-xx}  Set directory recursion levels. Default infinite. Useful\n";
 	$output .= "                  for having syncing or checksum tools ignore sub directories.\n";
 	$output .= "--remove-images, -R\n";
@@ -3837,6 +3896,13 @@ sub set_basic_data {
 		# say Data::Dumper::Dumper \@excludes;
 		# say Data::Dumper::Dumper \@excludes_stripped;
 	}
+	if ($PREFILL_TAG){
+		my @prefills = split(/\Q^^\E/,$PREFILL_TAG);
+		foreach my $tag (@prefills){
+			my @info = split(/%:/,$tag);
+			$run{'prefill-tag'}->{$info[0]} = $info[1];
+		}
+	}
 }
 
 sub set_display_data {
@@ -3948,6 +4014,7 @@ sub assign_value {
 	elsif ($var eq 'MAN_DIRECTORY'){$MAN_DIRECTORY = $value}
 	elsif ($var eq 'MD5_FILE'){$MD5_FILE = $value}
 	elsif ($var eq 'OUTPUT_TYPE'){$OUTPUT_TYPE = $value;}
+	elsif ($var eq 'PREFILL_TAG'){$PREFILL_TAG = $value;}
 	# legacy configs, sets both
 	elsif ($var eq 'QUALITY'){$QUALITY_OGG = $value;$QUALITY_MP3 = $value}
 	elsif ($var eq 'QUALITY_AAC'){$QUALITY_AAC = $value}
@@ -4328,6 +4395,19 @@ sub get{
 		$test{'info'} = 1;
 		$test{'prefill'} = 1;
 		},
+	'prefill-tag|prefill-tags|pft|pt:s' => sub { 
+		my ($opt,$arg) = @_;
+		if (!$arg || (lc($arg) ne 'unset' && $arg !~ /%:/)){
+			$msg = "$opt requires TAG%:value sets. See -h.";
+			main::error_handler('missing-arg',$msg,1);
+		}
+		if (lc($arg) ne 'unset'){
+			$PREFILL_TAG = $arg;
+			$test{'prefill-tag'} = 1;
+		}
+		else {
+			$PREFILL_TAG = '';
+		}},
 	'q|quality:f' => sub { 
 		my ($opt,$arg) = @_;
 		if (!defined $arg || $arg !~ /^-?[0-9\.]+$/){
@@ -4398,7 +4478,7 @@ sub get{
 			$msg = "$opt requires TAG%:value sets. See -h.";
 			main::error_handler('missing-arg',$msg,1);
 		}
-		@tags = split /\Q^^\E/, $arg;
+		@tags = split(/\Q^^\E/, $arg);
 		$run{'update-tag'} = 1;
 		$run{'autotag'} = 1;
 		$run{'autotag-create'} = 0;
@@ -4498,6 +4578,14 @@ sub verify_selections {
 	if ($test{'prefill'} && !$test{'autotag-create'}){
 		main::error_handler('invalid-options', 
 		 "Prefill requires either --autotag-create-multi or --autotag-create-single.",1);
+	}
+	if ($test{'tag'} && $test{'prefill-tag'}){
+		main::error_handler('invalid-options', 
+		 "You cannot use --prefill-tag with --tag.",1);
+	}
+	if ($test{'prefill-tag'} && !$test{'autotag-create'}){
+		main::error_handler('invalid-options', 
+		 "You must use an --autotag-prefill option with --prefill-tag.",1);
 	}
 	if ($test{'multiartist'} && !$test{'prefill'}){
 		main::error_handler('invalid-options', 
