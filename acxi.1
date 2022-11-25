@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-11\-24" acxi "acxi manual"
+.TH ACXI 1 "2022\-11\-25" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -576,7 +576,9 @@ files that have all upper case, but a lot of sentences. You will have to go back
 in and correct items. Good in combination with \fBt\fR.
 
 * \fBm\fR \- add (..) around track time when it's included in track title at end 
-of Title string. Required for the prefill track title cleanup of track times. 
+of Title string. Required for the prefill track title cleanup of track times. If
+time is located at start of track title, after disk/track numbers, moves to end.
+Note that \fBm\fR should be used together with \fBn\fR for best results.
 
 * \fBn\fR \- fix track numbering to be consistent '0X. ' or 'Y-0X'. See 
 \fB\-\-prefill\fR track terminators for stopping fixes at end of track listing.

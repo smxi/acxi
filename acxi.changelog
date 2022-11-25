@@ -72,7 +72,8 @@ Must be only characters on line. '-' and '=' not supported because things like
 method.
 
 5. Added -Xm which attempts to add parenthesis around track times so that the 
-times don't get included in the track TITLE info. 
+times don't get included in the track TITLE info. Also moves time at start of
+title to end of title, some people do that one, oddly enough.
 
 6. Added {...} syntax for ignoring track times. Note that track times have to be
 at end of Title string, otherwise it's a pain to do the logic.
