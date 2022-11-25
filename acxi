@@ -2052,10 +2052,10 @@ sub run_fixes {
 				$row =~ s/\s\s+/ /g; # make sure we didn't add in an extra space
 				# this should be run with -Xn to make sure syntax works, slice out time
 				# from start of title and append to end of string
-				if ($row =~ /^(\d-)?\d{1,2}\.(\s+[\(\[\{]\d{1,2}(:\d{2}){1,2}[\)\]\}]) /){
+				if ($row =~ /^(\d-)?\d{1,2}\.\s([\(\[\{]\d{1,2}(:\d{2}){1,2}[\)\]\}])\s*/){
 					my $time = $2;
 					$row =~ s/\Q$time\E//;
-					$row .= $time;
+					$row .= ' ' . $time;
 					$row =~ s/\s\s+/ /g; # make sure we didn't add in an extra space
 				}
 			}
