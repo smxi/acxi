@@ -313,10 +313,14 @@ Do not use together with other cleaning/syncing options. Can be used with
 .B \-\-checksum\-delete\fR, \fB\-D\fR
 Will first delete all \fB.md5\fR, \fB.md5.txt\fR, \fB.ffp\fR, \fB.ffp.txt\fR,  
 \fB.st5\fR, and \fBshntool.txt\fR files before creating new checksum files. 
-\fB.st5\fR and \fBshntool.txt\fR were often created by shntool. Note that some 
-audio processing tools add \fB.txt\fR to the checksum file name, which creates 
-undesirable outcomes since some tools that use \fB.ffp\fR or \fB.md5\fR files 
-don't recognize the files if they have the \fB.txt\fR extension added on.
+\fB.st5\fR and \fBshntool.txt\fR were often created by shntool. Also removes 
+\fBrobots.txt\fR files, which sometimes were added by some downloaders in the 
+past. 
+
+Note that some audio processing tools add \fB.txt\fR to the checksum file name, 
+which creates undesirable outcomes since some tools that use \fB.ffp\fR or 
+\fB.md5\fR files don't recognize the files if they have the \fB.txt\fR extension 
+added on.
 
 I can think of very few reasons to want to preserve \fB.ffp\fR or \fB.md5\fR 
 files, since they should in general reflect what the actual files you have are.

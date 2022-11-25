@@ -78,8 +78,9 @@ title to end of title, some people do that one, oddly enough.
 6. Added {...} syntax for ignoring track times. Note that track times have to be
 at end of Title string, otherwise it's a pain to do the logic.
 
-7. Added *.st5 and shntool.txt types to --checksum-delete. Those are almost 
-always from SHN files, and aren't relevant anymore.
+7. Added *.st5, shntool.txt types to --checksum-delete. Those are almost always 
+from SHN files, and aren't relevant anymore. Also added robots.txt because some 
+legacy file downloaders added that.
 
 --------------------------------------------------------------------------------
 CHANGES:
