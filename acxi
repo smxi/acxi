@@ -3687,7 +3687,7 @@ sub show_options {
 	$output .= "--image, -I {jpg,png image file name|remove}\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
-	$output .= "--info-file, --prefill-file {file name}\n";
+	$output .= "--info-file, --if, --prefill-file, --pf {file name}\n";
 	$output .= "                  Alternate file name to use for --prefill or --infofix.\n";
 	$output .= "--infofix, -X [dnqtuw]\n";
 	$output .= "                  Fix info.txt files. Use any combination. Always cleans white\n";
@@ -4235,7 +4235,7 @@ sub get{
 		$b_check_out = 0;
 		$test{'tag'} = 1;
 		},
-	'info-file|prefill-file:s' => sub { 
+	'info-file|prefill-file|if|pf:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires file name.",1) if !$arg;
 		$INFO_FILE = $arg;
