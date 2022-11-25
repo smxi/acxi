@@ -41,9 +41,9 @@ FIXES:
 
 2. For -Xn, added support for common legacy numbering syntaxes: d1t12, t12 
 
-3. Added optional --info-file and --if for --prefill-file, made that active for 
---infofix, not just -S, -E autotag. Also fixed validation which was a little too 
-tight on that combo.
+3. Added alternates --info-file, --if, --pf for --prefill-file. Also made it 
+active for --infofix, not just -S, -E autotag. Also fixed validation which was a 
+little too tight on that combo.
 
 4. -Xn was treating times starting line, like 5:43, as track numbers because it
 was using :\s*, not :\s+, which led to undesired outcomes.
