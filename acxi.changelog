@@ -45,6 +45,9 @@ FIXES:
 --infofix, not just -S, -E autotag. Also fixed validation which was a little too
 tight on that combo.
 
+4. -Xn was treating times starting line, like 5:43, as track numbers because it
+was using :\s*, not :\s+, which led to undesired outcomes.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 

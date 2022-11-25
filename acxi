@@ -2024,9 +2024,9 @@ sub run_fixes {
 		$row =~ /^\s*[:^_<>]{1,}?(E[ST]L?|END([\s_-]?(SETLIST|TRACKS))?)?[:^_<>]{1,}\s*$/i){
 			$b_tracks_end = 1;
 		}
-		# 1-4 / 1-12 / 12 / 213
+		# 1-4 / 1-12 / 12 / 213. Note: don't want to trap times, so use \s after :
 		if (($run{'infofix-no'} || $run{'infofix-time'} || $run{'infofix-title'}) && !$b_tracks_end &&
-		 $row =~ /^(\s*((d?[1-9][t-])([0-9]{1,2})|t?([0-9]{1,2}|[0-9]{3}))(\]\s*|\.\s*|\s*-\s*|\s*\)\s*|:\s*|\s+))/){
+		 $row =~ /^(\s*((d?[1-9][t-])([0-9]{1,2})|t?([0-9]{1,2}|[0-9]{3}))(\]\s*|\.\s*|\s*-\s*|\s*\)\s*|:\s+|\s+))/){
 			# say "$1 '$6'";
 			if ($run{'infofix-no'}){
 				# say "$1 $2 $3";
