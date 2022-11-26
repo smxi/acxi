@@ -107,6 +107,9 @@ uses, with md5 checks disabled.
 10. Added optional option names --dry-run, --dry, same as --test, eay to 
 remember.
 
+11. Added 'Taped by', 'Recorded by' as prefill field names, for the PRODUCER 
+tag.
+
 --------------------------------------------------------------------------------
 CHANGES:
 

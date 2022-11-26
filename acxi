@@ -978,7 +978,8 @@ sub prefill_data {
 	my $counter = 0;
 	my $fields = 'Album|AlbumArtist|AlbumSort|Artiste?s?|Artist\s*\/\s*Band|Band|';
 	$fields .= 'City|Club|Composer|Country|Cover|Date|Event|Festival|Genre|Image|';
-	$fields .= 'Location|Producer|Lieu|State|Taper|Venue|Ville|Year';
+	$fields .= 'Location|Producer|Lieu|Recorded by|State|Taper|Taped by|';
+	$fields .= 'Venue|Ville|Year';
 	foreach (@$data){
 		$counter++;
 		$_ = main::trimmer($_);
@@ -1067,7 +1068,7 @@ sub prefill_data {
 				elsif ($field_name =~ /^(Genre)$/i){
 					$info->{'genre'} = $field_value;
 				}
-				elsif ($field_name =~ /^(Producer|Taper)$/i){
+				elsif ($field_name =~ /^(Producer|Taper|(Record|Tap)ed by)$/i){
 					$info->{'producer'} = $field_value;
 				}
 				elsif ($field_name =~ /^(Cover|Image)$/i){
@@ -1102,7 +1103,8 @@ sub prefill_data {
 				$b_performer = 0;
 			}
 			# some random stuff if it wasn't in top block
-			if (!$info->{'producer'} && $_ =~ /^(Producer|Taper)\s*:\s*(.*)/i){
+			if (!$info->{'producer'} && 
+			$_ =~ /^(Producer|Recorded by|Taper|Taped by)\s*:\s*(.*)/i){
 				$info->{'producer'} = $2;
 			}
 			elsif (!$info->{'genre'} && $_ =~ /^(Genre)\s*:\s*(.*)$/i){
