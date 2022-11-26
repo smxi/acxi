@@ -104,6 +104,9 @@ shows the full file report, which can be useful. Note that running ffp
 verification is slow. This is the same basic tool that --checksum-verify/-V 
 uses, with md5 checks disabled.
 
+10. Added optional option names --dry-run, --dry, same as --test, eay to 
+remember.
+
 --------------------------------------------------------------------------------
 CHANGES:
 

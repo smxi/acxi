@@ -3863,10 +3863,10 @@ sub show_options {
 	$output .= $line_small . "\n";
 	$output .= "Display output and debugging options:\n";
 	$output .= "--debug           Trigger advanced output debugging data.\n";
+	$output .= "--dry-run, --test Test copy, sync, autotag, checksum without actually doing\n";
 	$output .= "--help, -h        This help menu.\n";
 	$output .= "--quiet           Turns off most screen output, except for error messages.\n";
 	$output .= "                  Only disables screen output is logical to do so. Same as -v 0\n";
-	$output .= "--test            Test copy, sync, autotag, checksum without actually doing\n";
 	$output .= "                  the action.\n";
 	$output .= "--version         Show $self_name version.\n";
 	$output .= "--verbosity, -v   {0-3} Dynamically set VERBOSITY. Current value: $VERBOSITY\n";
@@ -4296,6 +4296,8 @@ sub get{
 		$DITHER = $arg;},
 	'dot' => sub { 
 		$run{'dot'} = 1;},
+	'dry-run|dr|dry|test' => sub { 
+		$b_test = 1 },
 	'dupes|duplicates' => sub { 
 		$run{'checksum'} = 1;
 		$run{'duplicates'} = 1;
@@ -4547,8 +4549,6 @@ sub get{
 		$OUTPUT_TYPE = 'UNSET';
 		$test{'tag'} = 1;
 		},
-	'test' => sub { 
-		$b_test = 1 },
 	'U|update'=> sub { 
 		$run{'update'} = 1; 
 		$run{'checksum'} = 0;

@@ -58,7 +58,7 @@ Output Controls: \fBacxi\fR [\fB\-\-verbosity\fR, \fB\-v\fR {0-3}]
 [\fB\-\-quiet\fR]
 .IP * 2
 Debugging: \fBacxi\fR [\fB\-\-debug\fR] [\fB\-\-nlink\fR] 
-[\fB\-\-no\-nlink\fR] [\fB\-\-test\fR] 
+[\fB\-\-no\-nlink\fR] [\fB\-\-dry\fR, \fB\-\-dry\-run\fR, \fB\-\-test\fR] 
 .SH DESCRIPTION
 \fBacxi\fR is a command line audio conversion program and audio processing 
 program. It converts and syncs all desired source lossless files to the desired 
@@ -440,6 +440,11 @@ of excluding dot files and directories (like \fB/home/user/.config\fR). Added by
 request, but use at your own risk, I take NO responsibility for any unintended 
 consequences. Note that if you do find unintended consequences, you should be 
 able to filter those out using additional \fB\-\-exclude\fR lists.
+
+.TP
+.B \-\-dry\-run\fR, \fB\-\-dry\fR, \fB\-\-test\fR
+.br
+See \fB\-\-test\fR.
 
 .TP
 .B \-\-duplicates\fR, \fB\-\-dupes\fR
@@ -1095,7 +1100,7 @@ If tag value is \fBUNSET\fR it will just remove that tag and its contents.
 Sample: \fBacxi \-s ./ \-\-tag "COMMENT%:UNSET^^ARTIST%:Black Sabbath"\fR
 
 .TP
-.B \-\-test\fR
+.B \-\-test\fR, \fB\-\-dry\fR, \fB\-\-dry\-run\fR
 Test your configurations, copy, sync, checksum, and tagging actions without 
 actually doing the operations. 
 
