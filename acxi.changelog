@@ -48,6 +48,10 @@ little too tight on that combo.
 4. -Xn was treating times starting line, like 5:43, as track numbers because it
 was using :\s*, not :\s+, which led to undesired outcomes.
 
+5. -i was triggering $test{'sync'} which is not correct, you should be able to 
+set input types for non syncing actions, since some of those only work with 
+specific codecs, like FLAC.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
@@ -94,6 +98,11 @@ done with the current job, or it will always get used. These values override
 everything else in prefill, so use with caution.
 
 --prefill-tag=UNSET unsets the configuration value temporarily.
+
+9. Added -Xv. This adds an FFP verified to the q report. FLAC only. If errors, 
+shows the full file report, which can be useful. Note that running ffp 
+verification is slow. This is the same basic tool that --checksum-verify/-V 
+uses, with md5 checks disabled.
 
 --------------------------------------------------------------------------------
 CHANGES:

@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-11\-25" acxi "acxi manual"
+.TH ACXI 1 "2022\-11\-26" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -39,7 +39,7 @@ Tagging: \fBacxi\fR [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-autotag\-create\-multi\fR, \fB\-M\fR {filename start ID}]
 [\fB\-\-image\fR, \fB\-I\fR {cover image filename}]
 [\fB\-\-info\-file\fR, \fB\-\-prefill\-file\fR {release info file name}] 
-[\fB\-\-infofix\fR, \fB\-X\fR [d|l|m|n|q|t|u|w]] 
+[\fB\-\-infofix\fR, \fB\-X\fR [d|l|m|n|q|t|u|v|w]] 
 [\fB\-\-info\-rating\fR {2\-xxx}
 [\fB\-\-multiartist\fR, \fB\-\-ma\fR {[at|ta]:separator}]
 [\fB\-\-prefill\fR, \fB\-E\fR] 
@@ -550,7 +550,7 @@ An alternate file name to use for prefill or infofix. Note that file MUST have a
 you will get ungood results.
 
 .TP
-.B \-\-infofix\fR, \fB\-X [d|l|n|q|t|u|w]\fR
+.B \-\-infofix\fR, \fB\-X [d|l|n|q|t|u|v|w]\fR
 Correct common corruptions to info.txt files. Only to correct these common 
 issues:
 
@@ -604,6 +604,9 @@ end of track listing.
 
 * \fBu\fR \- run upper case first smart fix. Requires Perl module 
 \fBText::Autoformat\fR.
+
+* \fBv\fR \- validate \fBFFP\fR hash signatures. \fBFLAC\fR only. Activates 
+\fBq\fR. Adds \fBFLAC FFPs:\fR status line to the \fBq\fR report.
 
 * \fBw\fR \- write changes to info file.
 
@@ -1307,7 +1310,7 @@ be used to populate the \fBauto.tag\fR fields.
 
 \fBPREFILL_TAG\fR \- Same syntax as \fB\-\-tag\fR. Remember to clear this if you
 don't want these tags to be always used in prefill actions. 
-.br
+
 Sample: \fBPREFILL_TAG=GENRE%:Heavy Metal^^IMAGE%:cover.jpg\fR 
 
 \fBTAG_FILE\fR \- Sample: \fBTAG_FILE=autotags.tag\fR 

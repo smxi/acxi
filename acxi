@@ -79,7 +79,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.05';
-my $self_date='2022-11-25';
+my $self_date='2022-11-26';
 
 ## GLOBALS ##
 ## Booleans
@@ -468,17 +468,17 @@ sub process {
 		}
 		# We WANT to see 0 data results.
 		#if ($info->{'size'} && $info->{'duration'}){
-			if ($type eq 'data' || !$source_info){
-				my $source_data = $info->{'bps'} . '/' . sprintf("%.1f", $info->{'sample-rate'}/1000);
-				$source_info = uc($INPUT_TYPE) . ": $source_data";
-				$source_info .= " ($info->{'channels'} channels)";
-				if ($type eq 'data'){
-					$source_data .= '/' . $info->{'channels'} . 'ch';
-					if (!grep {$_ eq $source_data} @info){
-						push(@info,$source_data);
-					}
+		if ($type eq 'data' || !$source_info){
+			my $source_data = $info->{'bps'} . '/' . sprintf("%.1f", $info->{'sample-rate'}/1000);
+			$source_info = uc($INPUT_TYPE) . ": $source_data";
+			$source_info .= " ($info->{'channels'} channels)";
+			if ($type eq 'data'){
+				$source_data .= '/' . $info->{'channels'} . 'ch';
+				if (!grep {$_ eq $source_data} @info){
+					push(@info,$source_data);
 				}
 			}
+		}
 		#}
 		if ($type eq 'data'){
 			my ($raw_time,$raw_size) = ($info->{'duration'},$info->{'size'});
@@ -627,14 +627,17 @@ sub process_metaflac {
 # this will be inserted into $INFO_FILE
 sub info_data {
 	my ($b_head,$b_inserted,$counter) = (1,0,0);
-	my (@data);
+	my (@data,$verify);
+	if ($run{'infofix-verify'}){
+		$verify = Checksums::verify_flacs();
+	}
 	foreach (@$ref){
 		$counter++;
 		$b_head = 0 if $b_head && $counter > 1 && /^\s*$/;
 		# put the block under the top band info header block
 		if (!$b_inserted && !$b_head && $source_info && $counter > 3){
 			my $quality = "Quality: /$INFO_RATING ()";
-			push(@data,(
+			push(@data,
 			'',
 			$source_info,
 			$quality,
@@ -642,8 +645,22 @@ sub info_data {
 			'Size: ' . main::print_size($total_size),
 			'Average kb/s: ' . $avg_kbs,
 			'Tracks: ' . scalar @files,
+			);
+			if ($run{'infofix-verify'} && $verify){
+				if ($VERBOSITY > 1 || $verify->[1] || $verify->[2]){
+					push(@data,'FLAC FFPs: ', 
+					split(/\n/,$verify->[0]),
+					split(/\n/,$verify->[1]),
+					split(/\n/,$verify->[2])
+					);
+				}
+				else {
+					push(@data,'FLAC FFPs: ' . $verify->[0]);
+				}
+			}
+			push(@data,
 			'',
-			));
+			);
 			$b_inserted = 1;
 		}
 		push(@data,$_);
@@ -1583,7 +1600,7 @@ sub process_directories {
 			say "  No $INPUT_TYPE files";
 		}
 		if ($run{'checksum-verify'}){
-			verify_checksums(@files);
+			verify_checksums(\@files);
 		}
 	}
 	if ($run{'duplicates'}){
@@ -1657,15 +1674,17 @@ sub generate_md5 {
 	}
 }
 sub verify_checksums {
-	my (@files) = @_;
-	verify_flacs() if !$run{'no-ffp'} && grep -f, @files;
+	my ($files) = @_;
+	verify_flacs() if !$run{'no-ffp'} && grep -f, @$files;
 	verify_md5() if !$run{'no-md5'};
 }
 # NOTE: something is wrong with how flac outputs to stderr and
 # creates invisible text strings, maybe unicode related
 sub verify_flacs {
-	my ($b_app_error,$error_message,$err_nu,@errors);
+	my ($b_app_error,$error_message,$err_nu,$output,@errors);
+	my ($bad,$err,$msg) = ('','','');
 	print "  Checking $INPUT_TYPE file ffps (be patient): ";
+	say '' if $run{'infofix-verify'};
 	# note, flac sends output to stderr
 	# NOTE: $_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
 	# shows the weird hidden text this command creates
@@ -1689,16 +1708,24 @@ sub verify_flacs {
 		$_ =~ s/[^[:print:]]+//g;
 		$_;
 	} @results;
-# 	foreach (@results){
-# 		$_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
-# 		say "##$_##";
-# 	}
+	# 	foreach (@results){
+	# 		$_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
+	# 		say "##$_##";
+	# 	}
 	if ($err_nu > 0){
 		$b_app_error = 1;
 		$error_message = "$COMMAND_FLAC returned error: $?";
-		print '  ';
+		print '  ' if !$run{'infofix-verify'};
 		main::error_handler('application-error', $error_message,0);
-		say "   Error Result:\n    ", join("\n    ",@results) if $VERBOSITY > 1;
+		if ($VERBOSITY > 1){
+			$output = "   Error Result:\n    " . join("\n    ",@results);
+			if (!$run{'infofix-verify'}){
+				say $output if $VERBOSITY > 1;
+			}
+			else {
+				$err = $output;
+			}
+		}
 	}
 	$err_nu = 0;
 	# @results = grep {/\.$INPUT_TYPE:\s/i} @results;
@@ -1736,24 +1763,50 @@ sub verify_flacs {
 	# NOTE: cases found where ok and rest of string prints on next line!!
 	@errors = grep {!/\.$INPUT_TYPE:\s+ok$/i} @results;
 	@results = grep {/\.$INPUT_TYPE:\s+ok$/i} @results;
-	# say scalar @results, "\n", "@errors";
+	# say scalar @results, "\n", "@results";
+	# say scalar @errors, "\n", "@errors";
 	# say "errors:\n", join "\n", @errors;
 	if (@errors){
-		say '' if !$b_app_error;
-		say "   Files with errors:\n    ", join("\n    ", @errors);
+		$output = "   Files with errors:\n    " . join("\n    ", @errors);
+		if (!$run{'infofix-verify'}){
+			say '' if !$b_app_error;
+			say $output;
+		}
+		else {
+			$bad = $output;
+		}
 	}
 	if (@results){
 		if ($VERBOSITY > 1 || $b_app_error){
-			say '' if !$b_app_error && !@errors;
-			say "   Verified files:\n    ",  join("\n    ", @results);
+			$output = "   Verified files:\n    " . join("\n    ", @results);
+			if (!$run{'infofix-verify'}){
+				say '' if !$b_app_error && !@errors;
+				say $output;
+			}
+			else {
+				$msg = $output;
+			}
 		}
 		else {
-			say "Verified";
+			$output = "Verified";
+			if (!$run{'infofix-verify'}){
+				say $output;
+			}
+			else {
+				$msg = $output;
+			}
 		}
 	}
 	else {
-		say "No verified $INPUT_TYPE files";
+		$output = "No verified $INPUT_TYPE files";
+		if (!$run{'infofix-verify'}){
+			say $output;
+		}
+		else {
+			$msg = $output;
+		}
 	}
+	return [$msg,$bad,$err] if $run{'infofix-verify'};
 }
 sub verify_md5 {
 	my (@data,@errors,@results,@working);
@@ -3171,18 +3224,8 @@ sub check_application_paths {
 			}
 		}
 		if ($run{'infofix-quality'} || $run{'analyze'}){
-			if ($run{'ffprobe'} || lc($INPUT_TYPE) ne 'flac'){
-				if (!grep {$_ eq $COMMAND_FFPROBE} @app_paths){
-					push(@app_paths,$COMMAND_FFPROBE);
-				}
-				# Added: Odd @2011-03-23 01:55:28
-				if (! -x "$COMMAND_FFPROBE"){
-					$b_error = 1;
-					$error_message .= "\n $COMMAND_FFPROBE not found. Required for ";
-					$error_message .= "analyzing $INPUT_TYPE files.";
-				}
-			}
-			else {
+			if ($run{'infofix-verify'} || 
+			(!$run{'ffprobe'} && lc($INPUT_TYPE) eq 'flac')) {
 				if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
 					push(@app_paths,$COMMAND_METAFLAC);
 				}
@@ -3190,6 +3233,17 @@ sub check_application_paths {
 				if (! -x "$COMMAND_METAFLAC"){
 					$b_error = 1;
 					$error_message .= "\n $COMMAND_METAFLAC not found. Required for ";
+					$error_message .= "analyzing $INPUT_TYPE files.";
+				}
+			}
+			else {
+				if (!grep {$_ eq $COMMAND_FFPROBE} @app_paths){
+					push(@app_paths,$COMMAND_FFPROBE);
+				}
+				# Added: Odd @2011-03-23 01:55:28
+				if (! -x "$COMMAND_FFPROBE"){
+					$b_error = 1;
+					$error_message .= "\n $COMMAND_FFPROBE not found. Required for ";
 					$error_message .= "analyzing $INPUT_TYPE files.";
 				}
 			}
@@ -3308,32 +3362,32 @@ sub check_in_out_types {
 		print main::dotify("Checking input and output types");
 	}
 	if ($run{'ffmpeg'} && ($INPUT_TYPE !~ /^(flac)$/ || 
-	 $OUTPUT_TYPE !~ m/^(flac|ogg|opus)$/i)){
+	$OUTPUT_TYPE !~ m/^(flac|ogg|opus)$/i)){
 		$b_error = 1;
 		$error_message .= "\n The --ffmpeg input/output type combination you entered is not supported: ";
 		$error_message .= "in: $INPUT_TYPE out: $OUTPUT_TYPE";
 	}
 	if ((!$run{'analyze'} && !$run{'infofix-quality'}) && 
-	 $INPUT_TYPE !~ m/^(aiff?|flac|mp3|raw|shn|wav)$/i){
+	$INPUT_TYPE !~ m/^(aiff?|flac|mp3|raw|shn|wav)$/i){
 		$b_error = 1;
 		$error_message .= "\n The input type you entered is not supported: ";
 		$error_message .= "$INPUT_TYPE";
 	}
-	if ((!$run{'analyze'} && !$run{'infofix-quality'}) && ($run{'checksum'} || 
-	 $run{'checksum-verify'} || $run{'autotag'} || $run{'resample'}) && 
-	 $INPUT_TYPE !~ m/^(flac)$/i){
+	if ((!$run{'analyze'} && (!$run{'infofix-quality'} || $run{'infofix-verify'})) && 
+	($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'} || 
+	$run{'infofix-verify'} || $run{'resample'}) && $INPUT_TYPE !~ m/^(flac)$/i){
 		$b_error = 1;
-		$error_message .= "\n The input type you entered is not supported for ";
-		$error_message .= "\n checksum/resample/tagging operations: ";
+		$error_message .= "\n The input type you entered is not supported for the ";
+		$error_message .= "\n checksum/resample/tagging operation you are requesting: ";
 		$error_message .= "$INPUT_TYPE";
 	}
-# 	if (($run{'analyze'} || $run{'info-quality'}) && 
-# 	 $INPUT_TYPE !~ m/^(flac)$/i){
-# 		$b_error = 1;
-# 		$error_message .= "\n The input type you entered is not supported for ";
-# 		$error_message .= "\n analyzeg operations: ";
-# 		$error_message .= "$INPUT_TYPE";
-# 	}
+	# 	if (($run{'analyze'} || $run{'info-quality'}) && 
+	# 	 $INPUT_TYPE !~ m/^(flac)$/i){
+	# 		$b_error = 1;
+	# 		$error_message .= "\n The input type you entered is not supported for ";
+	# 		$error_message .= "\n analyze operations: ";
+	# 		$error_message .= "$INPUT_TYPE";
+	# 	}
 	if ($b_check_out){
 		if ($OUTPUT_TYPE !~ m/^(aac|flac|m4a|mp3|ogg|opus)$/i){
 			$b_error = 1;
@@ -3346,7 +3400,7 @@ sub check_in_out_types {
 			$error_message .= "only supports input type: flac";
 		}
 		if (($run{'resample'} || $INPUT_TYPE =~ m/^(aac|aiff?|m4a|mp3|raw|shn)$/i) &&
-		 $OUTPUT_TYPE ne lc('flac')){
+		$OUTPUT_TYPE ne lc('flac')){
 			$b_error = 1;
 			$error_message .= "\n The input type $INPUT_TYPE you entered ";
 			$error_message .= "only supports output type: flac";
@@ -3747,7 +3801,7 @@ sub show_options {
 	$output .= "                  value only removes images.\n";
 	$output .= "--info-file, --if, --prefill-file, --pf {file name}\n";
 	$output .= "                  Alternate file name to use for --prefill or --infofix.\n";
-	$output .= "--infofix, -X [dnqtuw]\n";
+	$output .= "--infofix, -X [dnqtuvw]\n";
 	$output .= "                  Fix info.txt files. Use any combination. Always cleans white\n";
 	$output .= "                  space issues.\n";
 	$output .= "                  d: make iso date: YYYY-MM-DD from various random date formats\n";
@@ -3757,6 +3811,7 @@ sub show_options {
 	$output .= "                  q: add FLAC/Quality: /[quality] items to info file\n";
 	$output .= "                  t: fix upper/lower case track titles\n";
 	$output .= "                  u: fix entire file upper/lower\n";
+	$output .= "                  v: verify FFPs (FLAC only). Activates q.\n";
 	$output .= "                  w: write changes to file\n";
 	$output .= "                  t and u use Title upper case main words.\n";
 	$output .= "--info-rating {2-xxx}\n";
@@ -4313,14 +4368,15 @@ sub get{
 		my ($opt,$arg) = @_;
 		$run{'infofix'} = 1;
 		if ($arg){
-			if ($arg =~ /^[dlmnqutw]+$/i){
+			if ($arg =~ /^[dlmnqutvw]+$/i){
 				$run{'infofix-date'} = 1 if $arg =~ /d/i;
 				$run{'infofix-lower'} = 1 if $arg =~ /l/i;
 				$run{'infofix-time'} = 1 if $arg =~ /m/i;
 				$run{'infofix-no'} = 1 if $arg =~ /n/i;
-				$run{'infofix-quality'} = 1 if $arg =~ /q/i;
+				$run{'infofix-quality'} = 1 if $arg =~ /[qv]/i;
 				$run{'infofix-title'} = 1 if $arg =~ /t/i;
 				$run{'infofix-upper'} = 1 if $arg =~ /u/i;
+				$run{'infofix-verify'} = 1 if $arg =~ /v/i;
 				$run{'infofix-write'} = 1 if $arg =~ /w/i;
 			}
 			else {
@@ -4354,7 +4410,7 @@ sub get{
 		main::error_handler('missing-arg',"$opt requires type.",1) if !$arg;
 		$test{'input'} = 1;
 		$INPUT_TYPE = $arg;
-		$test{'sync'} = 1;
+		# $test{'sync'} = 1;
 		},
 	'link' => sub { 
 		$DONT_USE_NLINK = 0 },
@@ -4629,7 +4685,8 @@ sub verify_selections {
 		main::error_handler('invalid-options', 
 		 "You cannot use -Z/-Xq with --checksum or --checksum-verify.",1);
 	}
-	if ($test{'checksum'} && $run{'no-ffp'} && $run{'no-md5'}){
+	if (($test{'checksum'} || $run{'infofix-verify'}) && 
+	$run{'no-ffp'} && $run{'no-md5'}){
 		main::error_handler('invalid-options', 
 		 "You cannot use both --no-ffp and --no-md5 with checksum options.",1);
 	}
