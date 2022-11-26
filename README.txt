@@ -70,8 +70,9 @@ extended. Changes will not break existing configurations.
 --------------------------------------------------------------------------------
 TEST ACTIONS:
 
-Using the --test option allows you to see what acxi would have done for syncing, 
-tagging, and checksum creation actions, without actually running those.
+Using --dry-run/--dry/--test option allows you to see what acxi would have done 
+for syncing, tagging, and checksum creation actions, without actually running 
+those.
 
 --------------------------------------------------------------------------------
 SYNCING:
@@ -136,7 +137,8 @@ Read the man page for more on auto tagging and info file processing.
 CHECKSUMS AND TESTS:
 
 acxi can generate new checksum files (--checksum/-K) (md5 and ffp), and verify 
-existing md5 hashes and flac file integrity (--checksum-verify/-V).
+existing md5 hashes and flac file integrity (--checksum-verify/-V and --infofix 
+v/-Xv).
 
 The --duplicates/--dupes option allows bulk checks of a collection for duplicate 
 flac files.
@@ -292,20 +294,22 @@ does not support wav or raw formats).
   
 * SHN -> FLAC conversion requires the codec 'shorten' and ffmpeg.
 
+* --analyze, --duplicates, and --ffps require metaflac.
+
+* --analyze, -Xq if input type not flac, or flac + --ffprobe, require ffprobe.
+
 * --autotag requires metaflac plus a specially formatted auto.tag file placed 
 inside each album/collection directory.
-
-* --image, --remove-images require metaflac.
 
 * --checksum/--checksum-delete checksum generation require metaflac and md5sum 
 (or a comparable md5 generating command line utility).
   
 * --checksum-verify requires md5sum (or comparable tool) and flac.
 
-* --analyze, --duplicates, and --ffps require metaflac.
+* --image, --remove-images require metaflac.
 
-* --analyze, -Xq if input type not flac, or flac + --ffprobe, require ffprobe.
-  
+* --infofix v requires flac.
+
 * -U self updater requires curl, and valid paths for currently installed acxi 
 and acxi.1 man page. Will not update if both acxi and acxi.1 are not present on 
 your system, and correct paths set.

@@ -3196,7 +3196,8 @@ sub check_application_paths {
 					$error_message .= "ffp checksum files.";
 				}
 			}
-			if ($run{'checksum-verify'} && !$run{'no-ffp'}){
+			if (($run{'checksum-verify'} || $run{'infofix-verify'}) && 
+			!$run{'no-ffp'}){
 				if (!grep {$_ eq $COMMAND_FLAC} @app_paths){
 					push(@app_paths,$COMMAND_FLAC);
 				}
@@ -3226,8 +3227,7 @@ sub check_application_paths {
 			}
 		}
 		if ($run{'infofix-quality'} || $run{'analyze'}){
-			if ($run{'infofix-verify'} || 
-			(!$run{'ffprobe'} && lc($INPUT_TYPE) eq 'flac')) {
+			if (!$run{'ffprobe'} && lc($INPUT_TYPE) eq 'flac') {
 				if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
 					push(@app_paths,$COMMAND_METAFLAC);
 				}
