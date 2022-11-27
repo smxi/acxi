@@ -52,6 +52,8 @@ was using :\s*, not :\s+, which led to undesired outcomes.
 set input types for non syncing actions, since some of those only work with 
 specific codecs, like FLAC.
 
+6. Added *ffps.txt, *md5sum.txt as possible -D delete file names.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
