@@ -56,6 +56,9 @@ specific codecs, like FLAC.
 
 6. Added *ffps.txt, *md5sum.txt as possible -D delete file names.
 
+7. Added corner case -Xn numbering fix: 104-d1t04. Why such weird redundancies?
+Who knows, but there they are.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
