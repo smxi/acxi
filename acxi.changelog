@@ -67,12 +67,12 @@ numbered per track notes, and so on, which could then trigger a track count
 mismatch exit error. Also makes it so you don't have to do anything to the info 
 file other than add the terminator string. Supported (not case sensitive):
 
-One or more: ':^_<>' followed by zero or one ES, ESL, ET, ETL, END, END\-TRACKS, 
+One or more: ':^<>' followed by zero or one ES, ESL, ET, ETL, END, END\-TRACKS, 
 END_TRACKS, END TRACKS, END\-SETLIST, END_SETLIST, END SETLIST, terminating in 1 
 or more ^_<>.
 
-Must be only characters on line. '-' and '=' not supported because things like 
------- are a very common part of info file track values, or other related items.
+Must be only characters on line. '_', '-', '=' not supported because things like 
+------, =======, ________ are a common part of info file full line values.
 
 4. Extended -Xnd and -Xtd slightly to also use this track list terminator 
 method.
