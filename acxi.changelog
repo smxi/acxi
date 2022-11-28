@@ -25,6 +25,8 @@ KNOWN ISSUES:
 getting unwanted changes to items after the set/track list. Solution of course
 is to just add the terminator, but it's worth mentioning anyway.
 
+2. -X fails to correct windows special characters like magic quotes etc.
+
 --------------------------------------------------------------------------------
 BUGS:
 
@@ -85,8 +87,9 @@ title to end of title, some people do that one, oddly enough.
 at end of Title string, otherwise it's a pain to do the logic.
 
 7. Added *.st5, shntool.txt types to --checksum-delete. Those are almost always 
-from SHN files, and aren't relevant anymore. Also added robots.txt because some 
-legacy file downloaders added that.
+from SHN files, and aren't relevant anymore. Also added index.html, robots.txt 
+because some legacy file downloaders added those. Also added .txt.1, .txt.2 
+since sloppy downloaders could add those.
 
 8. Added option --prefill-tag/--pt/--pft to add temporary --prefill tag 
 completions, so you don't have to do the same thing over and over. Can be used 

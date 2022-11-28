@@ -1084,8 +1084,10 @@ sub prefill_data {
 			}
 			# Start building tracks, note: on other lines can start with numbers like this!
 			# but with terminator not issue after tracklist, but can be before.
+			# corner cases: *; (4:45) *, just dump the trailing *, too complicated to add
+			# back onto track title, and tags don't need those info * things anyway.
 			if (($b_fields || $counter > 4) && !$b_tracks_end && 
-			$_ =~ /^([1-6]-\d{1,2}|\d{1,2})\.\s(.*?)(\s+[\[\(\{][\d:\.\s]+[\]\)\}]\s*)?$/){
+			$_ =~ /^([1-6]-\d{1,2}|\d{1,2})\.\s(.*?)(\s+[\[\(\{][\d:\.\s]+[\]\)\}]\s*)?\**$/){
 				push(@{$info->{'tracks'}},$2);
 				$b_tracks_start = 1;
 			}
@@ -1868,7 +1870,8 @@ sub delete_checksums {
 	my $error_message = '';
 	# note: some checksum generators tack on a .txt to the filename.
 	# seen case like: "verbose stuff md5.txt
-	my $glob = "*{.ffp,.md5,.st5,{md5,md5sum{s,},ffp{s,},robots,shntool,st5}.txt}";
+	my $glob = '*{.ffp,.md5,.st5,index.html{.1,.2,.3,},';
+	$glob .= '{md5,md5sum{s,},ffp{s,},robots,shntool,st5}.txt{.1,.2,.3,}}';
 	my @checksums = main::globber($glob);
 	# say Data::Dumper::Dumper @checksums;
 	foreach my $file (@checksums){
@@ -2153,7 +2156,8 @@ sub run_fixes {
 			}
 			if ($run{'infofix-time'}){
 				# add parenthese, also change [..], {...} to (..)
-				$row =~ s/\s+:?(\d{1,2}(:\d{2}){1,2})(\s+|$)/ ($1)/;
+				$row =~ s/\s+:?(\d{1,2}(:\d{2}){1,2})(\s*\*+)?(\s+|$)/ ($1)/;
+				$row .= $3 if $3;
 				$row =~ s/\)(\S)/) $1/; # add space after if not EOL.
 				$row =~ s/\s\s+/ /g; # make sure we didn't add in an extra space
 				# this should be run with -Xn to make sure syntax works, slice out time
