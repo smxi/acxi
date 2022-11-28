@@ -2143,6 +2143,7 @@ sub run_fixes {
 				my $nu = (defined $5) ? $5 : $6;
 				my $disc = (defined $4) ? $4 : '';
 				my $pattern = $1;
+				# say $pattern;
 				if ($pattern =~ /^(\d{3}-)?d([1-9])t(\d{1,2})/){
 					$nu = $3;
 					$disc = $2 . '-';
