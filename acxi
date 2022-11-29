@@ -2251,10 +2251,12 @@ sub date_fix {
 			$mm = sprintf('%02d',$3);
 			$dd = sprintf('%02d',$4);
 		}
+		# this would miss something like 6/12/39
 		if ($yyyy =~ /^[4-9][0-9]$/){
 			$yyyy = '19' . $yyyy;
 		}
-		elsif ($yyyy =~ /^[0-2][0-9]$/){
+		# future proof to the 2030s
+		elsif ($yyyy =~ /^[0-3][0-9]$/){
 			$yyyy = '20' . $yyyy;
 		}
 		if ($mm && $dd && $yyyy){
