@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.05';
-my $self_date='2022-11-28';
+my $self_date='2022-11-29';
 
 ## GLOBALS ##
 ## Booleans
@@ -2117,7 +2117,7 @@ sub run_fixes {
 			$row =~ s/\bSB\b/SBD/g;
 		}
 		$row =~ s/[\r\n]+//g; # has to be AFTER autoformat
-		# $row =~ s/\t/ /g; # get rid of tabs.
+		$row =~ s/\t/ /g; # get rid of tabs.
 		$row =~ s/\s\s+/ /g;
 		$row =~ s/\s+$//g;
 		$row =~ s/\(\s+/\(/g;
@@ -2158,14 +2158,17 @@ sub run_fixes {
 				$row =~ s/^\Q$pattern\E/$nu. /;
 			}
 			if ($run{'infofix-time'}){
-				# add parenthese, also change [..], {...} to (..)
-				$row =~ s/\s+:?(\d{1,2}(:\d{2}){1,2})(\s*\*+)?(\s+|$)/ ($1)/;
-				$row .= $3 if $3;
-				$row =~ s/\)(\S)/) $1/; # add space after if not EOL.
-				$row =~ s/\s\s+/ /g; # make sure we didn't add in an extra space
+				# Needs to run inside the replace test to avoid carrying over $3, $4
+				# from number fix.
+				# Add parenthese, also change [..], {...} to (..)
+				if ($row =~ s/\s+:?(\d{1,2}(:\d{2}){1,2}(\.\d+)?)(\s*\*+)?(\s+|$)/ ($1)/){
+					$row .= $4 if $4;
+					$row =~ s/\)(\S)/) $1/; # add space after if not EOL.
+					$row =~ s/\s\s+/ /g; # make sure we didn't add in an extra space
+				}
 				# this should be run with -Xn to make sure syntax works, slice out time
 				# from start of title and append to end of string
-				if ($row =~ /^(\d-)?\d{1,2}\.\s([\(\[\{]\d{1,2}(:\d{2}){1,2}[\)\]\}])\s*/){
+				if ($row =~ /^(\d-)?\d{1,2}\.\s([\(\[\{]\d{1,2}(:\d{2}){1,2}(\s*\*+)?[\)\]\}])\s*/){
 					my $time = $2;
 					$row =~ s/\Q$time\E//;
 					$row .= ' ' . $time;
