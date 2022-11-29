@@ -59,6 +59,9 @@ specific codecs, like FLAC.
 7. Added corner case -Xn numbering fix: 104-d1t04. Why such weird redundancies?
 Who knows, but there they are.
 
+8. Slightly risky update, adding (20)?3x year ids, which could possibly trip bad
+day of month == 30, 31, but then again, so could dom == 29.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 

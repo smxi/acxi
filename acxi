@@ -1872,7 +1872,7 @@ sub delete_checksums {
 	# note: some checksum generators tack on a .txt to the filename.
 	# seen case like: "verbose stuff md5.txt
 	my $glob = '*{.ffp,.md5,.st5,index.html{.1,.2,.3,},';
-	$glob .= '{md5,md5sum{s,},ffp{s,},robots,shntool,st5}.txt{.1,.2,.3,}}';
+	$glob .= '{md5,md5sum{s,},ffp{s,},robots,shntool{_len,_length,},st5}.txt{.1,.2,.3,}}';
 	my @checksums = main::globber($glob);
 	# say Data::Dumper::Dumper @checksums;
 	foreach my $file (@checksums){
