@@ -2137,7 +2137,7 @@ sub run_fixes {
 		# 1-4 / 1-12 / 12 / 213 / d1t04 / 104-d1t04 / xxx-d1t04
 		# Note: don't want to trap times, so use \s after :
 		if (($run{'infofix-no'} || $run{'infofix-time'} || $run{'infofix-title'}) && !$b_tracks_end &&
-		 $row =~ /^(\s*((\d{3}-|xxx-)?(d?[1-9][t-])([0-9]{1,2})|t?([0-9]{1,2}|[0-9]{3}))(\]\s*|\.\s*|\s*-\s*|\s*\)\s*|:\s+|\s+))/){
+		 $row =~ /^(\s*((\d{3}-|xxx-)?([ds]?[1-9][t-])([0-9]{1,2})|t?([0-9]{1,2}|[0-9]{3}))(\]\s*|\.\s*|\s*-\s*|\s*\)\s*|:\s+|\s+))/i){
 			# say "$1 '$6'";
 			if ($run{'infofix-no'}){
 				# say "$1 $2 $3";
@@ -2145,7 +2145,7 @@ sub run_fixes {
 				my $disc = (defined $4) ? $4 : '';
 				my $pattern = $1;
 				# say "::${pattern}::";
-				if ($pattern =~ /^\s*(\d{3}-|xxx-)?d([1-9])t(\d{1,2})/){
+				if ($pattern =~ /^\s*(\d{3}-|xxx-)?[ds]([1-9])t(\d{1,2})/i){
 					$nu = $3;
 					$disc = $2 . '-';
 				}

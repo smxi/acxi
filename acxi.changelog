@@ -41,7 +41,8 @@ FIXES:
 
 1. Forgot some words in -h for -M.
 
-2. For -Xn, added support for common legacy numbering syntaxes: d1t12, t12 
+2. For -Xn, added support for common legacy numbering syntaxes: d1t12, t12, and
+s1t12.
 
 3. Added alternates --info-file, --if, --pf for --prefill-file. Also made it 
 active for --infofix, not just -S, -E autotag. Also fixed validation which was a 
