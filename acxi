@@ -62,6 +62,7 @@ use File::Copy qw(copy);
 use File::Glob qw(:bsd_glob);
 use File::Path qw(rmtree make_path);
 use Cwd qw(getcwd);
+use POSIX qw(strftime);
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
 # use File::Copy::Recursive qw(fcopy rcopy dircopy fmove rmove dirmove);
@@ -2207,9 +2208,9 @@ sub run_fixes {
 }
 sub date_fix {
 	my ($ref) = @_;
-	my ($dd,$mm,$regex,$yyyy,@data);
+	my ($b_dow,$dd,$dow,$mm,$regex,$yyyy,@data);
 	foreach (@$ref){
-		($dd,$mm,$regex,$yyyy) =  ('','','','');
+		($dd,$dow,$mm,$regex,$yyyy) =  ('','','','','');
 		# fix D month, YY, month D, YY, month-DD-YYYY
 		# regex: 1: total regex; 2: container for day start; 3: day start
 		# 4: optional nd/rd 5: month; 6: container for day; 7: day;
@@ -2258,7 +2259,15 @@ sub date_fix {
 		}
 		if ($mm && $dd && $yyyy){
 			# say "$regex $yyyy $mm $dd";
-			$_ =~ s/\Q$regex\E/$yyyy-$mm-$dd/i;
+			# only do the first date found, that would be in the top block.
+			if (!$b_dow && $run{'infofix-dow'}){
+				$dow = POSIX::strftime("%A", '01', '01', '01', $dd, ($mm-1), ($yyyy-1900));
+				# only cut out existing dow with leading OR trailing space/-
+				$_ =~ s/$dow[\s,-]+\s*|[\s,-]+\s*$dow//; 
+				$dow = ' (' . $dow . ')';
+				$b_dow = 1;
+			}
+			$_ =~ s/\Q$regex\E/$yyyy-$mm-$dd$dow/i;
 		}
 		push(@data,$_);
 	}
@@ -3813,6 +3822,7 @@ sub show_options {
 	$output .= "                  Fix info.txt files. Use any combination. Always cleans white\n";
 	$output .= "                  space issues.\n";
 	$output .= "                  d: make iso date: YYYY-MM-DD from various random date formats\n";
+	$output .= "                  k: adds (weekday) after iso date. Activates d.\n";
 	$output .= "                  l: set all lowercase, and apply simple upper case first fixes.\n";
 	$output .= "                  m: add parentheses around track times, move to end, in track title.\n";
 	$output .= "                  n: make track numbering 'NN. ' (0 padded) or 'N-NN. '\n";
@@ -4378,8 +4388,9 @@ sub get{
 		my ($opt,$arg) = @_;
 		$run{'infofix'} = 1;
 		if ($arg){
-			if ($arg =~ /^[dlmnqutvw]+$/i){
-				$run{'infofix-date'} = 1 if $arg =~ /d/i;
+			if ($arg =~ /^[dklmnqutvw]+$/i){
+				$run{'infofix-date'} = 1 if $arg =~ /[dk]/i;
+				$run{'infofix-dow'} = 1 if $arg =~ /k/i;
 				$run{'infofix-lower'} = 1 if $arg =~ /l/i;
 				$run{'infofix-time'} = 1 if $arg =~ /m/i;
 				$run{'infofix-no'} = 1 if $arg =~ /n/i;

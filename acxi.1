@@ -39,7 +39,7 @@ Tagging: \fBacxi\fR [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-autotag\-create\-multi\fR, \fB\-M\fR {filename start ID}]
 [\fB\-\-image\fR, \fB\-I\fR {cover image filename}]
 [\fB\-\-info\-file\fR, \fB\-\-prefill\-file\fR {release info file name}] 
-[\fB\-\-infofix\fR, \fB\-X\fR [d|l|m|n|q|t|u|v|w]] 
+[\fB\-\-infofix\fR, \fB\-X\fR [d|k|l|m|n|q|t|u|v|w]] 
 [\fB\-\-info\-rating\fR {2\-xxx}
 [\fB\-\-multiartist\fR, \fB\-\-ma\fR {[at|ta]:separator}]
 [\fB\-\-prefill\fR, \fB\-E\fR] 
@@ -583,6 +583,12 @@ Values (can be combined):
 * no option \- clean white space issues. Default action, always runs.
 
 * \fBd\fR \- set date to ISO format YYYY\-MM\-DD
+
+* \fBk\fR \- set date to ISO format and add day of week after date. Also removes 
+any existing day of weeks from that line. Only does this on first date found in
+info file, which should be on top block.
+
+Sample: \fBThursday, April 23, 2020\fR becomes \fb2020-04-23 (Thursday)\fR
 
 * \fBl\fR \- more simplistic upper case first, lower case rest. Good for info 
 files that have all upper case, but a lot of sentences. You will have to go back 

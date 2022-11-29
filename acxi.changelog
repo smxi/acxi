@@ -118,6 +118,15 @@ remember.
 11. Added 'Taped by', 'Recorded by' as prefill field names, for the PRODUCER 
 tag.
 
+12. Added -Xk, for adding day of week after fixed date string. Activates d as 
+well. Also clears out any existing day of week from line so you don't need to 
+manually delete it if it was not done with day of week after date. Like so:
+
+2020-04-23 (Thursday)
+
+This uses core module POSIX::strftime, to avoid any non core module 
+requirements.
+
 --------------------------------------------------------------------------------
 CHANGES:
 
