@@ -62,6 +62,9 @@ Who knows, but there they are.
 8. Slightly risky update, adding (20)?3x year ids, which could possibly trip bad
 day of month == 30, 31, but then again, so could dom == 29.
 
+9. For -X, replace tabs with a space, tabs are just annoying and create odd 
+layouts.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 

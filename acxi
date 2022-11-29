@@ -2117,7 +2117,7 @@ sub run_fixes {
 			$row =~ s/\bSB\b/SBD/g;
 		}
 		$row =~ s/[\r\n]+//g; # has to be AFTER autoformat
-		$row =~ s/\t/ /g; # get rid of tabs.
+		$row =~ s/\t+/ /g; # get rid of tabs.
 		$row =~ s/\s\s+/ /g;
 		$row =~ s/\s+$//g;
 		$row =~ s/\(\s+/\(/g;
