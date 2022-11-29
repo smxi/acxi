@@ -79,8 +79,7 @@ or more ^_<>.
 Must be only characters on line. '_', '-', '=' not supported because things like 
 ------, =======, ________ are a common part of info file full line values.
 
-4. Extended -Xnd and -Xtd slightly to also use this track list terminator 
-method.
+4. Extended -Xm, -Xn, -Xt to also use this track list terminator method.
 
 5. Added -Xm which attempts to add parenthesis around track times so that the 
 times don't get included in the track TITLE info. Also moves time at start of
@@ -105,7 +104,8 @@ If you use the configuration item, remember to remove the value after you are
 done with the current job, or it will always get used. These values override 
 everything else in prefill, so use with caution.
 
---prefill-tag=UNSET unsets the configuration value temporarily.
+--prefill-tag=UNSET unsets the configuration value temporarily, or replaces it
+with the supplied tag values.
 
 9. Added -Xv. This adds an FFP verified to the q report. FLAC only. If errors, 
 shows the full file report, which can be useful. Note that running ffp 

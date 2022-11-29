@@ -2263,7 +2263,7 @@ sub date_fix {
 			if (!$b_dow && $run{'infofix-dow'}){
 				$dow = POSIX::strftime("%A", '01', '01', '01', $dd, ($mm-1), ($yyyy-1900));
 				# only cut out existing dow with leading OR trailing space/-
-				$_ =~ s/$dow[\s,-]+\s*|[\s,-]+\s*$dow//; 
+				$_ =~ s/$dow[\s,-]+\s*|[\s,-]+\s*$dow//i; 
 				$dow = ' (' . $dow . ')';
 				$b_dow = 1;
 			}
