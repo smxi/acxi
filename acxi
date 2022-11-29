@@ -2211,11 +2211,12 @@ sub date_fix {
 	my ($b_dow,$dd,$dow,$mm,$regex,$yyyy,@data);
 	foreach (@$ref){
 		($dd,$dow,$mm,$regex,$yyyy) =  ('','','','','');
+		# NOTE: be careful with (20)?3x ids, might trip month day by accident. Watch for this!
 		# fix D month, YY, month D, YY, month-DD-YYYY
 		# regex: 1: total regex; 2: container for day start; 3: day start
 		# 4: optional nd/rd 5: month; 6: container for day; 7: day;
 		# 8: optional nd/rd etc; 9: year; 10: 19..; 11: 20..
-		if (/\b(((0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\S*?([\s\/,-]+(0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?)?[\s\/,-]+((19)?[4-9][0-9]|(20)?[012][0-9]))\b/i){
+		if (/\b(((0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\S*?([\s\/,-]+(0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?)?[\s\/,-]+((19)?[4-9][0-9]|(20)?[0-3][0-9]))\b/i){
 			$regex = $1;
 			$yyyy = $9;
 			# say "rx: $regex 5: $5 9: $9";
@@ -2237,7 +2238,7 @@ sub date_fix {
 			# say "y: $yyyy m: $mm d: $dd";
 		}
 		# Change m/d/yy or m-d-yy or m.d.yy to yyyy-mm-dd 09/19/54
-		elsif (/\b((0?[1-9]|1[0-2])[\/\.-](0?[1-9]|[12][0-9]|30|31)[\/\.-]((19)?[4-9][0-9]|(20)?[0-2][0-9]))\b/){
+		elsif (/\b((0?[1-9]|1[0-2])[\/\.-](0?[1-9]|[12][0-9]|30|31)[\/\.-]((19)?[4-9][0-9]|(20)?[0-3][0-9]))\b/){
 			$regex = $1;
 			$mm = sprintf('%02d',$2);
 			$dd = sprintf('%02d',$3);
