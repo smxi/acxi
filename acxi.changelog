@@ -134,6 +134,9 @@ manually delete it if it was not done with day of week after date. Like so:
 This uses core module POSIX::strftime, to avoid any non core module 
 requirements.
 
+13. Added -X0. This turns off the leading characters usually added before each 
+line of output.
+
 --------------------------------------------------------------------------------
 CHANGES:
 

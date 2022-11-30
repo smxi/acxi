@@ -2189,18 +2189,19 @@ sub run_fixes {
 		push(@prepped,$row) if $newlines < 2;
 	}
 	print '  Processing completed. ';
+	my ($no_write,$write) = ($run{'infofix-no-leading'}) ? ('','') : ('  |: ','  | ');
 	if (!$run{'infofix-write'}){
 		say "Write following changes to $INFO_FILE by adding 'w':";
 		say "  $line_small";
-		print "  |: ";
-		say join("\n  |: ",@prepped);
+		print $write;
+		say join("\n$write",@prepped);
 		say "  $line_small";
 	}
 	else {
 		say "Writing changes to $INFO_FILE:";
 		say "  $line_small";
-		print '  | ';
-		say join("\n  | ",@prepped);
+		print $no_write;
+		say join("\n$no_write",@prepped);
 		my $contents = join("\r\n",@prepped);
 		open(my $fh, '>', $INFO_FILE) or die "failed to open for writing: $INFO_FILE";
 		print $fh $contents;;
@@ -2269,7 +2270,7 @@ sub date_fix {
 			if (!$b_dow && $run{'infofix-dow'}){
 				$dow = POSIX::strftime("%A", '01', '01', '01', $dd, ($mm-1), ($yyyy-1900));
 				# only cut out existing dow with leading OR trailing space/-
-				$_ =~ s/$dow[\s,-]+\s*|[\s,-]+\s*$dow//i; 
+				$_ =~ s/\(?$dow\)?[\s,-]+\s*|[\s,-]+\s*\(?$dow\)?//i; 
 				$dow = ' (' . $dow . ')';
 				$b_dow = 1;
 			}
@@ -3827,16 +3828,17 @@ sub show_options {
 	$output .= "--infofix, -X [dnqtuvw]\n";
 	$output .= "                  Fix info.txt files. Use any combination. Always cleans white\n";
 	$output .= "                  space issues.\n";
-	$output .= "                  d: make iso date: YYYY-MM-DD from various random date formats\n";
-	$output .= "                  k: adds (weekday) after iso date. Activates d.\n";
-	$output .= "                  l: set all lowercase, and apply simple upper case first fixes.\n";
-	$output .= "                  m: add parentheses around track times, move to end, in track title.\n";
-	$output .= "                  n: make track numbering 'NN. ' (0 padded) or 'N-NN. '\n";
-	$output .= "                  q: add FLAC/Quality: /[quality] items to info file\n";
-	$output .= "                  t: fix upper/lower case track titles\n";
-	$output .= "                  u: fix entire file upper/lower\n";
-	$output .= "                  v: verify FFPs (FLAC only). Activates q.\n";
-	$output .= "                  w: write changes to file\n";
+	$output .= "                  0: Do not print leading delimiter characters per line.\n";
+	$output .= "                  d: Make iso date: YYYY-MM-DD from various random date formats.\n";
+	$output .= "                  k: Adds (weekday) after iso date. Activates d.\n";
+	$output .= "                  l: Set all lowercase, and apply simple upper case first fixes.\n";
+	$output .= "                  m: Add parentheses around track times, move to end, in track title.\n";
+	$output .= "                  n: Make track numbering 'NN. ' (0 padded) or 'N-NN. '\n";
+	$output .= "                  q: Add FLAC/Quality: /[quality] items to info file.\n";
+	$output .= "                  t: Fix upper/lower case track titles.\n";
+	$output .= "                  u: Fix entire file upper/lower.\n";
+	$output .= "                  v: Verify FFPs (FLAC only). Activates q.\n";
+	$output .= "                  w: Write changes to file\n";
 	$output .= "                  t and u use Title upper case main words.\n";
 	$output .= "--info-rating {2-xxx}\n";
 	$output .= "                  Change default rating value for --infofix q. Current: $INFO_RATING;\n";
@@ -4394,7 +4396,8 @@ sub get{
 		my ($opt,$arg) = @_;
 		$run{'infofix'} = 1;
 		if ($arg){
-			if ($arg =~ /^[dklmnqutvw]+$/i){
+			if ($arg =~ /^[0dklmnqutvw]+$/i){
+				$run{'infofix-no-leading'} = 1 if $arg =~ /0/i;
 				$run{'infofix-date'} = 1 if $arg =~ /[dk]/i;
 				$run{'infofix-dow'} = 1 if $arg =~ /k/i;
 				$run{'infofix-lower'} = 1 if $arg =~ /l/i;
