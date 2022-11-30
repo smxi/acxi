@@ -39,7 +39,7 @@ Tagging: \fBacxi\fR [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-autotag\-create\-multi\fR, \fB\-M\fR {filename start ID}]
 [\fB\-\-image\fR, \fB\-I\fR {cover image filename}]
 [\fB\-\-info\-file\fR, \fB\-\-prefill\-file\fR {release info file name}] 
-[\fB\-\-infofix\fR, \fB\-X\fR [0|d|k|l|m|n|q|t|u|v|w]] 
+[\fB\-\-infofix\fR, \fB\-X\fR [d|k|l|m|n|q|t|u|v|w|z]] 
 [\fB\-\-info\-rating\fR {2\-xxx}
 [\fB\-\-multiartist\fR, \fB\-\-ma\fR {[at|ta]:separator}]
 [\fB\-\-prefill\fR, \fB\-E\fR] 
@@ -558,7 +558,7 @@ An alternate file name to use for prefill or infofix. Note that file MUST have a
 you will get ungood results.
 
 .TP
-.B \-\-infofix\fR, \fB\-X [0|d|l|n|q|t|u|v|w]\fR
+.B \-\-infofix\fR, \fB\-X [d|l|n|q|t|u|v|w|z]\fR
 Correct common corruptions to info.txt files. Only to correct these common 
 issues:
 
@@ -581,8 +581,6 @@ action always).
 Values (can be combined):
 
 * no option \- clean white space issues. Default action, always runs.
-
-* \fB0\fR \- turn off leading characters per info file.
 
 * \fBd\fR \- set date to ISO format YYYY\-MM\-DD
 
@@ -625,6 +623,8 @@ end of track listing.
 \fBq\fR. Adds \fBFLAC FFPs:\fR status line to the \fBq\fR report.
 
 * \fBw\fR \- write changes to info file.
+
+* \fBz\fR \- turn off leading characters per info file.
 
 With no \fBw\fR supplied, will just show what would have happened, with \fBw\fR, 
 writes fixes to file.
