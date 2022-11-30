@@ -6,8 +6,13 @@ Date: 2022-??-??
 RELEASE NOTES:
 --------------------------------------------------------------------------------
 
-A big prefill/infofix release. Many more possible info file syntaxes handled,
-new -X fix options, corrections, bug fixes.
+A big prefill/infofix release. Many more possible info file syntaxes handled, 
+new -X fix options, corrections, bug fixes. This has been tested heavily on a 
+fairly large untagged concert collection (Grateful Dead shows), which had a very 
+good set of random ways of creating the info files, with varying syntaxes and 
+methods, so this was in essence an ideal training set. Though objectively, any 
+set generated over decades by random people is going to have most of the 
+randomly possible options.
 
 --------------------------------------------------------------------------------
 SPECIAL THANKS:
@@ -41,39 +46,33 @@ FIXES:
 
 1. Forgot some words in -h for -M.
 
-2. For -Xn, added support for common legacy numbering syntaxes: d1t12, t12, and
-s1t12.
+2a. INFOFIX: -Xn was treating times starting line, like 5:43, as track numbers 
+because it was using :\s*, not :\s+, which led to undesired outcomes.
 
-3. Added alternates --info-file, --if, --pf for --prefill-file. Also made it 
-active for --infofix, not just -S, -E autotag. Also fixed validation which was a 
-little too tight on that combo.
+2b. INFOFIX: replace tabs with a space, tabs are just annoying and create odd 
+layouts, since they always assume x spaces per tab, but that behavior is not 
+actually set in stone.
 
-4. -Xn was treating times starting line, like 5:43, as track numbers because it
-was using :\s*, not :\s+, which led to undesired outcomes.
-
-5. -i was triggering $test{'sync'} which is not correct, you should be able to 
+3. -i was triggering $test{'sync'} which is not correct, you should be able to 
 set input types for non syncing actions, since some of those only work with 
 specific codecs, like FLAC.
 
-6. Added *ffps.txt, *md5sum.txt as possible -D delete file names.
-
-7. Added corner case -Xn numbering fix: 104-d1t04. Why such weird redundancies?
-Who knows, but there they are.
-
-8. Slightly risky update, adding (20)?3x year ids, which could possibly trip bad
+4. Slightly risky update, adding (20)?3x year ids, which could possibly trip bad
 day of month == 30, 31, but then again, so could dom == 29.
-
-9. For -X, replace tabs with a space, tabs are just annoying and create odd 
-layouts.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
-1. Added field name 'Artist / Band' to Artist prefill field name list. 
+1a. PREFILL: Added the following field names:
+* 'Artist / Band' to ARTIST prefill field name list.
+* 'Taped by', 'Recorded by' for PRODUCER tag.
 
-2. Added alternate --copy-append to --append/-a, to make it more obvious.
+1b. PREFILL/AUTOTAG: Added CDDB, ETREE, ISRC ID tags. ETREE is not an official 
+tag from vorbis/flac, but might be useful for bands that have etree ids, that 
+way it can go somewhere in the tags, as well as being a possible field name for 
+prefill. 
 
-3. Added option in --prefill to add a terminator to the Setlist/Tracks/ etc to 
+1c. PREFILL: Added option to add a terminator after the Setlist/Tracks block to 
 stop creating and counting tracks. This helps when there are numbered comments, 
 numbered per track notes, and so on, which could then trigger a track count 
 mismatch exit error. Also makes it so you don't have to do anything to the info 
@@ -86,24 +85,8 @@ or more ^_<>.
 Must be only characters on line. '_', '-', '=' not supported because things like 
 ------, =======, ________ are a common part of info file full line values.
 
-4. Extended -Xm, -Xn, -Xt to also use this track list terminator method.
-
-5. Added -Xm which attempts to add parenthesis around track times so that the 
-times don't get included in the track TITLE info. Also moves time at start of
-title to end of title, some people do that one, oddly enough.
-
-6. Added {...} syntax for ignoring track times. Note that track times have to be
-at end of Title string, otherwise it's a pain to do the logic.
-
-7. Added *.st5, shntool.txt types to --checksum-delete. Those are almost always 
-from SHN files, and aren't relevant anymore. Also added index.html, robots.txt 
-because some legacy file downloaders added those. Also added .txt.1, .txt.2 
-since sloppy downloaders could add those.
-
-8. Added option --prefill-tag/--pt/--pft to add temporary --prefill tag 
-completions, so you don't have to do the same thing over and over. Can be used 
-as option or configuration item. Remember to undo it when you are done with job 
-if you used the configuration option! Uses same syntax as --tag/-T.
+1d. Added --prefill-tag, configuration item PREFILL_TAG. This allows setting 
+fields for prefilling either on a per recording, per recording group, or always.
 
 PREFILL_TAG=GENRE%:Heavy Metal^^IMAGE%:cover.jpg
 
@@ -114,28 +97,63 @@ everything else in prefill, so use with caution.
 --prefill-tag=UNSET unsets the configuration value temporarily, or replaces it
 with the supplied tag values.
 
-9. Added -Xv. This adds an FFP verified to the q report. FLAC only. If errors, 
-shows the full file report, which can be useful. Note that running ffp 
+1e. PREFILL/OPTIONS: Added option --prefill-tag/--pt/--pft to add temporary 
+--prefill tag completions, so you don't have to do the same thing over and over. 
+Can be used as option or configuration item. Remember to undo it when you are 
+done with job if you used the configuration option! Uses same syntax as 
+--tag/-T.
+
+1f. PREFILL/INFOFIX/OPTIONS: Added alternates --info-file, --if, --pf for 
+--prefill-file. Also made it active for --infofix, not just -S, -E autotag. Also 
+fixed validation which was a little too tight on that combo.
+
+2a. INFOFIX: For -Xn, added support for common legacy numbering syntaxes: d1t12, 
+t12, s1t12, and less common 123-d1t23.
+
+2b. INFOFIX: Extended -Xm, -Xn, -Xt to also use prefill track list terminator 
+method.
+
+2c. INFOFIX: Added -Xm which attempts to add parenthesis around track times so 
+that the times don't get included in the track TITLE info. Also moves time at 
+start of title to end of title, some people do that one, oddly enough.
+
+2d. INFOFIX: Added -Xv. This adds an FFP verified to the q report. FLAC only. If 
+errors, shows the full file report, which can be useful. Note that running ffp 
 verification is slow. This is the same basic tool that --checksum-verify/-V 
 uses, with md5 checks disabled.
 
-10. Added optional option names --dry-run, --dry, same as --test, eay to 
-remember.
-
-11. Added 'Taped by', 'Recorded by' as prefill field names, for the PRODUCER 
-tag.
-
-12. Added -Xk, for adding day of week after fixed date string. Activates d as 
-well. Also clears out any existing day of week from line so you don't need to 
-manually delete it if it was not done with day of week after date. Like so:
+2e. INFOFIX: Added -Xk, for adding day of week after fixed date string. 
+Activates d as well. Also clears out any existing day of week from line so you 
+don't need to manually delete it if it was not done with day of week after date. 
+Like so:
 
 2020-04-23 (Thursday)
 
 This uses core module POSIX::strftime, to avoid any non core module 
 requirements.
 
-13. Added -X0. This turns off the leading characters usually added before each 
-line of output.
+2f. INFOFIX: Added -X0. This turns off the leading characters usually added 
+before each line of output.
+
+2g. INFOFIX/PREFILL: Added {...} syntax for track times. Note that track times 
+have to be at end of Title string, otherwise it's a pain to do the logic. -Xm 
+will move them from start of title to end.
+
+3a. CHECKSUM DELETE: Added *.st5, shntool.txt types to --checksum-delete. Those 
+are almost always from SHN files, and aren't relevant anymore. 
+
+3b. CHECKSUM DELETE: Added *ffps.txt, *md5sum.txt as possible -D delete file 
+names.
+
+3c. CHECKSUM DELETE: Added index.html, robots.txt because some legacy file 
+downloaders added those. Also added .txt.1, .txt.2 since sloppy downloaders 
+could add those when trying to download repeatedly.
+
+4a. OPTIONS: Added alternate --copy-append to --append/-a, to make it more 
+obvious.
+
+4b. OPTIONS: Added optional option names --dry-run, --dry, same as --test, eay 
+to remember.
 
 --------------------------------------------------------------------------------
 CHANGES:
@@ -153,6 +171,8 @@ CODE:
 
 1. Changed $test{'tag-create'} to $test{'autotag-create'} to make it consistent
 with the %run values, too confusing otherwise.
+
+2. Refactored prefill fields to be more flexible, easier to add prefill fields.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Tue, 15 Nov 2022 17:25:50 -0800

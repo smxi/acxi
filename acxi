@@ -978,16 +978,17 @@ sub prefill_data {
 	my $data = InfoFix::open_info_file('prefill');
 	my $counter = 0;
 	my $fields = 'Album|AlbumArtist|AlbumSort|Artiste?s?|Artist\s*\/\s*Band|Band|';
-	$fields .= 'City|Club|Composer|Country|Cover|Date|Event|Festival|Genre|Image|';
-	$fields .= 'Location|Producer|Lieu|Recorded by|State|Taper|Taped by|';
+	$fields .= 'CDDB|CDDB[\s-]?ID|City|Club|Composer|Country|Cover|Date|';
+	$fields .= 'Etree|Etree[\s-]?ID|Event|Festival|Genre|Image|ISRC|ISRC[\s-]?ID|';
+	$fields .= 'Event|Location|Producer|Lieu|Recorded by|State|Taper|Taped by|';
 	$fields .= 'Venue|Ville|Year';
-	foreach (@$data){
+	foreach my $line (@$data){
 		$counter++;
-		$_ = main::trimmer($_);
-		$b_top_block = 0 if !$_;
+		$line = main::trimmer($line);
+		$b_top_block = 0 if !$line;
 		# we only want values where something exists, found french syntax, other 
 		# languages will be added if people want them.
-		if ($b_top_block && /^($fields)\s*:\s*(.+)$/i){
+		if ($b_top_block && $line =~ /^($fields)\s*:\s*(.+)$/i){
 			$b_fields = 1;
 			$field_name = lc($1);
 			$field_value = $2;
@@ -995,21 +996,21 @@ sub prefill_data {
 		if ($b_top_block){
 			if (!$b_fields){
 				if ($counter == 1){
-					$info->{'artist'} = $_;
+					$info->{'artist'} = $line;
 				}
-				elsif ($counter < 7 && $_ !~ /^(19|20)[0-9]{2}-/){
-					$_ =~ s/,$//;
+				elsif ($counter < 7 && $line !~ /^(19|20)[0-9]{2}-/){
+					$line =~ s/,$//;
 					if ($info->{'location'}){
-						if ($info->{'location'} !~ /\Q$_\E/i){
-							$info->{'location'} .= ', ' . $_ ;
+						if ($info->{'location'} !~ /\Q$line\E/i){
+							$info->{'location'} .= ', ' . $line ;
 						}
 					}
 					else {
-						$info->{'location'} = $_;
+						$info->{'location'} = $line;
 					}
 				}
 				elsif ($counter < 7 && 
-				$_ =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
+				$line =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
 					$info->{'date-print'} = $1;
 					$info->{'date-print'} .= $4 if $4;
 					$info->{'date'} = $1;
@@ -1017,6 +1018,7 @@ sub prefill_data {
 				}
 			}
 			else {
+				# this should always be first in info file
 				if ($field_name =~ /^(Artiste?s?|Artist\s*\/\s*Band|Band)$/i){
 					$info->{'artist'} = $field_value;
 				}
@@ -1028,6 +1030,19 @@ sub prefill_data {
 				}
 				elsif ($field_name =~ /^(AlbumSort)$/i){
 					$info->{'albumsort'} = $field_value;
+				}
+				elsif ($field_name =~ /^CDDB([\s-]?ID)?$/i){
+					$info->{'cddb'} = $field_value;
+				}
+				elsif ($field_name =~ /^(City|Country|Location|State|Ville)$/i){
+					if ($info->{'location'}){
+						if ($info->{'location'} !~ /\Q$field_value\E/i){
+							$info->{'location'} .= ', ' . $field_value;
+						}
+					}
+					else {
+						$info->{'location'} = $field_value;
+					}
 				}
 				elsif ($field_name =~ /^(Club|Event|Festival|Lieu|Venue)$/i){
 					if ($info->{'location'}){
@@ -1043,18 +1058,11 @@ sub prefill_data {
 						$info->{'venue'} = $field_value;
 					}
 				}
-				elsif ($field_name =~ /^(City|Country|Location|State|Ville)$/i){
-					if ($info->{'location'}){
-						if ($info->{'location'} !~ /\Q$field_value\E/i){
-							$info->{'location'} .= ', ' . $field_value;
-						}
-					}
-					else {
-						$info->{'location'} = $field_value;
-					}
-				}
 				elsif ($field_name =~ /^(Composer)$/i){
 					$info->{'composer'} = $field_value;
+				}
+				elsif ($field_name =~ /^(Cover|Image)$/i){
+					$info->{'image'} = $field_value;
 				}
 				elsif ($field_name =~ /^(Date)$/i &&
 				$field_value =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
@@ -1063,24 +1071,27 @@ sub prefill_data {
 					$info->{'date'} = $1;
 					$info->{'year'} = $2;
 				}
-				elsif ($field_name =~ /^(Year)$/i){
-					$info->{'year'} = $field_value;
+				elsif ($field_name =~ /^Etree([\s-]?ID)?$/i){
+					$info->{'etree'} = $field_value;
 				}
 				elsif ($field_name =~ /^(Genre)$/i){
 					$info->{'genre'} = $field_value;
 				}
+				elsif ($field_name =~ /^ISRC([\s-]?ID)?$/i){
+					$info->{'isrc'} = $field_value;
+				}
 				elsif ($field_name =~ /^(Producer|Taper|(Record|Tap)ed by)$/i){
 					$info->{'producer'} = $field_value;
 				}
-				elsif ($field_name =~ /^(Cover|Image)$/i){
-					$info->{'image'} = $field_value;
+				elsif ($field_name =~ /^(Year)$/i){
+					$info->{'year'} = $field_value;
 				}
 			}
 		}
 		elsif (!$b_top_block){
 			# see InfoFix::run_fixes as well if changing the terminator regex
 			if (!$b_tracks_end && $b_tracks_start && 
-			/^\s*[:^<>]{1,}?(E[ST]L?|END([\s_-]?(SETLIST|TRACKS))?)?[:^<>]{1,}\s*$/i){
+			$line =~ /^\s*[:^<>]{1,}?(E[ST]L?|END([\s_-]?(SETLIST|TRACKS))?)?[:^<>]{1,}\s*$/i){
 				$b_tracks_end = 1;
 			}
 			# Start building tracks, note: on other lines can start with numbers like this!
@@ -1088,33 +1099,42 @@ sub prefill_data {
 			# corner cases: *; (4:45) *, just dump the trailing *, too complicated to add
 			# back onto track title, and tags don't need those info * things anyway.
 			if (($b_fields || $counter > 4) && !$b_tracks_end && 
-			$_ =~ /^([1-6]-\d{1,2}|\d{1,2})\.\s(.*?)(\s+[\[\(\{][\d:\.\s]+[\]\)\}]\s*)?\**$/){
+			$line =~ /^([1-6]-\d{1,2}|\d{1,2})\.\s(.*?)(\s+[\[\(\{][\d:\.\s]+[\]\)\}]\s*)?\**$/){
 				push(@{$info->{'tracks'}},$2);
 				$b_tracks_start = 1;
 			}
 			# Start building performers
 			elsif (($b_fields || $counter > 8) && 
-			/^(Band|(Band\s)?Line[\s_-]?up|(Band\s)?Members|Performers|Personnel):/i){
+			$line =~ /^(Band|(Band\s)?Line[\s_-]?up|(Band\s)?Members|Performers|Personnel):/i){
 				$b_performer = 1;
 				next;
 			}
-			if ($b_performer && $_){
-				push(@{$info->{'performers'}},$_);
+			if ($b_performer && $line){
+				push(@{$info->{'performers'}},$line);
 			}
 			# first white space after performer list
-			elsif ($b_performer && !$_){
+			elsif ($b_performer && !$line){
 				$b_performer = 0;
 			}
 			# some random stuff if it wasn't in top block
-			if (!$info->{'producer'} && 
-			$_ =~ /^(Producer|Recorded by|Taper|Taped by)\s*:\s*(.*)/i){
-				$info->{'producer'} = $2;
+			if (!$info->{'cddb'} && $line =~ /^CDDB([\s-]?ID)?\s*:\s*(.*)$/i){
+				$info->{'cddb'} = $2;
 			}
-			elsif (!$info->{'genre'} && $_ =~ /^(Genre)\s*:\s*(.*)$/i){
+			elsif (!$info->{'etree'} && $line =~ /^Etree([\s-]?ID)?\s*:\s*(.*)$/i){
+				$info->{'etree'} = $2;
+			}
+			elsif (!$info->{'genre'} && $line =~ /^(Genre)\s*:\s*(.*)$/i){
 				$info->{'genre'} = $2;
 			}
-			elsif (!$info->{'image'} && $_ =~ /^(Cover|Image)\s*:\s*(.*)$/i){
+			elsif (!$info->{'image'} && $line =~ /^(Cover|Image)\s*:\s*(.*)$/i){
 				$info->{'image'} = $2;
+			}
+			elsif (!$info->{'isrc'} && $line =~ /^ISRC([\s-]?ID)?\s*:\s*(.*)$/i){
+				$info->{'isrc'} = $2;
+			}
+			elsif (!$info->{'producer'} && 
+			$line =~ /^(Producer|Recorded by|Taper|Taped by)\s*:\s*(.*)/i){
+				$info->{'producer'} = $2;
 			}
 		}
 	}
@@ -1151,8 +1171,8 @@ sub populate_tag_file {
 	# note: VENUE and LABEL better handled by xiph spec: LOCATION and ORGANIZATION
 	# Include YEAR to make conversion to mp3 tagging cleaner
 	'GENRE','RATING','DATE','YEAR','LOCATION','VENUE','PRODUCER','PUBLISHER',
-	'CDDB','ISRC',
 	'# e.g. record label, taper group,, etc. ','ORGANIZATION',
+	'# Database IDs', 'CDDB','ETREE','ISRC',
 	'## TECHNICAL INFORMATION ##',
 	'ENCODING',
 	'# Useful for tapers etc','SOURCE','SOURCE','SOURCE','SOURCE',
@@ -1171,9 +1191,13 @@ sub populate_tag_file {
 	my @track = ('','TRACKNUMBER','TITLE','VERSION','PART','FILE');
 	splice(@track, 1, 0, 'ARTIST') if $run{'multiartist'};
 	@collection = map {$_ .= '%:' if /^[A-Z]/; $_;} @collection;
+	my @prefills = ('ALBUMSORT%:','ARTIST%:','CDDB%:','COMPOSER%:','DATE%:',
+	'ETREE%:','GENRE%:','IMAGE%:','ISRC%:','LOCATION%:','PRODUCER%:','VENUE%:',
+	'YEAR%:');
 	if ($info && %$info && @collection){
 		my @working;
 		foreach my $item (@collection){
+			# these first ones require custom handling
 			if ($item eq 'ALBUM%:'){
 				if ($b_prefill_tag && $run{'prefill-tag'}->{'ALBUM'}){
 					$item .= $run{'prefill-tag'}->{'ALBUM'};
@@ -1197,89 +1221,21 @@ sub populate_tag_file {
 					$item .= ($info->{'albumartist'}) ? $info->{'albumartist'} : $info->{'artist'};
 				}
 			}
-			elsif ($item eq 'ALBUMSORT%:'){
-				if ($b_prefill_tag && $run{'prefill-tag'}->{'ALBUMSORT'}){
-					$item .= $run{'prefill-tag'}->{'ALBUMSORT'};
-				}
-				elsif ($info->{'albumsort'}){
-					$item .= $info->{'albumsort'};
-				}
-			}
-			elsif ($item eq 'ARTIST%:'){
-				if ($b_prefill_tag && $run{'prefill-tag'}->{'ARTIST'}){
-					$item .= $run{'prefill-tag'}->{'ARTIST'};
-				}
-				elsif ($info->{'artist'}){
-					$item .= $info->{'artist'};
-				}
-			}
-			elsif ($item eq 'COMPOSER%:'){
-				if ($b_prefill_tag && $run{'prefill-tag'}->{'COMPOSER'}){
-					$item .= $run{'prefill-tag'}->{'COMPOSER'};
-				}
-				elsif ($info->{'composer'}){
-					$item .= $info->{'composer'};
-				}
-			}
-			elsif ($item eq 'DATE%:'){
-				if ($b_prefill_tag && $run{'prefill-tag'}->{'DATE'}){
-					$item .= $run{'prefill-tag'}->{'DATE'};
-				}
-				elsif ($info->{'date'}){
-					$item .= $info->{'date'};
-				}
-			}
-			elsif ($item eq 'GENRE%:'){
-				if ($b_prefill_tag && $run{'prefill-tag'}->{'GENRE'}){
-					$item .= $run{'prefill-tag'}->{'GENRE'};
-				}
-				elsif ($info->{'genre'}){
-					$item .= $info->{'genre'};
-				}
-			}
-			elsif ($item eq 'IMAGE%:'){
-				if ($b_prefill_tag && $run{'prefill-tag'}->{'IMAGE'}){
-					$item .= $run{'prefill-tag'}->{'IMAGE'};
-				}
-				elsif ($info->{'image'}){
-					$item .= $info->{'image'};
-				}
-			}
-			elsif ($item eq 'LOCATION%:'){
-				if ($b_prefill_tag && $run{'prefill-tag'}->{'LOCATION'}){
-					$item .= $run{'prefill-tag'}->{'LOCATION'};
-				}
-				elsif ($info->{'location'}){
-					$item .= $info->{'location'};
-				}
-			}
 			elsif ($item eq 'PERFORMER%:'){
 				if ($info->{'performers'} && @{$info->{'performers'}}){
 					$item .= shift @{$info->{'performers'}};
 				}
 			}
-			elsif ($item eq 'PRODUCER%:'){
-				if ($b_prefill_tag && $run{'prefill-tag'}->{'PRODUCER'}){
-					$item .= $run{'prefill-tag'}->{'PRODUCER'};
+			# and these are generic prefills
+			elsif (grep {$_ eq $item} @prefills){
+				my $field = $item;
+				$field =~ s/%:$//;
+				my ($lc_field,$uc_field) = (lc($field),uc($field));
+				if ($b_prefill_tag && $run{'prefill-tag'}->{$uc_field}){
+					$item .= $run{'prefill-tag'}->{$uc_field};
 				}
-				elsif ($info->{'producer'}){
-					$item .= $info->{'producer'};
-				}
-			}
-			elsif ($item eq 'VENUE%:'){
-				if ($b_prefill_tag && $run{'prefill-tag'}->{''}){
-					$item .= $run{'prefill-tag'}->{''};
-				}
-				elsif ($info->{'venue'}){
-					$item .= $info->{'venue'};
-				}
-			}
-			elsif ($item eq 'YEAR%:'){
-				if ($b_prefill_tag && $run{'prefill-tag'}->{'YEAR'}){
-					$item .= $run{'prefill-tag'}->{'YEAR'};
-				}
-				elsif ($info->{'year'}){
-					$item .= $info->{'year'};
+				elsif ($info->{$lc_field}){
+					$item .= $info->{$lc_field};
 				}
 			}
 			push(@working,$item);
@@ -2188,9 +2144,9 @@ sub run_fixes {
 		# say $row;
 		push(@prepped,$row) if $newlines < 2;
 	}
-	say 'yes' if $run{'infofix-z'};
+	say 'yes' if $run{'infofix-zero'};
 	print '  Processing completed. ';
-	my ($no_write,$write) = ($run{'infofix-z'}) ? ('','') : ('  |: ','  | ');
+	my ($no_write,$write) = ($run{'infofix-zero'}) ? ('','') : ('  |: ','  | ');
 	if (!$run{'infofix-write'}){
 		say "Write following changes to $INFO_FILE by adding 'w':";
 		say "  $line_small";
@@ -3826,9 +3782,10 @@ sub show_options {
 	$output .= "                  value only removes images.\n";
 	$output .= "--info-file, --if, --prefill-file, --pf {file name}\n";
 	$output .= "                  Alternate file name to use for --prefill or --infofix.\n";
-	$output .= "--infofix, -X [dnqtuvw]\n";
+	$output .= "--infofix, -X [0dklmnqtuvw]\n";
 	$output .= "                  Fix info.txt files. Use any combination. Always cleans white\n";
 	$output .= "                  space issues.\n";
+	$output .= "                  0: (zero) No printed leading delimiter characters per line.\n";
 	$output .= "                  d: Make iso date: YYYY-MM-DD from various random date formats.\n";
 	$output .= "                  k: Adds (weekday) after iso date. Activates d.\n";
 	$output .= "                  l: Set all lowercase, and apply simple upper case first fixes.\n";
@@ -3838,8 +3795,7 @@ sub show_options {
 	$output .= "                  t: Fix upper/lower case track titles.\n";
 	$output .= "                  u: Fix entire file upper/lower.\n";
 	$output .= "                  v: Verify FFPs (FLAC only). Activates q.\n";
-	$output .= "                  w: Write changes to file\n";
-	$output .= "                  z: Do not print leading delimiter characters per line.\n";
+	$output .= "                  w: Write changes to file.\n";
 	$output .= "                  t and u use Title upper case main words.\n";
 	$output .= "--info-rating {2-xxx}\n";
 	$output .= "                  Change default rating value for --infofix q. Current: $INFO_RATING;\n";
@@ -3890,7 +3846,8 @@ sub show_options {
 	$output .= $line_small . "\n";
 	$output .= "Display output and debugging options:\n";
 	$output .= "--debug           Trigger advanced output debugging data.\n";
-	$output .= "--dry-run, --test Test copy, sync, autotag, checksum without actually doing\n";
+	$output .= "--dry, --dry-run, --test\n";
+	$output .= "                  Test copy, sync, autotag, checksum without actually doing\n";
 	$output .= "--help, -h        This help menu.\n";
 	$output .= "--quiet           Turns off most screen output, except for error messages.\n";
 	$output .= "                  Only disables screen output is logical to do so. Same as -v 0\n";
@@ -4396,8 +4353,8 @@ sub get{
 	'X|infofix:s' => sub { 
 		my ($opt,$arg) = @_;
 		$run{'infofix'} = 1;
-		if ($arg){
-			if ($arg =~ /^[dklmnqutvwz]+$/i){
+		if ($arg ne ''){
+			if ($arg =~ /^[dklmnqutvw0]+$/i){
 				$run{'infofix-date'} = 1 if $arg =~ /[dk]/;
 				$run{'infofix-dow'} = 1 if $arg =~ /k/;
 				$run{'infofix-lower'} = 1 if $arg =~ /l/;
@@ -4408,7 +4365,7 @@ sub get{
 				$run{'infofix-upper'} = 1 if $arg =~ /u/;
 				$run{'infofix-verify'} = 1 if $arg =~ /v/;
 				$run{'infofix-write'} = 1 if $arg =~ /w/;
-				$run{'infofix-z'} = 1 if $arg =~ /z/;
+				$run{'infofix-zero'} = 1 if $arg =~ /0/;
 			}
 			else {
 				$msg = "For $opt use no arguments, or d n u t w. See -h.";
