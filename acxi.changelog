@@ -72,6 +72,8 @@ tag from vorbis/flac, but might be useful for bands that have etree ids, that
 way it can go somewhere in the tags, as well as being a possible field name for 
 prefill. 
 
+If etree id present, append to end of ALBUM like this: ' - etree [id]'. 
+
 1c. PREFILL: Added option to add a terminator after the Setlist/Tracks block to 
 stop creating and counting tracks. This helps when there are numbered comments, 
 numbered per track notes, and so on, which could then trigger a track count 

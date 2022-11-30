@@ -1211,6 +1211,7 @@ sub populate_tag_file {
 						$item .= $info->{'location'} if $info->{'location'};
 						$item =~ s/,\s*$//;
 					}
+					$item .= ' - etree ' . $info->{'etree'} if $info->{'etree'};
 				}
 			}
 			elsif ($item eq 'ALBUMARTIST%:'){
