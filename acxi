@@ -4355,7 +4355,7 @@ sub get{
 		my ($opt,$arg) = @_;
 		$run{'infofix'} = 1;
 		if ($arg ne ''){
-			if ($arg =~ /^[dklmnqutvw0]+$/i){
+			if ($arg =~ /^[dklmnqutvw0]+$/){
 				$run{'infofix-date'} = 1 if $arg =~ /[dk]/;
 				$run{'infofix-dow'} = 1 if $arg =~ /k/;
 				$run{'infofix-lower'} = 1 if $arg =~ /l/;
