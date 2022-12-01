@@ -36,7 +36,7 @@ is to just add the terminator, but it's worth mentioning anyway.
 BUGS:
 
 1. In certain cases, -Xd got confused, and added extra block to the ISO date, 
-like 1966-11-25 > 1966-01-01-29. This was caused by insufficiently greedy 
+like 1966-11-25 > 1966-01-01-25. This was caused by insufficiently greedy 
 patterns for the number separators, which then led to certain mm dd getting 
 trapped one at a time (mm == 1, dd == 1) instead of as pairs separated by date
 separators like -, ., _, /.
@@ -46,12 +46,12 @@ FIXES:
 
 1. Forgot some words in -h for -M.
 
-2a. INFOFIX: -Xn was treating times starting line, like 5:43, as track numbers 
-because it was using :\s*, not :\s+, which led to undesired outcomes.
+2a. INFOFIX: -Xn was treating times starting track title, like 5:43, as track 
+numbers because it was using :\s*, not :\s+, which led to undesired outcomes.
 
-2b. INFOFIX: replace tabs with a space, tabs are just annoying and create odd 
-layouts, since they always assume x spaces per tab, but that behavior is not 
-actually set in stone.
+2b. INFOFIX: replace tabs with a space, tabs are just annoying in the context of 
+.txt files, and create odd layouts, since they always assume x spaces per tab, 
+but that behavior is not actually set in stone.
 
 3. -i was triggering $test{'sync'} which is not correct, you should be able to 
 set input types for non syncing actions, since some of those only work with 
@@ -87,8 +87,12 @@ or more ^_<>.
 Must be only characters on line. '_', '-', '=' not supported because things like 
 ------, =======, ________ are a common part of info file full line values.
 
-1d. Added --prefill-tag, configuration item PREFILL_TAG. This allows setting 
-fields for prefilling either on a per recording, per recording group, or always.
+1d. PREFILL/OPTIONS: Added option --prefill-tag/--pt/--pft to add temporary 
+--prefill tag completions, so you don't have to do the same thing over and over. 
+Can be used as option or configuration item. Remember to undo it when you are 
+done with job if you used the configuration option! Uses same syntax as 
+--tag/-T. This allows setting fields for prefilling either on a per recording, 
+per recording group, or always.
 
 PREFILL_TAG=GENRE%:Heavy Metal^^IMAGE%:cover.jpg
 
@@ -99,13 +103,7 @@ everything else in prefill, so use with caution.
 --prefill-tag=UNSET unsets the configuration value temporarily, or replaces it
 with the supplied tag values.
 
-1e. PREFILL/OPTIONS: Added option --prefill-tag/--pt/--pft to add temporary 
---prefill tag completions, so you don't have to do the same thing over and over. 
-Can be used as option or configuration item. Remember to undo it when you are 
-done with job if you used the configuration option! Uses same syntax as 
---tag/-T.
-
-1f. PREFILL/INFOFIX/OPTIONS: Added alternates --info-file, --if, --pf for 
+1e. PREFILL/INFOFIX/OPTIONS: Added alternates --info-file, --if, --pf for 
 --prefill-file. Also made it active for --infofix, not just -S, -E autotag. Also 
 fixed validation which was a little too tight on that combo.
 
@@ -122,7 +120,7 @@ start of title to end of title, some people do that one, oddly enough.
 2d. INFOFIX: Added -Xv. This adds an FFP verified to the q report. FLAC only. If 
 errors, shows the full file report, which can be useful. Note that running ffp 
 verification is slow. This is the same basic tool that --checksum-verify/-V 
-uses, with md5 checks disabled.
+uses, with md5 checks disabled. Activates q as well.
 
 2e. INFOFIX: Added -Xk, for adding day of week after fixed date string. 
 Activates d as well. Also clears out any existing day of week from line so you 
@@ -135,11 +133,11 @@ This uses core module POSIX::strftime, to avoid any non core module
 requirements.
 
 2f. INFOFIX: Added -X0. This turns off the leading characters usually added 
-before each line of output.
+before each line of output. Useful if you want to copy parts of the output.
 
-2g. INFOFIX/PREFILL: Added {...} syntax for track times. Note that track times 
-have to be at end of Title string, otherwise it's a pain to do the logic. -Xm 
-will move them from start of title to end.
+2g. INFOFIX/PREFILL: Added {...} syntax for track times, along with existing 
+(..), [..]. Note that track times have to be at end of Title string, otherwise 
+it's a pain to do the logic. -Xm will move them from start of title to end.
 
 3a. CHECKSUM DELETE: Added *.st5, shntool.txt types to --checksum-delete. Those 
 are almost always from SHN files, and aren't relevant anymore. 
@@ -152,10 +150,10 @@ downloaders added those. Also added .txt.1, .txt.2 since sloppy downloaders
 could add those when trying to download repeatedly.
 
 4a. OPTIONS: Added alternate --copy-append to --append/-a, to make it more 
-obvious.
+obvious and consistent with other option syntaxes.
 
-4b. OPTIONS: Added optional option names --dry-run, --dry, same as --test, eay 
-to remember.
+4b. OPTIONS: Added optional names --dry-run, --dry. These are same as --test, 
+easy to remember if you think of it as a dry run, not a test.
 
 5. Added -U 3, for updating from smxi server, github is a pain, better to do 
 most dev work on server, like with pinxi, then commit to github once largely 
@@ -164,6 +162,8 @@ working. That github throttling of commits after a few done quickly is annoying.
 --------------------------------------------------------------------------------
 CHANGES:
 
+1. Should be no real changes, just big polishing up and enhancements of existing 
+features.
 
 --------------------------------------------------------------------------------
 DOCUMENTATION:
@@ -179,6 +179,8 @@ CODE:
 with the %run values, too confusing otherwise.
 
 2. Refactored prefill fields to be more flexible, easier to add prefill fields.
+
+3. Made --checksum-delete/-D globbbing patterns cleaner and easier to update.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Tue, 15 Nov 2022 17:25:50 -0800
