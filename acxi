@@ -2924,7 +2924,7 @@ sub update {
 }
 sub grab {
 	my ($cmd,@content);
-	say "Downloading $self_name.";
+	say "Downloading $self_name using location: $url";
 	$cmd = "$COMMAND_CURL -L $url$self_name";
 	say $line_small;
 	@content = qx($cmd);
