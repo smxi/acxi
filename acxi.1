@@ -1,39 +1,30 @@
-.TH ACXI 1 "2022\-11\-30" acxi "acxi manual"
+.TH ACXI 1 "2022\-12\-01" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
 Most of the commonly used options have short forms to make typing the commands
 faster.
 .IP * 2
-Directories: \fBacxi\fR 
-[\fB\-\-destination\fR, \fB\-d\fR {destination-path}] 
-[\fB\-\-source\fR, \fB\-s\fR {source\-path}] 
+Directories: [\fB\-\-destination\fR, \fB\-d\fR {destination-path}]
+[\fB\-\-dot\fR] [\fB\-\-nlink\fR] [\fB\-\-no\-dot\fR] [\fB\-\-no\-nlink\fR]
+[\fB\-\-recurse\fR {-1-xx}] [\fB\-\-source\fR, \fB\-s\fR {source\-path}] 
 [\fB\-\-source\-glob\fR, \fB\-g\fR {relative path}]
-.IP * 2\fBacxi\fR 
-Analyze: 
-[\fB\-\-z\-min\-size\fR {0\-xxx}] [\fB\-\-z\-min\-time\fR {0\-xxx}]
 .IP * 2
-Checksums: \fBacxi\fR [\fB\-\-analyze\fR, \fB\-Z\fR] 
-[\fB\-\-checksum\fR, \fB\-K\fR] [\fB\-\-checksum\-delete\fR, \fB\-D\fR] 
-[\fB\-\-checksum\-ffps\fR, \fB\-\-ffps\fR] 
-[\fB\-\-checksum\-verify\fR, \fB\-V\fR] 
-[\fB\-\-duplicates\fR, \fB\-\-dupes\fR] [\fB\-\-ffprobe\fR]
-[\fB\-\-no\-ffp\fR] [\fB\-\-no\-md5\fR] 
+Input/Output: [\fB\-\-input\fR, \fB\-i\fR {flac|raw|shn|wave}] 
+[\fB\-\-output\fR, \fB\-d\fR {flac|mp3|ogg|opus}]
 .IP * 2
 Syncing:
-\fBacxi\fR [\fB\-\-append\fR, \fB\-\-copy\-append\fR, \fB\-a\fR {extensions}] 
+[\fB\-\-append\fR, \fB\-\-copy\-append\fR, \fB\-a\fR {extensions}] 
 [\fB\-\-clean\fR] [\fB\-\-codec\fR {aac|libfdk_aac2}] 
 [\fB\-\-copy\fR, \fB\-c\fR {extensions}] [\fB\-\-copy\-append \fR {extensions}] 
-[\fB\-\-dither\fR {dither\-type}] [\fB\-\-dot\fR] 
+[\fB\-\-dither\fR {dither\-type}]
 [\fB\-\-exclude\fR, \fB\-x\fR {filename|extension}] 
 [\fB\-\-exclude\-append\fR, \fB\-y\fR {filename|extension}] 
-[\fB\-\-force\fR, \fB\-f\fR] [\fB\-\-fork\fR, \fB\-F\fR {0-xx}]
-[\fB\-\-input\fR, \fB\-i\fR {flac|raw|shn|wave}] 
-[\fB\-\-output\fR, \fB\-d\fR {flac|mp3|ogg|opus}] [\fB\-\-no\-dot\fR] 
+[\fB\-\-force\fR, \fB\-f\fR] [\fB\-\-fork\fR, \fB\-F\fR {0-xx}] 
 [\fB\-\-quality\fR\fR, \fB\-q\fR {NUMBER}] 
 [\fB\-\-resample\fR {bit-depth:sample-rate}]
 .IP * 2
-Tagging: \fBacxi\fR [\fB\-\-autotag\fR, \fB\-A\fR] 
+Tagging: [\fB\-\-autotag\fR, \fB\-A\fR] 
 [\fB\-\-autotag\-create\fR, \fB\-C\fR] 
 [\fB\-\-autotag\-create\-single\fR, \fB\-S\fR] 
 [\fB\-\-autotag\-create\-multi\fR, \fB\-M\fR {filename start ID}]
@@ -44,21 +35,28 @@ Tagging: \fBacxi\fR [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-multiartist\fR, \fB\-\-ma\fR {[at|ta]:separator}]
 [\fB\-\-prefill\fR, \fB\-E\fR] 
 [\fB\-\-prefill\-tag\fR, \fB\-\-pt\fR {tags}] 
-[\fB\-\-no\-replaygain\fR] [\fB\-\-recurse\fR {-1-xx}] 
+[\fB\-\-no\-replaygain\fR]
 [\fB\-\-remove\-images\fR, \fB\-R\fR] [\fB\-\-remove\-padding\fR, \fB\-P\fR] 
 [\fB\-\-start\fR {0-xx}] 
 [\fB\-\-tag\fR, \fB\-T\fR] {"TAG1%:tag value^^TAG2%:tag value"}] 
 .IP * 2
-Info: \fBacxi\fR [\fB\-\-help\fR, \fB\-h\fR] [\fB\-\-version\fR] 
+Analyze/Checksums: [\fB\-\-analyze\fR, \fB\-Z\fR]
+[\fB\-\-checksum\fR, \fB\-K\fR] [\fB\-\-checksum\-delete\fR, \fB\-D\fR] 
+[\fB\-\-checksum\-ffps\fR, \fB\-\-ffps\fR] 
+[\fB\-\-checksum\-verify\fR, \fB\-V\fR] 
+[\fB\-\-duplicates\fR, \fB\-\-dupes\fR] [\fB\-\-ffprobe\fR]
+[\fB\-\-infofix\fR, \fB\-X\fR {[qz]}] [\fB\-\-no\-ffp\fR] [\fB\-\-no\-md5\fR] 
+[\fB\-\-z\-min\-size\fR {0\-xxx}] [\fB\-\-z\-min\-time\fR {0\-xxx}]
 .IP * 2
-Miscellaneous: \fBacxi\fR [\fB\-\-aggregate\fR, \fB\-G\fR [file name|extension]]
-[\fB\-\-update\fR, \fB\-U\fR]
+Miscellaneous: [\fB\-\-aggregate\fR, \fB\-G\fR [file name|extension]]
+[\fB\-\-help\fR, \fB\-h\fR] [\fB\-\-update\fR, \fB\-U\fR] 
+[\fB\-\-version\fR]
 .IP * 2
-Output Controls: \fBacxi\fR [\fB\-\-verbosity\fR, \fB\-v\fR {0-3}] 
+Output Controls: [\fB\-\-verbosity\fR, \fB\-v\fR {0-3}] 
 [\fB\-\-quiet\fR]
 .IP * 2
-Debugging: \fBacxi\fR [\fB\-\-debug\fR] [\fB\-\-nlink\fR] 
-[\fB\-\-no\-nlink\fR] [\fB\-\-dry\fR, \fB\-\-dry\-run\fR, \fB\-\-test\fR] 
+Debugging: [\fB\-\-debug\fR] [\fB\-\-dry\fR, \fB\-\-dry\-run\fR, \fB\-\-test\fR] 
+
 .SH DESCRIPTION
 \fBacxi\fR is a command line audio conversion program and audio processing 
 program. It converts and syncs all desired source lossless files to the desired 
@@ -83,6 +81,37 @@ as tag/embed images using \fBauto.tag\fR or \fB\-\-tag\fR / \fB\-\-image
 \fBacxi\fR runs pretests on each start to make sure input and output directories 
 are valid, conversion programs for input and output formatting programs are 
 present, and other user values are correct.
+
+.SH TABLE OF CONTENTS
+This man page is pretty long and information packed. The options items are 
+broken up into the same organization as the help menu. The man page is divided 
+into the following sections:
+
+* \fBDEPENDENCIES\fR Tools and codecs required by the various features.
+
+* \fBUSING OPTIONS\fR How to use the command line options.
+
+* \fBINPUT/OUTPUT OPTIONS\fR input, output codecs; source, destination 
+directories; source globbing, dot files, recursion levels.
+
+* \fBSYNCING OPTIONS\fR Options related to syncing your collection. Includes 
+forking, clean, copy types, excludes, codecs, dither, quality, resample, 
+
+* \fBTAGGING OPTIONS\fR Includes autotag, image embed, infofix, prefill, tag.
+
+* \fBANALYZE/CHECKSUMS OPTIONS\fR Analyze, duplicates, checksums.
+
+* \fBMISCELLANEOUS OPTIONS\fR Aggregate files, help, version, self\-updater.
+
+* \fBDEBUG/OUTPUT CONTROL OPTIONS\fR Dry run, debug, verbosity levels.
+
+* \fBCONFIGURATION FILE\fR Configuration file name, locations, and configuration 
+values. 
+
+* \fBBUGS\fR Where to report bugs, or make issue requests etc. 
+
+* \fBHOME PAGE/AUTHORS\fR Home page, copyright, authors, etc.
+
 .SH DEPENDENCIES
 For backward compatibility, acxi requires only Perl 5.010 (or newer), so it 
 should run on anything. Several features (copy, make directory, find files) were 
@@ -135,6 +164,7 @@ generates md5 hashes).
 In theory, acxi 3.x should run on Windows and Macs, but I have not tested that, 
 but as long as the source/destination directory paths and the 
 application/configuration paths are correct, it should 'just work'.
+
 .SH USING OPTIONS
 For example:
 .EX
@@ -148,59 +178,123 @@ All tagging or checksum options (\fB\-A\fR, \fB\-C\fR, \fB\-\-dupes\fR,
 \fB\-D\fR, \fB\-E\fR, \fB\-\-ffps\fR, \fB\-G\fR, \fB\-I\fR, \fB\-K\fR, 
 \fB\-M\fR, \fB\-P\fR, \fB\-R\fR, \fB\-S\fR, \fB\-T\fR, \fB\-V\fR, \fB\-Z\fR) 
 must have an explicit source (\fB\-s\fR) location supplied to avoid errors.
-.SH OPTIONS
+
+.SH INPUT/OUTPUT OPTIONS
+These options are related to input/output actions, and may apply to sync, 
+analyze, checksum, tagging, and aggregate options.
+
 .TP
-.B \-\-aggregate, \fB\-G\fR [filename|extension]\fR
-Collect all the \fBauto.tag\fR files in a source directory and send to a target 
-directory. Useful to collect data for a large collection. You can supply a list 
-of comma separated items: jpg,info.txt,myart.png
+.B \-\-destination, \fB\-d {path}\fR
+Full path to the directory where you want the processed lossy (eg, ogg) files to 
+go. Cannot start with \fB../\fR.
 
-Creates the directories the files were found in in the destination directory.
-
-If no extra argument is supplied, it will default to collecting all the 
-\fBauto.tag\fR files in the source directory.
-
-Sample 1 (collects all auto.tag files): 
-.EX
-\fBacxi \-\-aggregate \-s my\-music -d music\-data\fR
-.EE
-Sample 2 (collects all supplied filename): 
-.EX
-\fBacxi \-\-aggregate info.txt \-s my\-music -d music\-data\fR
-.EE
-Sample 3 (collects all files of type jpg): 
-.EX
-\fBacxi \-\-aggregate jpg \-s my\-music -d music\-data\fR
-.EE
-Sample 4 (collects multiple values):
-.EX
-\fBacxi \-\-aggregate jpg,info.txt,png \-s my\-music -d music\-data\fR
-.EE
 .TP
-.B \-\-analyze\fR, \fB\-Z\fR
-Similar to \fB\-Xq\fR, except creates per file/directory reports with screen 
-output. Shows input tye file quality (sample bit size, sampling rate, and channels), 
-size, duration, kb/s, and also per directory summaries of those values. In 
-directory summary, if more than one input file quality type found in directory, will 
-print out each type found, which can be useful to see if different sampling 
-rates or sample bit sizes were used.
+.B \-\-dot\fR
+Disables the default behavior when creating file/directory syncing/action lists 
+of excluding dot files and directories (like \fB/home/user/.config\fR). Added by 
+request, but use at your own risk, I take NO responsibility for any unintended 
+consequences. Note that if you do find unintended consequences, you should be 
+able to filter those out using additional \fB\-\-exclude\fR lists.
 
-To write to a file, use something like this:
-.EX
-\fBacxi -s./ \-\-analyze 2&>1 | tee analyze.txt\fR
-.EE
-The tee will allow the output to also scroll on screen while it runs, which is
-helpful in many cases. Otherwise just redirect output to file directly.
+.TP
+.B \-\-input\fR, \fB\-i {aif|flac|raw|shn|wav}\fR
+Input type. Supported types: flac, wav, raw, shn. 
 
-\fB\-v 0\fR turns off per file reports, and shows only per directory summary; 
-\fB\-v 2\fR wraps per file data to key: value pair lines, adds ffp signature 
-(flac only); \fB\-v 3\fR adds raw non rounded seconds and file size in bytes to 
-all size / time results.
+\fBaif/raw/shn\fR \- only support flac output. 
 
-Note that default for flac is metaflac, unless you use \fB\-\-ffprobe\fR, which 
-does not have hashes. Use metaflac for flac, it's about 25x or more faster than 
-ffprobe!!
+\fBshn\fR \- requires the shorten codec, which you usually have to build 
+yourself unless you can find a package for it. Use \fB\-v 3\fR to test the 
+first time to make sure you have shorten codec installed.
 
+Some other input types may be active for testing purposes occasionally, but acxi 
+does not promote, advocate, or officially support those types (like mp3 to 
+flac). 
+
+Supports flac to flac for cases where you might want to redo flac files to known 
+quality/compression levels, or redo them using current flac codecs.
+
+Tags transfer from AIF files that are tagged to FLAC files in my tests.
+
+.TP
+.B \-\-nlink\fR
+Set \fB$File::Find::dont_use_nlink = 0\fR. Default is \fB1\fR. Only change this 
+if you have a reason to do so. Setting value to \fB0\fR may make \fBcifs\fR type 
+file system reads fail, on a \fBsamba\fR network share for example. If you 
+encounter issues with the default value, please post an issue on the acxi github 
+page.
+
+See this PerlMonks thread for an explanation: 
+\fIhttps://www.perlmonks.org/?node_id=1180606\fR
+
+.TP
+.B \-\-no\-dot\fR
+Overrides user configuration \fBDOT\fR. Basically restores default behavior for 
+acxi in terms of skipping all dot files. Only useful if you have set \fBDOT\fR 
+to true in your configuration file and want to do a one time override of that 
+setting.
+
+.TP
+.B \-\-no\-nlink\fR
+Set \fB$File::Find::dont_use_nlink = 1\fR. This is the default value. See 
+\fB\-\-nlink\fR for details.
+
+.TP
+.B \-\-output\fR, \fB\-o {aac|flac|m4a|mp3|ogg|opus}\fR
+Output type. Output only for syncing operations. Supported types: aac, flac, 
+ogg, opus, m4a, mp3
+
+\fBaac\fR \- only supports flac input type, To preserve flac tags, use m4a.
+
+\fBflac\fR \- only supports flac, shn, or raw input types.
+
+\fBm4a\fR \- only supports flac input type, Container around aac data. Use if 
+you want to preserve flac tags in your aac audio file.
+
+\fBmp3\fR \- only supports flac input type
+
+.TP
+.B \-\-recurse {number}\fR
+There may be cases where you want a certain action to NOT recurse beyond the 
+number of steps you supply as an argument for this option. Default recursion 
+level is infinite (-1). If you use 0, it will only return files for the current 
+directory.
+
+This can be useful if you for example do not want to create ffp or md5, or sync 
+files in a sub directory.
+
+In general, use the \fB\-\-test\fR option to verify the results are what you 
+expected before actually proceeding with this option for real.
+
+.TP
+.B \-\-source\fR, \fB\-s {path}\fR
+Path to the top-most directory containing your source files (eg, flac). Cannot 
+start with \fB../\fR.
+
+.TP
+.B \-\-source\-glob\fR, \fB\-g {path relative to \-s path}\fR
+Accepts wild card paths if you only want to update or check certain directories 
+within the main \fB\-\-source\fR working directory. Requires \fB\-\-source\fR 
+(or pre-configured \fBSOURCE_DIRECTORY\fR), wild card path must be within 
+\fB-\-source\fR.
+
+Sample:
+.nf
+\fBacxi -s ./ \-g 'BandName*' \-V
+acxi -s ./ \-g '{BandName,Band Name,Band_Name}*' \-V\fR
+.fi
+
+Will only verify folders tarting with BandName. Remember to always quote the 
+value otherwise your shell will expand the wild cards!!
+
+Uses standard globbing patterns: * one or more of anything; {one,two,three} 
+matches one of the comma separated values inside {...}. Note that * only matches 
+directory names or files, not the path separator, like /.
+
+Works with all options except \fB\-\-clean\fR and \fB\-\-prefill\fR.
+
+.SH SYNCING OPTIONS
+Sync your lossless collection to lossy, or to another lossless format, or 
+resample lossless to lossless.
 .TP
 .B \-\-append\fR, \fB\-\-copy\-append\fR, \fB\-a {extensions}\fR
 Takes one or more comma separated extensions. Do not use whitespaces in this 
@@ -210,6 +304,211 @@ sync action without having to make a full list with \fB\-c\fR.
 
 Sample: \fBacxi \-a tag,md5\fR will add md5 and tag file type to copy list.
 
+.TP
+.B \-\-clean [sync]\fR
+Clean directories and files from destination (compressed) directories which are 
+not present in the source music directories. Will show you the directories or 
+files to be removed before deleting them, and you have to confirm the deletion 
+of each set two times before it will actually delete it. If used with optional 
+value \fBsync\fR, will proceed to sync actions, otherwise exits after cleaning.
+
+The paths provided by \fB\-s\fR and \fB\-d\fR must be relative to either root or 
+\fB$HOME\fR:
+.EX
+\fBacxi \-\-clean \-s /home/fred/music \-d /home/fred/music/opus\fR
+.EE
+OR
+.EX
+\fBacxi \-\-clean \-s ~/music \-d ~/music/opus\fR
+.EE
+
+Take care with this one, if you have other compressed formats in your compressed 
+directory than your default $OUTPUT_TYPE format, it will want to delete all 
+those, so do not use this option unless your compressed directories are literal 
+true copies of your source directories.
+
+To confirm deletion of each group, you must first type 'delete' then hit enter, 
+then type 'yes' to confirm the deletion. This should avoid errors and unintended 
+deletions.
+
+Note that this feature does not run in silent/quiet mode because it should never 
+be used automatically, or without explicit confirmation by the user. It can be 
+enabled using the CLEAN configuration option below so that acxi always cleans up 
+before it starts syncing.
+
+.TP
+.B \-\-codec {libfdk_aac|aac}\fR
+Currently only supported for aac/m4a output using ffmpeg.
+
+.TP
+.B \-\-copy\fR, \fB\-c {extensions}\fR
+Comma separated list of extensions for file types you want to sync to your lossy 
+music directory. Overrides default values. Use lowercase, but it's case 
+insensitive internally. Do not include the period in the extension.
+
+Default values are: bmp doc docx gif jpg jpeg odt pdf png tif txt
+
+If you use no value, it will not copy anything.
+
+Sample: \fB\-c txt,pdf,png,jpg,jpeg,gif\fR
+
+.TP
+.B \-\-dither {dither-type}\fR
+Use with \fB\-\-resample\fR and if you want to use a different dither type than 
+default shibata. Possible values:
+.nf
+\fB0\fR \- no dither
+\fBrectangular\fR \- rectangular dither
+\fBtriangular\fR \- triangular dither
+\fBtriangular_hp\fR \- triangular dither with high pass 
+\fBlipshitz\fR \- Lipshitz noise shaping dither
+\fBshibata\fR \- Shibata noise shaping dither (default value)
+\fBlow_shibata\fR \- low Shibata noise shaping dither
+\fBhigh_shibata\fR \-  high Shibata noise shaping dither
+\fBf_weighted\fR \- f-weighted noise shaping dither
+\fBmodified_e_weighted\fR \- modified-e-weighted noise shaping dither
+\fBimproved_e_weighted\fR \- improved-e-weighted noise shaping dither
+.fi
+
+Read more on these dither types here: 
+\fIhttps://ffmpeg.org/ffmpeg-resampler.html\fR
+
+Dithering is only applied if being resampled to sample depth of less than 24 
+bit.
+
+.TP
+.B \-\-exclude\fR, \fB\-x {items}\fR
+Exclude a list of unique strings separated by ^^, or a full path to an exclude 
+file whose name includes the value set in \fB$EXCLUDE_BASE\fR. 
+
+Excludes sync/copy action to destination directory. Replaces \fBEXCLUDE\fR 
+values if present. Anything matching in any part of the source directory file 
+path will be excluded or removed from the destination directory. 
+
+If it's a path to a file of excludes, use one exclude string per line.
+
+Samples:
+.nf
+\fB\-\-exclude='artwork^^Daisy Queen^^Bon Jovi'
+\-\-exclude='/home/me/music/excludes/acxi-excludes-phone.txt\fR
+.fi
+
+If you want to temporarily suspend exclude actions one time, use: 
+\fB\-\-exclude='UNSET'\fR
+
+.TP
+.B \-\-exclude\-append\fR, \fB\-y {items}\fR
+Append an item to the list of excludes or file. Only accepts string values, not 
+a file path.
+
+Sample: \fB\-\-exclude\-append='My Sharona^^Dancing Queen'\fR
+
+.TP
+.B \-\-ffprobe\fR
+Force \fB\-\-analyze\fR and \fB\-\-infofix q\fR to use ffprobe instead of 
+metaflac for flac files. Useless!!! Incredibly slow, but just in case you want 
+to confirm the outputs of the two, or something. My tests showed 30x slower.
+
+.TP
+.B \-\-force\fR, \fB\-f\fR
+Overwrites all the mp3/ogg/opus/jpg/txt etc. files, even if they already exist. 
+This is useful if you for example want to change compression quality on existing 
+files.
+
+.TP
+.B \-\-fork\fR, \fB\-F {0-xx}\fR
+Uses Perl module \fBParallel::ForkManager\fR to allow for forking of audio file 
+conversions actions. This can speed up your syncing a lot depending on how many 
+threads your CPU can support and how many you assign with this option.
+
+Supports integer values \fB0\fR or greater, but tests show 1 is slower than not 
+using forking at all. \fB0\fR is default, and disables forking.
+
+Some debugging features will be slightly distorted if fork is used, but it is 
+only cosmetic.
+
+See also configuration file option \fBFORK\fR if you want to set this 
+permanently.
+
+Please note that this can have strange consequences if you run it on a huge job, 
+even if you use only half your threads, the system can still act strange as a 
+result of running it with multiple forks.
+
+.TP
+.B \-\-quality\fR, \fB\-q {number}\fR
+Set compression quality level.
+
+\fBaac/m4a\fR \- n can be an integer between 10\-500 (bitrate). 500 is largest 
+file/highest quality.
+
+\fBflac\fR \- n can be an integer between 0\-8, 0 is largest file / fastest 
+conversion time, 8 is smallest file, longest time. Note that tests show there is 
+very little point in using anything over 4.
+
+\fBmp3\fR \- n can be an integer between 0\-9 (variable bit rate), 0 is largest 
+file / highest quality.
+
+\fBogg\fR \- n can be between \-1 and 10. 10 is the largest file/highest 
+quality. Fractions are allowed, e.g. \fB\-o ogg \-q 7.54\fR
+
+\fBopus\fR \- n can be an integer between 6\-256 (bitrate). 256 is largest 
+file/highest quality.
+
+Note that using a higher or lower quality than you used to create the compressed 
+files will not result in redoing those files unless you use the \fB\-f\fR / 
+\fB\-\-force\fR option to force the overwrite of the existing files.
+
+.TP
+.B \-\-resample {bit depth:sample rate khz}\fR
+Allows for standard resampling options: 16|20|24 bit depth and 
+44.1|48|88.2|96|192 khz sampling rate. 
+
+To get best results, always make sure to resample to a sampling rate that 
+divides evenly into the original sampling rate, for example, if the original is 
+96khz sampling rate, 24 bit, resample to 48khz, 16 bit (96/2 == 48). 
+
+If you use values that do not divide evenly, you have to deal with synthesizing 
+sample issues (depending on how the resampling is done, of course), and your 
+audio will not be as good as it could be. Note that 44.1 is only required for 
+Audio CDs, and in most cases, the cd burning software can deal with that itself, 
+unless you want to force it using acxi.
+
+In short, if you have 192 or 96 khz originals, resample them to 48 khz. If you 
+have 88.2 khz, resample it to 44.1. Do not sample upwards, it's just wasted 
+bytes, for example, there is no reason to resample from 44.1 to 88.2. In almost 
+all cases, if you need to work like that, use a dedicated DAW program like 
+Audacity and let it do the resamplings to higher levels in its native mode, then 
+after you have worked on the project, save it, and export to normal sampling 
+rates and bit depths.
+
+IMPORTANT: use the \fB\-Z\fR analyze option first to make sure what the bit 
+depth and sampling rate of your files are before using this resampling option. 
+\fB\-\-resample\fR and \fB\-\-analyze\fR are meant to be used together to avoid 
+errors, and so you always can be sure of what you are actually dealing with.
+
+Output for \fB\-v1\fR shows source file bit-depth:sample-rate and resample 
+bit-depth:sample-rate per file. \fB\-v2\fR adds dither type to output resample 
+data. Dither (\fBshibata\fR default, use \fB\-\-dither {type}\fR for alternates) 
+is added when sampling from bit depths of 24 or more to less than 24.
+
+Sample:
+.nf
+\fB# to get sampling rates etc:
+acxi \-s ./ \-Z
+[.... output...]
+# then run resampling once you have determined sampling rates etc
+acxi \-s working \-d results \-i flac \-o flac \-\-resample 16:48\fR
+.fi
+
+.TP
+.B \-\-resample\-override\fR
+Allows users to select any supported bit depth (4\-32) and sample rate, in khz 
+(1\-655). Why you would want to do this is beyond me, but if you want to, you 
+can if you add this override switch.
+
+.SH TAGGING OPTIONS
+Create autotag files, fix info files, create prefills, image embedding and 
+removal, command line and autotag tagging.
 .TP
 .B \-\-autotag\fR, \fB\-A\fR
 Requires specially formatted file, default name \fBauto.tag\fR, to be put into 
@@ -298,233 +597,6 @@ file.
 Use together with \fB\-E\fR (\fB\-\-prefill\fR) To prepopulate the \fBALBUM,\fR 
 \fBARTIST\fR, \fBALBUMARTIST\fR, \fBPERFORMER\fR, \fBDATE\fR, \fBYEAR\fR, and 
 \fBTITLE\fR fields as well. 
-
-.TP
-.B \-\-checksum\fR, \fB\-K\fR
-Create \fB.ffp\fR and \fB.md5\fR checksum files in your source directory. 
-Checksum files are only created inside directories where flac files are found. 
-Use \fB\-\-checksum\-delete\fR if you also want to delete existing checksum 
-files before creating new ones. Only flac input type is supported.
-
-This will not create md5 sums for for files in directories that do not contain 
-flac files, because that creates a very complicated logical puzzle which is hard 
-to accurately or reliably resolve in code.
-
-Do not use together with other cleaning/syncing options. Can be used with 
-\fB\-A\fR.
-
-.TP
-.B \-\-checksum\-delete\fR, \fB\-D\fR
-Will first delete all \fB.md5\fR, \fB.md5.txt\fR, \fB.ffp\fR, \fB.ffp.txt\fR,  
-\fB.st5\fR, and \fBshntool.txt\fR files before creating new checksum files. 
-\fB.st5\fR and \fBshntool.txt\fR were often created by shntool. Also removes 
-\fBrobots.txt\fR files, which sometimes were added by some downloaders in the 
-past. 
-
-Note that some audio processing tools add \fB.txt\fR to the checksum file name, 
-which creates undesirable outcomes since some tools that use \fB.ffp\fR or 
-\fB.md5\fR files don't recognize the files if they have the \fB.txt\fR extension 
-added on.
-
-I can think of very few reasons to want to preserve \fB.ffp\fR or \fB.md5\fR 
-files, since they should in general reflect what the actual files you have are.
-
-Do not use together with other cleaning/syncing options. Can be used with 
-\fB\-A\fR.
-
-.TP
-.B \-\-checksum\-ffps\fR, \fB\-\-ffps\fR
-Prints checksums to screen, disables md5 generation and output. Useful for 
-generating large lists of ffps for a collection.
-
-Similar to: \fBacxi \-K \-\-no\-md5 \-\-test\fR
-
-Sample (prints to screen, redirects stderr to stdout, prints to file):
-.EX
-\fBacxi \-s ./ \-\-ffps 2>&1 | tee ffps.txt\fB
-.EE
-
-.TP
-.B \-\-checksum\-verify\fR, \fB\-V\fR
-Will read existing .md5 files and compare md5 hash of files listed in the md5 
-file with the actual checksums of those files. Also will verify FLAC integrity 
-(this is pretty slow, so be patient).
-
-Note that when reading md5s, it does not matter if they are windows or *nix path 
-styles (/ or \/), it translates them to the one on your system. It also ignores 
-line endings, which makes reading windows generated md5 files on *nix systems a 
-breeze.
-
-.TP
-.B \-\-clean [sync]\fR
-Clean directories and files from destination (compressed) directories which are 
-not present in the source music directories. Will show you the directories or 
-files to be removed before deleting them, and you have to confirm the deletion 
-of each set two times before it will actually delete it. If used with optional 
-value \fBsync\fR, will proceed to sync actions, otherwise exits after cleaning.
-
-The paths provided by \fB\-s\fR and \fB\-d\fR must be relative to either root or \fB$HOME\fR:
-.EX
-\fBacxi \-\-clean \-s /home/fred/music \-d /home/fred/music/opus\fR
-.EE
-OR
-.EX
-\fBacxi \-\-clean \-s ~/music \-d ~/music/opus\fR
-.EE
-
-Take care with this one, if you have other compressed formats in your compressed 
-directory than your default $OUTPUT_TYPE format, it will want to delete all 
-those, so do not use this option unless your compressed directories are literal 
-true copies of your source directories.
-
-To confirm deletion of each group, you must first type 'delete' then hit enter, 
-then type 'yes' to confirm the deletion. This should avoid errors and unintended 
-deletions.
-
-Note that this feature does not run in silent/quiet mode because it should never 
-be used automatically, or without explicit confirmation by the user. It can be 
-enabled using the CLEAN configuration option below so that acxi always cleans up 
-before it starts syncing.
-
-.TP
-.B \-\-codec {libfdk_aac|aac}\fR
-Currently only supported for aac/m4a output using ffmpeg.
-
-.TP
-.B \-\-copy\fR, \fB\-c {extensions}\fR
-Comma separated list of extensions for file types you want to sync to your lossy 
-music directory. Overrides default values. Use lowercase, but it's case 
-insensitive internally. Do not include the period in the extension.
-
-Default values are: bmp doc docx gif jpg jpeg odt pdf png tif txt
-
-If you use no value, it will not copy anything.
-
-Sample: \fB\-c txt,pdf,png,jpg,jpeg,gif\fR
-
-.TP
-.B \-\-debug\fR
-Activate specialized debugger output. Don't use unless you are asked to, or are 
-a developer or something like that.
-
-.TP
-.B \-\-destination, \fB\-d {path}\fR
-Full path to the directory where you want the processed lossy (eg, ogg) files to 
-go. Cannot start with \fB../\fR.
-
-.TP
-.B \-\-dither {dither-type}\fR
-Use with \fB\-\-resample\fR and if you want to use a different dither type than 
-default shibata. Possible values:
-.nf
-\fB0\fR \- no dither
-\fBrectangular\fR \- rectangular dither
-\fBtriangular\fR \- triangular dither
-\fBtriangular_hp\fR \- triangular dither with high pass 
-\fBlipshitz\fR \- Lipshitz noise shaping dither
-\fBshibata\fR \- Shibata noise shaping dither (default value)
-\fBlow_shibata\fR \- low Shibata noise shaping dither
-\fBhigh_shibata\fR \-  high Shibata noise shaping dither
-\fBf_weighted\fR \- f-weighted noise shaping dither
-\fBmodified_e_weighted\fR \- modified-e-weighted noise shaping dither
-\fBimproved_e_weighted\fR \- improved-e-weighted noise shaping dither
-.fi
-
-Read more on these dither types here: 
-\fIhttps://ffmpeg.org/ffmpeg-resampler.html\fR
-
-Dithering is only applied if being resampled to sample depth of less than 24 
-bit.
-
-.TP
-.B \-\-dot\fR
-Disables the default behavior when creating file/directory syncing/action lists 
-of excluding dot files and directories (like \fB/home/user/.config\fR). Added by 
-request, but use at your own risk, I take NO responsibility for any unintended 
-consequences. Note that if you do find unintended consequences, you should be 
-able to filter those out using additional \fB\-\-exclude\fR lists.
-
-.TP
-.B \-\-dry\-run\fR, \fB\-\-dry\fR, \fB\-\-test\fR
-.br
-See \fB\-\-test\fR.
-
-.TP
-.B \-\-duplicates\fR, \fB\-\-dupes\fR
-Check your collection for duplicated flac files or releases, helpful to find 
-repeated items in your collection. Note that in cases of only 1 file matching, 
-it's in theory possible for that to be a random coincidence, so always confirm 
-before deleting anything!! But it's pretty rare for an ffp hash to be 
-duplicated.
-
-For larger directories/collections, use 
-
-\fBacxi -s./ \-\-dupes 2>&1 | tee duplicates.txt\fR
-
-The tee will allow the output to also scroll on screen while it runs, which is
-helpful to see what's going on. Otherwise just redirect output to file directly.
-
-.TP
-.B \-\-exclude\fR, \fB\-x {items}\fR
-Exclude a list of unique strings separated by ^^, or a full path to an exclude 
-file whose name includes the value set in \fB$EXCLUDE_BASE\fR. 
-
-Excludes sync/copy action to destination directory. Replaces \fBEXCLUDE\fR 
-values if present. Anything matching in any part of the source directory file 
-path will be excluded or removed from the destination directory. 
-
-If it's a path to a file of excludes, use one exclude string per line.
-
-Samples:
-.nf
-\fB\-\-exclude='artwork^^Daisy Queen^^Bon Jovi'
-\-\-exclude='/home/me/music/excludes/acxi-excludes-phone.txt\fR
-.fi
-
-If you want to temporarily suspend exclude actions one time, use: 
-\fB\-\-exclude='UNSET'\fR
-
-.TP
-.B \-\-exclude\-append\fR, \fB\-y {items}\fR
-Append an item to the list of excludes or file. Only accepts string values, not 
-a file path.
-
-Sample: \fB\-\-exclude\-append='My Sharona^^Dancing Queen'\fR
-
-.TP
-.B \-\-ffprobe\fR
-Force \fB\-\-analyze\fR and \fB\-\-infofix q\fR to use ffprobe instead of 
-metaflac for flac files. Useless!!! Incredibly slow, but just in case you want 
-to confirm the outputs of the two, or something. My tests showed 30x slower.
-
-.TP
-.B \-\-force\fR, \fB\-f\fR
-Overwrites all the mp3/ogg/opus/jpg/txt etc. files, even if they already exist. 
-This is useful if you for example want to change compression quality on existing 
-files.
-
-.TP
-.B \-\-fork\fR, \fB\-F {0-xx}\fR
-Uses Perl module \fBParallel::ForkManager\fR to allow for forking of audio file 
-conversions actions. This can speed up your syncing a lot depending on how many 
-threads your CPU can support and how many you assign with this option.
-
-Supports integer values \fB0\fR or greater, but tests show 1 is slower than not 
-using forking at all. \fB0\fR is default, and disables forking.
-
-Some debugging features will be slightly distorted if fork is used, but it is 
-only cosmetic.
-
-See also configuration file option \fBFORK\fR if you want to set this 
-permanently.
-
-Please note that this can have strange consequences if you run it on a huge job, 
-even if you use only half your threads, the system can still act strange as a 
-result of running it with multiple forks.
-
-.TP
-.B \-\-help\fR, \fB\-h\fR
-The help / options menu.
 
 .TP
 .B \-\-image\fR, \fB\-I {cover image file name|remove}\fR
@@ -644,25 +716,6 @@ number]\fR line if you want to change from default of 4. Some people like rating
 by x/100, others x/10, etc. Use with \fB\-X q\fR or set in configurations.
 
 .TP
-.B \-\-input\fR, \fB\-i {aif|flac|raw|shn|wav}\fR
-Input type. Supported types: flac, wav, raw, shn. 
-
-\fBaif/raw/shn\fR \- only support flac output. 
-
-\fBshn\fR \- requires the shorten codec, which you usually have to build 
-yourself unless you can find a package for it. Use \fB\-v 3\fR to test the 
-first time to make sure you have shorten codec installed.
-
-Some other input types may be active for testing purposes occasionally, but acxi 
-does not promote, advocate, or officially support those types (like mp3 to 
-flac). 
-
-Supports flac to flac for cases where you might want to redo flac files to known 
-quality/compression levels, or redo them using current flac codecs.
-
-Tags transfer from AIF files that are tagged to FLAC files in my tests.
-
-.TP
 .B \-\-multiartist\fR, \fB\-\-ma\fR {[at|ta]:separator}\fR
 Use with \fB\-\-prefill\fR if the recording is multiartist, and the source info 
 file is in Artist [separator] Title or Title [separator] Artist format. Note 
@@ -709,59 +762,10 @@ telling you which track title and separator failed. It will often be because
 there was a space missing on one or both sides of the separator.
 
 .TP
-.B \-\-nlink\fR
-Set \fB$File::Find::dont_use_nlink = 0\fR. Default is \fB1\fR. Only change this 
-if you have a reason to do so. Setting value to \fB0\fR may make \fBcifs\fR type 
-file system reads fail, on a \fBsamba\fR network share for example. If you 
-encounter issues with the default value, please post an issue on the acxi github 
-page.
-
-See this PerlMonks thread for an explanation: 
-\fIhttps://www.perlmonks.org/?node_id=1180606\fR
-
-.TP
-.B \-\-no\-dot\fR
-Overrides user configuration \fBDOT\fR. Basically restores default behavior for 
-acxi in terms of skipping all dot files. Only useful if you have set \fBDOT\fR 
-to true in your configuration file and want to do a one time override of that 
-setting.
-
-.TP
-.B \-\-no\-ffp\fR
-Skips FLAC ffp checks and generation on \fB\-\-checksum\fR, 
-\fB\-\-checksum\-delete\fR, and \fB\-\-checksum\-verify\fR. Useful if you have 
-already verified or created ffp/flac data and only want to check md5 sums.
-
-.TP
-.B \-\-no\-md5\fR
-Skips md5 checks and generation on \fB\-\-checksum\fR, 
-\fB\-\-checksum\-delete\fR, and \fB\-\-checksum\-verify\fR. Useful if you only 
-want to check / create ffp data, which is much faster to generate than md5 
-checksums.
-
-.TP
-.B \-\-no\-nlink\fR
-Set \fB$File::Find::dont_use_nlink = 1\fR. This is the default value. See 
-\fB\-\-nlink\fR for details.
-
-.TP
 .B \-\-no\-replaygain\fR
 Remove any existing \fBREPLAYGAIN\fR and \fBWAVEFORMATEXTENSIBLE_CHANNEL_MASK\fR 
 tags when creating a new \fBauto.tag\fR file. See \fB\-\-autotag\-create\fR for 
 details.
-
-.TP
-.B \-\-output\fR, \fB\-o {aac|flac|m4a|mp3|ogg|opus}\fR
-Output type. Supported types: aac, flac, ogg, opus, m4a, mp3
-
-\fBaac\fR \- only supports flac input type, To preserve flac tags, use m4a.
-
-\fBflac\fR \- only supports flac, shn, or raw input types.
-
-\fBm4a\fR \- only supports flac input type, Container around aac data. Use if 
-you want to preserve flac tags in your aac audio file.
-
-\fBmp3\fR \- only supports flac input type
 
 .TP
 .B \-\-prefill\fR, \fB\-E\fR
@@ -934,49 +938,6 @@ values.
 Supports same tags as \fB\-\-prefill\fR field names.s
 
 .TP
-.B \-\-quality\fR, \fB\-q {number}\fR
-Set compression quality level.
-
-\fBaac/m4a\fR \- n can be an integer between 10\-500 (bitrate). 500 is largest 
-file/highest quality.
-
-\fBflac\fR \- n can be an integer between 0\-8, 0 is largest file / fastest 
-conversion time, 8 is smallest file, longest time. Note that tests show there is 
-very little point in using anything over 4.
-
-\fBmp3\fR \- n can be an integer between 0\-9 (variable bit rate), 0 is largest 
-file / highest quality.
-
-\fBogg\fR \- n can be between \-1 and 10. 10 is the largest file/highest 
-quality. Fractions are allowed, e.g. \fB\-o ogg \-q 7.54\fR
-
-\fBopus\fR \- n can be an integer between 6\-256 (bitrate). 256 is largest 
-file/highest quality.
-
-Note that using a higher or lower quality than you used to create the compressed 
-files will not result in redoing those files unless you use the \fB\-f\fR / 
-\fB\-\-force\fR option to force the overwrite of the existing files.
-
-.TP
-.B \-\-quiet\fR, \fB\-\-silent\fR
-Turns off most screen output, except for error messages. Same as \fB\-v 0\fR.
-Not used for all features since it makes no sense to turn off screen output for
-features that require screen output, like \fB\-Z\fR.
-
-.TP
-.B \-\-recurse {number}\fR
-There may be cases where you want a certain action to NOT recurse beyond the 
-number of steps you supply as an argument for this option. Default recursion 
-level is infinite (-1). If you use 0, it will only return files for the current 
-directory.
-
-This can be useful if you for example do not want to create ffp or md5, or sync 
-files in a sub directory.
-
-In general, use the \fB\-\-test\fR option to verify the results are what you 
-expected before actually proceeding with this option for real.
-
-.TP
 .B \-\-remove\-images\fR, \fB\-R\fR
 Use with \fB\-\-autotag\fR or \fB\-\-image\fR. Will remove all embedded image data, 
 and the associated padding, prior to tagging (and adding new image if 
@@ -995,81 +956,6 @@ file.flac\fR
 Use with \fB\-\-autotag\fR and \fB\-\-tag\fR if you want to remove padding. My 
 tests showed inconclusive results with this, and it slows down the tagging a 
 lot, especially over network connections.
-
-.TP
-.B \-\-resample {bit depth:sample rate khz}\fR
-Allows for standard resampling options: 16|20|24 bit depth and 
-44.1|48|88.2|96|192 khz sampling rate. 
-
-To get best results, always make sure to resample to a sampling rate that 
-divides evenly into the original sampling rate, for example, if the original is 
-96khz sampling rate, 24 bit, resample to 48khz, 16 bit (96/2 == 48). 
-
-If you use values that do not divide evenly, you have to deal with synthesizing 
-sample issues (depending on how the resampling is done, of course), and your 
-audio will not be as good as it could be. Note that 44.1 is only required for 
-Audio CDs, and in most cases, the cd burning software can deal with that itself, 
-unless you want to force it using acxi.
-
-In short, if you have 192 or 96 khz originals, resample them to 48 khz. If you 
-have 88.2 khz, resample it to 44.1. Do not sample upwards, it's just wasted 
-bytes, for example, there is no reason to resample from 44.1 to 88.2. In almost 
-all cases, if you need to work like that, use a dedicated DAW program like 
-Audacity and let it do the resamplings to higher levels in its native mode, then 
-after you have worked on the project, save it, and export to normal sampling 
-rates and bit depths.
-
-IMPORTANT: use the \fB\-Z\fR analyze option first to make sure what the bit 
-depth and sampling rate of your files are before using this resampling option. 
-\fB\-\-resample\fR and \fB\-\-analyze\fR are meant to be used together to avoid 
-errors, and so you always can be sure of what you are actually dealing with.
-
-Output for \fB\-v1\fR shows source file bit-depth:sample-rate and resample 
-bit-depth:sample-rate per file. \fB\-v2\fR adds dither type to output resample 
-data. Dither (\fBshibata\fR default, use \fB\-\-dither {type}\fR for alternates) 
-is added when sampling from bit depths of 24 or more to less than 24.
-
-Sample:
-.nf
-\fB# to get sampling rates etc:
-acxi \-s ./ \-Z
-[.... output...]
-# then run resampling once you have determined sampling rates etc
-acxi \-s working \-d results \-i flac \-o flac \-\-resample 16:48\fR
-.fi
-
-.TP
-.B \-\-resample\-override\fR
-Allows users to select any supported bit depth (4\-32) and sample rate, in khz 
-(1\-655). Why you would want to do this is beyond me, but if you want to, you 
-can if you add this override switch.
-
-.TP
-.B \-\-source\fR, \fB\-s {path}\fR
-Path to the top-most directory containing your source files (eg, flac). Cannot 
-start with \fB../\fR.
-
-.TP
-.B \-\-source\-glob\fR, \fB\-g {path relative to \-s path}\fR
-Accepts wild card paths if you only want to update or check certain directories 
-within the main \fB\-\-source\fR working directory. Requires \fB\-\-source\fR 
-(or pre-configured \fBSOURCE_DIRECTORY\fR), wild card path must be within 
-\fB-\-source\fR.
-
-Sample:
-.nf
-\fBacxi -s ./ \-g 'BandName*' \-V
-acxi -s ./ \-g '{BandName,Band Name,Band_Name}*' \-V\fR
-.fi
-
-Will only verify folders tarting with BandName. Remember to always quote the 
-value otherwise your shell will expand the wild cards!!
-
-Uses standard globbing patterns: * one or more of anything; {one,two,three} 
-matches one of the comma separated values inside {...}. Note that * only matches 
-directory names or files, not the path separator, like /.
-
-Works with all options except \fB\-\-clean\fR and \fB\-\-prefill\fR.
 
 .TP
 .B \-\-start {number}\fR
@@ -1117,10 +1003,169 @@ If tag value is \fBUNSET\fR it will just remove that tag and its contents.
 
 Sample: \fBacxi \-s ./ \-\-tag "COMMENT%:UNSET^^ARTIST%:Black Sabbath"\fR
 
+.SH ANALYZE/CHECKSUM OPTIONS
+Create checksum files (ffp/md5), verify checksums, analyze sets of files, check 
+collection for duplicate ffps.
+
 .TP
-.B \-\-test\fR, \fB\-\-dry\fR, \fB\-\-dry\-run\fR
-Test your configurations, copy, sync, checksum, and tagging actions without 
-actually doing the operations. 
+.B \-\-analyze\fR, \fB\-Z\fR
+Similar to \fB\-Xq\fR, except creates per file/directory reports with screen 
+output. Shows input tye file quality (sample bit size, sampling rate, and 
+channels), size, duration, kb/s, and also per directory summaries of those 
+values. In directory summary, if more than one input file quality type found in 
+directory, will print out each type found, which can be useful to see if 
+different sampling rates or sample bit sizes were used.
+
+To write to a file, use something like this:
+.EX
+\fBacxi -s./ \-\-analyze 2&>1 | tee analyze.txt\fR
+.EE
+The tee will allow the output to also scroll on screen while it runs, which is
+helpful in many cases. Otherwise just redirect output to file directly.
+
+\fB\-v 0\fR turns off per file reports, and shows only per directory summary; 
+\fB\-v 2\fR wraps per file data to key: value pair lines, adds ffp signature 
+(flac only); \fB\-v 3\fR adds raw non rounded seconds and file size in bytes to 
+all size / time results.
+
+Note that default for flac is metaflac, unless you use \fB\-\-ffprobe\fR, which 
+does not have hashes. Use metaflac for flac, it's about 25x or more faster than 
+ffprobe!!
+
+To verify \fB\-Xq\fR, use \fB\-Xv\fR instead, which will add an FFP verification 
+report item to the analysis block.
+
+.TP
+.B \-\-checksum\fR, \fB\-K\fR
+Create \fB.ffp\fR and \fB.md5\fR checksum files in your source directory. 
+Checksum files are only created inside directories where flac files are found. 
+Use \fB\-\-checksum\-delete\fR if you also want to delete existing checksum 
+files before creating new ones. Only flac input type is supported.
+
+This will not create md5 sums for for files in directories that do not contain 
+flac files, because that creates a very complicated logical puzzle which is hard 
+to accurately or reliably resolve in code.
+
+Do not use together with other cleaning/syncing options. Can be used with 
+\fB\-A\fR.
+
+.TP
+.B \-\-checksum\-delete\fR, \fB\-D\fR
+Will first delete all \fB.md5\fR, \fB.md5.txt\fR, \fB.ffp\fR, \fB.ffp.txt\fR,  
+\fB.st5\fR, and \fBshntool.txt\fR files before creating new checksum files. 
+\fB.st5\fR and \fBshntool.txt\fR were often created by shntool. Also removes 
+\fBrobots.txt\fR files, which sometimes were added by some downloaders in the 
+past. 
+
+Note that some audio processing tools add \fB.txt\fR to the checksum file name, 
+which creates undesirable outcomes since some tools that use \fB.ffp\fR or 
+\fB.md5\fR files don't recognize the files if they have the \fB.txt\fR extension 
+added on.
+
+I can think of very few reasons to want to preserve \fB.ffp\fR or \fB.md5\fR 
+files, since they should in general reflect what the actual files you have are.
+
+Do not use together with other cleaning/syncing options. Can be used with 
+\fB\-A\fR.
+
+.TP
+.B \-\-checksum\-ffps\fR, \fB\-\-ffps\fR
+Prints checksums to screen, disables md5 generation and output. Useful for 
+generating large lists of ffps for a collection.
+
+Similar to: \fBacxi \-K \-\-no\-md5 \-\-test\fR
+
+Sample (prints to screen, redirects stderr to stdout, prints to file):
+.EX
+\fBacxi \-s ./ \-\-ffps 2>&1 | tee ffps.txt\fB
+.EE
+
+.TP
+.B \-\-checksum\-verify\fR, \fB\-V\fR
+Will read existing .md5 files and compare md5 hash of files listed in the md5 
+file with the actual checksums of those files. Also will verify FLAC integrity 
+(this is pretty slow, so be patient).
+
+Note that when reading md5s, it does not matter if they are windows or *nix path 
+styles (/ or \/), it translates them to the one on your system. It also ignores 
+line endings, which makes reading windows generated md5 files on *nix systems a 
+breeze.
+
+See also \fB\-Xv\fR for adding FFP verification item to that block.
+
+.TP
+.B \-\-duplicates\fR, \fB\-\-dupes\fR
+Check your collection for duplicated flac files or releases, helpful to find 
+repeated items in your collection. Note that in cases of only 1 file matching, 
+it's in theory possible for that to be a random coincidence, so always confirm 
+before deleting anything!! But it's pretty rare for an ffp hash to be 
+duplicated.
+
+For larger directories/collections, use 
+
+\fBacxi -s./ \-\-dupes 2>&1 | tee duplicates.txt\fR
+
+The tee will allow the output to also scroll on screen while it runs, which is
+helpful to see what's going on. Otherwise just redirect output to file directly.
+
+.TP
+.B \-\-no\-ffp\fR
+Skips FLAC ffp checks and generation on \fB\-\-checksum\fR, 
+\fB\-\-checksum\-delete\fR, and \fB\-\-checksum\-verify\fR. Useful if you have 
+already verified or created ffp/flac data and only want to check md5 sums.
+
+.TP
+.B \-\-no\-md5\fR
+Skips md5 checks and generation on \fB\-\-checksum\fR, 
+\fB\-\-checksum\-delete\fR, and \fB\-\-checksum\-verify\fR. Useful if you only 
+want to check / create ffp data, which is much faster to generate than md5 
+checksums.
+
+.TP
+.B \-\-z\-min\-size {number}\fR
+Override default value for \fB\-\-analyze\fR min lossless file size alert.
+Number is integer KiB, 0\-xxx. 0 disables this test. Can be set in config file,
+see config section.
+
+.TP
+.B \-\-z\-min\-time {number}\fR
+Override default value for \fB\-\-analyze\fR min file duration alert. Number is 
+integer seconds, 0\-xxx. 0 disables this test. Can be set in config file, see 
+config section.
+
+.SH MISCELLANEOUS OPTIONS
+
+.TP
+.B \-\-aggregate, \fB\-G\fR [filename|extension]\fR
+Collect all the \fBauto.tag\fR files in a source directory and send to a target 
+directory. Useful to collect data for a large collection. You can supply a list 
+of comma separated items: jpg,info.txt,myart.png
+
+Creates the directories the files were found in in the destination directory.
+
+If no extra argument is supplied, it will default to collecting all the 
+\fBauto.tag\fR files in the source directory.
+
+Sample 1 (collects all auto.tag files): 
+.EX
+\fBacxi \-\-aggregate \-s my\-music -d music\-data\fR
+.EE
+Sample 2 (collects all supplied filename): 
+.EX
+\fBacxi \-\-aggregate info.txt \-s my\-music -d music\-data\fR
+.EE
+Sample 3 (collects all files of type jpg): 
+.EX
+\fBacxi \-\-aggregate jpg \-s my\-music -d music\-data\fR
+.EE
+Sample 4 (collects multiple values):
+.EX
+\fBacxi \-\-aggregate jpg,info.txt,png \-s my\-music -d music\-data\fR
+.EE
+
+.TP
+.B \-\-help\fR, \fB\-h\fR
+The help / options menu.
 
 .TP
 .B \-\-update\fR, \fB\-U\fR
@@ -1128,8 +1173,37 @@ Self updater, will update acxi and its man page. Non GNU/LInux will probably
 require changing the default values, which are set in \fBUSER VARIABLES\fR for 
 curl, acxi and man page acxi.1. Requires \fBcurl\fR.
 
-If you add \fB3, like \fB\-U 3\fR, it will update from smxi.org server instead.
-Avoid this unless you have been asked to do it.
+If you add \fB3\fR (\fB\-U 3\fR), \fBacxi\fR will update from smxi.org server 
+instead. Avoid this unless you have been asked to do it.
+
+.TP
+.B \-\-version\fR
+Show acxi version.
+
+.SH DEBUG/OUTPUT CONTROL OPTIONS
+These options allow you to modify the output, or to test actions before doing 
+them for real.
+
+.TP
+.B \-\-debug\fR
+Activate specialized debugger output. Don't use unless you are asked to, or are 
+a developer or something like that.
+
+.TP
+.B \-\-dry\-run\fR, \fB\-\-dry\fR, \fB\-\-test\fR
+.br
+See \fB\-\-test\fR.
+
+.TP
+.B \-\-quiet\fR, \fB\-\-silent\fR
+Turns off most screen output, except for error messages. Same as \fB\-v 0\fR.
+Not used for all features since it makes no sense to turn off screen output for
+features that require screen output, like \fB\-Z\fR.
+
+.TP
+.B \-\-test\fR, \fB\-\-dry\fR, \fB\-\-dry\-run\fR
+Test your configurations, copy, sync, checksum, and tagging actions without 
+actually doing the operations. 
 
 .TP
 .B \-\-verbosity\fR, \fB\-v {0-3}\fR
@@ -1147,22 +1221,6 @@ useful or used for all features.
 
 For other technical data, use \fB\-\-debug\fR, but not unless you know why you 
 are doing it, that output can vary widely.
-
-.TP
-.B \-\-version\fR
-Show acxi version.
-
-.TP
-.B \-\-z\-min\-size {number}\fR
-Override default value for \fB\-\-analyze\fR min lossless file size alert.
-Number is integer KiB, 0\-xxx. 0 disables this test. Can be set in config file,
-see config section.
-
-.TP
-.B \-\-z\-min\-time {number}\fR
-Override default value for \fB\-\-analyze\fR min file duration alert. Number is 
-integer seconds, 0\-xxx. 0 disables this test. Can be set in config file, see 
-config section.
 
 .SH CONFIGURATION FILE
 You can see by running \fBacxi \-h\fR the configuration file locations.
@@ -1413,7 +1471,6 @@ Please report bugs using the following resources.
 .B Issue Report
 File an issue report:
 .I https://github.com/smxi/acxi/issues
-
 .TP
 .B Forums
 Post on acxi forums:

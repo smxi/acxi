@@ -14,6 +14,14 @@ methods, so this was in essence an ideal training set. Though objectively, any
 set generated over decades by random people is going to have most of the 
 randomly possible options.
 
+Also features a big usability boost for help and man page, now lists in more 
+granular style, with order in help and man made the same. Broken into 
+Input/Output, Synching, Tagging, Checksums, Miscellaneous, and Debug/Output 
+controls. Over last years, a lot of feature sets have expanded, or been created, 
+making it harder to find the stuff in help or man. As with inxi, also added a 
+table of contents to the man page, which has gotten quite long, so users can 
+know which section to look for options.
+
 --------------------------------------------------------------------------------
 SPECIAL THANKS:
 
@@ -171,6 +179,12 @@ DOCUMENTATION:
 1. Man, help changes for new features, enhanced features, etc.
 
 2. README.txt, man, and help updated for new options.
+
+3. Reorganzed man page and help menu, with top navigation section on man page, 
+and more granular option subsections to make stuff easier to find.
+
+4. Fixed some width issues on help output, some lines had strayed over 80 
+columns, or could be shortened by moving a word to next line.
 
 --------------------------------------------------------------------------------
 CODE:
