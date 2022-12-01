@@ -4369,7 +4369,7 @@ sub get{
 				$run{'infofix-zero'} = 1 if $arg =~ /0/;
 			}
 			else {
-				$msg = "For $opt use no arguments, or d n u t w. See -h.";
+				$msg = "For $opt use no arguments, or d k l m n q t u v w 0. See -h.";
 				main::error_handler('missing-arg',$msg,1);
 			}
 		}
