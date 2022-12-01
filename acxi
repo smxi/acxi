@@ -2909,10 +2909,13 @@ sub writer {
 package SelfUpdater;
 my $self_source = "$SELF_DIRECTORY$path_separator$self_name";
 my $man_source = "$MAN_DIRECTORY$path_separator$self_name.1";
-
+my $url = 'https:/smxi.org/';
 sub update {
 	say $line_large;
 	say "Starting $self_name self updater.";
+	if ($run{'update-type'} && $run{'update-type'} == 3){
+		$url = 'https:/smxi.org/ac/';
+	}
 	validate();
 	grab();
 	say "Completed self updates.";
@@ -2922,7 +2925,7 @@ sub update {
 sub grab {
 	my ($cmd,@content);
 	say "Downloading $self_name.";
-	$cmd = "$COMMAND_CURL -L https:/smxi.org/acxi";
+	$cmd = "$COMMAND_CURL -L $url$self_name";
 	say $line_small;
 	@content = qx($cmd);
 	if ($? > 0){
@@ -2940,7 +2943,7 @@ sub grab {
 		say 'File updated';
 	}
 	say "Downloading $self_name.1 man page.";
-	$cmd = "$COMMAND_CURL -L https:/smxi.org/acxi.1";
+	$cmd = "$COMMAND_CURL -L $url$self_name.1";
 	say $line_small;
 	@content = qx($cmd);
 	if ($? > 0){
@@ -3837,6 +3840,7 @@ sub show_options {
 	$output .= "                  the tag name and its value. Value 'UNSET' removes the tag.\n";
 	if ($ALLOW_UPDATES){
 		$output .= "--update, -U      Update $self_name and man page. Set paths if not Linux.\n";
+		$output .= "                  -U 3 updates from smxi.org server directly, skips github.\n";
 		$output .= "                  Current values: $self_name: $SELF_DIRECTORY\n";
 		$output .= "                  man $self_name.1: $MAN_DIRECTORY\n";
 	}
@@ -4536,8 +4540,10 @@ sub get{
 		$OUTPUT_TYPE = 'UNSET';
 		$test{'tag'} = 1;
 		},
-	'U|update'=> sub { 
+	'U|update:i'=> sub { 
+		my ($opt,$arg) = @_;
 		$run{'update'} = 1; 
+		$run{'update-type'} = $arg if $arg; 
 		$run{'checksum'} = 0;
 		$run{'checksum-delete'} = 0; 
 		$run{'checksum-verify'} = 0;
@@ -4676,6 +4682,10 @@ sub verify_selections {
 	$run{'no-ffp'} && $run{'no-md5'}){
 		main::error_handler('invalid-options', 
 		 "You cannot use both --no-ffp and --no-md5 with checksum options.",1);
+	}
+	if ($run{'update-type'} && $run{'update-type'} != 3){
+		main::error_handler('invalid-options', 
+		 "-U 3 is the only alternate update type currently supported.",1);
 	}
 }
 # End OptionsHandler

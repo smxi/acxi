@@ -157,6 +157,10 @@ obvious.
 4b. OPTIONS: Added optional option names --dry-run, --dry, same as --test, eay 
 to remember.
 
+5. Added -U 3, for updating from smxi server, github is a pain, better to do 
+most dev work on server, like with pinxi, then commit to github once largely 
+working. That github throttling of commits after a few done quickly is annoying.
+
 --------------------------------------------------------------------------------
 CHANGES:
 
