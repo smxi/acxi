@@ -73,6 +73,11 @@ PRODUCER%:
 PUBLISHER%:
 # e.g.: label, taper group, etc.
 ORGANIZATION%:
+# Database type IDs
+CDDB%:
+ETREE%:
+ISRC%:
+SHNID%:
 
 ## TECHNICAL INFORMATION ##
 # tech info about the flac generation
