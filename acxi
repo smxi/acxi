@@ -2920,13 +2920,11 @@ sub writer {
 package SelfUpdater;
 my $self_source = "$SELF_DIRECTORY$path_separator$self_name";
 my $man_source = "$MAN_DIRECTORY$path_separator$self_name.1";
-my $url = 'https:/smxi.org/';
+
 sub update {
 	say $line_large;
 	say "Starting $self_name self updater.";
-	if ($run{'update-type'} && $run{'update-type'} == 3){
-		$url = 'https:/smxi.org/ac/';
-	}
+	
 	validate();
 	grab();
 	say "Completed self updates.";
@@ -2935,8 +2933,17 @@ sub update {
 }
 sub grab {
 	my ($cmd,@content);
-	say "Downloading $self_name using location: $url";
-	$cmd = "$COMMAND_CURL -L $url$self_name";
+	my $no_ssl = ($run{'no-ssl'}) ? '--insecure': '';
+	my($source,$url) = ('default redirect to repo','https:/smxi.org/');
+	if ($run{'update-type'} && $run{'update-type'} == 3){
+		$url = 'https:/smxi.org/ac/';
+		$source = 'alternate';
+	}
+	say "Downloading $self_name using $source location: $url";
+	if ($no_ssl){
+		say "- SSL certificate checks have been disabled.";
+	}
+	$cmd = "$COMMAND_CURL $no_ssl -L $url$self_name";
 	say $line_small;
 	@content = qx($cmd);
 	if ($? > 0){
@@ -2954,7 +2961,7 @@ sub grab {
 		say 'File updated';
 	}
 	say "Downloading $self_name.1 man page.";
-	$cmd = "$COMMAND_CURL -L $url$self_name.1";
+	$cmd = "$COMMAND_CURL $no_ssl -L $url$self_name.1";
 	say $line_small;
 	@content = qx($cmd);
 	if ($? > 0){
@@ -3862,6 +3869,7 @@ sub show_options {
 	$output .= "                  (several): acxi -d ~/music/cdinfo --aggregate png,jpg,info.txt\n";
 	$output .= "--help, -h        This help menu.\n";
 	if ($ALLOW_UPDATES){
+		$output .= "--no-ssl          Disable SSL for update. Useful if legacy server and -U3.\n";
 		$output .= "--update, -U      Update $self_name and man page. Set paths if not Linux.\n";
 		$output .= "                  -U 3 updates from smxi.org server directly, skips github.\n";
 		$output .= "                  Current values: $self_name: $SELF_DIRECTORY\n";
@@ -4438,13 +4446,15 @@ sub get{
 	'no-dot' => sub { 
 		$run{'dot'} = 0;},
 	'no-ffp' => sub { 
-		$run{'no-ffp'} = 1 },
+		$run{'no-ffp'} = 1;},
 	'no-md5' => sub { 
-		$run{'no-md5'} = 1 },
+		$run{'no-md5'} = 1;},
 	'no-nlink' => sub { 
 		$DONT_USE_NLINK = 1 },
 	'no-replaygain' => sub { 
 		$run{'no-replaygain'} = 1 },
+	'no-ssl' => sub { 
+		$run{'no-ssl'} = 1 },
 	'o|output:s' => sub {
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires type.",1) if !$arg;

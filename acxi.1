@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-12\-01" acxi "acxi manual"
+.TH ACXI 1 "2022\-12\-02" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -49,8 +49,8 @@ Analyze/Checksums: [\fB\-\-analyze\fR, \fB\-Z\fR]
 [\fB\-\-z\-min\-size\fR {0\-xxx}] [\fB\-\-z\-min\-time\fR {0\-xxx}]
 .IP * 2
 Miscellaneous: [\fB\-\-aggregate\fR, \fB\-G\fR [file name|extension]]
-[\fB\-\-help\fR, \fB\-h\fR] [\fB\-\-update\fR, \fB\-U\fR] 
-[\fB\-\-version\fR]
+[\fB\-\-help\fR, \fB\-h\fR] [\fB\-\-no\-ssl\fR] 
+[\fB\-\-update\fR, \fB\-U\fR [3]] [\fB\-\-version\fR]
 .IP * 2
 Output Controls: [\fB\-\-verbosity\fR, \fB\-v\fR {0-3}] 
 [\fB\-\-quiet\fR]
@@ -1173,13 +1173,25 @@ Sample 4 (collects multiple values):
 The help / options menu.
 
 .TP
-.B \-\-update\fR, \fB\-U\fR
+.B \-\-no\-ssl\fR
+Disable SSL strict certificate checks for \fB\-U\fR. 
+
+Sample: \fB\acxi -U3 \-\-no\-ssl\fR
+
+This can be useful because github doesn't usually allow connections without 
+strict SSL checks, but legacy systems often have expired SSL certificates. 
+
+.TP
+.B \-\-update\fR, \fB\-U [3]\fR
 Self updater, will update acxi and its man page. Non GNU/LInux will probably 
 require changing the default values, which are set in \fBUSER VARIABLES\fR for 
 curl, acxi and man page acxi.1. Requires \fBcurl\fR.
 
-If you add \fB3\fR (\fB\-U 3\fR), \fBacxi\fR will update from smxi.org server 
-instead. Avoid this unless you have been asked to do it.
+If you add \fB3\fR (\fB\-U 3\fR), \fBacxi\fR will update from \fIsmxi.org\fR 
+server instead (that version is updated at least 1x per day, more during active 
+development). Avoid this unless you have been asked to do it, or if you are 
+running acxi on a legacy server with expired SSL certificates and need to use 
+\fB\-\-no\-ssl\fR (\fB\-U 3 \-\-no\-ssl\fR).
 
 .TP
 .B \-\-version\fR

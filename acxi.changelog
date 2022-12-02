@@ -169,6 +169,10 @@ easy to remember if you think of it as a dry run, not a test.
 most dev work on server, like with pinxi, then commit to github once largely 
 working. That github throttling of commits after a few done quickly is annoying.
 
+6. Going along with -U 3, added --no-ssl, for older systems which may have 
+expired SSL certificates. Note that -U on such systems will not work generally 
+with or without --no-ssl, but -U 3 will.
+
 --------------------------------------------------------------------------------
 CHANGES:
 
