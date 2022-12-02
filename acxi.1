@@ -137,8 +137,8 @@ flac. MP3 encoding does not support wav or raw input formats.
 \fBSHN \-> \fBFLAC\fR conversion requires the codec \fBshorten\fR and 
 \fBffmpeg\fR.
 .IP * 2
-\fB\-\-analyze\fR, \fB\-\-duplicates\fR, \fB\-\-ffps\fR, and \fB\-\-infofix q\fR 
-require \fBmetaflac\fR (with the following exception).
+\fB\-\-analyze\fR, \fB\-\-duplicates\fR, \fB\-\-ffps\fR, and \fB\-\-infofix 
+[q|v]\fR require \fBmetaflac\fR (with the following exception).
 .IP * 2
 \fB\-\-analyze\fR, \fB\-\-infofix q\fR require \fBffprobe\fR for non \fBflac \fR 
 input types, or if using \fB\-\-ffprobe\fR option with \fBflac\fR.
@@ -156,6 +156,8 @@ executable.
 generates md5 hashes). 
 .IP * 2
 \fB\-\-fork\fR requires Perl module \fBParallel::ForkManager\fR. 
+.IP * 2
+\fB\-\-infofix k\fR requires Perl Core Module \fBPOSIX::strftime\fR. 
 .IP * 2
 \fB\-\-infofix [t|u]\fR require Perl module \fBText::Autoformat\fR. 
 .IP * 2
@@ -813,12 +815,13 @@ Supported field names, and their corresponding tag name:
 \fBALBUMSORT\fR \- AlbumSort
 \fBARTIST\fR \- Artist, Artists, Artiste, Artistes, Band
 \fBCOMPOSER\fR \- Composer
-\fBCDDB\fR \- CDDB, CDDBID, CDDB-ID, CDDB ID
+\fBCDDB\fR \- CDDB
 \fBDATE\fR \- Date
-\fBETREE\fR \- ETREE, ETREEID, ETREE-ID, ETREE ID. NOTE: not a standard tag.
+\fBETREE\fR \- Etree, EtreeDB. NOTE: not a standard tag.
 \fBGENRE\fR \- Genre
 \fBIMAGE\fR \- Cover,Image
-\fBISRC\fR \- ISRC, ISRCDB, ISRC-DB, ISRC DB
+\fBISRC\fR \- ISRC
+\fBSHNID\fR \- Shnid, commonly used in Grateful Dead recordings. Not standard.
 \fBLOCATION\fR \- City, State, Country, Lieu, Location, Ville.
 \fBPRODUCER\fR \- Producer, Recorded by, Taper, Taped By
 \fBVENUE\fR \- Club, Event, Festival, Venue
@@ -841,6 +844,8 @@ prefill if not in top block.
 * See \fB\-Xd\fR for date fixes, prefill only accepts YYYY\-MM\-DD formatting.
 
 * If Etree: present, also appends to end of ALBUM string: ' (etree [id])'
+
+* If Shnid: present, also appends to end of ALBUM string: ' (shnid [id])'
 
 * \fBVENUE\fR will also be added to \fBLOCATION\fR if no \fBALBUM\fR set.
 

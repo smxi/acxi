@@ -75,12 +75,13 @@ ENHANCEMENTS:
 * 'Artist / Band' to ARTIST prefill field name list.
 * 'Taped by', 'Recorded by' for PRODUCER tag.
 
-1b. PREFILL/AUTOTAG: Added CDDB, ETREE, ISRC ID tags. ETREE is not an official 
-tag from vorbis/flac, but might be useful for bands that have etree ids, that 
-way it can go somewhere in the tags, as well as being a possible field name for 
-prefill. 
+1b. PREFILL/AUTOTAG: Added CDDB, ETREE, ISRC, SHNID tags. ETREE and SHNID are 
+not an official tag from vorbis/flac, but might be useful for bands that have 
+etree ids or shnids, that way it can go somewhere in the tags, as well as being 
+a possible field name for prefill. 
 
-If etree id present, append to end of ALBUM like this: ' (etree [id])'. 
+If etree/shnid id present, append to end of ALBUM like this: ' (etree [id])' or 
+' (shnid [id])'. 
 
 1c. PREFILL: Added option to add a terminator after the Setlist/Tracks block to 
 stop creating and counting tracks. This helps when there are numbered comments, 
@@ -122,8 +123,9 @@ t12, s1t12, and less common 123-d1t23.
 method.
 
 2c. INFOFIX: Added -Xm which attempts to add parenthesis around track times so 
-that the times don't get included in the track TITLE info. Also moves time at 
-start of title to end of title, some people do that one, oddly enough.
+that the times don't get included in the track TITLE info. Also changes corner 
+wrapping with |...| to (...) Also moves time at start of title to end of title, 
+some people do that one, oddly enough.
 
 2d. INFOFIX: Added -Xv. This adds an FFP verified to the q report. FLAC only. If 
 errors, shows the full file report, which can be useful. Note that running ffp 

@@ -980,8 +980,8 @@ sub prefill_data {
 	my $fields = 'Album|AlbumArtist|AlbumSort|Artiste?s?|Artist\s*\/\s*Band|Band|';
 	$fields .= 'CDDB|CDDB[\s-]?ID|City|Club|Composer|Country|Cover|Date|';
 	$fields .= 'Etree|Etree[\s-]?ID|Event|Festival|Genre|Image|ISRC|ISRC[\s-]?ID|';
-	$fields .= 'Event|Location|Producer|Lieu|Recorded by|State|Taper|Taped by|';
-	$fields .= 'Venue|Ville|Year';
+	$fields .= 'Event|Location|Producer|Lieu|Recorded by|SHNID|State|';
+	$fields .= 'Taper|Taped by|Venue|Ville|Year';
 	foreach my $line (@$data){
 		$counter++;
 		$line = main::trimmer($line);
@@ -1031,7 +1031,7 @@ sub prefill_data {
 				elsif ($field_name =~ /^(AlbumSort)$/i){
 					$info->{'albumsort'} = $field_value;
 				}
-				elsif ($field_name =~ /^CDDB([\s-]?ID)?$/i){
+				elsif ($field_name =~ /^CDDB$/i){
 					$info->{'cddb'} = $field_value;
 				}
 				elsif ($field_name =~ /^(City|Country|Location|State|Ville)$/i){
@@ -1071,17 +1071,20 @@ sub prefill_data {
 					$info->{'date'} = $1;
 					$info->{'year'} = $2;
 				}
-				elsif ($field_name =~ /^Etree([\s-]?ID)?$/i){
+				elsif ($field_name =~ /^Etree(db)?$/i){
 					$info->{'etree'} = $field_value;
 				}
 				elsif ($field_name =~ /^(Genre)$/i){
 					$info->{'genre'} = $field_value;
 				}
-				elsif ($field_name =~ /^ISRC([\s-]?ID)?$/i){
+				elsif ($field_name =~ /^ISRC$/i){
 					$info->{'isrc'} = $field_value;
 				}
 				elsif ($field_name =~ /^(Producer|Taper|(Record|Tap)ed by)$/i){
 					$info->{'producer'} = $field_value;
+				}
+				elsif ($field_name =~ /^SHNID$/i){
+					$info->{'shnid'} = $field_value;
 				}
 				elsif ($field_name =~ /^(Year)$/i){
 					$info->{'year'} = $field_value;
@@ -1117,10 +1120,10 @@ sub prefill_data {
 				$b_performer = 0;
 			}
 			# some random stuff if it wasn't in top block
-			if (!$info->{'cddb'} && $line =~ /^CDDB([\s-]?ID)?\s*:\s*(.*)$/i){
-				$info->{'cddb'} = $2;
+			if (!$info->{'cddb'} && $line =~ /^CDDB\s*:\s*(.*)$/i){
+				$info->{'cddb'} = $1;
 			}
-			elsif (!$info->{'etree'} && $line =~ /^Etree([\s-]?ID)?\s*:\s*(.*)$/i){
+			elsif (!$info->{'etree'} && $line =~ /^Etree(DB)?\s*:\s*(.*)$/i){
 				$info->{'etree'} = $2;
 			}
 			elsif (!$info->{'genre'} && $line =~ /^(Genre)\s*:\s*(.*)$/i){
@@ -1129,12 +1132,15 @@ sub prefill_data {
 			elsif (!$info->{'image'} && $line =~ /^(Cover|Image)\s*:\s*(.*)$/i){
 				$info->{'image'} = $2;
 			}
-			elsif (!$info->{'isrc'} && $line =~ /^ISRC([\s-]?ID)?\s*:\s*(.*)$/i){
-				$info->{'isrc'} = $2;
+			elsif (!$info->{'isrc'} && $line =~ /^ISRC\s*:\s*(.*)$/i){
+				$info->{'isrc'} = $1;
 			}
 			elsif (!$info->{'producer'} && 
 			$line =~ /^(Producer|Recorded by|Taper|Taped by)\s*:\s*(.*)/i){
 				$info->{'producer'} = $2;
+			}
+			elsif (!$info->{'shnid'} && $line =~ /^SHNID\s*:\s*(.*)$/i){
+				$info->{'shnid'} = $1;
 			}
 		}
 	}
@@ -1172,7 +1178,7 @@ sub populate_tag_file {
 	# Include YEAR to make conversion to mp3 tagging cleaner
 	'GENRE','RATING','DATE','YEAR','LOCATION','VENUE','PRODUCER','PUBLISHER',
 	'# e.g. record label, taper group,, etc. ','ORGANIZATION',
-	'# Database IDs', 'CDDB','ETREE','ISRC',
+	'# Database type IDs', 'CDDB','ETREEDB','ISRC','SHNID',
 	'## TECHNICAL INFORMATION ##',
 	'ENCODING',
 	'# Useful for tapers etc','SOURCE','SOURCE','SOURCE','SOURCE',
@@ -1192,8 +1198,8 @@ sub populate_tag_file {
 	splice(@track, 1, 0, 'ARTIST') if $run{'multiartist'};
 	@collection = map {$_ .= '%:' if /^[A-Z]/; $_;} @collection;
 	my @prefills = ('ALBUMSORT%:','ARTIST%:','CDDB%:','COMPOSER%:','DATE%:',
-	'ETREE%:','GENRE%:','IMAGE%:','ISRC%:','LOCATION%:','PRODUCER%:','VENUE%:',
-	'YEAR%:');
+	'ETREE%:','GENRE%:','IMAGE%:','ISRC%:','LOCATION%:','PRODUCER%:','SHNID%:',
+	'VENUE%:','YEAR%:');
 	if ($info && %$info && @collection){
 		my @working;
 		foreach my $item (@collection){
@@ -2118,7 +2124,7 @@ sub run_fixes {
 				# Needs to run inside the replace test to avoid carrying over $3, $4
 				# from number fix.
 				# Add parenthese, also change [..], {...} to (..)
-				if ($row =~ s/\s+:?(\d{1,2}(:\d{2}){1,2}(\.\d+)?)(\s*\*+)?(\s+|$)/ ($1)/){
+				if ($row =~ s/\s+\|?:?(\d{1,2}(:\d{2}){1,2}(\.\d+)?)\|?(\s*\*+)?(\s+|$)/ ($1)/){
 					$row .= $4 if $4;
 					$row =~ s/\)(\S)/) $1/; # add space after if not EOL.
 					$row =~ s/\s\s+/ /g; # make sure we didn't add in an extra space

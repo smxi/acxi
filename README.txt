@@ -294,9 +294,9 @@ does not support wav or raw formats).
   
 * SHN -> FLAC conversion requires the codec 'shorten' and ffmpeg.
 
-* --analyze, --duplicates, and --ffps require metaflac.
+* --analyze, --duplicates, -X [qv], and --ffps require metaflac.
 
-* --analyze, -Xq if input type not flac, or flac + --ffprobe, require ffprobe.
+* --analyze, -X q if input type not flac, or flac + --ffprobe, require ffprobe.
 
 * --autotag requires metaflac plus a specially formatted auto.tag file placed 
 inside each album/collection directory.
@@ -306,7 +306,13 @@ inside each album/collection directory.
   
 * --checksum-verify requires md5sum (or comparable tool) and flac.
 
+* --fork requires Perl module Parallel::ForkManager
+
 * --image, --remove-images require metaflac.
+
+* --infofix k requires Perl Core Module POSIX::strftime
+
+* --infofix t and u require Perl module Text::Autoformat
 
 * --infofix v requires flac.
 
