@@ -1178,7 +1178,7 @@ sub populate_tag_file {
 	# Include YEAR to make conversion to mp3 tagging cleaner
 	'GENRE','RATING','DATE','YEAR','LOCATION','VENUE','PRODUCER','PUBLISHER',
 	'# e.g. record label, taper group,, etc. ','ORGANIZATION',
-	'# Database type IDs', 'CDDB','ETREEDB','ISRC','SHNID',
+	'# Database type IDs', 'CDDB','ETREE','ISRC','SHNID',
 	'## TECHNICAL INFORMATION ##',
 	'ENCODING',
 	'# Useful for tapers etc','SOURCE','SOURCE','SOURCE','SOURCE',
