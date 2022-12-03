@@ -1099,10 +1099,10 @@ sub prefill_data {
 			}
 			# Start building tracks, note: on other lines can start with numbers like this!
 			# but with terminator not issue after tracklist, but can be before.
-			# corner cases: *; (4:45) *, just dump the trailing *, too complicated to add
-			# back onto track title, and tags don't need those info * things anyway.
+			# Corner cases: (2), ;, %,*; (4:45) *, just dump the trailing items.  
+			# Not needed to add back onto track title, tags don't need those anyway usually.
 			if (($b_fields || $counter > 4) && !$b_tracks_end && 
-			$line =~ /^([1-6]-\d{1,2}|\d{1,2})\.\s(.*?)(\s+[\[\(\{][\d:\.\s]+[\]\)\}]\s*)?\**$/){
+			$line =~ /^([1-6]-\d{1,2}|\d{1,2})\.\s(.*?)[\s;%\*]*(\s+[\[\(\{][\d:\.\s]+[\]\)\}]\s*)*[\s;%\*]*$/){
 				push(@{$info->{'tracks'}},$2);
 				$b_tracks_start = 1;
 			}
@@ -2129,7 +2129,7 @@ sub run_fixes {
 				# Needs to run inside the replace test to avoid carrying over $3, $4
 				# from number fix.
 				# Add parenthese, also change [..], {...} to (..)
-				if ($row =~ s/\s+\|?:?(\d{1,2}(:\d{2}){1,2}(\.\d+)?)\|?(\s*\*+)?(\s+|$)/ ($1)/){
+				if ($row =~ s/\s+\|?\s*:?(\d{1,2}(:\d{2}){1,2}(\.\d+)?)\s*\|?(\s*\*+)?(\s+|$)/ ($1)/){
 					$row .= $4 if $4;
 					$row =~ s/\)(\S)/) $1/; # add space after if not EOL.
 					$row =~ s/\s\s+/ /g; # make sure we didn't add in an extra space
