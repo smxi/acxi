@@ -14,6 +14,10 @@ methods, so this was in essence an ideal training set. Though objectively, any
 set generated over decades by random people is going to have most of the 
 randomly possible options.
 
+A long time weakness is handled, now -X automatically maps windows CF-1252 
+common characters to ASCII. These are really common because so many people use 
+word document type formatting to generate magic quotes etc.
+
 Also features a big usability boost for help and man page, now lists in more 
 granular style, with order in help and man made the same. Broken into 
 Input/Output, Synching, Tagging, Checksums, Miscellaneous, and Debug/Output 
@@ -38,7 +42,8 @@ KNOWN ISSUES:
 getting unwanted changes to items after the set/track list. Solution of course
 is to just add the terminator, but it's worth mentioning anyway.
 
-2. -X fails to correct windows special characters like magic quotes etc.
+2. If more than 1 date is in a line, the second one gets ignored. This is too 
+hard to fix, and would not really matter in almost all cases anyway.
 
 --------------------------------------------------------------------------------
 BUGS:
@@ -149,12 +154,25 @@ requirements.
 2f. INFOFIX: Added -X0. This turns off the leading characters usually added 
 before each line of output. Useful if you want to copy parts of the output.
 
-2g. INFOFIX/PREFILL: Added {...} syntax for track times, along with existing 
+2g. INFOFIX: Added -Xc. First try at long time weakness, failing to currect 
+windows cp-1252 characters like magic quotes etc. This may take a few iterations 
+since not only windows is going to have these issues, but this should cover a 
+solid 95%. Tested on several large sets of info files and worked well.
+
+Grep output to locate where corrections happened. To avoid leaving in unhandled 
+characters, will exit with error if it hits one it doesn't know about, and that 
+will be left to user to handle. I'm not trying for 99% perfection, just to get 
+the most common offenders (Windows generated .txt files), which probably covers 
+a solid 95% of real cases, except for UTF8 non English alphabets (like 
+Cyrillic).
+
+2h. INFOFIX/PREFILL: Added {...} syntax for track times, along with existing 
 (..), [..]. Note that track times have to be at end of Title string, otherwise 
 it's a pain to do the logic. -Xm will move them from start of title to end.
 
-3a. CHECKSUM DELETE: Added *.st5, shntool.txt types to --checksum-delete. Those 
-are almost always from SHN files, and aren't relevant anymore. 
+3a. CHECKSUM DELETE: Added *.cfp (some shn thing), *sbeok, *.st5, shntool.txt 
+types to --checksum-delete. Those are almost always from SHN files, and aren't 
+relevant anymore. sbeok as far as I can tell is same as shntool_length.
 
 3b. CHECKSUM DELETE: Added *ffps.txt, *md5sum.txt as possible -D delete file 
 names.

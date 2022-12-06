@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.05';
-my $self_date='2022-12-01';
+my $self_date='2022-12-05';
 
 ## GLOBALS ##
 ## Booleans
@@ -1839,8 +1839,9 @@ sub delete_checksums {
 	my $error_message = '';
 	# note: some checksum generators tack on a .txt to the filename.
 	# seen case like: "verbose stuff md5.txt
-	my $glob = '*{.ffp,.md5,.st5,index.html{.1,.2,.3,},';
-	$glob .= '{md5,md5sum{s,},ffp{s,},robots,shntool{_len,_length,},st5}.txt{.1,.2,.3,}}';
+	my $glob = '*{.cfp,.ffp,.md5,.st5,index.html{.1,.2,.3,},md5ok,';
+	$glob .= '{md5{ok,},md5sum{s,},ffp{s,},robots,sbeok,';
+	$glob .= 'shn{len,tool}{_len,_length,},st5}.txt{.1,.2,.3,}}';
 	my @checksums = main::globber($glob);
 	# say Data::Dumper::Dumper @checksums;
 	foreach my $file (@checksums){
@@ -2056,8 +2057,15 @@ sub process {
 sub run_fixes {
 	my (@prepped);
 	my ($newlines) = (0);
-	my ($b_tracks_end);
+	my ($b_1252,$b_tracks_end);
 	my $data = open_info_file('info-fixes');
+	if ($run{'infofix-character'} ){
+		# basic CF-1252 test. These are unassigned in 1252, 8859, utf8
+		# HOWEVER: copy/paste from webpages can and often will turn 8859 to 1252
+		# these tests don't really work reliably since valid utf8 characters can 
+		# contain these within a larger 'word', like: ⣁ eq \xe2\xa0\x81.
+		$b_1252 = 1 if (grep {$_ =~ /[\x81\x8D\x8F\x90\x9D]/} @$data);
+	}
 	date_fix($data) if $run{'infofix-date'};
 	$data = Analyze::run('info',$data) if $run{'infofix-quality'};
 	# say Data::Dumper::Dumper \@data;
@@ -2065,7 +2073,12 @@ sub run_fixes {
 	my $upper = 'Aud|Cdr?|Sd?b|Ips|Eac|Ak|Az|Ca|Co|Ct|Dc|De|Dk|Fl|Flac|Hd|Hi|Il|';
 	$upper .= 'Ma|Md|Mkw|Mo|Nc|Nh|Nj|Nm|Nyc?|Pa|Ri|Sbd?|Sf|Shn|Tn|Usa|Ut|Wa|';
 	$upper .= 'Wav|Wi|Va|Vt';
+	my $line_nu = 0;
 	foreach my $row (@$data){
+		$line_nu++;
+		if ($run{'infofix-character'} && $row && $b_1252){
+			$row = character_fix($row,$line_nu);
+		}
 		if ($run{'infofix-lower'}){
 			# set to lower, and make upper first character of each line.
 			$row = ucfirst(lc($row));
@@ -2178,6 +2191,40 @@ sub run_fixes {
 		say "  $line_small";
 		say "  Changes written to $INFO_FILE.";
 	}
+}
+# try to correct windows cp-1252 special characters
+# see: https://en.wikipedia.org/wiki/Windows-1252 to get more mappings
+# see: http://www.i18nqa.com/debug/table-iso8859-1-vs-windows-1252.html
+sub character_fix {
+  my ($item,$line_nu) = @_;
+  # useful to grep output to find bad characters in files
+  if ($item =~ /[\x00-\x08\x10-\x1F\x80-\x9F]/){
+		say "  BADCF: line: $line_nu";
+	}
+  # Map commonly used CP-1252 to ASCII characters
+  $item =~ s/\x82/,/g;
+  $item =~ s/\x84/,,/g;
+  $item =~ s/\x85/.../g;
+  $item =~ s/\x86/+/g; # †
+  $item =~ s/\x87/++/g; # ‡
+  $item =~ s/\x88/^/g;
+  $item =~ s/\x8B/</g;
+  $item =~ s/\x91|\x92/'/g;
+  $item =~ s/\x93|\x94/"/g;
+  $item =~ s/\x95/*/g;
+  $item =~ s/\x96/-/g;
+  $item =~ s/\x97/--/g;
+  $item =~ s/\x98/~/g;
+  $item =~ s/\x99/(TM)/g;
+  $item =~ s/\x9B/>/g;
+  $item =~ s/\xAB/<</g; # «
+  $item =~ s/\xBB/>>/g; # «
+  # Check for any untranslated characters.
+  if ($item =~ /[\x00-\x08\x10-\x1F\x80-\x9F\xA0-\xFF]/){
+		my $msg = "There is an unhandled special character on line: $line_nu\n  $item";
+		main::error_handler('infofix-bad-character',$msg,0);
+	}
+	return $item;
 }
 sub date_fix {
 	my ($ref) = @_;
@@ -3045,6 +3092,7 @@ sub error_handler {
 	elsif ($error eq 'analyze'){$error_no = 31;}
 	elsif ($error eq 'convert'){$error_no = 32;}
 	elsif ($error eq 'multiartist-split'){$error_no = 33;}
+	elsif ($error eq 'infofix-bad-character'){$error_no = 34;}
 	if ($error eq 'validation-errors'){
 		if (!$b_valid){
 			$message = "${br}Failed pretests. Please correct the listed errors.";
@@ -3783,14 +3831,15 @@ sub show_options {
 	$output .= "--info-file, --if, --prefill-file, --pf {file name}\n";
 	$output .= "                  Alternate file name to use for --prefill or --infofix.\n";
 	$output .= "--infofix, -X [0dklmnqtuvw]\n";
-	$output .= "                  Fix info.txt files. Use any combination. Always cleans white\n";
-	$output .= "                  space issues.\n";
+	$output .= "                  Fix info.txt files. Use any combination. Always corrects white\n";
+	$output .= "                  space.\n";
 	$output .= "                  0: (zero) No printed leading delimiter characters per line.\n";
+	$output .= "                  c: Correct Windows CF-1252 special character issues.\n";
 	$output .= "                  d: Make iso date: YYYY-MM-DD from various random date formats.\n";
 	$output .= "                  k: Adds (weekday) after iso date. Activates d.\n";
 	$output .= "                  l: Set all lowercase, and apply simple upper case first fixes.\n";
 	$output .= "                  m: Add parentheses around track times, move to end, in track\n";
-	$output .= "                     title.'\n";
+	$output .= "                     title.\n";
 	$output .= "                  n: Make track numbering 'NN. ' (0 padded) or 'N-NN. '\n";
 	$output .= "                  q: Add FLAC/Quality: /[quality] items to info file.\n";
 	$output .= "                  t: Fix upper/lower case track titles.\n";
@@ -4385,7 +4434,8 @@ sub get{
 		my ($opt,$arg) = @_;
 		$run{'infofix'} = 1;
 		if ($arg ne ''){
-			if ($arg =~ /^[dklmnqutvw0]+$/){
+			if ($arg =~ /^[cdklmnqutvw0]+$/){
+				$run{'infofix-character'} = 1 if $arg =~ /c/;
 				$run{'infofix-date'} = 1 if $arg =~ /[dk]/;
 				$run{'infofix-dow'} = 1 if $arg =~ /k/;
 				$run{'infofix-lower'} = 1 if $arg =~ /l/;
