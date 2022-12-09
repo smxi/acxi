@@ -296,7 +296,8 @@ does not support wav or raw formats).
 
 * --analyze, --duplicates, -X [qv], and --ffps require metaflac.
 
-* --analyze, -X q if input type not flac, or flac + --ffprobe, require ffprobe.
+* --analyze, --infofix q if input type not flac, or flac + --ffprobe, require 
+ffprobe.
 
 * --autotag requires metaflac plus a specially formatted auto.tag file placed 
 inside each album/collection directory.
@@ -309,6 +310,8 @@ inside each album/collection directory.
 * --fork requires Perl module Parallel::ForkManager
 
 * --image, --remove-images require metaflac.
+
+* --infofix c requires Perl Core Module Encoding::Guess
 
 * --infofix k requires Perl Core Module POSIX::strftime
 

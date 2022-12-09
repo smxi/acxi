@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-12\-08" acxi "acxi manual"
+.TH ACXI 1 "2022\-12\-09" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -141,7 +141,7 @@ flac. MP3 encoding does not support wav or raw input formats.
 [q|v]\fR require \fBmetaflac\fR (with the following exception).
 .IP * 2
 \fB\-\-analyze\fR, \fB\-\-infofix q\fR require \fBffprobe\fR for non \fBflac \fR 
-input types, or if using \fB\-\-ffprobe\fR option with \fBflac\fR.
+input types, or if using \fB\-\-ffprobe\fR option with input type \fBflac\fR.
 .IP * 2
 \fB\-\-autotag\fR, \fB\-\-tag\fR, \fB\-\-image\fR, and \fB\-\-image\-remove\fR 
 require \fBmetaflac\fR for \fBVORBIS\fR tagging.
@@ -155,7 +155,9 @@ executable.
 \fB\-\-checksum\-verify\fR requires \fBmd5sum\fR (or any comparable program that 
 generates md5 hashes). 
 .IP * 2
-\fB\-\-fork\fR requires Perl module \fBParallel::ForkManager\fR. 
+\fB\-\-fork\fR requires Perl module \fBParallel::ForkManager\fR.
+.IP * 2
+\fB\-\-infofix c\fR requires Perl Core Module \fBEncoding::Guess\fR. 
 .IP * 2
 \fB\-\-infofix k\fR requires Perl Core Module \fBPOSIX::strftime\fR. 
 .IP * 2
@@ -632,7 +634,7 @@ An alternate file name to use for prefill or infofix. Note that file MUST have a
 you will get ungood results.
 
 .TP
-.B \-\-infofix\fR, \fB\-X [c|d|l|n|q|t|u|v|w|z]\fR
+.B \-\-infofix\fR, \fB\-X [0|c|d|l|n|q|t|u|v|w|z]\fR
 Correct common corruptions to info.txt files. Note that this can be used in bulk 
 mode on sets of directories if all the info text files have the same name.
 
@@ -640,25 +642,38 @@ You can use any combination of the following options, or no options.
 
 * no option \- clean white space. Trim white spaces off line ends, get rid of 
 extra new lines, convert multiple white spaces to single space. Also change tabs 
-to space. 
+to space. This always runs.
 
 * \fB0\fR \- (zero) turn off leading characters per info file. Useful if you 
 want to use output for copy/paste actions etc.
 
-* \fBc\fR \- Try to change CF-1252 Windows special characters like magic quotes 
+* \fBc\fR \- Try to change CP\-1252 Windows special characters like magic quotes 
 to clean ASCII equivalents. Should handle most, but if it hits one it does not 
-know about, it will exit with error with the line number of the file being 
-processed. To let you find these in testing before writing, search the output 
-for:
+know about, it will let you know with a message. To let you find these in 
+collections (do NOT bulk write since you should always verify fixes as correct 
+per file!), search the output for:
 
-\fBacxi \-s./ \-X0c | grep \-E 'Processing:|BADCF:'\fR
+\fBacxi \-s./ \-X0c | grep \-E 'Processing:|CF:|Encoding:'\fR
 
-That will show you all directories with bad characters. There may be other 
+That will show you all directories with bad characters, what encoding type was 
+discovered, and if CP\-1252, if they are correctible or not. There may be other 
 character sets this does not handle, but this should cover most common cases, 
-since most of these come from MS Word or similar saved as .txt files. Be careful
-with this one, CP\-1252 can and sometimes is copied from 8859-1 web pages, among
-other oddities. While this tries to detect 1252, the tests are not reliable, so
-check before using and most important, beforew writing.
+since most of these come from MS Word, notepad, or similar Windows generated 
+*.txt files. 
+
+Be careful with this one, the tests are not completely reliable, so check before 
+writing changes to file. It does not try to map European characters to ASCII, so 
+you have to fix those yourself. Recomend changing document to UTF 8 after the 
+special characters have been fixed, then correcting the European characters.
+
+Note that this is only able to test for UTF8, CP\-1252, and ASCII. Other 
+character sets are too difficult to handle. If it found, or failed to find, the 
+encoding, it will show that in a message. An Encoding showing as ending with 
+\fB\-2\fR means it used a fallback detection.
+
+For character encoding issues, the perfect is the fatal enemy of the good. 
+Detection results for valid CP\-1252 and ASCII encodings are so far quite 
+reliable, UTF8 a bit less so.
 
 * \fBd\fR \- set date to ISO format YYYY\-MM\-DD. Use this to correct dates that 
 are non ISO YYYY\-MM\-DD, like May 23, 1983; 4/12/78; 2011-8-12; 18.4.21. Always 
