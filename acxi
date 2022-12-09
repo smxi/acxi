@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.05';
-my $self_date='2022-12-05';
+my $self_date='2022-12-08';
 
 ## GLOBALS ##
 ## Booleans
@@ -2028,6 +2028,8 @@ sub process {
 	chdir "$start_dir";
 	File::Find::find(\&main::wanted, @source_glob);
 	say 'start dir: ', $start_dir if $b_debug;
+	Encode::Guess->set_suspects(qw(ascii utf8 cp1252)) if $run{'infofix-character'};
+	# Encode::Guess->set_suspects(qw(ascii utf8 cp1252)) if $run{'infofix-character'};
 	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		my $b_valid;
 		$print_src = $item;
@@ -2044,7 +2046,7 @@ sub process {
 		if (-r "$INFO_FILE"){
 			# say $line_small;
 			say "  Working on file: $INFO_FILE";
-			run_fixes();
+			run_fixes($item);
 		}
 		else {
 			say "  No $INFO_FILE found";
@@ -2055,17 +2057,12 @@ sub process {
 	}
 }
 sub run_fixes {
+	my ($file) = @_;
 	my (@prepped);
 	my ($newlines) = (0);
-	my ($b_1252,$b_tracks_end);
+	my ($b_tracks_end);
 	my $data = open_info_file('info-fixes');
-	if ($run{'infofix-character'} ){
-		# basic CF-1252 test. These are unassigned in 1252, 8859, utf8
-		# HOWEVER: copy/paste from webpages can and often will turn 8859 to 1252
-		# these tests don't really work reliably since valid utf8 characters can 
-		# contain these within a larger 'word', like: ⣁ eq \xe2\xa0\x81.
-		$b_1252 = 1 if (grep {$_ =~ /[\x81\x8D\x8F\x90\x9D]/} @$data);
-	}
+	my $b_1252 = check_1252($data) if $run{'infofix-character'};
 	date_fix($data) if $run{'infofix-date'};
 	$data = Analyze::run('info',$data) if $run{'infofix-quality'};
 	# say Data::Dumper::Dumper \@data;
@@ -2169,7 +2166,6 @@ sub run_fixes {
 		# say $row;
 		push(@prepped,$row) if $newlines < 2;
 	}
-	say 'yes' if $run{'infofix-zero'};
 	print '  Processing completed. ';
 	my ($no_write,$write) = ($run{'infofix-zero'}) ? ('','') : ('  |: ','  | ');
 	if (!$run{'infofix-write'}){
@@ -2192,6 +2188,44 @@ sub run_fixes {
 		say "  Changes written to $INFO_FILE.";
 	}
 }
+sub check_1252 {
+	my $data = $_[0];
+	my $string = join(' ', @$data);
+	my $b_1252;
+	my $enc = Encode::Guess::guess_encoding($string, qw(cp1252 utf8));
+	if (ref($enc)){
+		say '  Encoding: ' . $enc->name();
+		$b_1252 = 1 if $enc->name() eq 'cp1252';
+	}
+	else {
+		say '  Encoding: not detected';
+	}
+# 		if ($string =~ /[^\x00-\x7f]/){ # true if contains any non-ascii character
+# 			say "Encoding: contains non-ascii characters";
+# 			my $pattern = '([\0-\x7F])|([\xC0-\xDF][\x80-\xBF])|';
+# 			$pattern .= '([\xE0-\xEF][\x80-\xBF][\x80-\xBF])|';
+# 			$pattern .= '([\xF0-\xF7][\x80-\xBF][\x80-\xBF][\x80-\xBF])|';
+# 			$pattern .= '([\xF8-\xFB][\x80-\xBF][\x80-\xBF][\x80-\xBF][\x80-\xBF])|';
+# 			$pattern .= '([\xFC-\xFE][\x80-\xBF][\x80-\xBF][\x80-\xBF][\x80-\xBF][\x80-\xBF])';
+# 			# if ($string =~ /[\x{100}-\x{10FFFF}]/){
+# 			if ($string =~ /^($pattern)*$/){
+# 				my $pattern2 = '([\xC0-\xC1])|([\xE0][\x80-\x9F])|([\xF0][\x80-\x8F])|';
+# 				$pattern2 .= '([\xF8][\x80-\x87])|([\xFC][\x80-\x83])';
+# 				if ($string !~ /$pattern2/){
+# 					say "Encoding: utf8?";
+# 				}
+# 				else {
+# 					say "Encoding: failed utf8 test 2.";
+# 				}
+# 			}
+# 			# elsif (grep {/[\x{81}\x{8D}\x{8F}\x{90}\x{9D}]/} @$data){
+# 			elsif (grep {/[\x{85}\x{91}\x{92}\x{93}\x{94}\x{97}\x{98}]/} @$data){
+# 				$b_1252 = 1;
+# 				say "Encoding: appears to contain 1252";
+# 			}
+# 		}
+	return $b_1252;
+}
 # try to correct windows cp-1252 special characters
 # see: https://en.wikipedia.org/wiki/Windows-1252 to get more mappings
 # see: http://www.i18nqa.com/debug/table-iso8859-1-vs-windows-1252.html
@@ -2199,7 +2233,7 @@ sub character_fix {
   my ($item,$line_nu) = @_;
   # useful to grep output to find bad characters in files
   if ($item =~ /[\x00-\x08\x10-\x1F\x80-\x9F]/){
-		say "  BADCF: line: $line_nu";
+		say "   BADCF: line: $line_nu";
 	}
   # Map commonly used CP-1252 to ASCII characters
   $item =~ s/\x82/,/g;
@@ -2221,8 +2255,9 @@ sub character_fix {
   $item =~ s/\xBB/>>/g; # «
   # Check for any untranslated characters.
   if ($item =~ /[\x00-\x08\x10-\x1F\x80-\x9F\xA0-\xFF]/){
-		my $msg = "There is an unhandled special character on line: $line_nu\n  $item";
-		main::error_handler('infofix-bad-character',$msg,0);
+		say "   BADCF: not handled character";
+		# my $msg = "There is an unhandled special character on line: $line_nu\n  $item";
+		# main::error_handler('infofix-bad-character',$msg,0);
 	}
 	return $item;
 }
@@ -3312,6 +3347,19 @@ sub check_application_paths {
 				import Text::Autoformat;
 			}
 		}
+		if ($run{'infofix-character'}){
+			if (!grep {$_ eq 'Module Encode::Guess'} @app_paths){
+				push(@app_paths,'Module Encode::Guess');
+			}
+			if (!main::check_module('Encode::Guess')){
+				$b_error = 1;
+				$error_message .= "\n Perl module Encode::Guess not found. Required ";
+				$error_message .= "for -Xc.";
+			}
+			else {
+				import Encode::Guess;
+			}
+		}
 	}
 	if ($b_error){
 		main::error_handler('missing-app',$error_message,0);
@@ -3830,7 +3878,7 @@ sub show_options {
 	$output .= "                  value only removes images.\n";
 	$output .= "--info-file, --if, --prefill-file, --pf {file name}\n";
 	$output .= "                  Alternate file name to use for --prefill or --infofix.\n";
-	$output .= "--infofix, -X [0dklmnqtuvw]\n";
+	$output .= "--infofix, -X [0cdklmnqtuvw]\n";
 	$output .= "                  Fix info.txt files. Use any combination. Always corrects white\n";
 	$output .= "                  space.\n";
 	$output .= "                  0: (zero) No printed leading delimiter characters per line.\n";
