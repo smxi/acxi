@@ -59,6 +59,10 @@ patterns for the number separators, which then led to certain mm dd getting
 trapped one at a time (mm == 1, dd == 1) instead of as pairs separated by date
 separators like -, ., _, /.
 
+2. Configuration file processor was removing spaces from user configuration 
+values, that can lead to incorrect results, like turning: Bill Monroe to 
+BillMonro.
+
 --------------------------------------------------------------------------------
 FIXES:
 
@@ -226,6 +230,10 @@ with the %run values, too confusing otherwise.
 2. Refactored prefill fields to be more flexible, easier to add prefill fields.
 
 3. Made --checksum-delete/-D globbbing patterns cleaner and easier to update.
+
+4. Fixed InfoFix::date_fix(), InfoFix::cp1252_fix(), Analyze::info_quality() to 
+correctly update the array reference, not to work on a copy then create a new 
+reference and return that, which is a bad habit I have.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Tue, 15 Nov 2022 17:25:50 -0800

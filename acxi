@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.05';
-my $self_date='2022-12-09';
+my $self_date='2022-12-12';
 
 ## GLOBALS ##
 ## Booleans
@@ -421,7 +421,7 @@ sub aggregate {
 package Analyze;
 my ($avg_kbs,$total_size,$total_size_raw,$total_time) = (0,0,0,0);
 my ($source_info) = ('');
-my ($type,$ref,%alerts,@files,@info,%results);
+my ($type,$ref,%alerts,@files,@files_info,%results);
 sub run {
 	($type,$ref) = @_;
 	my $dir = Cwd::getcwd; # resolves sym links
@@ -440,13 +440,12 @@ sub run {
 	else {
 		undef(%alerts);
 		undef(%results);
-		undef(@info);
+		undef(@files_info);
 		($avg_kbs,$total_size,$total_size_raw,$total_time) = (0,0,0,0);
 		($source_info) = ('');
 		process();
 		if ($type eq 'info'){
-			info_data(); # updated INFO_FILE page contents array ref
-			return $ref;
+			info_quality() if $source_info; # updates INFO_FILE page contents array ref
 		}
 		else {
 			generate_output(); # print output to screen
@@ -475,8 +474,8 @@ sub process {
 			$source_info .= " ($info->{'channels'} channels)";
 			if ($type eq 'data'){
 				$source_data .= '/' . $info->{'channels'} . 'ch';
-				if (!grep {$_ eq $source_data} @info){
-					push(@info,$source_data);
+				if (!grep {$_ eq $source_data} @files_info){
+					push(@files_info,$source_data);
 				}
 			}
 		}
@@ -625,23 +624,20 @@ sub process_metaflac {
 	'md5sum' => $real[4]
 	};
 }
-# this will be inserted into $INFO_FILE
-sub info_data {
-	my ($b_head,$b_inserted,$counter) = (1,0,0);
+# this is inserted into $INFO_FILE content array reference
+# Q: is it better to just pop this at end of info file?
+sub info_quality {
+	my $b_head = 1;
 	my (@data,$verify);
-	if ($run{'infofix-verify'}){
-		$verify = Checksums::verify_flacs();
-	}
-	foreach (@$ref){
-		$counter++;
-		$b_head = 0 if $b_head && $counter > 1 && /^\s*$/;
+	$verify = Checksums::verify_flacs() if $run{'infofix-verify'};
+	for (my $i=0;$i < scalar @$ref; $i++){
+		$b_head = 0 if $b_head && $i > 1 && $ref->[$i] =~ /^\s*$/;
 		# put the block under the top band info header block
-		if (!$b_inserted && !$b_head && $source_info && $counter > 3){
-			my $quality = "Quality: /$INFO_RATING ()";
+		if (!$b_head){
 			push(@data,
 			'',
 			$source_info,
-			$quality,
+			"Quality: /$INFO_RATING ()",
 			'Time: ' . main::print_time($total_time),
 			'Size: ' . main::print_size($total_size),
 			'Average kb/s: ' . $avg_kbs,
@@ -662,11 +658,10 @@ sub info_data {
 			push(@data,
 			'',
 			);
-			$b_inserted = 1;
+			splice(@$ref,$i,0,@data);
+			last;
 		}
-		push(@data,$_);
 	}
-	$ref = \@data if @data;
 }
 sub generate_output {
 	my $time = main::print_time($total_time);
@@ -680,7 +675,7 @@ sub generate_output {
 	$size = '  Size: ' . $size;
 	$avg_kbs = '  Average kb/s: ' . $avg_kbs;
 	my $track_count = '  Tracks: ' . scalar @files;
-	my $source_data = '  Info: ' . join(', ',sort @info);
+	my $source_data = '  Info: ' . join(', ',sort @files_info);
 	if ($VERBOSITY > 0){
 		foreach my $key (sort keys %results){
 			say "   File: $key:";
@@ -2058,16 +2053,16 @@ sub process {
 }
 sub run_fixes {
 	my ($file) = @_;
-	my (@prepped);
-	my ($newlines) = (0);
-	my ($b_1252,$b_tracks_end,$encoding);
+	my $newlines = 0;
+	my ($b_tracks_end,@prepped);
 	my $data = open_info_file('info-fixes');
 	if ($run{'infofix-character'}){
-		$encoding = get_encoding($data);
-		$b_1252 = 1 if $encoding && $encoding eq 'cp1252';
+		my $encoding = get_encoding($data);
+		cp1252_fix($data) if ($encoding && $encoding eq 'cp1252');
 	}
 	date_fix($data) if $run{'infofix-date'};
-	$data = Analyze::run('info',$data) if $run{'infofix-quality'};
+	# Puts it after top data block, but could also put at end
+	Analyze::run('info',$data) if $run{'infofix-quality'};
 	# say Data::Dumper::Dumper \@data;
 	# we want these to be set to uppercase again after autoformat runs
 	my $upper = 'Aud|Cdr?|Sd?b|Ips|Eac|Ak|Az|Ca|Co|Ct|Dc|De|Dk|Fl|Flac|Hd|Hi|Il|';
@@ -2076,9 +2071,6 @@ sub run_fixes {
 	my $line_nu = 0;
 	foreach my $row (@$data){
 		$line_nu++;
-		if ($run{'infofix-character'} && $row && $b_1252){
-			$row = character_fix($row,$line_nu);
-		}
 		if ($run{'infofix-lower'}){
 			# set to lower, and make upper first character of each line.
 			$row = ucfirst(lc($row));
@@ -2241,52 +2233,71 @@ sub get_encoding {
 # try to correct windows cp-1252 special characters
 # see: https://en.wikipedia.org/wiki/Windows-1252 to get more mappings
 # see: http://www.i18nqa.com/debug/table-iso8859-1-vs-windows-1252.html
-sub character_fix {
-  my ($item,$line_nu) = @_;
-  ## nothing to do, this line is ascii only
-  return $item if $item =~ /^[\x00-\x7F]*$/; 
-  ## if the line contains one of the translation characters, translate
-  # if ($item =~ /[\x00-\x08\x10-\x1F\x80-\x9F]/){
-  if ($item =~ /[\x82\x84-\x88\x8B\x91-\x99\x9B\xAB\xBB]/){
-		say "   CF: line $line_nu";
-		# Map commonly used CP-1252 to ASCII characters
-		$item =~ s/\x82/,/g;
-		$item =~ s/\x84/,,/g;
-		$item =~ s/\x85/.../g;
-		$item =~ s/\x86/+/g; # †
-		$item =~ s/\x87/++/g; # ‡
-		$item =~ s/\x88/^/g;
-		$item =~ s/\x8B/</g;
-		$item =~ s/\x91|\x92/'/g;
-		$item =~ s/\x93|\x94/"/g;
-		$item =~ s/\x95/*/g;
-		$item =~ s/\x96/-/g;
-		$item =~ s/\x97/--/g;
-		$item =~ s/\x98/~/g;
-		$item =~ s/\x99/(TM)/g;
-		$item =~ s/\x9B/>/g;
-		$item =~ s/\xAB/<</g; # «
-		$item =~ s/\xBB/>>/g; # «
+sub cp1252_fix {
+  my ($data) = @_;
+  for (my $i = 0; $i < scalar @$data;$i++){
+		## nothing to do, this line is ascii only. This also covers empty lines.
+		next if $data->[$i] =~ /^[\x00-\x7F]*$/;
+		## if the line contains one of the translation characters, translate
+		# if ($data->[$i] =~ /[\x00-\x08\x10-\x1F\x80-\x9F]/){
+		if ($data->[$i] =~ /[\x82\x84-\x88\x8B\x91-\x99\x9B\xAB\xBB]/){
+			say '   CF: line ' . ($i + 1);
+			# Map commonly used CP-1252 to ASCII characters
+			$data->[$i] =~ s/\x82/,/g;
+			$data->[$i] =~ s/\x84/,,/g;
+			$data->[$i] =~ s/\x85/.../g;
+			$data->[$i] =~ s/\x86/+/g; # †
+			$data->[$i] =~ s/\x87/++/g; # ‡
+			$data->[$i] =~ s/\x88/^/g;
+			$data->[$i] =~ s/\x8B/</g;
+			$data->[$i] =~ s/\x91|\x92/'/g;
+			$data->[$i] =~ s/\x93|\x94/"/g;
+			$data->[$i] =~ s/\x95/*/g;
+			$data->[$i] =~ s/\x96/-/g;
+			$data->[$i] =~ s/\x97/--/g;
+			$data->[$i] =~ s/\x98/~/g;
+			$data->[$i] =~ s/\x99/(TM)/g;
+			$data->[$i] =~ s/\x9B/>/g;
+			$data->[$i] =~ s/\xAB/<</g; # «
+			$data->[$i] =~ s/\xBB/>>/g; # «
+		}
+		# Check for any untranslated non ASCII characters.
+		if ($data->[$i] =~ /[\x80-\x9F\xA0-\xFF]/){
+			say '   CF: unhandled-character: line ' . ($i + 1);
+			# my $msg = "There is an unhandled special character on line: $line_nu\n  $data->[$i]";
+			# main::error_handler('infofix-bad-character',$msg,0);
+		}
 	}
-  # Check for any untranslated non ASCII characters.
-  if ($item =~ /[\x80-\x9F\xA0-\xFF]/){
-		say "   CF: unhandled-character: line $line_nu";
-		# my $msg = "There is an unhandled special character on line: $line_nu\n  $item";
-		# main::error_handler('infofix-bad-character',$msg,0);
-	}
-	return $item;
 }
 sub date_fix {
-	my ($ref) = @_;
-	my ($b_dow,$dd,$dow,$mm,$regex,$yyyy,@data);
-	foreach (@$ref){
+	my ($data) = @_;
+	my ($b_dow,$dd,$dow,$mm,$regex,$yyyy);
+	# first day, aka: 12th July, 1972
+	my $pattern1 = '\b(((0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?\s+)?';
+	# then string month
+	$pattern1 .= '(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\S*?([\s\/,-]+';
+	# then alternate position day: July 12th, 1972
+	$pattern1 .= '(0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?)?[\s\/,-]+';
+	# then year: July 12, 72 or July 12, 1972 or July-12th, 1972 etc
+	$pattern1 .= '((19)?[4-9][0-9]|(20)?[0-3][0-9]))\b';
+	$pattern1 = qr/$pattern1/;
+	# numeric month day year. Can give bad results for 09-10-12 for example
+	my $pattern2 = '\b((0?[1-9]|1[0-2])[\/\.-](0?[1-9]|[12][0-9]|30|31)[\/\.-]';
+	$pattern2 .= '((19)?[4-9][0-9]|(20)?[0-3][0-9]))\b';
+	$pattern2 = qr/$pattern2/;
+	# yyyy mm dd
+	my $pattern3 = '\b((19[4-9][0-9]|20[0-3][0-9])[\.\/_-](0?[1-9]|1[0-2])[\._\/-]';
+	$pattern3 .= '(0?[1-9]|[12][0-9]|30|31))\b';
+	$pattern3 = qr/$pattern3/;
+	for (my $i = 0; $i < scalar @$data; $i++){
 		($dd,$dow,$mm,$regex,$yyyy) =  ('','','','','');
 		# NOTE: be careful with (20)?3x ids, might trip month day by accident. Watch for this!
+		# Will fail to update if no day found, but that's fine, that's what we want.
 		# fix D month, YY, month D, YY, month-DD-YYYY
 		# regex: 1: total regex; 2: container for day start; 3: day start
 		# 4: optional nd/rd 5: month; 6: container for day; 7: day;
 		# 8: optional nd/rd etc; 9: year; 10: 19..; 11: 20..
-		if (/\b(((0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\S*?([\s\/,-]+(0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?)?[\s\/,-]+((19)?[4-9][0-9]|(20)?[0-3][0-9]))\b/i){
+		if ($data->[$i] =~ /$pattern1/i){
 			$regex = $1;
 			$yyyy = $9;
 			# say "rx: $regex 5: $5 9: $9";
@@ -2308,7 +2319,7 @@ sub date_fix {
 			# say "y: $yyyy m: $mm d: $dd";
 		}
 		# Change m/d/yy or m-d-yy or m.d.yy to yyyy-mm-dd 09/19/54
-		elsif (/\b((0?[1-9]|1[0-2])[\/\.-](0?[1-9]|[12][0-9]|30|31)[\/\.-]((19)?[4-9][0-9]|(20)?[0-3][0-9]))\b/){
+		elsif ($data->[$i] =~ /$pattern2/){
 			$regex = $1;
 			$mm = sprintf('%02d',$2);
 			$dd = sprintf('%02d',$3);
@@ -2316,19 +2327,21 @@ sub date_fix {
 		}
 		# Change YYYY[._/-]MM[._/-]DD 2022-09-23 2022_09_23 2022.09.23 2022/09/23 
 		# Note: [\.\/_-]? can lead to 1966-11-29 regex eq 1966-11 and mm eq 01 dd eq 01
-		elsif (/\b((19[4-9][0-9]|20[0-3][0-9])[\.\/_-](0?[1-9]|1[0-2])[\._\/-](0?[1-9]|[12][0-9]|30|31))\b/){
+		elsif ($data->[$i] =~ /$pattern3/){
 			$regex = $1;
 			$yyyy = $2;
 			$mm = sprintf('%02d',$3);
 			$dd = sprintf('%02d',$4);
 		}
 		# this would miss something like 6/12/39
-		if ($yyyy =~ /^[4-9][0-9]$/){
-			$yyyy = '19' . $yyyy;
-		}
-		# future proof to the 2030s
-		elsif ($yyyy =~ /^[0-3][0-9]$/){
-			$yyyy = '20' . $yyyy;
+		if ($yyyy){
+			if ($yyyy =~ /^[4-9][0-9]$/){
+				$yyyy = '19' . $yyyy;
+			}
+			# future proof to the 2030s
+			elsif ($yyyy =~ /^[0-3][0-9]$/){
+				$yyyy = '20' . $yyyy;
+			}
 		}
 		if ($mm && $dd && $yyyy){
 			# say "$regex $yyyy $mm $dd";
@@ -2336,15 +2349,13 @@ sub date_fix {
 			if (!$b_dow && $run{'infofix-dow'}){
 				$dow = POSIX::strftime("%A", '01', '01', '01', $dd, ($mm-1), ($yyyy-1900));
 				# only cut out existing dow with leading OR trailing space/-
-				$_ =~ s/\(?$dow\)?[\s,-]+\s*|[\s,-]+\s*\(?$dow\)?//gi; 
+				$data->[$i] =~ s/\(?$dow\)?[\s,-]+\s*|[\s,-]+\s*\(?$dow\)?//gi; 
 				$dow = ' (' . $dow . ')';
 				$b_dow = 1;
 			}
-			$_ =~ s/\Q$regex\E/$yyyy-$mm-$dd$dow/i;
+			$data->[$i] =~ s/\Q$regex\E/$yyyy-$mm-$dd$dow/i;
 		}
-		push(@data,$_);
 	}
-	$ref = \@data if @data;
 }
 sub open_info_file {
 	my ($source) = @_;
@@ -4035,7 +4046,7 @@ sub set_basic_data {
 	$start_dir = getcwd();
 	# if --copy/-c is set, then use that data instead of default copy types
 	if (defined $COPY_TYPES){
-		@extension_list = split(/,\s*/, $COPY_TYPES);
+		@extension_list = split(/\s*,\s*/, $COPY_TYPES);
 	}
 	$DESTINATION_DIRECTORY =~ s|$path_separator$||;
 	$SOURCE_DIRECTORY =~ s|$path_separator$||;
@@ -4081,7 +4092,7 @@ sub set_basic_data {
 	if ($PREFILL_TAG){
 		my @prefills = split(/\Q^^\E/,$PREFILL_TAG);
 		foreach my $tag (@prefills){
-			my @info = split(/%:/,$tag);
+			my @info = split(/\s*%:\s*/,$tag);
 			$run{'prefill-tag'}->{$info[0]} = $info[1];
 		}
 	}
@@ -4152,7 +4163,7 @@ sub set {
 			s/#.*//;                # no comments
 			s/^\s+//;               # no leading white
 			s/\s+$//;               # no trailing white
-			s/('|"|\$|\s)//g;       # get rid of all non valid characters
+			s/('|"|\$)//g;       # get rid of all non valid characters
 			next unless length;     # anything left?
 			my ($var, $value) = split(/\s*=\s*/, $_, 2);
 			if (defined $var && defined $value){
