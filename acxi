@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.05';
-my $self_date='2022-12-12';
+my $self_date='2022-12-14';
 
 ## GLOBALS ##
 ## Booleans
@@ -2053,8 +2053,8 @@ sub process {
 }
 sub run_fixes {
 	my ($file) = @_;
-	my $newlines = 0;
-	my ($b_tracks_end,@prepped);
+	my ($disk_id,$newlines,$number) = ('',0,1);
+	my ($b_autonumber,$b_tracks_end,@prepped);
 	my $data = open_info_file('info-fixes');
 	if ($run{'infofix-character'}){
 		my $encoding = get_encoding($data);
@@ -2102,10 +2102,25 @@ sub run_fixes {
 		else {
 			$newlines++;
 		}
+		# we don't need to write this to info file since it will then be numbered.
+		if ($run{'infofix-autonumber'} && !$b_tracks_end && 
+		$row =~ /^:an[\s_-]?(\d)?:$/){
+			$number = 1 if $disk_id && $1 && "$1-" ne $disk_id;
+			$disk_id= "$1-" if $1;
+			$b_autonumber = 1;
+			next;
+		}
 		# see AutoTag::prefill_data() as well if changing the terminator regex
 		if (!$b_tracks_end &&
 		$row =~ /^\s*[:^<>]{1,}?(E[ST]L?|END([\s_-]?(SETLIST|TRACKS))?)?[:^<>]{1,}\s*$/i){
 			$b_tracks_end = 1;
+			$b_autonumber = 0;
+		}
+		if ($b_autonumber && !$b_tracks_end && $row && 
+		$row !~ /^(:an|Dis[ck]|Encore|Set).*:.*/i && $row !~ /^\s*$/i){
+			my $nu = sprintf('%02d',$number);
+			$row = $disk_id . $nu . '. ' . $row;
+			$number++;
 		}
 		# 1-4 / 1-12 / 12 / 213 / d1t04 / 104-d1t04 / xxx-d1t04
 		# Note: don't want to trap times, so use \s after :
@@ -3904,10 +3919,11 @@ sub show_options {
 	$output .= "                  value only removes images.\n";
 	$output .= "--info-file, --if, --prefill-file, --pf {file name}\n";
 	$output .= "                  Alternate file name to use for --prefill or --infofix.\n";
-	$output .= "--infofix, -X [0cdklmnqtuvw]\n";
+	$output .= "--infofix, -X [0acdklmnqtuvw]\n";
 	$output .= "                  Fix info.txt files. Use any combination. Always corrects white\n";
 	$output .= "                  space.\n";
 	$output .= "                  0: (zero) No printed leading delimiter characters per line.\n";
+	$output .= "                  a: Add numbering to unnumbered track/setlists. See man.\n";
 	$output .= "                  c: Correct Windows CF-1252 special character issues.\n";
 	$output .= "                  d: Make iso date: YYYY-MM-DD from various random date formats.\n";
 	$output .= "                  k: Adds (weekday) after iso date. Activates d.\n";
@@ -4508,7 +4524,8 @@ sub get{
 		my ($opt,$arg) = @_;
 		$run{'infofix'} = 1;
 		if ($arg ne ''){
-			if ($arg =~ /^[cdklmnqutvw0]+$/){
+			if ($arg =~ /^[acdklmnqutvw0]+$/){
+				$run{'infofix-autonumber'} = 1 if $arg =~ /a/;
 				$run{'infofix-character'} = 1 if $arg =~ /c/;
 				$run{'infofix-date'} = 1 if $arg =~ /[dk]/;
 				$run{'infofix-dow'} = 1 if $arg =~ /k/;

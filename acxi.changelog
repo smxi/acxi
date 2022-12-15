@@ -173,7 +173,12 @@ fails to correct for CP-1252. I'm not trying for 99% perfection, just to get the
 most common offenders (Windows generated .txt files), which probably covers a 
 solid 95% of real cases.
 
-2h. INFOFIX/PREFILL: Added {...} syntax for track times, along with existing 
+2h. INFOFIX: Added -Xa. This adds auto track numbering to unnumbered track/set 
+lists. Supports either straight 2 digit zero padded numbers, or disk ids, like 
+1-12. Requires start of either :an: for basic numbering, and :an-1: for 
+multidisk numbering. Terminate with :: or <> as with other track list features.
+
+2i. INFOFIX/PREFILL: Added {...} syntax for track times, along with existing 
 (..), [..]. Note that track times have to be at end of Title string, otherwise 
 it's a pain to do the logic. -Xm will move them from start of title to end.
 

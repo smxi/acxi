@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-12\-12" acxi "acxi manual"
+.TH ACXI 1 "2022\-12\-14" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -45,7 +45,8 @@ Analyze/Checksums: [\fB\-\-analyze\fR, \fB\-Z\fR]
 [\fB\-\-checksum\-ffps\fR, \fB\-\-ffps\fR] 
 [\fB\-\-checksum\-verify\fR, \fB\-V\fR] 
 [\fB\-\-duplicates\fR, \fB\-\-dupes\fR] [\fB\-\-ffprobe\fR]
-[\fB\-\-infofix\fR, \fB\-X\fR {[qz]}] [\fB\-\-no\-ffp\fR] [\fB\-\-no\-md5\fR] 
+[\fB\-\-infofix\fR, \fB\-X\fR [0acdklmnqtuvw]] [\fB\-\-no\-ffp\fR] 
+[\fB\-\-no\-md5\fR] 
 [\fB\-\-z\-min\-size\fR {0\-xxx}] [\fB\-\-z\-min\-time\fR {0\-xxx}]
 .IP * 2
 Miscellaneous: [\fB\-\-aggregate\fR, \fB\-G\fR [file name|extension]]
@@ -634,7 +635,7 @@ An alternate file name to use for prefill or infofix. Note that file MUST have a
 you will get ungood results.
 
 .TP
-.B \-\-infofix\fR, \fB\-X [0|c|d|l|n|q|t|u|v|w|z]\fR
+.B \-\-infofix\fR, \fB\-X [0|a|c|d|l|n|q|t|u|v|w|z]\fR
 Correct common corruptions to info.txt files. Note that this can be used in bulk 
 mode on sets of directories if all the info text files have the same name.
 
@@ -646,6 +647,39 @@ to space. This always runs.
 
 * \fB0\fR \- (zero) turn off leading characters per info file. Useful if you 
 want to use output for copy/paste actions etc.
+
+* \fBc\fR \- In cases where track or setlist is not numbered, add numbering 
+using start code \fB:an:\fR or \fB:an-[number]:\fR. Terminates using same 
+terminators as n m t.
+
+Will skip empty lines and things like Setlist:, Tracks:, Tracklist:, Disk 1:, 
+Set 1:, Encore:, and of course, itself. The :an..: must be the only thing on its 
+line.
+
+This makes the tedious process of adding track numbers a lot faster. For 
+multidisk or set releases, use the \fB:an-1:\fR, \fB:an-2:\fR, and so on, to 
+indicate that the following track numbers should start at 1, and reset to 1 
+every new \fB:an-[number]:\fR found.
+
+.nf
+:an: changes 
+Song Title
+to
+01. Song Title
+and :an-1: changes:
+Disk 1:
+Song Title
+to
+Disk 1:
+1-01. Song Title
+.if
+
+Make sure to add the colon after Setlist, Tracks, etc or they will be treated as 
+songs. And make sure to terminate the tracklist with a terminator or every 
+following line will be numbered.
+
+Note that once you write changes, the :an item will be removed automatically 
+from the info file.
 
 * \fBc\fR \- Try to change CP\-1252 Windows special characters like magic quotes 
 to clean ASCII equivalents. Should handle most, but if it hits one it does not 
