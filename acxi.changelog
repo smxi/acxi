@@ -130,7 +130,12 @@ everything else in prefill, so use with caution.
 --prefill-tag=UNSET unsets the configuration value temporarily, or replaces it
 with the supplied tag values.
 
-1e. PREFILL/INFOFIX/OPTIONS: Added alternates --info-file, --if, --pf for 
+1e. Added alternate lineup starter values, so:
+****Lineup this evening:
+would start the lineup prefill. Goal here is to not have to change source info
+files, or to change as little as possible, while keeping the syntax predicable.
+
+1f. PREFILL/INFOFIX/OPTIONS: Added alternates --info-file, --if, --pf for 
 --prefill-file. Also made it active for --infofix, not just -S, -E autotag. Also 
 fixed validation which was a little too tight on that combo.
 

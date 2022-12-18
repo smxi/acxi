@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-12\-14" acxi "acxi manual"
+.TH ACXI 1 "2022\-12\-18" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -648,7 +648,7 @@ to space. This always runs.
 * \fB0\fR \- (zero) turn off leading characters per info file. Useful if you 
 want to use output for copy/paste actions etc.
 
-* \fBc\fR \- In cases where track or setlist is not numbered, add numbering 
+* \fBa\fR \- In cases where track or setlist is not numbered, add numbering 
 using start code \fB:an:\fR or \fB:an-[number]:\fR. Terminates using same 
 terminators as n m t.
 
@@ -663,20 +663,29 @@ every new \fB:an-[number]:\fR found.
 
 .nf
 :an: changes 
-Song Title
+\fB:an:
+Song Title\fR
 to
-01. Song Title
-and :an-1: changes:
+\fB01. Song Title\fR
+and :an-[number]: changes:
+\fB:an-1:
 Disk 1:
 Song Title
+ ...
+:an-2:
+Disk 2:
+Song Title\fR
 to
-Disk 1:
+\fBDisk 1:
 1-01. Song Title
+ ...
+Disk 2:
+2-01. Song Title\fR
 .fi
 
-Make sure to add the colon after Setlist, Tracks, etc or they will be treated as 
-songs. And make sure to terminate the tracklist with a terminator or every 
-following line will be numbered.
+Make sure to add the colon after Setlist, Tracks, Disc 1, Set 1, Encore, etc or 
+they will be treated as track titles. And make sure to terminate the tracklist 
+with a terminator or every following line will be numbered.
 
 Note that once you write changes, the :an item will be removed automatically 
 from the info file.
@@ -697,7 +706,7 @@ since most of these come from MS Word, notepad, or similar Windows generated
 
 Be careful with this one, the tests are not completely reliable, so check before 
 writing changes to file. It does not try to map European characters to ASCII, so 
-you have to fix those yourself. Recomend changing document to UTF 8 after the 
+you have to fix those yourself. Recommend changing document to UTF 8 after the 
 special characters have been fixed, then correcting the European characters.
 
 Note that this is only able to test for UTF8, CP\-1252, and ASCII. Other 

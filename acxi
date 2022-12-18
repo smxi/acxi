@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.05';
-my $self_date='2022-12-14';
+my $self_date='2022-12-18';
 
 ## GLOBALS ##
 ## Booleans
@@ -1103,7 +1103,7 @@ sub prefill_data {
 			}
 			# Start building performers
 			elsif (($b_fields || $counter > 8) && 
-			$line =~ /^(Band|(Band\s)?Line[\s_-]?up|(Band\s)?Members|Performers|Personnel):/i){
+			$line =~ /^[\s*_=-]*(Band|(Band\s)?Line[\s_-]?up|(Band\s)?Members|Performers|Personnel)[^:]*:/i){
 				$b_performer = 1;
 				next;
 			}
@@ -2024,7 +2024,6 @@ sub process {
 	File::Find::find(\&main::wanted, @source_glob);
 	say 'start dir: ', $start_dir if $b_debug;
 	Encode::Guess->set_suspects(qw(ascii utf8 cp1252)) if $run{'infofix-character'};
-	# Encode::Guess->set_suspects(qw(ascii utf8 cp1252)) if $run{'infofix-character'};
 	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		my $b_valid;
 		$print_src = $item;
@@ -2104,7 +2103,7 @@ sub run_fixes {
 		}
 		# we don't need to write this to info file since it will then be numbered.
 		if ($run{'infofix-autonumber'} && !$b_tracks_end && 
-		$row =~ /^:an[\s_-]?(\d)?:$/){
+		$row =~ /^:an[\s_-]?(\d+)?:$/){
 			$number = 1 if $disk_id && $1 && "$1-" ne $disk_id;
 			$disk_id= "$1-" if $1;
 			$b_autonumber = 1;
@@ -2255,7 +2254,7 @@ sub cp1252_fix {
 		next if $data->[$i] =~ /^[\x00-\x7F]*$/;
 		## if the line contains one of the translation characters, translate
 		# if ($data->[$i] =~ /[\x00-\x08\x10-\x1F\x80-\x9F]/){
-		if ($data->[$i] =~ /[\x82\x84-\x88\x8B\x91-\x99\x9B\xAB\xBB]/){
+		if ($data->[$i] =~ /[\x82\x84-\x88\x8B\x91-\x99\x9B\xA9\xAB\xB4\xBB]/){
 			say '   CF: line ' . ($i + 1);
 			# Map commonly used CP-1252 to ASCII characters
 			$data->[$i] =~ s/\x82/,/g;
@@ -2265,14 +2264,15 @@ sub cp1252_fix {
 			$data->[$i] =~ s/\x87/++/g; # ‡
 			$data->[$i] =~ s/\x88/^/g;
 			$data->[$i] =~ s/\x8B/</g;
-			$data->[$i] =~ s/\x91|\x92/'/g;
-			$data->[$i] =~ s/\x93|\x94/"/g;
+			$data->[$i] =~ s/[\x91\x92\xB4]/'/g;
+			$data->[$i] =~ s/[\x93\x94]/"/g;
 			$data->[$i] =~ s/\x95/*/g;
 			$data->[$i] =~ s/\x96/-/g;
 			$data->[$i] =~ s/\x97/--/g;
 			$data->[$i] =~ s/\x98/~/g;
 			$data->[$i] =~ s/\x99/(TM)/g;
 			$data->[$i] =~ s/\x9B/>/g;
+			$data->[$i] =~ s/\xA9/(C)/g;
 			$data->[$i] =~ s/\xAB/<</g; # «
 			$data->[$i] =~ s/\xBB/>>/g; # «
 		}
@@ -2295,7 +2295,7 @@ sub date_fix {
 	$pattern1 .= '(0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?)?[\s\/,-]+';
 	# then year: July 12, 72 or July 12, 1972 or July-12th, 1972 etc
 	$pattern1 .= '((19)?[4-9][0-9]|(20)?[0-3][0-9]))\b';
-	$pattern1 = qr/$pattern1/;
+	# $pattern1 = qr/$pattern1/i; # qr/../i not supported til Perl 5.014
 	# numeric month day year. Can give bad results for 09-10-12 for example
 	my $pattern2 = '\b((0?[1-9]|1[0-2])[\/\.-](0?[1-9]|[12][0-9]|30|31)[\/\.-]';
 	$pattern2 .= '((19)?[4-9][0-9]|(20)?[0-3][0-9]))\b';
@@ -2334,7 +2334,7 @@ sub date_fix {
 			# say "y: $yyyy m: $mm d: $dd";
 		}
 		# Change m/d/yy or m-d-yy or m.d.yy to yyyy-mm-dd 09/19/54
-		elsif ($data->[$i] =~ /$pattern2/){
+		elsif ($data->[$i] =~ $pattern2){
 			$regex = $1;
 			$mm = sprintf('%02d',$2);
 			$dd = sprintf('%02d',$3);
@@ -2342,7 +2342,7 @@ sub date_fix {
 		}
 		# Change YYYY[._/-]MM[._/-]DD 2022-09-23 2022_09_23 2022.09.23 2022/09/23 
 		# Note: [\.\/_-]? can lead to 1966-11-29 regex eq 1966-11 and mm eq 01 dd eq 01
-		elsif ($data->[$i] =~ /$pattern3/){
+		elsif ($data->[$i] =~ $pattern3){
 			$regex = $1;
 			$yyyy = $2;
 			$mm = sprintf('%02d',$3);
