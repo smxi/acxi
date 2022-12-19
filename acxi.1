@@ -891,6 +891,7 @@ Supported field names, and their corresponding tag name:
 \fBSHNID\fR \- Shnid, commonly used in Grateful Dead recordings. Not standard.
 \fBLOCATION\fR \- City, State, Country, Lieu, Location, Ville.
 \fBPRODUCER\fR \- Producer, Recorded by, Taper, Taped By
+\fBTYPE\fR \- Only used to append to ALBUM. AUD, MTX, SBD etc.
 \fBVENUE\fR \- Club, Event, Festival, Venue
 \fBYEAR\fR \- Year
 .fi
@@ -913,6 +914,9 @@ prefill if not in top block.
 * If Etree: present, also appends to end of ALBUM string: ' (etree [id])'
 
 * If Shnid: present, also appends to end of ALBUM string: ' (shnid [id])'
+
+* If Type: present, appends to end of ALBUM string: ' - [type]'. Normal values
+AUD, SBD, MTX, but can be anything. This goes before shnid type append.
 
 * \fBVENUE\fR will also be added to \fBLOCATION\fR if no \fBALBUM\fR set.
 

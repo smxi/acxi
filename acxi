@@ -976,7 +976,7 @@ sub prefill_data {
 	$fields .= 'CDDB|CDDB[\s-]?ID|City|Club|Composer|Country|Cover|Date|';
 	$fields .= 'Etree|Etree[\s-]?ID|Event|Festival|Genre|Image|ISRC|ISRC[\s-]?ID|';
 	$fields .= 'Event|Location|Producer|Lieu|Recorded by|SHNID|State|';
-	$fields .= 'Taper|Taped by|Venue|Ville|Year';
+	$fields .= 'Taper|Taped by|Type|Venue|Ville|Year';
 	foreach my $line (@$data){
 		$counter++;
 		$line = main::trimmer($line);
@@ -1040,18 +1040,7 @@ sub prefill_data {
 					}
 				}
 				elsif ($field_name =~ /^(Club|Event|Festival|Lieu|Venue)$/i){
-					if ($info->{'location'}){
-						if ($info->{'location'} !~ /\Q$field_value\E/i){
-							$info->{'location'} .= ', ' . $field_value;
-						}
-					}
-					else {
-						$info->{'location'} = $field_value;
-					}
-					# we don't want to use venue if it's a full string: club,city,state
-					if ($field_value !~ /,/){
-						$info->{'venue'} = $field_value;
-					}
+					$info->{'venue'} = $field_value;
 				}
 				elsif ($field_name =~ /^(Composer)$/i){
 					$info->{'composer'} = $field_value;
@@ -1081,9 +1070,13 @@ sub prefill_data {
 				elsif ($field_name =~ /^SHNID$/i){
 					$info->{'shnid'} = $field_value;
 				}
+				elsif ($field_name =~ /^Type$/i){
+					$info->{'type'} = $field_value;
+				}
 				elsif ($field_name =~ /^(Year)$/i){
 					$info->{'year'} = $field_value;
 				}
+				
 			}
 		}
 		elsif (!$b_top_block){
@@ -1137,9 +1130,11 @@ sub prefill_data {
 			elsif (!$info->{'shnid'} && $line =~ /^SHNID\s*:\s*(.*)$/i){
 				$info->{'shnid'} = $1;
 			}
+			elsif (!$info->{'type'} && $line =~ /^Type\s*:\s*(.*)$/i){
+				$info->{'type'} = $1;
+			}
 		}
 	}
-	$info->{'location'} =~ s/,\s*$// if $info->{'location'};
 	# say Data::Dumper::Dumper $info;
 	return $info;
 }
@@ -1203,21 +1198,27 @@ sub populate_tag_file {
 				if ($b_prefill_tag && $run{'prefill-tag'}->{'ALBUM'}){
 					$item .= $run{'prefill-tag'}->{'ALBUM'};
 				}
-				elsif ($info->{'album'} || $info->{'date-print'} || $info->{'location'}){
-					if ($info->{'album'}){
-						$item .= $info->{'album'};
+				elsif ($info->{'album'}){
+					$item .= $info->{'album'};
+				}
+				# we'll construct the album name out of the bits
+				elsif ($info->{'date-print'} || $info->{'location'} || $info->{'venue'}){
+					$item .= $info->{'date-print'} . ', ' if $info->{'date-print'};
+					if ($info->{'venue'} && 
+					(!$info->{'location'} || $info->{'location'} !~ /\Q$info->{'venue'}\E/i)){
+						$item .= $info->{'venue'} . ', ';
 					}
-					else {
-						$item .= $info->{'date-print'} . ', ' if $info->{'date-print'};
-						$item .= $info->{'location'} if $info->{'location'};
-						$item =~ s/,\s*$//;
-					}
-					if ($info->{'etree'}){
-						$item .= ' (etree ' . $info->{'etree'} . ')';
-					}
-					elsif ($info->{'shnid'}){
-						$item .= ' (shnid ' . $info->{'shnid'} . ')';
-					}
+					$item .= $info->{'location'} if $info->{'location'};
+					$item =~ s/,\s*$//;
+				}
+				if ($info->{'type'}){
+					$item .= ' - ' . $info->{'type'};
+				}
+				if ($info->{'etree'}){
+					$item .= ' (etree ' . $info->{'etree'} . ')';
+				}
+				elsif ($info->{'shnid'}){
+					$item .= ' (shnid ' . $info->{'shnid'} . ')';
 				}
 			}
 			elsif ($item eq 'ALBUMARTIST%:'){
