@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.05';
-my $self_date='2022-12-18';
+my $self_date='2022-12-22';
 
 ## GLOBALS ##
 ## Booleans
@@ -2288,23 +2288,41 @@ sub cp1252_fix {
 sub date_fix {
 	my ($data) = @_;
 	my ($b_dow,$dd,$dow,$mm,$regex,$yyyy);
+	my $type = 2; # default to standard mm/dd/yyyy type regex
 	# first day, aka: 12th July, 1972
 	my $pattern1 = '\b(((0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?\s+)?';
 	# then string month
 	$pattern1 .= '(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\S*?([\s\/,-]+';
 	# then alternate position day: July 12th, 1972
-	$pattern1 .= '(0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?)?[\s\/,-]+';
+	$pattern1 .= '(0?[1-9]|[12][0-9]|3[01])(nd|rd|st|th)?)?[\s\/,-]+';
 	# then year: July 12, 72 or July 12, 1972 or July-12th, 1972 etc
 	$pattern1 .= '((19)?[4-9][0-9]|(20)?[0-3][0-9]))\b';
 	# $pattern1 = qr/$pattern1/i; # qr/../i not supported til Perl 5.014
 	# numeric month day year. Can give bad results for 09-10-12 for example
-	my $pattern2 = '\b((0?[1-9]|1[0-2])[\/\.-](0?[1-9]|[12][0-9]|30|31)[\/\.-]';
+	my $pattern2 = '\b((0?[1-9]|1[0-2])[\/\.-](0?[1-9]|[12][0-9]|3[01])[\/\.-]';
 	$pattern2 .= '((19)?[4-9][0-9]|(20)?[0-3][0-9]))\b';
 	$pattern2 = qr/$pattern2/;
-	# yyyy mm dd
-	my $pattern3 = '\b((19[4-9][0-9]|20[0-3][0-9])[\.\/_-](0?[1-9]|1[0-2])[\._\/-]';
-	$pattern3 .= '(0?[1-9]|[12][0-9]|30|31))\b';
+	# numeric dd.mm.yyyy - verify via test3
+	my $pattern3 = '\b((0?[1-9]|[12][0-9]|3[01])[\/\.-](0?[1-9]|1[0-2])[\/\.-]';
+	$pattern3 .= '((19)?[4-9][0-9]|(20)?[0-3][0-9]))\b';
 	$pattern3 = qr/$pattern3/;
+	# yyyy mm dd
+	my $pattern4 = '\b((19[4-9][0-9]|20[0-3][0-9])[\.\/_-](0?[1-9]|1[0-2])[\._\/-]';
+	$pattern4 .= '(0?[1-9]|[12][0-9]|3[01]))\b';
+	$pattern4 = qr/$pattern4/;
+	
+	# only to detect for certain mm/dd/yyyy, not used currently, this is default
+	my $test2 = '\b((0?[1-9]|1[0-2])[\/\.-](1[3-9]|2[0-9]|3[01])[\/\.-]';
+	$test2 .= '((19)?[4-9][0-9]|(20)?[0-3][0-9]))\b';
+	$test2 = qr/$test2/;
+	# only to detect for definite dd/mm/yyyy, where dd > 12.
+	my $test3 = '\b((1[3-9]|2[0-9]|3[01])[\/\.-](0?[1-9]|1[0-2])[\/\.-]';
+	$test3 .= '((19)?[4-9][0-9]|(20)?[0-3][0-9]))\b';
+	$test3 = qr/$test3/;
+	
+	# first we have to find which pattern: mm/dd/yyyy or dd/mm/yyyy
+	$type = 3 if grep {$test3} @$data;
+	
 	for (my $i = 0; $i < scalar @$data; $i++){
 		($dd,$dow,$mm,$regex,$yyyy) =  ('','','','','');
 		# NOTE: be careful with (20)?3x ids, might trip month day by accident. Watch for this!
@@ -2335,15 +2353,22 @@ sub date_fix {
 			# say "y: $yyyy m: $mm d: $dd";
 		}
 		# Change m/d/yy or m-d-yy or m.d.yy to yyyy-mm-dd 09/19/54
-		elsif ($data->[$i] =~ $pattern2){
+		elsif ($type == 2 && $data->[$i] =~ $pattern2){
 			$regex = $1;
 			$mm = sprintf('%02d',$2);
 			$dd = sprintf('%02d',$3);
 			$yyyy = $4;
 		}
+		# Change dd/mm/yyyy etc to yyyy-mm-dd eg: 23.12.2013
+		elsif ($type == 3 && $data->[$i] =~ $pattern3){
+			$regex = $1;
+			$mm = sprintf('%02d',$3);
+			$dd = sprintf('%02d',$2);
+			$yyyy = $4;
+		}
 		# Change YYYY[._/-]MM[._/-]DD 2022-09-23 2022_09_23 2022.09.23 2022/09/23 
 		# Note: [\.\/_-]? can lead to 1966-11-29 regex eq 1966-11 and mm eq 01 dd eq 01
-		elsif ($data->[$i] =~ $pattern3){
+		elsif ($data->[$i] =~ $pattern4){
 			$regex = $1;
 			$yyyy = $2;
 			$mm = sprintf('%02d',$3);
@@ -2503,7 +2528,7 @@ sub update_files {
 		$dest_file = $src_file = $file;
 		# say "\nIF: $src_file";
 		$dest_file =~ s|^$SOURCE_DIRECTORY|$DESTINATION_DIRECTORY|;
-		$dest_file =~ s/\`/\'/g;
+		# $dest_file =~ s/\`/\'/g; # don't do this, will break --clean
 		# $dest_file =~ s/\$/\\\$/g;
 		# get rid of escape sequences in case someone used them: \40
 		# $src_file =~ s/\0//g; 

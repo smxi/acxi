@@ -75,6 +75,12 @@ numbers because it was using :\s*, not :\s+, which led to undesired outcomes.
 .txt files, and create odd layouts, since they always assume x spaces per tab, 
 but that behavior is not actually set in stone.
 
+2c. INFOFIX: d/k found yet another variant, dd/mm/yyyy, added pretest to 
+determine which is being used, since you can't tell say, 09.08.2020 so it looks 
+for a day greater than 12 in the first or second position, then assigns the type 
+to use based on that pretest. Be aware of possible situation where two types 
+were used in the same file!
+
 3. -i was triggering $test{'sync'} which is not correct, you should be able to 
 set input types for non syncing actions, since some of those only work with 
 specific codecs, like FLAC.
@@ -85,6 +91,9 @@ day of month == 30, 31, but then again, so could dom == 29.
 5. PREFILL: added stripping of ';', '%' from end of track title. 
 Those have some meaning for Grateful Dead stuff but not relevant for track 
 titles in tags. Also added support for > 1 ([\d:.]+) at end of track.
+
+6. SYNC: removed translate filter for file name: $dest_file =~ s/\`/\'/g;
+This makes --clean remove say, 'Dan`s Song' each time.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:

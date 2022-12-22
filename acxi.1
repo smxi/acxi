@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-12\-18" acxi "acxi manual"
+.TH ACXI 1 "2022\-12\-22" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -635,7 +635,7 @@ An alternate file name to use for prefill or infofix. Note that file MUST have a
 you will get ungood results.
 
 .TP
-.B \-\-infofix\fR, \fB\-X [0|a|c|d|l|n|q|t|u|v|w|z]\fR
+.B \-\-infofix\fR, \fB\-X [0|a|c|d|k|l|n|q|t|u|v|w|z]\fR
 Correct common corruptions to info.txt files. Note that this can be used in bulk 
 mode on sets of directories if all the info text files have the same name.
 
@@ -721,7 +721,9 @@ reliable, UTF8 a bit less so.
 * \fBd\fR \- set date to ISO format YYYY\-MM\-DD. Use this to correct dates that 
 are non ISO YYYY\-MM\-DD, like May 23, 1983; 4/12/78; 2011-8-12; 18.4.21. Always 
 double check file to make sure they aren't using some really silly date format, 
-and confirm with d option before using wd to make sure it is as expected.
+and confirm with d option before using wd to make sure it is as expected. 
+Pretests for less common formats like dd/mm/yyyy by checking for a day/month > 
+13 in first or second position anywhere in the file.
 
 * \fBk\fR \- set date to ISO format and add day of week after date. Also removes 
 any existing day of weeks from that line. Only does this on first date found in
