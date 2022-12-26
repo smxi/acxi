@@ -79,8 +79,8 @@ $Data::Dumper::Sortkeys = 1;
 
 ## SELF INFO ##
 my $self_name='acxi';
-my $self_version='3.5.05';
-my $self_date='2022-12-22';
+my $self_version='3.5.06';
+my $self_date='2022-12-26';
 
 ## GLOBALS ##
 ## Booleans
@@ -802,7 +802,7 @@ sub process_tags {
 			$set{$working[0]} = 1;
 			if ($working[0] eq 'IMAGE'){
 				$tag = qq($working[1]);
-				push @images, $tag;
+				push(@images,$tag);
 			}
 			else {
 				$tag = qq(--set-tag=$working[0]="$working[1]");
@@ -872,9 +872,9 @@ sub tag_updater {
 	$print_padding = ' and padding' if $padding;
 	foreach (@tags){
 		@working = split /%:/, $_;
-		$tag .= qq(--set-tag=$working[0]="$working[1]" ) if $working[1] ne 'UNSET';
+		$tag .= qq(--set-tag=$working[0]="$working[1]" ) if uc($working[1]) ne 'UNSET';
 		$remove .= qq(--remove-tag=$working[0] );
-		$print_tags .= qq($working[0])
+		$print_tags .= qq($working[0] )
 	}
 	$list_type = 'file';
 	$extension = $INPUT_TYPE;
@@ -972,114 +972,116 @@ sub prefill_data {
 	my ($b_top_block,$info) = (1,{});
 	my $data = InfoFix::open_info_file('prefill');
 	my $counter = 0;
-	my $fields = 'Album|AlbumArtist|AlbumSort|Artiste?s?|Artist\s*\/\s*Band|Band|';
+	# we only want values where something exists, found french syntax, other 
+		# languages will be added if people want them.
+	my $fields = 'Album|Album[\s-]?Artist|Album[\s-]?Sort|Artiste?s?|';
+	$fields .= 'Artist\s*\/\s*Band|Band|';
 	$fields .= 'CDDB|CDDB[\s-]?ID|City|Club|Composer|Country|Cover|Date|';
 	$fields .= 'Etree|Etree[\s-]?ID|Event|Festival|Genre|Image|ISRC|ISRC[\s-]?ID|';
-	$fields .= 'Event|Location|Producer|Lieu|Recorded by|SHNID|State|';
-	$fields .= 'Taper|Taped by|Type|Venue|Ville|Year';
+	$fields .= 'Event|Location|Media|Producer|Lieu|Recorded by|SHNID|';
+	$fields .= 'Source[\s-]?Media|State|Taper|Taped by|Type|Venue|Ville|Year';
 	foreach my $line (@$data){
-		$counter++;
 		$line = main::trimmer($line);
-		$b_top_block = 0 if !$line;
-		# we only want values where something exists, found french syntax, other 
-		# languages will be added if people want them.
-		if ($b_top_block && $line =~ /^($fields)\s*:\s*(.+)$/i){
+		$counter++;
+		$b_top_block = 0 if !$line && $counter > 1;
+		($field_name,$field_value) = ('','');
+		if (($b_top_block || $b_fields) && $line =~ /^($fields)\s*:\s*(.+)$/i){
 			$b_fields = 1;
 			$field_name = lc($1);
 			$field_value = $2;
 		}
-		if ($b_top_block){
-			if (!$b_fields){
-				if ($counter == 1){
-					$info->{'artist'} = $line;
-				}
-				elsif ($counter < 7 && $line !~ /^(19|20)[0-9]{2}-/){
-					$line =~ s/,$//;
-					if ($info->{'location'}){
-						if ($info->{'location'} !~ /\Q$line\E/i){
-							$info->{'location'} .= ', ' . $line ;
-						}
-					}
-					else {
-						$info->{'location'} = $line;
+		if ($b_top_block && !$b_fields){
+			if ($counter == 1){
+				$info->{'artist'} = $line;
+			}
+			elsif ($counter < 7 && $line !~ /^(19|20)[0-9]{2}-/){
+				$line =~ s/,$//;
+				if ($info->{'location'}){
+					if ($info->{'location'} !~ /\Q$line\E/i){
+						$info->{'location'} .= ', ' . $line ;
 					}
 				}
-				elsif ($counter < 7 && 
-				$line =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
-					$info->{'date-print'} = $1;
-					$info->{'date-print'} .= $4 if $4;
-					$info->{'date'} = $1;
-					$info->{'year'} = $2;
+				else {
+					$info->{'location'} = $line;
 				}
 			}
-			else {
-				# this should always be first in info file
-				if ($field_name =~ /^(Artiste?s?|Artist\s*\/\s*Band|Band)$/i){
-					$info->{'artist'} = $field_value;
-				}
-				elsif ($field_name =~ /^(Album)$/i){
-					$info->{'album'} = $field_value;
-				}
-				elsif ($field_name =~ /^(AlbumArtist)$/i){
-					$info->{'albumartist'} = $field_value;
-				}
-				elsif ($field_name =~ /^(AlbumSort)$/i){
-					$info->{'albumsort'} = $field_value;
-				}
-				elsif ($field_name =~ /^CDDB$/i){
-					$info->{'cddb'} = $field_value;
-				}
-				elsif ($field_name =~ /^(City|Country|Location|State|Ville)$/i){
-					if ($info->{'location'}){
-						if ($info->{'location'} !~ /\Q$field_value\E/i){
-							$info->{'location'} .= ', ' . $field_value;
-						}
-					}
-					else {
-						$info->{'location'} = $field_value;
-					}
-				}
-				elsif ($field_name =~ /^(Club|Event|Festival|Lieu|Venue)$/i){
-					$info->{'venue'} = $field_value;
-				}
-				elsif ($field_name =~ /^(Composer)$/i){
-					$info->{'composer'} = $field_value;
-				}
-				elsif ($field_name =~ /^(Cover|Image)$/i){
-					$info->{'image'} = $field_value;
-				}
-				elsif ($field_name =~ /^(Date)$/i &&
-				$field_value =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
-					$info->{'date-print'} = $1;
-					$info->{'date-print'} .= $4 if $4;
-					$info->{'date'} = $1;
-					$info->{'year'} = $2;
-				}
-				elsif ($field_name =~ /^Etree(db)?$/i){
-					$info->{'etree'} = $field_value;
-				}
-				elsif ($field_name =~ /^(Genre)$/i){
-					$info->{'genre'} = $field_value;
-				}
-				elsif ($field_name =~ /^ISRC$/i){
-					$info->{'isrc'} = $field_value;
-				}
-				elsif ($field_name =~ /^(Producer|Taper|(Record|Tap)ed by)$/i){
-					$info->{'producer'} = $field_value;
-				}
-				elsif ($field_name =~ /^SHNID$/i){
-					$info->{'shnid'} = $field_value;
-				}
-				elsif ($field_name =~ /^Type$/i){
-					$info->{'type'} = $field_value;
-				}
-				elsif ($field_name =~ /^(Year)$/i){
-					$info->{'year'} = $field_value;
-				}
-				
+			elsif ($counter < 7 && 
+			$line =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
+				$info->{'date-print'} = $1;
+				$info->{'date-print'} .= $4 if $4;
+				$info->{'date'} = $1;
+				$info->{'year'} = $2;
 			}
 		}
-		elsif (!$b_top_block){
+		if ($b_fields && $field_name){
+			# this should always be first in info file
+			if ($field_name =~ /^(Artiste?s?|(Artiste?s?\s*\/\s*)?Band)$/i){
+				$info->{'artist'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Album)$/i){
+				$info->{'album'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Album[\s-]?Artist)$/i){
+				$info->{'albumartist'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Album[\s-]?Sort)$/i){
+				$info->{'albumsort'} = $field_value;
+			}
+			elsif ($field_name =~ /^CDDB$/i){
+				$info->{'cddb'} = $field_value;
+			}
+			elsif ($field_name =~ /^(City|Country|Location|State|Ville)$/i){
+				if ($info->{'location'}){
+					if ($info->{'location'} !~ /\Q$field_value\E/i){
+						$info->{'location'} .= ', ' . $field_value;
+					}
+				}
+				else {
+					$info->{'location'} = $field_value;
+				}
+			}
+			elsif ($field_name =~ /^(Club|Event|Festival|Lieu|Venue)$/i){
+				$info->{'venue'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Composer)$/i){
+				$info->{'composer'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Cover|Image)$/i){
+				$info->{'image'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Date)$/i &&
+			$field_value =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
+				$info->{'date-print'} = $1;
+				$info->{'date-print'} .= $4 if $4;
+				$info->{'date'} = $1;
+				$info->{'year'} = $2;
+			}
+			elsif ($field_name =~ /^Etree(db)?$/i){
+				$info->{'etree'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Genre)$/i){
+				$info->{'genre'} = $field_value;
+			}
+			elsif ($field_name =~ /^ISRC$/i){
+				$info->{'isrc'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Source[\s-]?)?Media$/i){
+				$info->{'sourcemedia'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Producer|Taper|(Record|Tap)ed by)$/i){
+				$info->{'producer'} = $field_value;
+			}
+			elsif ($field_name =~ /^SHNID$/i){
+				$info->{'shnid'} = $field_value;
+			}
+			elsif ($field_name =~ /^Type$/i){
+				$info->{'type'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Year)$/i){
+				$info->{'year'} = $field_value;
+			}
+		}
+		if (!$b_top_block){
 			# see InfoFix::run_fixes as well if changing the terminator regex
 			if (!$b_tracks_end && $b_tracks_start && 
 			$line =~ /^\s*[:^<>]{1,}?(E[ST]L?|END([\s_-]?(SETLIST|TRACKS))?)?[:^<>]{1,}\s*$/i){
@@ -1095,43 +1097,19 @@ sub prefill_data {
 				$b_tracks_start = 1;
 			}
 			# Start building performers
-			elsif (($b_fields || $counter > 8) && 
+			elsif (($b_fields || $counter > 4) && 
 			$line =~ /^[\s*_=-]*(Band|(Band\s)?Line[\s_-]?up|(Band\s)?Members|Performers|Personnel)[^:]*:/i){
 				$b_performer = 1;
 				next;
 			}
-			if ($b_performer && $line){
-				push(@{$info->{'performers'}},$line);
-			}
-			# first white space after performer list
-			elsif ($b_performer && !$line){
-				$b_performer = 0;
-			}
-			# some random stuff if it wasn't in top block
-			if (!$info->{'cddb'} && $line =~ /^CDDB\s*:\s*(.*)$/i){
-				$info->{'cddb'} = $1;
-			}
-			elsif (!$info->{'etree'} && $line =~ /^Etree(DB)?\s*:\s*(.*)$/i){
-				$info->{'etree'} = $2;
-			}
-			elsif (!$info->{'genre'} && $line =~ /^(Genre)\s*:\s*(.*)$/i){
-				$info->{'genre'} = $2;
-			}
-			elsif (!$info->{'image'} && $line =~ /^(Cover|Image)\s*:\s*(.*)$/i){
-				$info->{'image'} = $2;
-			}
-			elsif (!$info->{'isrc'} && $line =~ /^ISRC\s*:\s*(.*)$/i){
-				$info->{'isrc'} = $1;
-			}
-			elsif (!$info->{'producer'} && 
-			$line =~ /^(Producer|Recorded by|Taper|Taped by)\s*:\s*(.*)/i){
-				$info->{'producer'} = $2;
-			}
-			elsif (!$info->{'shnid'} && $line =~ /^SHNID\s*:\s*(.*)$/i){
-				$info->{'shnid'} = $1;
-			}
-			elsif (!$info->{'type'} && $line =~ /^Type\s*:\s*(.*)$/i){
-				$info->{'type'} = $1;
+			if ($b_performer){
+				if ($line){
+					push(@{$info->{'performers'}},$line);
+				}
+				# first white space after performer list
+				else {
+					$b_performer = 0;
+				}
 			}
 		}
 	}
@@ -1189,7 +1167,7 @@ sub populate_tag_file {
 	@collection = map {$_ .= '%:' if /^[A-Z]/; $_;} @collection;
 	my @prefills = ('ALBUMSORT%:','ARTIST%:','CDDB%:','COMPOSER%:','DATE%:',
 	'ETREE%:','GENRE%:','IMAGE%:','ISRC%:','LOCATION%:','PRODUCER%:','SHNID%:',
-	'VENUE%:','YEAR%:');
+	'SOURCEMEDIA%:','VENUE%:','YEAR%:');
 	if ($info && %$info && @collection){
 		my @working;
 		foreach my $item (@collection){
@@ -1326,7 +1304,7 @@ sub populate_tag_file {
 					$disc_working[2] .= create_track_total($multi[$j]); # track total
 					# then we add in the tracks for the previous disk/set, and start
 					# the next block
-					@tags = (@tags,'',@disc_working);
+					push(@tags,'',@disc_working);
 				}
 				$b_first = 0;
 			}
@@ -1356,7 +1334,7 @@ sub populate_tag_file {
 			# we want the replaygain data right before FILE
 			splice (@track_working, 5, 0, @replaygain) if @replaygain;
 		}
-		@tags = (@tags,@track_working);
+		push(@tags,@track_working);
 		# this allows for 0 track numbers
 		$counter++;
 	}
@@ -3950,7 +3928,7 @@ sub show_options {
 	$output .= "                  space.\n";
 	$output .= "                  0: (zero) No printed leading delimiter characters per line.\n";
 	$output .= "                  a: Add numbering to unnumbered track/setlists. See man.\n";
-	$output .= "                  c: Correct Windows CF-1252 special character issues.\n";
+	$output .= "                  c: Correct Windows CP-1252 special character issues.\n";
 	$output .= "                  d: Make iso date: YYYY-MM-DD from various random date formats.\n";
 	$output .= "                  k: Adds (weekday) after iso date. Activates d.\n";
 	$output .= "                  l: Set all lowercase, and apply simple upper case first fixes.\n";

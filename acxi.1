@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-12\-22" acxi "acxi manual"
+.TH ACXI 1 "2022\-12\-26" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -744,14 +744,18 @@ Note that \fBm\fR should be used together with \fBn\fR for best results.
 \fB\-\-prefill\fR track terminators for stopping fixes at end of track listing. 
 Use when track numbering is defective or inconsistent. 
 
-* \fBq\fR \- add in 2 technical quality info lines after top header. Reads flac 
+* \fBq\fR \- add in technical quality info lines after top header. Reads flac 
 file in directory to determine bit rate, sampling frequency, and channels. 
 Requires track file name starts with D-NN or ends with D-NN.flac. Exits if it 
 can't find a match. Quality is /[rating] number and can be changed from default 
 if desired.
 .nf
 \fBFLAC: 16/44.1 (2 channels)
-Quality: /4 ()\fR
+Quality: /4 ()
+Time: 29:35.01
+Size: 324.2 MiB
+Average kb/s: 768
+Tracks: 7\fR
 .fi
 
 * \fBt\fR \- smart upper case first track titles only. Requires Perl module 
@@ -880,9 +884,9 @@ Supported field names, and their corresponding tag name:
 
 .nf
 \fBALBUM\fR \- Album: 
-\fBALBUMARTIST\fR \- AlbumArtist
-\fBALBUMSORT\fR \- AlbumSort
-\fBARTIST\fR \- Artist, Artists, Artiste, Artistes, Band
+\fBALBUMARTIST\fR \- AlbumArtist, Album Artist, Album-Artist
+\fBALBUMSORT\fR \- AlbumSort, Album Sort, Album-Sort
+\fBARTIST\fR \- Artist, Artists, Artiste, Artistes, Band, Artist/Band
 \fBCOMPOSER\fR \- Composer
 \fBCDDB\fR \- CDDB
 \fBDATE\fR \- Date
@@ -893,7 +897,8 @@ Supported field names, and their corresponding tag name:
 \fBSHNID\fR \- Shnid, commonly used in Grateful Dead recordings. Not standard.
 \fBLOCATION\fR \- City, State, Country, Lieu, Location, Ville.
 \fBPRODUCER\fR \- Producer, Recorded by, Taper, Taped By
-\fBTYPE\fR \- Only used to append to ALBUM. AUD, MTX, SBD etc.
+\fBSOURCEMEDIA\fR \- Media, SourceMedia, Source Media, Source-Media
+\fBTYPE\fR \- Only used to append to ALBUM. AUD, Audience master, MTX, SBD etc.
 \fBVENUE\fR \- Club, Event, Festival, Venue
 \fBYEAR\fR \- Year
 .fi
