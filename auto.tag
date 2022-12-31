@@ -69,8 +69,10 @@ DATE%:
 YEAR%:
 LOCATION%:
 VENUE%:
+MIXER%:
 PRODUCER%:
 PUBLISHER%:
+REMIXER%:
 # e.g.: label, taper group, etc.
 ORGANIZATION%:
 # Database type IDs

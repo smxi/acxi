@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-12\-26" acxi "acxi manual"
+.TH ACXI 1 "2022\-12\30" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -250,7 +250,7 @@ ogg, opus, m4a, mp3
 
 \fBaac\fR \- only supports flac input type, To preserve flac tags, use m4a.
 
-\fBflac\fR \- only supports flac, shn, or raw input types.
+\fBflac\fR \- only supports aiff, flac, shn, or raw input types.
 
 \fBm4a\fR \- only supports flac input type, Container around aac data. Use if 
 you want to preserve flac tags in your aac audio file.
@@ -880,27 +880,30 @@ ignored. The value after the colon will be used as the tag value.
 
 If a field name should be added, just let us know what it is and we'll add it.
 
-Supported field names, and their corresponding tag name:
+Supported field names, and their corresponding tag name (note: all two word 
+field names can use a space, \fB\-\fR, \fB_\fR or no space as word separators):
 
 .nf
-\fBALBUM\fR \- Album: 
-\fBALBUMARTIST\fR \- AlbumArtist, Album Artist, Album-Artist
-\fBALBUMSORT\fR \- AlbumSort, Album Sort, Album-Sort
-\fBARTIST\fR \- Artist, Artists, Artiste, Artistes, Band, Artist/Band
-\fBCOMPOSER\fR \- Composer
-\fBCDDB\fR \- CDDB
-\fBDATE\fR \- Date
-\fBETREE\fR \- Etree, EtreeDB. NOTE: not a standard tag.
-\fBGENRE\fR \- Genre
-\fBIMAGE\fR \- Cover,Image
-\fBISRC\fR \- ISRC
-\fBSHNID\fR \- Shnid, commonly used in Grateful Dead recordings. Not standard.
+\fBALBUM\fR \- Album.
+\fBALBUMARTIST\fR \- AlbumArtist, Album Artist.
+\fBALBUMSORT\fR \- AlbumSort, Album Sort.
+\fBARTIST\fR \- Artist, Artists, Artiste, Artistes, Band, Artist/Band.
+\fBCOMPOSER\fR \- Composer.
+\fBCDDB\fR \- CDDB, CDDB ID.
+\fBDATE\fR \- Date.
+\fBETREE\fR \- Etree, Etree DB. Non\-standard tag.
+\fBGENRE\fR \- Genre.
+\fBIMAGE\fR \- Cover, Image.
+\fBISRC\fR \- ISRC, ISRC ID.
 \fBLOCATION\fR \- City, State, Country, Lieu, Location, Ville.
-\fBPRODUCER\fR \- Producer, Recorded by, Taper, Taped By
-\fBSOURCEMEDIA\fR \- Media, SourceMedia, Source Media, Source-Media
-\fBTYPE\fR \- Only used to append to ALBUM. AUD, Audience master, MTX, SBD etc.
-\fBVENUE\fR \- Club, Event, Festival, Venue
-\fBYEAR\fR \- Year
+\fBMIXER\fR \- Mixer, Mixed by, Masterer, Mastered by.
+\fBPRODUCER\fR \- Producer, Recorded by, Taper, Taped By.
+\fBREMIXER\fR \- Remixer, Remixed by, Remasterer, Remastered by
+\fBSHNID\fR \- Shnid (eg. Grateful Dead recording IDs). Non\-standard.
+\fBSOURCEMEDIA\fR \- Media, SourceMedia, Source Media.
+\fBTYPE\fR \- Used to append to ALBUM, eg. AUD, Audience master, MTX, SBD.
+\fBVENUE\fR \- Club, Event, Festival, Venue.
+\fBYEAR\fR \- Year.
 .fi
 
 Notes:

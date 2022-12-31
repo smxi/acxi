@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_date='2022-12-26';
+my $self_date='2022-12-30';
 
 ## GLOBALS ##
 ## Booleans
@@ -974,12 +974,13 @@ sub prefill_data {
 	my $counter = 0;
 	# we only want values where something exists, found french syntax, other 
 		# languages will be added if people want them.
-	my $fields = 'Album|Album[\s-]?Artist|Album[\s-]?Sort|Artiste?s?|';
+	my $fields = 'Album|Album[\s_-]?Artist|Album[\s_-]?Sort|Artiste?s?|';
 	$fields .= 'Artist\s*\/\s*Band|Band|';
-	$fields .= 'CDDB|CDDB[\s-]?ID|City|Club|Composer|Country|Cover|Date|';
-	$fields .= 'Etree|Etree[\s-]?ID|Event|Festival|Genre|Image|ISRC|ISRC[\s-]?ID|';
-	$fields .= 'Event|Location|Media|Producer|Lieu|Recorded by|SHNID|';
-	$fields .= 'Source[\s-]?Media|State|Taper|Taped by|Type|Venue|Ville|Year';
+	$fields .= 'CDDB|CDDB[\s_-]?ID|City|Club|Composer|Country|Cover|Date|';
+	$fields .= 'Etree|Etree[\s_-]?ID|Event|Festival|Genre|Image|ISRC|ISRC[\s_-]?ID|';
+	$fields .= 'Event|Location|Media|Mastered[\s_-]?by|Masterer|Mixed[\s_-]?by|Mixer|';
+	$fields .= 'Lieu|Producer|Recorded[\s_-]?by|Remixed[\s_-]?by|Remixer|SHNID|';
+	$fields .= 'Source[\s_-]?Media|State|Taper|Taped[\s_-]?by|Type|Venue|Ville|Year';
 	foreach my $line (@$data){
 		$line = main::trimmer($line);
 		$counter++;
@@ -987,7 +988,7 @@ sub prefill_data {
 		($field_name,$field_value) = ('','');
 		if (($b_top_block || $b_fields) && $line =~ /^($fields)\s*:\s*(.+)$/i){
 			$b_fields = 1;
-			$field_name = lc($1);
+			$field_name = $1;
 			$field_value = $2;
 		}
 		if ($b_top_block && !$b_fields){
@@ -1021,13 +1022,13 @@ sub prefill_data {
 			elsif ($field_name =~ /^(Album)$/i){
 				$info->{'album'} = $field_value;
 			}
-			elsif ($field_name =~ /^(Album[\s-]?Artist)$/i){
+			elsif ($field_name =~ /^(Album[\s_-]?Artist)$/i){
 				$info->{'albumartist'} = $field_value;
 			}
-			elsif ($field_name =~ /^(Album[\s-]?Sort)$/i){
+			elsif ($field_name =~ /^(Album[\s_-]?Sort)$/i){
 				$info->{'albumsort'} = $field_value;
 			}
-			elsif ($field_name =~ /^CDDB$/i){
+			elsif ($field_name =~ /^(CDDB([\s_-]?ID)?)$/i){
 				$info->{'cddb'} = $field_value;
 			}
 			elsif ($field_name =~ /^(City|Country|Location|State|Ville)$/i){
@@ -1056,25 +1057,31 @@ sub prefill_data {
 				$info->{'date'} = $1;
 				$info->{'year'} = $2;
 			}
-			elsif ($field_name =~ /^Etree(db)?$/i){
+			elsif ($field_name =~ /^(Etree([\s_-]?db))?$/i){
 				$info->{'etree'} = $field_value;
 			}
 			elsif ($field_name =~ /^(Genre)$/i){
 				$info->{'genre'} = $field_value;
 			}
-			elsif ($field_name =~ /^ISRC$/i){
+			elsif ($field_name =~ /^(ISRC([\s_-]?ID)?)$/i){
 				$info->{'isrc'} = $field_value;
 			}
-			elsif ($field_name =~ /^(Source[\s-]?)?Media$/i){
+			elsif ($field_name =~ /^((Source[\s_-]?)?Media)$/i){
 				$info->{'sourcemedia'} = $field_value;
 			}
-			elsif ($field_name =~ /^(Producer|Taper|(Record|Tap)ed by)$/i){
+			elsif ($field_name =~ /^((Master|Mix)(er|ed[\s_-]?by))$/i){
+				$info->{'mixer'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Producer|Taper|(Record|Tap)ed[\s_-]?by)$/i){
 				$info->{'producer'} = $field_value;
 			}
-			elsif ($field_name =~ /^SHNID$/i){
+			elsif ($field_name =~ /^(Re(mix|master)(er|ed[\s_-]?by))$/i){
+				$info->{'remixer'} = $field_value;
+			}
+			elsif ($field_name =~ /^(SHNID)$/i){
 				$info->{'shnid'} = $field_value;
 			}
-			elsif ($field_name =~ /^Type$/i){
+			elsif ($field_name =~ /^(Type)$/i){
 				$info->{'type'} = $field_value;
 			}
 			elsif ($field_name =~ /^(Year)$/i){
@@ -1144,13 +1151,15 @@ sub populate_tag_file {
 	'## RECORDING INFO ##',
 	# note: VENUE and LABEL better handled by xiph spec: LOCATION and ORGANIZATION
 	# Include YEAR to make conversion to mp3 tagging cleaner
-	'GENRE','RATING','DATE','YEAR','LOCATION','VENUE','PRODUCER','PUBLISHER',
+	'GENRE','RATING','DATE','YEAR','LOCATION','VENUE','MIXER','REMIXER',
+	'PRODUCER','PUBLISHER',
 	'# e.g. record label, taper group,, etc. ','ORGANIZATION',
 	'# Database type IDs', 'CDDB','ETREE','ISRC','SHNID',
 	'## TECHNICAL INFORMATION ##',
 	'ENCODING',
 	'# Useful for tapers etc','SOURCE','SOURCE','SOURCE','SOURCE',
-	'# Media recording taken from, eg, cassette, tape, dat, vinyl','SOURCEMEDIA',
+	'# Media recording taken from, eg, cassette, tape, dat, vinyl',
+	'SOURCEMEDIA',
 	);
 	my @discs = ('DISCNUMBER','DISCSUBTITLE','TRACKTOTAL');
 	my @disc = ('','## DISC INFO ##',
@@ -1165,9 +1174,10 @@ sub populate_tag_file {
 	my @track = ('','TRACKNUMBER','TITLE','VERSION','PART','FILE');
 	splice(@track, 1, 0, 'ARTIST') if $run{'multiartist'};
 	@collection = map {$_ .= '%:' if /^[A-Z]/; $_;} @collection;
-	my @prefills = ('ALBUMSORT%:','ARTIST%:','CDDB%:','COMPOSER%:','DATE%:',
-	'ETREE%:','GENRE%:','IMAGE%:','ISRC%:','LOCATION%:','PRODUCER%:','SHNID%:',
-	'SOURCEMEDIA%:','VENUE%:','YEAR%:');
+	my @prefills = ('ALBUMSORT','ARTIST','CDDB','COMPOSER','DATE','ETREE','GENRE',
+	'IMAGE','ISRC','LOCATION','MIXER','PRODUCER','REMIXER','SHNID','SOURCEMEDIA',
+	'VENUE','YEAR');
+	@prefills = map {$_ .= '%:'; $_;} @prefills;
 	if ($info && %$info && @collection){
 		my @working;
 		foreach my $item (@collection){
@@ -1460,9 +1470,9 @@ sub create_track_total {
 sub get_replaygain {
 	my ($input_file) = @_;
 	my (@tags);
-	my %replaygain = main::get_flac_tags('replaygain',$input_file);
-	foreach (keys %replaygain){
-		push @tags, "$_%:$replaygain{$_}" if $replaygain{$_};
+	my $replaygain = main::get_flac_tags('replaygain',$input_file);
+	foreach (keys %$replaygain){
+		push(@tags, $_ . '%:' . $replaygain->{$_}) if $replaygain->{$_};
 	}
 	return @tags;
 }
@@ -2752,49 +2762,92 @@ sub convert_file {
 #### TAGGING
 #### -------------------------------------------------------------------
 
-# Added: Odd @2011-03-23 01:52:31
+# Originally added: Odd @2011-03-23 01:52:31
+# Revised many times since, full refactor 2022-12-30.
 sub flac2mp3_cmd {
 	my ($i_file, $o_file) = @_;
-	my %tags = get_flac_tags('standard',"$i_file");
+	my $tags = get_flac_tags('standard',"$i_file");
 	my $lame_params = '';
-	foreach (keys %tags){
-		$tags{$_} = escape_item($tags{$_});
+	foreach (keys %$tags){
+		$tags->{$_} = escape_item($tags->{$_});
 	}
-	# say Dumper \%tags;
-	if ($tags{'TRACKNUMBER'} && $tags{'TRACKTOTAL'}){
-		$tags{'TRACKNUMBER'} .= "/$tags{'TRACKTOTAL'}";
+	# say Dumper $tags;
+	my %mp3_tags = (
+	'ALBUM' => '--tl "',
+	'ALBUMARTIST' => '--tv "TPE2=',
+	'ALBUMSORT' => '--tv "TSOA=',
+	'ALBUMSORT' => '--tv "TPE2=',
+	'ARTIST' => '--ta "',
+	'ARTISTSORT' => '--tv "TSOP=',
+	'COMMENT' => '--tv "COMM=',
+	'COMPILATION' => '--tv "TCMP=',
+	'COMPOSER' => '--tv "TCOM=',
+	'CONDUCTOR' => '--tv "TPE3=',
+	'COPYRIGHT' => '--tv "TCOP=',
+	'DATE' => '--tv "TXXX:DATE=', # this is id3v2.4 syntax
+	'DESCRIPTION' => '--tv "TIT3=',
+	'DISCSUBTITLE' => '--tv "TSST=',
+	'GENRE' => '--tg "',
+	'ISRC' => '--tv "TSRC=',
+	'LABEL' => '--tv "TPUB=',
+	'MEDIA' => '--tv "TMED=',
+	'MOOD' => '-tv "TMOO=',
+	'MOVEMENTNAME' => '-tv "MVNM=',
+	'PUBLISHER' => '--tv "TPUB=',
+	'REMIXER' => '--tv "TPE4=',
+	'SOURCEMEDIA' => '--tv "TMED=',
+	'SUBTITLE' => '--tv "TIT3=',
+	'TITLE' => '--tt "',
+	'YEAR' => '--ty "',
+	);
+	# start building MP3 id3v2 tags
+	foreach my $key (keys %mp3_tags){
+		if ($tags->{$key}){
+			$lame_params .= ' ' . $mp3_tags{$key} . $tags->{$key} . '"'; 
+		}
 	}
-	if ($tags{'DISKNUMBER'} && $tags{'DISKTOTAL'}){
-		$lame_params .= "--tv \"TPOS=$tags{'DISKNUMBER'}/$tags{'DISKTOTAL'}\" ";
+	# note: id3v2.3: DATE: TDAT; id3v2.4: DATE: TXXX:DATE 
+	# We will construct the YEAR if no YEAR and YYYY found in DATE.
+	if (!$tags->{'YEAR'} && $tags->{'DATE'} && 
+	$tags->{'DATE'} =~ /\b((1[6-9]|20)\d{2})\b/){
+		$lame_params .= ' --ty "' . $1 . '"';
 	}
-	$lame_params .= ' --ta "' . $tags{'ARTIST'} . '"';
-	$lame_params .= ' --tl "' . $tags{'ALBUM'} . '"';
-	$lame_params .= ' --tt "' . $tags{'TITLE'} . '"';
-	$lame_params .= ' --tg "' . $tags{'GENRE'} . '"';
-	$lame_params .= ' --ty "' . $tags{'DATE'} . '"';
-	$lame_params .= ' --tn "' . $tags{'TRACKNUMBER'} . '"';
+	# complex combinations
+	if ($tags->{'DISKNUMBER'} && $tags->{'DISKTOTAL'}){
+		$lame_params .= '--tv "TPOS= ' . $tags->{'DISKNUMBER'} . '/' . $tags->{'DISKTOTAL'} . '"';
+	}
+	if ($tags->{'TRACKNUMBER'}){
+		# Providing just track number creates v1.1 tag, providing total forces v2.0
+		if ($tags->{'TRACKTOTAL'}){
+			$tags->{'TRACKNUMBER'} .= '/' . $tags->{'TRACKTOTAL'};
+		}
+		$lame_params .= ' --tn "' . $tags->{'TRACKNUMBER'} . '"';
+	}
 	$lame_params .= ' - "' . $o_file . '"';
-	# $lame_params .= ' --tt \"$tags{'TRACKTOTAL'}\" --tg \"$tags{'DISKNUMBER'}\"';
 	my $cmd = "$COMMAND_FLAC $silent_flac -d -c \"$i_file\" | ";
 	$cmd .= "$COMMAND_LAME $silent_lame -h -V $quality $lame_params";
 	# say $cmd;
 	return $cmd;
 }
-
-# Added: Odd @2011-03-23 01:52:17
 # args: $type: standard|replaygain; $i_file: file to work on
+# Added: Odd @2011-03-23 01:52:17
+# Updated routinely afterwards.
 # For this function to work reliably, it should be passed tag queries in the order of:
 # artist, album, title, genre, date, tracknumber
 sub get_flac_tags {
 	my ($type,$i_file) = @_;
 	my (%tag_list,@tags,@working);
 	if ($type eq 'standard'){
-		@tags = ('ARTIST', 'ALBUM', 'TITLE','GENRE', 'DATE', 'TRACKNUMBER', 
-		'TRACKTOTAL','DISKNUMBER','DISKTOTAL');
+		# note: no venue, location,producer tags in standard mp3
+		@tags = qw(ALBUM ALBUMARTIST ARTIST ARTISTSORT 
+		COMMENT COMPILATION COMPOSER CONDUCTOR COPYRIGHT
+		DATE DESCRIPTION DISKNUMBER DISCSUBTITLE DISKTOTAL 
+		GENRE ISRC LABEL MEDIA MOOD MOVEMENTNAME PUBLISHER REMIXER
+		SOURCEMEDIA SUBTITLE TITLE TRACKNUMBER TRACKTOTAL YEAR);
 	}
 	elsif ($type eq 'replaygain'){
-		@tags = ('REPLAYGAIN_TRACK_PEAK','REPLAYGAIN_TRACK_GAIN',
-		'REPLAYGAIN_ALBUM_PEAK','REPLAYGAIN_ALBUM_GAIN','WAVEFORMATEXTENSIBLE_CHANNEL_MASK');
+		@tags = qw(REPLAYGAIN_TRACK_PEAK REPLAYGAIN_TRACK_GAIN REPLAYGAIN_ALBUM_PEAK 
+		REPLAYGAIN_ALBUM_GAIN WAVEFORMATEXTENSIBLE_CHANNEL_MASK);
 	}
 	my $cmd = "$COMMAND_METAFLAC \"$i_file\" ";
 	foreach (@tags){
@@ -2811,7 +2864,7 @@ sub get_flac_tags {
 		$tag_list{$_} = '' if !defined $tag_list{$_};
 	}
 	# say Dumper \%tag_list;
-	return %tag_list;
+	return \%tag_list;
 }
 
 #########################################################################
