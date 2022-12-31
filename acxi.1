@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-12\30" acxi "acxi manual"
+.TH ACXI 1 "2022\-12\31" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -888,45 +888,58 @@ field names can use a space, \fB\-\fR, \fB_\fR or no space as word separators):
 \fBALBUMARTIST\fR \- AlbumArtist, Album Artist.
 \fBALBUMSORT\fR \- AlbumSort, Album Sort.
 \fBARTIST\fR \- Artist, Artists, Artiste, Artistes, Band, Artist/Band.
-\fBCOMPOSER\fR \- Composer.
 \fBCDDB\fR \- CDDB, CDDB ID.
+\fBCOMPOSER\fR \- Composer, Composed by.
+\fBCONDUCTOR\fR \- Conductor, Conducted by.
 \fBDATE\fR \- Date.
-\fBETREE\fR \- Etree, Etree DB. Non\-standard tag.
+\fBENSEMBLE\fR \- Ensemble, Orquestra, Symphony.
+\fBETREE\fR \- Etree, Etree DB. Non\-standard. See below.
 \fBGENRE\fR \- Genre.
 \fBIMAGE\fR \- Cover, Image.
 \fBISRC\fR \- ISRC, ISRC ID.
 \fBLOCATION\fR \- City, State, Country, Lieu, Location, Ville.
 \fBMIXER\fR \- Mixer, Mixed by, Masterer, Mastered by.
+\fBOPUS\fR \- Opus.
 \fBPRODUCER\fR \- Producer, Recorded by, Taper, Taped By.
-\fBREMIXER\fR \- Remixer, Remixed by, Remasterer, Remastered by
-\fBSHNID\fR \- Shnid (eg. Grateful Dead recording IDs). Non\-standard.
+\fBREMIXER\fR \- Remixer, Remixed by, Remasterer, Remastered by.
+\fBSHNID\fR \- Shnid. Non\-standard. See below.
 \fBSOURCEMEDIA\fR \- Media, SourceMedia, Source Media.
-\fBTYPE\fR \- Used to append to ALBUM, eg. AUD, Audience master, MTX, SBD.
+\fBType:\fR \- Extra data to append to ALBUM. See below.
 \fBVENUE\fR \- Club, Event, Festival, Venue.
 \fBYEAR\fR \- Year.
 .fi
 
 Notes:
 
-* \fBALBUM\fR is constructed out of \fBDATE\fR, \fBLOCATION\fR, \fBVENUE\fR  
-if \fBAlbum\fR not explicitly supplied.
+* \fBALBUM\fR is constructed out of \fBDATE\fR, \fBLOCATION\fR, \fBVENUE\fR  if 
+\fBAlbum\fR not explicitly supplied. See \fBDATE\fR, \fBETREE\fR, \fBSHNID\fR, 
+\fBTYPE\fR below.
+
+** \fBDATE\fR will be prepended to \fBALBUM\fR if no ALBUM supplied.
+
+** \fBTYPE\fR if present: appends to end of ALBUM string: ' - [type]'. Normal 
+values AUD, SBD, MTX, AUD 16/44.1, SBD Master 24/48, but can be anything. This 
+goes before etree/shnid appends in ALBUM string.
+
+** \fBETREE\fR if present: appends to end of ALBUM string: ' (etree [id])'
+
+** \fBSHNID\fR if present: appends to end of ALBUM string: ' (shnid [id])'
 
 * \fBBand:\fR will trigger \fBARTIST\fR only if in top block, before first 
 empty line, since \fBBand:\fR can also be used to trigger \fBPERFORMERS\fR 
 prefill if not in top block.
 
-* \fBComposer:\fR is usually classical only, but up to you.
-
-* \fBDATE\fR will be prepended to \fBALBUM\fR if no ALBUM supplied.
+* \fBComposer:\fR, \fBConductor\fR, \fBEnsemble:\fR, \fBOpus:\fR are usually 
+for classical recordings, but up to you.
 
 * See \fB\-Xd\fR for date fixes, prefill only accepts YYYY\-MM\-DD formatting.
 
-* If Etree: present, also appends to end of ALBUM string: ' (etree [id])'
+* \fBPRODUCER\fR is preferred over \fBMIXER\fR unless for example 1 person 
+produced, taped, or otherwise created the recording, and another mixed or 
+mastered it.  
 
-* If Shnid: present, also appends to end of ALBUM string: ' (shnid [id])'
-
-* If Type: present, appends to end of ALBUM string: ' - [type]'. Normal values
-AUD, SBD, MTX, but can be anything. This goes before shnid type append.
+* \fBREMIXER\fR is if track is remixed, remastered. The person who did the
+remix/remaster.
 
 * \fBVENUE\fR will also be added to \fBLOCATION\fR if no \fBALBUM\fR set.
 

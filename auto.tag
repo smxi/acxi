@@ -15,6 +15,8 @@
 ## Use -E option to prefill ARTIST, DATE, YEAR, PERFORMER, TITLE fields 
 ## automatically. Requires specially formatted info.txt file. See man page for
 ## details.
+## NOTE: almost no media players support > 1 tag type the way the specifications 
+## say, so multiple values, like GENRE, ARTIST, often fail to work as intended.
 
 ## COLLECTION/RECORDING NAME/CREATORS ##
 ALBUM%:
@@ -26,11 +28,18 @@ ALBUMSORT%:
 ARTIST%:
 # Multi-Artist only
 ALBUMARTIST%:
+# Symphony, Orquestra. Usually group playing non-original music
+ENSEMBLE%:
+# Generally Classical fields
 COMPOSER%:
-# Classical fields
 CONDUCTOR%:
 OPUS%:
 # 1 performer per entry. For example members of band.
+PERFORMER%:
+PERFORMER%:
+PERFORMER%:
+PERFORMER%:
+PERFORMER%:
 PERFORMER%:
 PERFORMER%:
 PERFORMER%:
@@ -59,17 +68,19 @@ COMMENT%:
 IMAGE%:
 
 ## RECORDING INFO ##
-# Repeat if > 1 genre
+# Repeat if > 1 genre (very poor support in media players).
 GENRE%:
 # 0 to 100, yields 0-5 stars usually, 1 star = 20.
 RATING%:
-# Suggestion: use ISO format for consistent and sortable dates: YYYY-MM-DD
+# Use ISO format for consistent and sortable dates: YYYY-MM-DD
 DATE%:
 # Format: YYYY
 YEAR%:
 LOCATION%:
 VENUE%:
+# If different from the person who produced or recorded it
 MIXER%:
+# Person responsible, either taper, funder, etc.
 PRODUCER%:
 PUBLISHER%:
 REMIXER%:

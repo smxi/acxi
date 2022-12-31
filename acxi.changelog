@@ -26,6 +26,14 @@ https://wiki.hydrogenaud.io/index.php?title=Tag_Mapping
 https://docs.mp3tag.de/mapping/
 https://docs.mp3tag.de/mapping-table/
 
+2. SUBTITLE FLAC tag is super specific, and should be avoided.
+SUBTITLE: This field is intended for use with FLAC, in order to connect specific 
+titles with an embedded cue sheet. A single file can effectively contain 
+multiple works, indexed by TRACK and INDEX in the case of cue sheets, and they 
+can be specified using subscripts like “SUBTITLE[TRACK 3]” or “SUBTITLE[TRACK 
+7:INDEX 2]”. This should only be used for the case of multiple works in the same 
+file and not for cases where a single work has multiple titles.
+
 --------------------------------------------------------------------------------
 BUGS:
 
@@ -68,6 +76,10 @@ supported.
 MIXER: Mixed by, Mixer, Mastered by, Masterer
 REMIXER: Remixer, remixed by, remasterer, remastered by.
 
+3. Added SUBTITLE tag to list of supported tags, but not to auto.tag because 
+it's made for very specific purposes and is unlikely to be used correctly. See 
+Known Issues 2.
+
 --------------------------------------------------------------------------------
 CHANGES:
 
@@ -80,11 +92,15 @@ DOCUMENTATION:
 2. Man page, added MIXER and REMIXER to --prefill tags. Also cleaned up and made 
 more consistent prefill tag listing.
 
+3. Sample auto.tag file, updated to add new tags and comments.
+
 --------------------------------------------------------------------------------
 CODE:
 
 1. Refactored flac2mp3_cmd() to make more flexible. Made it return hash ref, not
 hash.
+
+2. Switched to qw(...) in some tag lists that are being updated frequently.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Fri, 30 Dec 2022 12:57:40 -0800

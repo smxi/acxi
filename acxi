@@ -770,6 +770,7 @@ sub get_tag_files {
 }
 sub process_tags {
 	my @tags = main::reader($TAG_FILE,'strip');
+	say Data::Dumper::Dumper \@tags;
 	my ($args,$error_message,@image_args,@images,@main_tags,
 	@track_tags,@working);
 	my ($b_image_check,$b_tracks);
@@ -783,7 +784,7 @@ sub process_tags {
 		# $working[1] =~ s/"/\\\"/g;
 		# $working[1] =~ s/\$/\\\$/g;
 		$working[1] = main::escape_item("$working[1]");
-		if ($working[0] =~ /^(TITLE|TRACKNUMBER|VERSION|PART)$/){
+		if ($working[0] =~ /^(PART|SUBTITLE|TITLE|TRACKNUMBER|VERSION)$/){
 			$tag = qq(--set-tag=$working[0]="$working[1]" );
 			push(@track_tags,$tag);
 		}
@@ -973,14 +974,18 @@ sub prefill_data {
 	my $data = InfoFix::open_info_file('prefill');
 	my $counter = 0;
 	# we only want values where something exists, found french syntax, other 
-		# languages will be added if people want them.
-	my $fields = 'Album|Album[\s_-]?Artist|Album[\s_-]?Sort|Artiste?s?|';
-	$fields .= 'Artist\s*\/\s*Band|Band|';
-	$fields .= 'CDDB|CDDB[\s_-]?ID|City|Club|Composer|Country|Cover|Date|';
-	$fields .= 'Etree|Etree[\s_-]?ID|Event|Festival|Genre|Image|ISRC|ISRC[\s_-]?ID|';
-	$fields .= 'Event|Location|Media|Mastered[\s_-]?by|Masterer|Mixed[\s_-]?by|Mixer|';
-	$fields .= 'Lieu|Producer|Recorded[\s_-]?by|Remixed[\s_-]?by|Remixer|SHNID|';
-	$fields .= 'Source[\s_-]?Media|State|Taper|Taped[\s_-]?by|Type|Venue|Ville|Year';
+	# languages will be added if people want them.
+	my $fields = join('|',qw(Album Album[\s_-]?Artist Album[\s_-]?Sort Artiste?s? 
+	Artist\s*\/\s*Band Band CDDB CDDB[\s_-]?ID City Club 
+	Composer Composed[\s_-]?by Conducted[\s_-]?by Conductor Country Cover Date 
+	Ensemble Etree Etree[\s_-]?ID Event Festival Genre 
+	Image ISRC ISRC[\s_-]?ID Lieu Location 
+	Media Mastered[\s_-]?by Masterer Mixed[\s_-]?by Mixer 
+	Opus Orquestr?a Producer 
+	Recorded[\s_-]?by Remastered[\s_-]?by Remasterer Remixed[\s_-]?by Remixer 
+	SHNID Source[\s_-]?Media State Symphony Taper Taped[\s_-]?by Type
+	Venue Ville Year)
+	);
 	foreach my $line (@$data){
 		$line = main::trimmer($line);
 		$counter++;
@@ -1015,11 +1020,7 @@ sub prefill_data {
 			}
 		}
 		if ($b_fields && $field_name){
-			# this should always be first in info file
-			if ($field_name =~ /^(Artiste?s?|(Artiste?s?\s*\/\s*)?Band)$/i){
-				$info->{'artist'} = $field_value;
-			}
-			elsif ($field_name =~ /^(Album)$/i){
+			if ($field_name =~ /^(Album)$/i){
 				$info->{'album'} = $field_value;
 			}
 			elsif ($field_name =~ /^(Album[\s_-]?Artist)$/i){
@@ -1028,8 +1029,39 @@ sub prefill_data {
 			elsif ($field_name =~ /^(Album[\s_-]?Sort)$/i){
 				$info->{'albumsort'} = $field_value;
 			}
+			elsif ($field_name =~ /^(Artiste?s?|(Artiste?s?\s*\/\s*)?Band)$/i){
+				$info->{'artist'} = $field_value;
+			}
 			elsif ($field_name =~ /^(CDDB([\s_-]?ID)?)$/i){
 				$info->{'cddb'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Compos(er|ed[\s_-]?by))$/i){
+				$info->{'composer'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Conduct(ed[\s_-]?by|or))$/i){
+				$info->{'conductor'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Date)$/i &&
+			$field_value =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
+				$info->{'date-print'} = $1;
+				$info->{'date-print'} .= $4 if $4;
+				$info->{'date'} = $1;
+				$info->{'year'} = $2;
+			}
+			elsif ($field_name =~ /^(Ensemble|Orquestr?a|Symphony)$/i){
+				$info->{'ensemble'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Etree([\s_-]?db))?$/i){
+				$info->{'etree'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Genre)$/i){
+				$info->{'genre'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Cover|Image)$/i){
+				$info->{'image'} = $field_value;
+			}
+			elsif ($field_name =~ /^(ISRC([\s_-]?ID)?)$/i){
+				$info->{'isrc'} = $field_value;
 			}
 			elsif ($field_name =~ /^(City|Country|Location|State|Ville)$/i){
 				if ($info->{'location'}){
@@ -1040,34 +1072,6 @@ sub prefill_data {
 				else {
 					$info->{'location'} = $field_value;
 				}
-			}
-			elsif ($field_name =~ /^(Club|Event|Festival|Lieu|Venue)$/i){
-				$info->{'venue'} = $field_value;
-			}
-			elsif ($field_name =~ /^(Composer)$/i){
-				$info->{'composer'} = $field_value;
-			}
-			elsif ($field_name =~ /^(Cover|Image)$/i){
-				$info->{'image'} = $field_value;
-			}
-			elsif ($field_name =~ /^(Date)$/i &&
-			$field_value =~ /^(((19|20)[0-9]{2})-[01][0-9]-[0-3][0-9])(.*)?/){
-				$info->{'date-print'} = $1;
-				$info->{'date-print'} .= $4 if $4;
-				$info->{'date'} = $1;
-				$info->{'year'} = $2;
-			}
-			elsif ($field_name =~ /^(Etree([\s_-]?db))?$/i){
-				$info->{'etree'} = $field_value;
-			}
-			elsif ($field_name =~ /^(Genre)$/i){
-				$info->{'genre'} = $field_value;
-			}
-			elsif ($field_name =~ /^(ISRC([\s_-]?ID)?)$/i){
-				$info->{'isrc'} = $field_value;
-			}
-			elsif ($field_name =~ /^((Source[\s_-]?)?Media)$/i){
-				$info->{'sourcemedia'} = $field_value;
 			}
 			elsif ($field_name =~ /^((Master|Mix)(er|ed[\s_-]?by))$/i){
 				$info->{'mixer'} = $field_value;
@@ -1081,8 +1085,14 @@ sub prefill_data {
 			elsif ($field_name =~ /^(SHNID)$/i){
 				$info->{'shnid'} = $field_value;
 			}
+			elsif ($field_name =~ /^((Source[\s_-]?)?Media)$/i){
+				$info->{'sourcemedia'} = $field_value;
+			}
 			elsif ($field_name =~ /^(Type)$/i){
 				$info->{'type'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Club|Event|Festival|Lieu|Venue)$/i){
+				$info->{'venue'} = $field_value;
 			}
 			elsif ($field_name =~ /^(Year)$/i){
 				$info->{'year'} = $field_value;
@@ -1120,7 +1130,7 @@ sub prefill_data {
 			}
 		}
 	}
-	# say Data::Dumper::Dumper $info;
+	 say Data::Dumper::Dumper $info;
 	return $info;
 }
 sub populate_tag_file {
@@ -1135,7 +1145,8 @@ sub populate_tag_file {
 	'## RECORDING NAME/CREATORS ##',
 	'ALBUM','# Name to sort under','ALBUMSORT',
 	'ARTIST','# Multi-Artist only','ALBUMARTIST',
-	'COMPOSER','# Classical fields','CONDUCTOR','OPUS',
+	'# Symphony, Orquestra. Usually group playing non-original music.','ENSEMBLE',
+	'# Generally classical fields','COMPOSER','CONDUCTOR','OPUS',
 	'# Band members, etc.', 'PERFORMER','PERFORMER','PERFORMER','PERFORMER',,
 	'PERFORMER','PERFORMER','PERFORMER','PERFORMER','PERFORMER','PERFORMER',
 	'## RECORDING COMMENTS. Note: COMMENT preferred over DESCRIPTION ##',
@@ -1151,9 +1162,11 @@ sub populate_tag_file {
 	'## RECORDING INFO ##',
 	# note: VENUE and LABEL better handled by xiph spec: LOCATION and ORGANIZATION
 	# Include YEAR to make conversion to mp3 tagging cleaner
-	'GENRE','RATING','DATE','YEAR','LOCATION','VENUE','MIXER','REMIXER',
-	'PRODUCER','PUBLISHER',
-	'# e.g. record label, taper group,, etc. ','ORGANIZATION',
+	'GENRE','RATING',
+	'# Use ISO format: YYYY-MM-DD','DATE','# YYYY','YEAR','LOCATION','VENUE',
+	'MIXER','REMIXER',
+	'# Person responsible, either taper, funder, etc.','PRODUCER','PUBLISHER',
+	'# e.g. record label, taper group.','ORGANIZATION',
 	'# Database type IDs', 'CDDB','ETREE','ISRC','SHNID',
 	'## TECHNICAL INFORMATION ##',
 	'ENCODING',
@@ -1174,9 +1187,10 @@ sub populate_tag_file {
 	my @track = ('','TRACKNUMBER','TITLE','VERSION','PART','FILE');
 	splice(@track, 1, 0, 'ARTIST') if $run{'multiartist'};
 	@collection = map {$_ .= '%:' if /^[A-Z]/; $_;} @collection;
-	my @prefills = ('ALBUMSORT','ARTIST','CDDB','COMPOSER','DATE','ETREE','GENRE',
-	'IMAGE','ISRC','LOCATION','MIXER','PRODUCER','REMIXER','SHNID','SOURCEMEDIA',
-	'VENUE','YEAR');
+	# ALBUM, ALBUMARTIST, TYPE handled explicitly below
+	my @prefills = qw(ALBUMSORT ARTIST CDDB COMPOSER CONDUCTOR DATE ENSEMBLE 
+	ETREE GENRE IMAGE ISRC LOCATION MIXER OPUS PRODUCER REMIXER SHNID SOURCEMEDIA 
+	VENUE YEAR);
 	@prefills = map {$_ .= '%:'; $_;} @prefills;
 	if ($info && %$info && @collection){
 		my @working;
@@ -1319,9 +1333,11 @@ sub populate_tag_file {
 				$b_first = 0;
 			}
 		}
+		# the track number
 		if ($run{'autotag-single'} || $run{'autotag-multi'}){
 			$track_working[$k+1] = $track[$k+1] . $counter;
 		}
+		# the file name
 		$track_working[$k+5] = $track[$k+5] . $_;
 		if (@info_working){
 			my $title = shift(@info_working);
@@ -1335,14 +1351,14 @@ sub populate_tag_file {
 					'split pattern \'' . $ma_split . '\' not found in: ' . $title,1);
 				}
 				($one,$two) = ($run{'multiartist'}->[0] eq 'at') ? ($one,$two):($two,$one);
-				$track_working[$k+0] = $track[$k+0] . $one;
-				$track_working[$k+2] = $track[$k+2] . $two;
+				$track_working[$k+0] = $track[$k+0] . $one; # ARTIST%:[band]
+				$track_working[$k+2] = $track[$k+2] . $two; # TITLE%: [title]
 			}
 		}
 		if (!$run{'no-replaygain'}){
 			@replaygain = get_replaygain(main::escape_item("$_"));
 			# we want the replaygain data right before FILE
-			splice (@track_working, 5, 0, @replaygain) if @replaygain;
+			splice (@track_working, 6, 0, @replaygain) if @replaygain;
 		}
 		push(@tags,@track_working);
 		# this allows for 0 track numbers
@@ -2784,7 +2800,9 @@ sub flac2mp3_cmd {
 	'COMPOSER' => '--tv "TCOM=',
 	'CONDUCTOR' => '--tv "TPE3=',
 	'COPYRIGHT' => '--tv "TCOP=',
-	'DATE' => '--tv "TXXX:DATE=', # this is id3v2.4 syntax
+	# DATE: mp2tag.de: : v2.3: TDAT; v2.4: TXXX:DATE
+	# hydrogenaudio: v2.2: TYE+TDA(+TIM) v2.3: TYER+TDAT(+TIME[22]) v2.4: TDRC 
+	# 'DATE' => '--tv "TXXX:DATE=', # this is id3v2.4 syntax
 	'DESCRIPTION' => '--tv "TIT3=',
 	'DISCSUBTITLE' => '--tv "TSST=',
 	'GENRE' => '--tg "',
@@ -2806,7 +2824,6 @@ sub flac2mp3_cmd {
 			$lame_params .= ' ' . $mp3_tags{$key} . $tags->{$key} . '"'; 
 		}
 	}
-	# note: id3v2.3: DATE: TDAT; id3v2.4: DATE: TXXX:DATE 
 	# We will construct the YEAR if no YEAR and YYYY found in DATE.
 	if (!$tags->{'YEAR'} && $tags->{'DATE'} && 
 	$tags->{'DATE'} =~ /\b((1[6-9]|20)\d{2})\b/){
@@ -2838,7 +2855,7 @@ sub get_flac_tags {
 	my ($type,$i_file) = @_;
 	my (%tag_list,@tags,@working);
 	if ($type eq 'standard'){
-		# note: no venue, location,producer tags in standard mp3
+		# note: no opus, venue, location, producer tags in standard mp3
 		@tags = qw(ALBUM ALBUMARTIST ARTIST ARTISTSORT 
 		COMMENT COMPILATION COMPOSER CONDUCTOR COPYRIGHT
 		DATE DESCRIPTION DISKNUMBER DISCSUBTITLE DISKTOTAL 
