@@ -7,11 +7,15 @@ RELEASE NOTES:
 --------------------------------------------------------------------------------
 
 Big MP3 tag update, added tags that are same in id3v2.3 and id3v2.4 and have 
-FLAC equivalents.
+FLAC equivalents. Used this as an excuse to also review and add some Vorbis tags
+that make sense for acxi to include in auto.tag and tagging/prefill features.
 
 --------------------------------------------------------------------------------
 SPECIAL THANKS:
 
+1. Once again, to the people who helped make free / libre audio possible, and in
+particular, the people who worked so hard for so long at xiph.org to provide the
+world with the codecs and tools we now use to listen to and work on audio.
 
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
@@ -27,12 +31,16 @@ https://docs.mp3tag.de/mapping/
 https://docs.mp3tag.de/mapping-table/
 
 2. SUBTITLE FLAC tag is super specific, and should be avoided.
-SUBTITLE: This field is intended for use with FLAC, in order to connect specific 
-titles with an embedded cue sheet. A single file can effectively contain 
-multiple works, indexed by TRACK and INDEX in the case of cue sheets, and they 
-can be specified using subscripts like “SUBTITLE[TRACK 3]” or “SUBTITLE[TRACK 
-7:INDEX 2]”. This should only be used for the case of multiple works in the same 
-file and not for cases where a single work has multiple titles.
+https://web.archive.org/web/20120429102447/http://reallylongword.org/\
+vorbiscomment/
+
+"SUBTITLE: This field is intended for use with FLAC, in order to connect 
+specific titles with an embedded cue sheet. A single file can effectively 
+contain multiple works, indexed by TRACK and INDEX in the case of cue sheets, 
+and they can be specified using subscripts like “SUBTITLE[TRACK 3]” or 
+“SUBTITLE[TRACK 7:INDEX 2]”. This should only be used for the case of multiple 
+works in the same file and not for cases where a single work has multiple 
+titles."
 
 --------------------------------------------------------------------------------
 BUGS:
@@ -41,20 +49,28 @@ BUGS:
 --------------------------------------------------------------------------------
 FIXES:
 
-1. For mp3 tagging, was using DATE, didn't check for YEAR, but mp3 is very likely
-to fail if you put a date in that value. Now checks for YEAR first, and falls
-back to DATE. Note that DATE is supported somewhat, but syntax differs between:
+1. For mp3 tagging, was using DATE, didn't check for YEAR, but mp3 is very 
+likely to fail if you put a date in that value. Now checks for YEAR first, and 
+falls back to using year (YYYY) extracted from DATE. 
 
-DATE: id3v2.3: TDAT; id3v2.4: TXXX:DATE 
+Note that DATE is supported somewhat, but syntax differs between:
 
-and I don't want to get into detecting idv2 subversion, this is a messy non-free 
-codec and it shows by how poorly they did tagging version to version. Using:
-TXXX:DATE and if that works, it works, if not, whatever.
+DATE: 
+Vorbis: DATE id3v2.3: TDAT; id3v2.4: TXXX:DATE 
+or
+RECORDING DATE: 
+Vorbis: DATE: id3v2.2: TYE+TDA(+TIM) id3v2.3: TYER+TDAT(+TIME[22]) id3v2.4: TDRC 
 
-Also tries to extract YYYY out of DATE if no YEAR.
+Docs don't agree, so not using DATE in mp3 except to extract year. Note that 
+--ty handles the year so we don't need to worry about what the literal syntax 
+is.
+
+I don't want to get into detecting idv2 subversion, this is a messy non-free 
+codec and it shows by how poorly they did tagging version to version, as well as 
+how focused on corporate interests their efforts were. 
 
 2. Some of the prefill field names didn't fully match the listed possible 
-values. Also made all 2 word type field names support space, -, or no space.
+values. Also made all 2 word type field names support space, -, _, or no space.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
@@ -68,17 +84,20 @@ COPYRIGHT DATE DESCRIPTION DISKNUMBER DISCSUBTITLE DISKTOTAL GENRE ISRC LABEL
 MEDIA MOOD MOVEMENTNAME PUBLISHER REMIXER SOURCEMEDIA SUBTITLE TITLE TRACKNUMBER 
 TRACKTOTAL YEAR
 		
-Note that because id3v2.x either doesn't have comparable LOCATION, PERFORMER, 
-PRODUCER, VENUE tags, or v2.3 name is different from v2.4, those tags are not 
-supported.
+Note that because id3v2.x either doesn't have comparable DATE, LOCATION, OPUS, 
+PERFORMER, PRODUCER, VENUE tags, or v2.3 name is different from v2.4, those tags 
+are not supported.
 
-2. To auto.tag generator, added MIXER, REMIXER, and variants for prefill, like:
-MIXER: Mixed by, Mixer, Mastered by, Masterer
+2. To auto.tag generator, added CONDUCTOR, MIXER, REMIXER, and variants for 
+prefill, like:
+
+CONDUCTOR: Conductor, Conducted by.
+MIXER: Mixed by, Mixer, Mastered by, Masterer.
 REMIXER: Remixer, remixed by, remasterer, remastered by.
 
-3. Added SUBTITLE tag to list of supported tags, but not to auto.tag because 
-it's made for very specific purposes and is unlikely to be used correctly. See 
-Known Issues 2.
+3. Added SUBTITLE tag to list of supported tags for tagging, but not to auto.tag 
+because it's made for very specific purposes and is unlikely to be used 
+correctly. See Known Issues 2.
 
 --------------------------------------------------------------------------------
 CHANGES:
