@@ -102,6 +102,9 @@ REMIXER: Remixer, remixed by, remasterer, remastered by.
 because it's made for very specific purposes and is unlikely to be used 
 correctly. See Known Issues 2.
 
+4. New feature: --info-create/--ic: creates info.txt files if non exist from 
+FLAC tag data.
+
 --------------------------------------------------------------------------------
 CHANGES:
 

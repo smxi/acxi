@@ -337,6 +337,7 @@ sub main {
 	AutoTag::create() if $run{'autotag-create'};
 	AutoTag::run_tagger() if $run{'autotag'};
 	Checksums::process() if ($run{'checksum'} || $run{'checksum-verify'});
+	InfoCreate::process() if $run{'info-create'};
 	CleanCollection::process() if $run{'clean'};
 	InfoFix::process() if $run{'infofix'};
 	SyncCollection::process() if $run{'sync'};
@@ -2019,8 +2020,202 @@ sub confirm_deletion {
 ## InfoCreate
 {
 package InfoCreate;
+my ($file_tags,$print_src);
 sub process {
-
+	say $line_large;
+	say "Starting info file checks in: " . main::sourcer("$SOURCE_DIRECTORY");
+	process_directories();
+	say $line_small;
+	say "Completed info file generation.";
+	say $line_large;
+}
+sub process_directories {
+	my ($result);
+	$list_type = 'dir';
+	say $line_small;
+	say "Checking directories...";
+	@found_list = ();
+	chdir "$start_dir";
+	File::Find::find(\&main::wanted, @source_glob);
+	say 'start dir: ', $start_dir if $dbg[3];
+	my $file_type = lc($INPUT_TYPE) . ',' . uc($INPUT_TYPE) . ',';
+	$file_type .= ucfirst(lc($INPUT_TYPE)); # flac,FLAC,Flac
+	foreach my $item (sort { "\L$a" cmp "\L$b" } @found_list){
+		my $b_valid;
+		$print_src = $item;
+		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
+		chdir "$start_dir";
+		chdir "$item";
+		if ($dbg[3]){
+			say 'srcdir: ', $SOURCE_DIRECTORY;
+			say 'item: ', $item;
+			say 'cwd: ', Cwd::getcwd();
+			system 'pwd';
+		}
+		say " Processing: $print_src";
+		my @files = main::globber("*.{$file_type}");
+		# say "\n", Data::Dumper::Dumper \@files;
+		if (grep -f, @files){
+			if (!-e $INFO_FILE){
+				say "  No $INFO_FILE file found. Processing $INPUT_TYPE files....";
+				process_tags(\@files);
+				if ($file_tags && %$file_tags){
+					generate_info_file();
+				}
+				else {
+					say "  No tag data found in $INPUT_TYPE files.";
+				}
+			}
+			else {
+				say "  $INFO_FILE file present. Skipping this directory.";
+			}
+		}
+		else {
+			say "  No $INPUT_TYPE files";
+		}
+	}
+}
+sub process_tags {
+	my ($files) = @_;
+	my ($b_tags);
+	foreach my $file (@$files){
+		$file_tags->{$file} = main::get_flac_tags('all',$file);
+		$b_tags = 1 if !$b_tags && %{$file_tags->{$file}};
+	}
+	say Data::Dumper::Dumper $file_tags if $dbg[4];
+}
+# note: in order to handle > 1 type per tag name, all are contained in arrays.
+sub generate_info_file {
+	my (@comments,@info,@lyrics,@main,@performers,@rating,@tracks);
+	my (%found,%multi,%track_data);
+	say "   Generating $INFO_FILE data...";
+	# $multi{'album'} = check_multi('ALBUM');
+	$multi{'artist'} = check_multi('ARTIST');
+	# $multi{'date'} = check_multi('DATE');
+	$multi{'performer'} = check_multi('PERFORMER');
+	$multi{'rating'} = check_multi('RATING');
+	# $multi{'year'} = check_multi('YEAR');
+	# This is the order we want the basic data in:
+	my @main_checks = qw(ARTIST ALBUM ALBUMSORT COMPILATION ALBUMARTIST ENSEMBLE 
+	COMPOSER CONDUCTOR OPUS DATE ORIGINALDATE YEAR VENUE LOCATION);
+	my @comments_checks = qw(COMMENTS DESCRIPTION);
+	my @info_checks = qw(GENRE MOOD BPM MEASURE INITIAL_KEY TUNING
+	ORGANIZATION PRODUCER PUBLISHER MIXER REMIXER 
+	URL WEBSITE CHAPTER COPYRIGHT LICENSE CONTACT
+	BARCODE EAN/UPN UPC PRODUCTNUMBER CATALOGNUMBER LABELNO CATALOG
+	ISRC ETREE SHNID ACOUSTIC_ID ACOUSTID_FINGERPRINT ACCURATERIPDISCID CDTOC
+	ENCODED-BY ENCODER ENCODING MEDIA SOURCEMEDIA SOURCE);
+	splice(@info_checks,2,0,'RATING') if !$multi{'rating'};
+	foreach my  $file (sort keys %$file_tags){
+		my ($track) = ('');
+		foreach my $check (@main_checks){
+			my ($lc,$ucf) = (lc($check),ucfirst(lc($check)));
+			if (!$found{$lc} && ($check ne 'ARTIST' || !$multi{'artist'}) && 
+			$file_tags->{$file}{$check}){
+				push(@main,"$ucf: " . join("\n$ucf: ", @{$file_tags->{$file}{$check}}));
+				$found{$lc} = 1;
+			}
+		}
+		foreach my $check (@comments_checks){
+			my ($lc,$ucf) = (lc($check),ucfirst(lc($check)));
+			if (!$found{$lc} && $file_tags->{$file}{$check}){
+				push(@comments,'',"$ucf:",@{$file_tags->{$file}{$check}});
+				$found{$lc} = 1;
+			}
+		}
+		foreach my $check (@info_checks){
+			my ($lc,$ucf) = (lc($check),ucfirst(lc($check)));
+			if (!$found{$lc} && $file_tags->{$file}{$check}){
+				push(@info,"$ucf: " . join("\n$ucf: ", @{$file_tags->{$file}{$check}}));
+				$found{$lc} = 1;
+			}
+		}
+		if ($file_tags->{$file}{'DISCNUMBER'}[0] && 
+		($file_tags->{$file}{'DISCTOTAL'}[0] && $file_tags->{$file}{'DISCTOTAL'}[0] > 1)){
+			$track = $file_tags->{$file}{'DISCNUMBER'}[0] . '-';
+		}
+		if ($file_tags->{$file}{'TRACKNUMBER'}[0]){
+			$track .= sprintf('%02d',$file_tags->{$file}{'TRACKNUMBER'}[0]) . '. '; 
+		}
+		if ($file_tags->{$file}{'TITLE'}[0]){
+			if ($multi{'artist'} && $file_tags->{$file}{'ARTIST'}[0]){
+				$track .= $file_tags->{$file}{'ARTIST'}[0] . ' - '; 
+			}
+			$track .= $file_tags->{$file}{'TITLE'}[0]; 
+			if ($file_tags->{$file}{'VERSION'}[0]){
+				$track .= ' (' . $file_tags->{$file}{'VERSION'}[0] . ')';
+			}
+			if ($file_tags->{$file}{'PART'}[0]){
+				$track .= ' (' . $file_tags->{$file}{'PART'}[0] . ')';
+			}
+		}
+		# these are probably going to be per file/track
+		if ($track){
+			$track_data{$file}->{'string'} = $track;
+			if ($multi{'performer'} && $file_tags->{$file}{'PERFORMER'} && 
+			join('',@{$file_tags->{$file}{'PERFORMER'}}) ne join('',@performers)){
+				$track_data{$file}->{'performers'} = "Performers:\n";
+				$track_data{$file}->{'performers'} .= join("\n",@{$file_tags->{$file}{'PERFORMER'}});
+				$track_data{$file}->{'performers'} .= "\n";
+				@performers = @{$file_tags->{$file}{'PERFORMER'}};
+			}
+			if ($file_tags->{$file}{'LYRICS'}){
+				push(@lyrics,$track,join("\n",@{$file_tags->{$file}{'LYRICS'}}),'');
+			}
+			if ($multi{'rating'} && $file_tags->{$file}{'RATING'}){
+				push(@rating,$track,join("\n",@{$file_tags->{$file}{'RATING'}}),'');
+			}
+		}
+		# these will be array already, but each track can have different performers
+		if (!$multi{'performer'} && !$found{'performer'} && 
+		$file_tags->{$file}{'PERFORMER'}){
+			@performers = @{$file_tags->{$file}{'PERFORMER'}};
+			$found{'performer'} = 1;
+		}
+	}
+	@performers = () if $multi{'performer'};
+	say Data::Dumper::Dumper \%track_data if $dbg[7];
+	if (%track_data){
+		my $b_starter;
+		foreach my $track (sort keys %track_data){
+			if ($track_data{$track}->{'performers'}){
+				push(@tracks,'',$track_data{$track}->{'performers'});
+			}
+			# we want Tracks: to come AFTER first performers list if multiperf.
+			if (!$b_starter){
+				push(@tracks,'','Tracks:');
+				$b_starter = 1;
+			}
+			push(@tracks,$track_data{$track}->{'string'});
+		}
+		push(@tracks,'',':et:');
+	}
+	if (!$multi{'performer'} && @performers){
+		@performers = ('','Performers:',@performers);
+	}
+	if (@info){
+		@info = ('','Info:',@info);
+	}
+	if (@lyrics){
+		@lyrics = ('','Lyrics:',@lyrics);
+	}
+	if (@rating){
+		@rating = ('','Ratings:',@rating);
+	}
+	my @info_data = (@main,@performers,@tracks,@comments,@info,@rating,@lyrics);
+	say Data::Dumper::Dumper \@info_data if $dbg[5];
+}
+sub check_multi {
+	my ($type) = @_;
+	my ($b_multi,%multi);
+	foreach my $key (sort keys %$file_tags){
+		if ($file_tags->{$key}{$type}){
+			$multi{join(';',@{$file_tags->{$key}{$type}})} = 1;
+		}
+	}
+	$b_multi = 1 if scalar keys %multi > 1;
+	say Data::Dumper::Dumper \%multi if $dbg[6];
+	return $b_multi;
 }
 }
 
@@ -3402,7 +3597,7 @@ sub check_application_paths {
 				if (! -x "$COMMAND_MD5"){
 					$b_error = 1;
 					$error_message .= "\n $COMMAND_MD5 not found. Required to generate ";
-					$error_message .= "md5 checksum files.";
+					$error_message .= "md5 checksum files (-D,-K,-V).";
 				}
 			}
 			if ($run{'checksum'} && !$run{'no-ffp'}){
@@ -3413,7 +3608,7 @@ sub check_application_paths {
 				if (! -x "$COMMAND_METAFLAC"){
 					$b_error = 1;
 					$error_message .= "\n $COMMAND_METAFLAC not found. Required to generate ";
-					$error_message .= "ffp checksum files.";
+					$error_message .= "ffp checksum files (-D,-K).";
 				}
 			}
 			if (($run{'checksum-verify'} || $run{'infofix-verify'}) && 
@@ -3424,19 +3619,19 @@ sub check_application_paths {
 				if (! -x "$COMMAND_FLAC"){
 					$b_error = 1;
 					$error_message .= "\n $COMMAND_FLAC not found. Required to verify ";
-					$error_message .= "$INPUT_TYPE files.";
+					$error_message .= "$INPUT_TYPE files (-V,-Xv).";
 				}
 			}
 		}
-		if ($run{'autotag'}){
+		if ($run{'autotag'} || $run{'info-create'}){
 			if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
 				push(@app_paths,$COMMAND_METAFLAC);
 			}
 			# Added: Odd @2011-03-23 01:55:28
 			if (! -x "$COMMAND_METAFLAC"){
 				$b_error = 1;
-				$error_message .= "\n $COMMAND_METAFLAC not found. Required auto-tag ";
-				$error_message .= "operations.";
+				$error_message .= "\n $COMMAND_METAFLAC not found. Required for -A, ";
+				$error_message .= "--info-create.";
 			}
 		}
 		if ($run{'prefill'} && $PREFILL_TAG){
@@ -3455,7 +3650,7 @@ sub check_application_paths {
 				if (! -x "$COMMAND_METAFLAC"){
 					$b_error = 1;
 					$error_message .= "\n $COMMAND_METAFLAC not found. Required for ";
-					$error_message .= "analyzing $INPUT_TYPE files.";
+					$error_message .= "analyzing $INPUT_TYPE files (-Z/-Xq).";
 				}
 			}
 			else {
@@ -3466,7 +3661,7 @@ sub check_application_paths {
 				if (! -x "$COMMAND_FFPROBE"){
 					$b_error = 1;
 					$error_message .= "\n $COMMAND_FFPROBE not found. Required for ";
-					$error_message .= "analyzing $INPUT_TYPE files.";
+					$error_message .= "analyzing $INPUT_TYPE files (-Z).";
 				}
 			}
 		}
@@ -3477,7 +3672,7 @@ sub check_application_paths {
 			if (!main::check_module('Text::Autoformat')){
 				$b_error = 1;
 				$error_message .= "\n Perl module Text::Autoformat not found. Required ";
-				$error_message .= "for -Xt / -Xu.";
+				$error_message .= "for -Xt/-Xu.";
 			}
 			else {
 				import Text::Autoformat;
@@ -3609,11 +3804,12 @@ sub check_in_out_types {
 		$error_message .= "$INPUT_TYPE";
 	}
 	if ((!$run{'analyze'} && (!$run{'infofix-quality'} || $run{'infofix-verify'})) && 
-	($run{'checksum'} || $run{'checksum-verify'} || $run{'autotag'} || 
-	$run{'infofix-verify'} || $run{'resample'}) && $INPUT_TYPE !~ m/^(flac)$/i){
+	($run{'autotag'} || $run{'checksum'} || $run{'checksum-verify'} || 
+	$run{'info-create'} || $run{'infofix-verify'} || $run{'resample'}) && 
+	$INPUT_TYPE !~ m/^(flac)$/i){
 		$b_error = 1;
 		$error_message .= "\n The input type you entered is not supported for the ";
-		$error_message .= "\n checksum/resample/tagging operation you are requesting: ";
+		$error_message .= "\n checksum/info/resample/tagging operation you are requesting: ";
 		$error_message .= "$INPUT_TYPE";
 	}
 	# 	if (($run{'analyze'} || $run{'info-quality'}) && 
@@ -4013,7 +4209,8 @@ sub show_options {
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
 	$output .= "--info-file, --if, --prefill-file, --pf {file name}\n";
-	$output .= "                  Alternate file name to use for --prefill or --infofix.\n";
+	$output .= "                  Alternate file name to use for --prefill, --info-create,\n";
+	$output .= "                  --infofix.\n";
 	$output .= "--infofix, -X [0acdklmnqtuvw]\n";
 	$output .= "                  Fix info.txt files. Use any combination. Always corrects white\n";
 	$output .= "                  space.\n";
@@ -4625,7 +4822,10 @@ sub get{
 		$run{'clean'} = 0;
 		$run{'checksum'} = 0;
 		$run{'checksum-verify'} = 0;
-		$run{'info-create'} = 0;
+		$run{'info-create'} = 1;
+		$OUTPUT_TYPE = 'UNSET';
+		$b_check_dest = 0;
+		$b_check_out = 0;
 		$test{'info'} = 1;
 		$test{'info-create'} = 1;
 	},
@@ -4955,7 +5155,7 @@ sub verify_selections {
 	# prefill options require tag-create options
 	if (($test{'prefill'} || $test{'prefill-tag'}) && !$test{'autotag-create'}){
 		main::error_handler('invalid-options', 
-		 "prefill options require tag-create options (-C,-M,-S).",1);
+		 "prefill options require tag-create options (-M,-S).",1);
 	}
 	if ($test{'multiartist'} && !$test{'prefill'}){
 		main::error_handler('invalid-options', 
