@@ -2209,7 +2209,7 @@ sub check_multi {
 	my ($type) = @_;
 	my ($b_multi,%multi);
 	foreach my $key (sort keys %$file_tags){
-		if ($file_tags->{$key}{$type}){
+		if (defined $file_tags->{$key}{$type}){
 			$multi{join(';',@{$file_tags->{$key}{$type}})} = 1;
 		}
 	}
