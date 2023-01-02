@@ -3,7 +3,7 @@
 # acxi - audio conversion program
 #########################################################################
 
-# Copyright (c) 2010-2022 - Harald Hope - smxi.org 
+# Copyright (c) 2010-2023 - Harald Hope - smxi.org 
 # Home page: https://github.com/smxi/acxi
 # Forum support: https://techpatterns.com/forums/about1491.html
 # Download url: https://smxi.org/acxi
@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_date='2022-12-30';
+my $self_date='2023-01-01';
 
 ## GLOBALS ##
 ## Booleans
@@ -101,8 +101,8 @@ my ($padding,$recurse,$start) = ('',-1,1);
 ## Data Storage Arrays
 my (@excludes,@excludes_stripped,@extension_list,@found_list,@source_glob,@tags);
 
-## Execution Switches Hash
-my %run;
+## Execution/Debug Switches
+my (@dbg,%run);
 $run{'sync'} = 1; # set default to sync collection
 
 ## CONSTANTS ##
@@ -770,7 +770,7 @@ sub get_tag_files {
 }
 sub process_tags {
 	my @tags = main::reader($TAG_FILE,'strip');
-	say Data::Dumper::Dumper \@tags;
+	say Data::Dumper::Dumper \@tags if $dbg[2];
 	my ($args,$error_message,@image_args,@images,@main_tags,
 	@track_tags,@working);
 	my ($b_image_check,$b_tracks);
@@ -2016,6 +2016,14 @@ sub confirm_deletion {
 #### INFO FILE PROCESSING
 #### -------------------------------------------------------------------
 
+## InfoCreate
+{
+package InfoCreate;
+sub process {
+
+}
+}
+
 ## InfoFix
 {
 package InfoFix;
@@ -2846,7 +2854,7 @@ sub flac2mp3_cmd {
 	# say $cmd;
 	return $cmd;
 }
-# args: $type: standard|replaygain; $i_file: file to work on
+# args: $type: all|standard|replaygain; $i_file: file to work on
 # Added: Odd @2011-03-23 01:52:17
 # Updated routinely afterwards.
 # For this function to work reliably, it should be passed tag queries in the order of:
@@ -2866,21 +2874,34 @@ sub get_flac_tags {
 		@tags = qw(REPLAYGAIN_TRACK_PEAK REPLAYGAIN_TRACK_GAIN REPLAYGAIN_ALBUM_PEAK 
 		REPLAYGAIN_ALBUM_GAIN WAVEFORMATEXTENSIBLE_CHANNEL_MASK);
 	}
-	my $cmd = "$COMMAND_METAFLAC \"$i_file\" ";
-	foreach (@tags){
-		$cmd .= "--show-tag=\"$_\" ";
+	my $cmd = "$COMMAND_METAFLAC --no-utf8-convert \"$i_file\" ";
+	if ($type ne 'all'){
+		foreach (@tags){
+			$cmd .= "--show-tag=\"$_\" ";
+		}
+	}
+	else {
+		 $cmd .= "--export-tags-to=- ";
 	}
 	my @orig_tags = qx($cmd);
 	chomp @orig_tags;
 	foreach (@orig_tags){
 		@working = split /=/,$_;
-		$tag_list{$working[0]} = $working[1];
+		if ($type ne 'all'){
+			$tag_list{$working[0]} = $working[1];
+		}
+		# while most tags occur single, easier to just treat them all as possible multi
+		else {
+			push(@{$tag_list{uc($working[0])}},$working[1]);
+		}
 	}
-	# create missing hash keys
-	foreach (@tags){
-		$tag_list{$_} = '' if !defined $tag_list{$_};
+	if ($type ne 'all'){
+		# create missing hash keys
+		foreach (@tags){
+			$tag_list{$_} = '' if !defined $tag_list{$_};
+		}
 	}
-	# say Dumper \%tag_list;
+	say Dumper \%tag_list if $dbg[1];
 	return \%tag_list;
 }
 
@@ -4091,7 +4112,8 @@ sub show_options {
 	$output .= "--version         Show $self_name version.\n";
 	$output .= $line_small . "\n";
 	$output .= "Debug/Output control options:\n";
-	$output .= "--debug           Trigger advanced output debugging data.\n";
+	$output .= "--dbg             {1-xx}[,xx] Trigger advanced output debugging data. See man.\n";
+	$output .= "--debug           Trigger global debugging data.\n";
 	$output .= "--dry, --dry-run, --test\n";
 	$output .= "                  Test copy, sync, autotag, checksum without actually doing\n";
 	$output .= "--quiet           Turns off most screen output, except for error messages.\n";
@@ -4510,6 +4532,14 @@ sub get{
 		$COPY_TYPES = $arg;
 		$test{'sync'} = 1;
 		},
+	'dbg:s' => sub { 
+		my ($opt,$arg) = @_;
+		if (!$arg || $arg !~ /^\d+(,\d+)*$/){
+			main::error_handler('missing-arg',"$opt requires valid dbg list.",1);
+		}
+		for (split(',',$arg)){
+			$dbg[$_] = 1;
+		}},
 	'debug' => sub { 
 		$b_debug = 1;},
 	'd|destination:s' => sub { 
@@ -4588,6 +4618,17 @@ sub get{
 		$b_check_out = 0;
 		$test{'tag'} = 1;
 		},
+	'ic|info-create' => sub { 
+		$run{'autotag'} = 0;
+		$run{'autotag-create'} = 0;
+		$run{'sync'} = 0;
+		$run{'clean'} = 0;
+		$run{'checksum'} = 0;
+		$run{'checksum-verify'} = 0;
+		$run{'info-create'} = 0;
+		$test{'info'} = 1;
+		$test{'info-create'} = 1;
+	},
 	'info-file|prefill-file|if|pf:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires file name.",1) if !$arg;
@@ -4830,102 +4871,103 @@ sub get{
 	verify_selections();
 }
 sub verify_selections {
-	if ($test{'analyze'} || $run{'infofix-quality'}){
-		$test{'sync'} = 0;
+	##############################
+	## Destination/Source Tests ##
+	##############################
+	# aggregate requires destination and cannot be used with any other action
+	if ($test{'aggregate'} && !$test{'destination'}){
+		main::error_handler('invalid-options', 
+		 "--aggregate requires destination.",1);
 	}
 	# prevent tagging/checksum operations without explicitly set source
-	if (!$test{'source'} && ($test{'tag'} || $test{'autotag-create'} || 
-	$test{'info'} || $test{'aggregate'} || $test{'checksum'})){
+	if (!$test{'source'} && ($test{'aggregate'} || $test{'autotag-create'} || 
+	$test{'checksum'} || $test{'info'} || $test{'tag'})){
 		main::error_handler('invalid-options', 
-		 "Explicit --source is required for all tagging/checksum options.",1);
-	}
-	# prevent running any tagging options with syncing options
-	if (($test{'clean'} || $test{'sync'}) && ($test{'tag'} || $test{'autotag-create'} || 
-	$test{'info'} || $test{'checksum'})){
-		main::error_handler('invalid-options', 
-		 "Tagging/checksum options cannot be used with clean/sync options.",1);
-	}
-	if ($test{'infofix'} && $test{'prefill'} && $test{'autotag-create'}){
-		main::error_handler('invalid-options', 
-		 "Info Fix cannot be combined with any other option except --source.",1);
-	}
-	if ($test{'info-rating'} && !$test{'infofix'}){
-		main::error_handler('invalid-options', 
-		 "--info-rating can only be used with --infofix.",1);
+		 "explicit --source is required for all checksum/info/tagging options.",1);
 	}
 	if ($test{'source-glob'} && ! -e $SOURCE_DIRECTORY){
 		main::error_handler('invalid-options', 
-		 "--source-glob/-g must be used with --source/-s.",1);
+		 "--source-glob/-g must be used with valid --source/-s.",1);
 	}
 	if ($test{'source-glob'} && ($test{'clean'} || $test{'prefill'})){
 		main::error_handler('invalid-options', 
 		 "--source-glob/-g cannot be used with --clean/--prefill.",1);
 	}
-	# info-file requires either prefill or infofix options
-	if ($test{'info-file'} && !$test{'autotag-create'} && !$test{'infofix'}){
+	###############################
+	## Invalid Combination Tests ##
+	###############################
+	# aggregate only runs alone
+	if ($test{'aggregate'} && (($test{'autotag-create'} || $test{'checksum'} || 
+	$test{'info'} || $test{'sync'} || $test{'tag'}))){
 		main::error_handler('invalid-options', 
-		 "--info-file/--prefill-file require --infofix or --autotag-create.",1);
+		 "--aggregate cannot be combined with any other actions.",1);
 	}
-	# prefill options require tag-create options
-	if ($test{'prefill'} && !$test{'autotag-create'}){
+	# prevent running any syncing options with tagging/checksum/info options
+	if (($test{'clean'} || $test{'sync'}) && ($test{'autotag-create'} || 
+	$test{'checksum'} || $test{'info'} || $test{'tag'})){
 		main::error_handler('invalid-options', 
-		 "Prefill requires either --autotag-create-multi or --autotag-create-single.",1);
+		 "checksum/tagging/info options cannot be used with clean/sync options.",1);
 	}
-	if ($test{'tag'} && $test{'prefill-tag'}){
+	# checksum can be run with taggingr: -AD -AK but not with info/tag-create
+	if ($test{'checksum'} && ($test{'autotag-create'} || $test{'info'})){
 		main::error_handler('invalid-options', 
-		 "You cannot use --prefill-tag with --tag.",1);
+		 "checksum options cannot be used with info/image/prefill/tag-create options.",1);
 	}
-	if ($test{'prefill-tag'} && !$test{'autotag-create'}){
+	# creating auto.tag cannot be combined with info, tagging options
+	if (($test{'autotag-create'} || $test{'prefill'} || $test{'prefill-tag'}) && 
+	($test{'info-create'} || $test{'infofix'} || $test{'tag'})){
 		main::error_handler('invalid-options', 
-		 "You must use an --autotag-prefill option with --prefill-tag.",1);
+		 "tag-create/prefill options cannot be used with image/info/tagging options.",1);
 	}
-	if ($test{'multiartist'} && !$test{'prefill'}){
+	# analyze options cannot be used with checksum/verify options
+	if (($test{'analyze'} || $run{'infofix-quality'}) && 
+	($test{'checksum-generate'} || $test{'checksum-verify'} || 
+	$test{'checksum-delete'})){
 		main::error_handler('invalid-options', 
-		 "MultiArtist requires --prefill.",1);
+		 "you cannot use -Z/-Xq with --checksum or --checksum-verify.",1);
 	}
-	# aggregate requires destination and cannot be used with any other action
-	if ($test{'aggregate'} && (!$test{'destination'} || ($test{'sync'} || 
-	$test{'tag'} || $test{'autotag-create'} || $test{'info'} || $test{'checksum'}))){
-		main::error_handler('invalid-options', 
-		 "Aggregate requires destination and cannot be combined with any other actions.",1);
-	}
-	# checksum can only be run with tagging/image, like -AD -AK
-	if ($test{'checksum'} && ($test{'sync'} || $run{'test'} || $test{'autotag-create'} || 
-	$test{'info'})){
-		main::error_handler('invalid-options', 
-		 "Checksum options cannot be used with clean/sync/image/auto.tag-create options.",1);
-	}
-	# tagging can only be used with checksum or other tagging options like -I, -R
-	if ($test{'tag'} && ($test{'sync'} || $test{'clean'} || $test{'autotag-create'})){
-		main::error_handler('invalid-options', 
-		 "Tagging cannot be used with tag-create/aggregate/clean/sync options.",1);
-	}
-	# creating auto.tag cannot be combined with sync, checksum, or tagging
-	if ($test{'autotag-create'} && ($test{'sync'} || $test{'clean'} || $test{'checksum'} || 
-	$test{'tag'})){
-		main::error_handler('invalid-options', 
-		 "autotag-create cannot be used with tagging/image/clean/sync/checksum options.",1);
-	}
-	# try to protect against ffmpeg being used with any non sync option
+	## Specific Not Allowed Combos ##
+	# protect against ffmpeg being used with any non sync option
 	if (!$test{'sync'} && $run{'ffmpeg'}){
 		main::error_handler('invalid-options', 
-		 "You can only use --ffmpeg with sync operations.",1);
+		 "you can only use --ffmpeg with sync operations.",1);
 	}
-	if (($test{'duplicates'} || $test{'checksum-ffps'}) && $run{'no-ffp'}){
-		main::error_handler('invalid-options', 
-		 "You cannot use --no-ffp with --duplicates or --checksum-verify.",1);
-	}
-	if (($test{'analyze'} || $run{'infofix-quality'}) && 
-	 ($test{'checksum-generate'} || $test{'checksum-verify'} || 
-	 $test{'checksum-delete'})){
-		main::error_handler('invalid-options', 
-		 "You cannot use -Z/-Xq with --checksum or --checksum-verify.",1);
-	}
+	# there's no tests to run if you block md5 and ffp!
 	if (($test{'checksum'} || $run{'infofix-verify'}) && 
 	$run{'no-ffp'} && $run{'no-md5'}){
 		main::error_handler('invalid-options', 
-		 "You cannot use both --no-ffp and --no-md5 with checksum options.",1);
+		 "you cannot use both --no-ffp and --no-md5 with checksum options.",1);
 	}
+	# duplicates/checksum-ffps uses ffps
+	if (($test{'duplicates'} || $test{'checksum-ffps'}) && $run{'no-ffp'}){
+		main::error_handler('invalid-options', 
+		 "you cannot use --no-ffp with --duplicates or --checksum-verify.",1);
+	}
+	#################################
+	## Required Option Combo Tests ##
+	#################################
+	# info-file requires either prefill, info-create, or infofix options
+	if ($test{'info-file'} && !$test{'autotag-create'} && !$test{'info-create'} && 
+	!$test{'infofix'}){
+		main::error_handler('invalid-options', 
+		 "--info-file/--prefill-file require --info-create/--infofix/--autotag-create.",1);
+	}
+	# prefill options require tag-create options
+	if (($test{'prefill'} || $test{'prefill-tag'}) && !$test{'autotag-create'}){
+		main::error_handler('invalid-options', 
+		 "prefill options require tag-create options (-C,-M,-S).",1);
+	}
+	if ($test{'multiartist'} && !$test{'prefill'}){
+		main::error_handler('invalid-options', 
+		 "--multiartist requires --prefill.",1);
+	}
+	if ($test{'info-rating'} && !$test{'infofix'}){
+		main::error_handler('invalid-options', 
+		 "--info-rating can only be used with --infofix.",1);
+	}
+	##################################################
+	## Invalid Data - Usually Handled in Validation ##
+	##################################################
 	if ($run{'update-type'} && $run{'update-type'} != 3){
 		main::error_handler('invalid-options', 
 		 "-U 3 is the only alternate update type currently supported.",1);

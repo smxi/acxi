@@ -72,6 +72,9 @@ how focused on corporate interests their efforts were.
 2. Some of the prefill field names didn't fully match the listed possible 
 values. Also made all 2 word type field names support space, -, _, or no space.
 
+3. Added --no-utf8-convert to flac > mp3 tag command generator, also for 'all' 
+flac tags.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
@@ -113,6 +116,8 @@ more consistent prefill tag listing.
 
 3. Sample auto.tag file, updated to add new tags and comments.
 
+4. Updated man page debugger section for --dbg xx triggers.
+
 --------------------------------------------------------------------------------
 CODE:
 
@@ -120,6 +125,14 @@ CODE:
 hash.
 
 2. Switched to qw(...) in some tag lists that are being updated frequently.
+
+3. Added --dbg [x-xx] for granular debugging.
+
+4. Major  refactor of options validation, which had gotten messy and hard to 
+follow/read/use.
+
+5. Extended main::get_flac_tags() to return all tags in flac file, for new 
+package InfoCreate.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Fri, 30 Dec 2022 12:57:40 -0800

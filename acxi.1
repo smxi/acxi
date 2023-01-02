@@ -1,4 +1,4 @@
-.TH ACXI 1 "2022\-12\31" acxi "acxi manual"
+.TH ACXI 1 "2023\-01\-01" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -56,7 +56,8 @@ Miscellaneous: [\fB\-\-aggregate\fR, \fB\-G\fR [file name|extension]]
 Output Controls: [\fB\-\-verbosity\fR, \fB\-v\fR {0-3}] 
 [\fB\-\-quiet\fR]
 .IP * 2
-Debugging: [\fB\-\-debug\fR] [\fB\-\-dry\fR, \fB\-\-dry\-run\fR, \fB\-\-test\fR] 
+Debugging: [\fB\-\-dbg\fR {1\-xx}[,y][,z]...] [\fB\-\-debug\fR] 
+[\fB\-\-dry\fR, \fB\-\-dry\-run\fR, \fB\-\-test\fR] 
 
 .SH DESCRIPTION
 \fBacxi\fR is a command line audio conversion program and audio processing 
@@ -1295,9 +1296,18 @@ Show acxi version.
 These options allow you to modify the output, or to test actions before doing 
 them for real.
 
+.B \-\-dbg {1\-xx}[,1\-xx]\fR
+Activate specialized debugger outputs. Don't use unless you are asked to, or are 
+a developer or something like that. Accepts comma separated list of integers to
+trigger > 1 debugger action.
+
+.B 1\fR \- main::get_flac_tags() print resultant tag hash.
+
+.B 1\fR \- AutoTag::process_tags() print auto.tag tag array result.
+
 .TP
 .B \-\-debug\fR
-Activate specialized debugger output. Don't use unless you are asked to, or are 
+Activate global debugger outputs. Don't use unless you are asked to, or are 
 a developer or something like that.
 
 .TP
@@ -1601,7 +1611,7 @@ or
 .\" don't change this line until new acxi out for a while, used for -U test
 acxi is a fork and full rewrite of flac2ogg.pl.
 
-Copyright (c) Harald Hope, 2010\-2022
+Copyright (c) Harald Hope, 2010\-2023
 
 Initial forking logic: prupert. 2019-07
 
