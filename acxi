@@ -2058,6 +2058,7 @@ sub process_directories {
 		if (grep -f, @files){
 			if (!-e $INFO_FILE){
 				say "  No $INFO_FILE file found. Processing $INPUT_TYPE files....";
+				undef $file_tags;
 				process_tags(\@files);
 				if ($file_tags && %$file_tags){
 					generate_info_file();
@@ -2088,7 +2089,7 @@ sub process_tags {
 sub generate_info_file {
 	my (@comments,@info,@lyrics,@main,@performers,@rating,@tracks);
 	my (%found,%multi,%track_data);
-	say "   Generating $INFO_FILE data...";
+	say "  Generating $INFO_FILE data...";
 	# $multi{'album'} = check_multi('ALBUM');
 	$multi{'artist'} = check_multi('ARTIST');
 	# $multi{'date'} = check_multi('DATE');
@@ -2098,7 +2099,7 @@ sub generate_info_file {
 	# This is the order we want the basic data in:
 	my @main_checks = qw(ARTIST ALBUM ALBUMSORT COMPILATION ALBUMARTIST ENSEMBLE 
 	COMPOSER CONDUCTOR OPUS DATE ORIGINALDATE YEAR VENUE LOCATION);
-	my @comments_checks = qw(COMMENTS DESCRIPTION);
+	my @comments_checks = qw(COMMENT DESCRIPTION);
 	my @info_checks = qw(GENRE MOOD BPM MEASURE INITIAL_KEY TUNING
 	ORGANIZATION PRODUCER PUBLISHER MIXER REMIXER 
 	URL WEBSITE CHAPTER COPYRIGHT LICENSE CONTACT
@@ -2204,6 +2205,20 @@ sub generate_info_file {
 	}
 	my @info_data = (@main,@performers,@tracks,@comments,@info,@rating,@lyrics);
 	say Data::Dumper::Dumper \@info_data if $dbg[5];
+	if (@info_data){
+		if ($b_test){
+			say "  Would have printed this to $INFO_FILE:";
+			say $line_small;
+			say join("\n",@info_data);
+		}
+		else {
+			say "  (Beta no writes) Writing tag data to: $INFO_FILE";
+		}
+	}
+	else {
+		say "  No tag data found! Are the files tagged?";
+	}
+	say $line_small;
 }
 sub check_multi {
 	my ($type) = @_;
