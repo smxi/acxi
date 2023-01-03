@@ -891,7 +891,9 @@ sub tag_updater {
 		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 		print "Processing: $print_file...\n Tags$print_padding ";
 		$file = main::escape_item("$file");
+		$file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||; 
 		$cmd = qq($COMMAND_METAFLAC $remove "$file");
+		# say "sd: $SOURCE_DIRECTORY cmd: $cmd";
 		if (!$b_test){
 			qx($cmd);
 			if ($? > 0){
@@ -3063,7 +3065,7 @@ sub convert_file {
 }
 
 #### -------------------------------------------------------------------
-#### TAGGING
+#### TAGGING TOOLS
 #### -------------------------------------------------------------------
 
 # Originally added: Odd @2011-03-23 01:52:31

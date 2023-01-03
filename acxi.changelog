@@ -45,6 +45,12 @@ titles."
 --------------------------------------------------------------------------------
 BUGS:
 
+1. In --tag, it was changing directory to SOURCE_DIRECTORY, but failed to 
+remove that from the file string, so tag updates failed unless you were using 
+-s ./. I hadn't noticed that because I almost always use -s./ with -T.
+
+This led to things like --glob failing too, since it was never working from the
+right directory in terms of the path/filename metaflac received.
 
 --------------------------------------------------------------------------------
 FIXES:
