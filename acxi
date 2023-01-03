@@ -4296,6 +4296,9 @@ sub show_options {
 	$output .= "--image, -I {jpg,png image file name|remove}\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
+	$output .= "--info-create, --ic\n";
+	$output .= "                  Create $INFO_FILE in FLAC directories without one using file\n";
+	$output .= "                  tags. See also --taglist.\n";
 	$output .= "--info-file, --if, --prefill-file, --pf {file name}\n";
 	$output .= "                  Alternate file name to use for --prefill, --info-create,\n";
 	$output .= "                  --infofix.\n";
@@ -4346,6 +4349,10 @@ sub show_options {
 	$output .= "                  tag/value pairs. Removes existing sets of the given type.\n";
 	$output .= "                  Use ^^ to separate tag key/value pairs, and %: to separate\n";
 	$output .= "                  the tag name and its value. Value 'UNSET' removes the tag.\n";
+	$output .= "--taglist, --tl   Create $TAGLIST_FILE in FLAC directories without one using file\n";
+	$output .= "                  tags. Creates raw tags per file. See also --info-create.\n";
+	$output .= "--taglist-file, --tlf, --tf {file}\n";
+	$output .= "                  Alternate file name to use for --taglist.\n";
 	$output .= $line_small . "\n";
 	$output .= "Analyze/Checksum options:\n";
 	$output .= "--analyze, -Z     Analyze contents of directories, creates screen report per\n";

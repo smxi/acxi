@@ -28,7 +28,7 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-autotag\-create\fR, \fB\-C\fR] 
 [\fB\-\-autotag\-create\-single\fR, \fB\-S\fR] 
 [\fB\-\-autotag\-create\-multi\fR, \fB\-M\fR {filename start ID}]
-[\fB\-\-image\fR, \fB\-I\fR {cover image filename}]
+[\fB\-\-image\fR, \fB\-I\fR {cover image filename}] [\fB\-\-info\-create\fR]
 [\fB\-\-info\-file\fR, \fB\-\-prefill\-file\fR {release info file name}] 
 [\fB\-\-infofix\fR, \fB\-X\fR [0|a|c|d|k|l|m|n|q|t|u|v|w]] 
 [\fB\-\-info\-rating\fR {2\-xxx}
@@ -39,6 +39,7 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-remove\-images\fR, \fB\-R\fR] [\fB\-\-remove\-padding\fR, \fB\-P\fR] 
 [\fB\-\-start\fR {0-xx}] 
 [\fB\-\-tag\fR, \fB\-T\fR] {"TAG1%:tag value^^TAG2%:tag value"}] 
+[\fB\-\-taglist\fR] [\fB\-\-taglist\-file\fR {tag list file}] 
 .IP * 2
 Analyze/Checksums: [\fB\-\-analyze\fR, \fB\-Z\fR]
 [\fB\-\-checksum\fR, \fB\-K\fR] [\fB\-\-checksum\-delete\fR, \fB\-D\fR] 
@@ -147,6 +148,9 @@ input types, or if using \fB\-\-ffprobe\fR option with input type \fBflac\fR.
 .IP * 2
 \fB\-\-autotag\fR, \fB\-\-tag\fR, \fB\-\-image\fR, and \fB\-\-image\-remove\fR 
 require \fBmetaflac\fR for \fBVORBIS\fR tagging.
+.IP * 2
+\fB\-\-info\-create\fR, \fB\-\-taglist\fR require \fBmetaflac\fR for getting 
+\fBFLAC\fR tags.
 .IP * 2
 \fB\-\-checksum\fR and \fB\-\-checksum\-delete\fR require \fBmetaflac\fR and 
 \fBmd5sum\fR (or any comparable program that generates md5sums). 

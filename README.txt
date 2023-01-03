@@ -309,7 +309,7 @@ inside each album/collection directory.
 
 * --fork requires Perl module Parallel::ForkManager
 
-* --image, --remove-images require metaflac.
+* --image, --info-create, --remove-images, --taglist require metaflac.
 
 * --infofix c requires Perl Core Module Encoding::Guess
 
