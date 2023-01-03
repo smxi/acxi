@@ -80,7 +80,8 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_date='2023-01-02';
+my $self_patch='04';
+my $self_date='2023-01-03';
 
 ## GLOBALS ##
 ## Booleans
@@ -262,7 +263,7 @@ my $INFO_RATING = 4;
 # Uses --tag syntax: TAG%:value^^TAG%:value, remember to clear when done!
 my $PREFILL_TAG = '';
 # This is for --info-create + --tag-list, writes to this file per directory
-my $TAGLIST_FILE = 'taglist.txt';
+my $TAGLIST_FILE = 'taglist.tag';
 
 #### -------------------------------------------------------------------
 #### CHECKSUM DATA
@@ -336,7 +337,7 @@ sub main {
 	set_basic_data();
 	Aggregate::run() if $run{'aggregate'};
 	AutoTag::create() if $run{'autotag-create'};
-	AutoTag::run_tagger() if $run{'autotag'};
+	AutoTag::run_tagger() if $run{'tagger'};
 	Checksums::process() if ($run{'checksum'} || $run{'checksum-verify'});
 	InfoCreate::process() if $run{'info-create'} || $run{'taglist'};
 	CleanCollection::process() if $run{'clean'};
@@ -3724,7 +3725,7 @@ sub check_application_paths {
 				}
 			}
 		}
-		if ($run{'autotag'} || $run{'info-create'} || $run{'taglist'}){
+		if ($run{'tagger'} || $run{'info-create'} || $run{'taglist'}){
 			if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
 				push(@app_paths,$COMMAND_METAFLAC);
 			}
@@ -3905,7 +3906,7 @@ sub check_in_out_types {
 		$error_message .= "$INPUT_TYPE";
 	}
 	if ((!$run{'analyze'} && (!$run{'infofix-quality'} || $run{'infofix-verify'})) && 
-	($run{'autotag'} || $run{'checksum'} || $run{'checksum-verify'} || 
+	($run{'tagger'} || $run{'checksum'} || $run{'checksum-verify'} || 
 	$run{'info-create'} || $run{'infofix-verify'} || $run{'resample'}) && 
 	$INPUT_TYPE !~ m/^(flac)$/i){
 		$b_error = 1;
@@ -4201,10 +4202,16 @@ sub show_options {
 	UserConfigs::set(); 
 	# but this should override the config data so follows
 	set_basic_data();
-	my $output = "$self_name v: $self_version :: Supported Options:\n";
-	$output .= "Examples: $self_name -q 8 --destination /music/main/ogg\n";
-	$output .= "$self_name --input flac --output ogg -a md5\n";
-	$output .= "$self_name --copy doc,docx,bmp\n";
+	my $output = "$self_name v: $self_version-$self_patch ($self_date)\n";
+	$output .= "While long option names are provided, it's usually easier to use short forms.\n";
+	$output .= "Sample Usage: $self_name\n";
+	$output .= "[--quality 8 --destination /music/main/ogg] [-q8 -d /music/main/ogg]\n";
+	$output .= "[--input flac --output ogg --append pdf] [-i flac -o ogg -a pdf]\n";
+	$output .= "[--copy doc,docx,bmp --clean sync --fork 4] [-c doc,docx,bmp --clean sync -F4]\n";
+	$output .= "[--source ./ --infofix cknw] [-s./ -Xcknw]\n";
+	$output .= "[--source ./ --prefill --multi 'at:-'] [-s./ -EM 'at:-']\n";
+	$output .= "[--source ./ --glob 'BandX*' --checksum --autotag] [-s./ -g 'BandX*' -AK]\n";
+	$output .= "When no options are supplied it will sync your configured directories/codecs.\n";
 	$output .= $line_small . "\n";
 	$output .= "Input/Output options:\n";
 	$output .= "--destination, -d Path to the directory where you want the processed\n";
@@ -4225,9 +4232,9 @@ sub show_options {
 	$output .= "                  for having syncing or checksum tools ignore sub directories.\n";
 	$output .= "--source, -s      Path to the top-most directory containing your source files.\n";
 	$output .= "                  Current value: $SOURCE_DIRECTORY\n";
-	$output .= "--source-glob, -g {Path inside -s directory with wildcards}\n";
+	$output .= "--source-glob, --glob, -g {Path inside -s directory with wildcards}\n";
 	$output .= "                  Wildcard path, using *, paths relative to -s path.\n";
-	$output .= "                  Allows work on only a subset of directories in -s path.\n";
+	$output .= "                  Allows work on only a subset of files/directories in -s path.\n";
 	$output .= $line_small . "\n";
 	$output .= "Syncing options:\n";
 	$output .= "--append, --copy-append, -a\n";
@@ -4452,7 +4459,7 @@ sub show_options {
 }
 
 sub show_version {
-	say "$self_name version: $self_version ($self_date)";
+	say "$self_name version: $self_version-$self_patch ($self_date)";
 	exit 0;
 }
 
@@ -4674,38 +4681,22 @@ sub get{
 		else {
 			$run{'ag-file'} = $AUTOTAG_FILE;
 		}
-		$run{'aggregate'} = 1;
-		$run{'autotag'} = 1;
-		$test{'aggregate'} = 1;
-		$b_check_out = 0;
-		$OUTPUT_TYPE = 'UNSET';
-	},
+		$run{'aggregate'} = 1;},
 	'analyze|Z' => sub { 
 		$run{'checksum'} = 1;
 		$run{'analyze'} = 1;
 		$run{'no-md5'} = 1;
-		$test{'checksum'} = 1;
-		$test{'analyze'} = 1;
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$OUTPUT_TYPE = 'UNSET';},
+		$test{'checksum'} = 1;},
 	'a|append|copy-append:s' => sub { 
 		my ($opt,$arg) = @_;
-		$COPY_TYPES .= ',' . $arg if $arg;},
+		$COPY_TYPES .= ',' . $arg if $arg;
+		$test{'sync'} = 1;},
 	'A|autotag' => sub { 
-		$run{'autotag'} = 1;
-		$test{'tag'} = 1;
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$OUTPUT_TYPE = 'UNSET';
-		},
+		$run{'tagger'} = 1;
+		$test{'tag'} = 1;},
 	'C|autotag-create' => sub { 
 		$run{'autotag-create'} = 1;
-		$test{'autotag-create'} = 1;
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$OUTPUT_TYPE = 'UNSET';
-		},
+		$test{'autotag'} = 1;},
 	'M|autotag-create-multi:s' => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /%|@/){
@@ -4715,78 +4706,47 @@ sub get{
 		$autotag_multi = $arg;
 		$run{'autotag-create'} = 1;
 		$run{'autotag-multi'} = 1;
-		$test{'autotag-multi'} = 1;
-		$test{'autotag-create'} = 1;
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$OUTPUT_TYPE = 'UNSET';
-		},
+		$test{'autotag'} = 1;},
 	'S|autotag-create-single' => sub { 
 		$run{'autotag-create'} = 1;
 		$run{'autotag-single'} = 1;
-		$test{'autotag-single'} = 1;
-		$test{'autotag-create'} = 1;
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$OUTPUT_TYPE = 'UNSET';
-		},
+		$test{'autotag'} = 1;},
 	# legacy
 	'basic|default' => sub { 
 		$VERBOSITY = 1 },
 	'K|checksum' => sub { 
 		$run{'checksum'} = 1;
 		$test{'checksum'} = 1;
-		$test{'checksum-generate'} = 1;
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$OUTPUT_TYPE = 'UNSET';
-		},
+		$test{'checksum-generate'} = 1;},
 	'D|checksum-delete' => sub { 
 		$run{'checksum'} = 1;
-		$run{'checksum-delete'} = 1; 
+		$run{'checksum-delete'} = 1;
 		$test{'checksum'} = 1;
-		$test{'checksum-delete'} = 1;
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$OUTPUT_TYPE = 'UNSET';
-		},
+		$test{'checksum-generate'} = 1;},
 	'checksum-ffps|ffps' => sub { 
 		$run{'checksum'} = 1;
 		$run{'checksum-ffps'} = 1;
 		$run{'no-md5'} = 1;
 		$test{'checksum'} = 1;
-		$test{'checksum-ffps'} = 1;
-		$test{'checksum-generate'} = 1;
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$OUTPUT_TYPE = 'UNSET';
-		},
+		$test{'checksum-generate'} = 1;},
 	'V|checksum-verify' => sub { 
 		$run{'checksum-verify'} = 1;
-		$test{'checksum'} = 1;
-		$test{'checksum-verify'} = 1;
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$OUTPUT_TYPE = 'UNSET';
-		},
+		$test{'checksum'} = 1;},
 	'clean:s' => sub { 
 		my ($opt,$arg) = @_;
 		$run{'clean-sync'} = 1 if $arg && $arg eq 'sync';
 		$run{'clean'} = 1;
-		$test{'clean'} = 1;
-		},
+		$test{'sync'} = 1;},
 	'codec:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires codec.",1) if !$arg;
 		$codec = $arg;
-		$test{'sync'} = 1;
-		},
+		$test{'sync'} = 1;},
 	# accepts null value so users can not copy anything
 	'c|copy:s' => sub { 
 		my ($opt,$arg) = @_;
 		$COPY_TYPES = $arg;
-		$test{'sync'} = 1;
-		},
+		$test{'sync'} = 1;},
 	'dbg:s' => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /^\d+(,\d+)*$/){
@@ -4801,12 +4761,12 @@ sub get{
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires path.",1) if !$arg;
 		$DESTINATION_DIRECTORY = $arg;
-		$test{'destination'} = 1;
-		},
+		$test{'destination'} = 1;},
 	'dither:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires value.",1) if !defined $arg;
 		$DITHER = $arg;
+		$test{'dither'} = 1;
 		$test{'sync'} = 1;},
 	'dot' => sub { 
 		$run{'dot'} = 1;},
@@ -4816,18 +4776,13 @@ sub get{
 		$run{'checksum'} = 1;
 		$run{'duplicates'} = 1;
 		$run{'no-md5'} = 1;
-		$test{'checksum'} = 1;
-		$test{'duplicates'} = 1;
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$OUTPUT_TYPE = 'UNSET';},
+		$test{'checksum'} = 1;},
 	'x|exclude:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires exclude list or file.",1) if !$arg;
 		$arg = '' if uc($arg) eq 'UNSET';
 		$EXCLUDE = $arg;
-		$test{'sync'} = 1;
-		},
+		$test{'sync'} = 1;},
 	'y|exclude-append:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires exclude list.",1) if !$arg;
@@ -4836,15 +4791,15 @@ sub get{
 	'f|force' => sub { 
 		$b_force = 1;},
 	'ffmpeg' => sub { 
-		$run{'ffmpeg'} = 1;},
+		$run{'ffmpeg'} = 1;
+		$test{'sync'} = 1;},
 	'ffprobe' => sub { 
 		$run{'ffprobe'} = 1;},
 	'F|fork:i' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires fork count integer.",1) if not defined $arg;
 		$FORK = $arg;
-		$test{'sync'} = 1;
-		},
+		$test{'sync'} = 1;},
 	# legacy
 	'full' => sub { 
 		$VERBOSITY = 3;},
@@ -4859,29 +4814,19 @@ sub get{
 		$embed_image = $arg;
 		$run{'remove-images'} = 1 if $embed_image eq 'remove';
 		$run{'embed-image'} = 1;
-		$run{'autotag'} = 1;
-		$test{'tag'} = 1;
-		$OUTPUT_TYPE = 'UNSET';
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		},
+		$run{'tagger'} = 1;
+		$test{'tag'} = 1;},
 	'ic|info-create' => sub { 
 		$run{'info-create'} = 1;
-		$test{'info'} = 1;
-		$test{'info-create'} = 1;
-		$OUTPUT_TYPE = 'UNSET';
-		$b_check_dest = 0;
-		$b_check_out = 0;
-	},
+		$test{'info'} = 1;},
 	'info-file|prefill-file|if|pf:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires file name.",1) if !$arg;
 		$INFO_FILE = $arg;
-		$test{'info-file'} = 1;
-		},
+		$test{'info'} = 1;
+		$test{'info-file'} = 1;},
 	'X|infofix:s' => sub { 
 		my ($opt,$arg) = @_;
-		$run{'infofix'} = 1;
 		if ($arg ne ''){
 			if ($arg =~ /^[acdklmnqutvw0]+$/){
 				$run{'infofix-autonumber'} = 1 if $arg =~ /a/;
@@ -4903,12 +4848,8 @@ sub get{
 				main::error_handler('missing-arg',$msg,1);
 			}
 		}
-		$test{'info'} = 1;
-		$test{'infofix'} = 1;
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$OUTPUT_TYPE = 'UNSET';
-	},
+		$run{'infofix'} = 1;
+		$test{'info'} = 1;},
 	'info-rating:i' => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg < 2){
@@ -4916,16 +4857,12 @@ sub get{
 			main::error_handler('missing-arg',$msg,1);
 		}
 		$INFO_RATING = $arg;
-		$test{'info-rating'} = 1;
-	},
+		$test{'info'} = 1;
+		$test{'info-rating'} = 1;},
 	'i|input:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires type.",1) if !$arg;
-		$test{'input'} = 1;
-		$INPUT_TYPE = $arg;
-		},
-	'link' => sub { 
-		$DONT_USE_NLINK = 0 },
+		$INPUT_TYPE = $arg;},
 	'multiartist|ma:s' => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /^(at|ta):\S+$/i){
@@ -4934,8 +4871,11 @@ sub get{
 		else {
 			$run{'multiartist'} = [split(/:/,$arg)];
 			$run{'multiartist'}->[0] = lc($run{'multiartist'}->[0]);
-			$test{'multiartist'} = 1;
+			$test{'autotag'} = 1;
+			$test{'prefill'} = 1;
 		}},
+	'nlink' => sub { 
+		$DONT_USE_NLINK = 0;},
 	'no-dot' => sub { 
 		$run{'dot'} = 0;},
 	'no-ffp' => sub { 
@@ -4945,21 +4885,22 @@ sub get{
 	'no-nlink' => sub { 
 		$DONT_USE_NLINK = 1;},
 	'no-replaygain' => sub { 
-		$run{'no-replaygain'} = 1;},
+		$run{'no-replaygain'} = 1;
+		$test{'autotag'} = 1;
+		$test{'prefill'} = 1;},
 	'no-ssl' => sub { 
-		$run{'no-ssl'} = 1;},
+		$run{'no-ssl'} = 1;
+		$test{'update'} = 1;},
 	'o|output:s' => sub {
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires type.",1) if !$arg;
-		$test{'output'} = 1;
-		$test{'sync'} = 1;
 		$OUTPUT_TYPE = $arg;
-		},
+		$test{'output'} = 1;
+		$test{'sync'} = 1;},
 	'E|prefill' => sub { 
 		$run{'prefill'} = 1;
-		$test{'info'} = 1;
 		$test{'prefill'} = 1;
-		},
+		$test{'autotag'} = 1;},
 	'prefill-tag|prefill-tags|pft|pt:s' => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || (lc($arg) ne 'unset' && $arg !~ /%:/)){
@@ -4968,6 +4909,8 @@ sub get{
 		}
 		if (lc($arg) ne 'unset'){
 			$PREFILL_TAG = $arg;
+			$test{'autotag'} = 1;
+			$test{'prefill'} = 1;
 			$test{'prefill-tag'} = 1;
 		}
 		else {
@@ -4984,50 +4927,45 @@ sub get{
 		$QUALITY_MP3 = $arg;
 		$QUALITY_OGG = $arg;
 		$QUALITY_OPUS = $arg;
-		$test{'sync'} = 1;
-		}, 
+		$test{'sync'} = 1;}, 
 	'quiet|silent' => sub { 
 		$b_quiet = 1; 
-		$VERBOSITY = 0 },
+		$VERBOSITY = 0;},
 	'recurse:i' => sub { 
 		my ($opt,$arg) = @_;
 		if (!defined $arg){
 			$msg = "$opt requires directory recursion level value. See -h.";
 			main::error_handler('missing-arg',$msg,1);
 		}
-		$recurse = $arg},
+		$recurse = $arg;},
 	'R|remove-images' => sub { 
 		$run{'remove-images'} = 1;
-		$test{'tag'} = 1;
-		},
+		$test{'tag'} = 1;},
 	'P|remove-padding' => sub { 
 		$padding = ' --dont-use-padding';
-		$test{'tag'} = 1;
-		},
+		$test{'remove-padding'} = 1;
+		$test{'tag'} = 1;},
 	'resample:s' => sub {
 		my ($opt,$arg) = @_;
 		if (defined $arg && $arg =~ /^([0-9]+):([0-9]+(\.[0-9]+)?)$/){
 			$run{'resample'} = [$1,$2];
+			$test{'sync'} = 1;
 		}
 		else {
 			main::error_handler('missing-arg',"Incorrect syntax for $opt: bits:khz, see -h or man.",1);
-		}
-		$test{'sync'} = 1;
-		},
+		}},
 	'resample-override' => sub {
-		$run{'resample-override'} = 1; },
+		$run{'resample-override'} = 1;
+		$test{'sync'} = 1;},
 	's|source:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires path.",1) if !$arg;
 		$SOURCE_DIRECTORY = $arg;
-		$test{'source'} = 1;
-		},
-	'g|source-glob:s' => sub { 
+		$test{'source'} = 1;},
+	'g|glob|source-glob:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires path.",1) if !$arg;
-		$run{'source-glob'} = $arg;
-		$test{'source-glob'} = 1;
-		},
+		$run{'source-glob'} = $arg;},
 	'start:i' => sub { 
 		my ($opt,$arg) = @_;
 		if (!defined $arg || $start < 0){
@@ -5035,8 +4973,8 @@ sub get{
 			main::error_handler('missing-arg',$msg,1);
 		}
 		$start = $arg;
-		$test{'autotag-create'} = 1;
-		},
+		$test{'prefill'} = 1;
+		$test{'autotag'} = 1;},
 	'T|tag:s' => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /%:/){
@@ -5045,34 +4983,22 @@ sub get{
 		}
 		@tags = split(/\Q^^\E/, $arg);
 		$run{'update-tag'} = 1;
-		$run{'autotag'} = 1;
-		$test{'tag'} = 1;
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$OUTPUT_TYPE = 'UNSET';
-		},
+		$run{'tagger'} = 1;
+		$test{'tag'} = 1;},
 	'taglist|tl' => sub { 
 		$run{'taglist'} = 1;
-		$test{'info'} = 1;
-		$test{'taglist'} = 1;
-		$OUTPUT_TYPE = 'UNSET';
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		},
+		$test{'info'} = 1;},
 	'taglist-file|tlf|tf:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires file name.",1) if !$arg;
 		$TAGLIST_FILE = $arg;
-		$test{'taglist-file'} = 1;
-		},
+		$test{'info'} = 1;
+		$test{'taglist-file'} = 1;},
 	'U|update:i'=> sub { 
 		my ($opt,$arg) = @_;
 		$run{'update'} = 1; 
 		$run{'update-type'} = $arg if $arg; 
-		$test{'update'} = 1;
-		$b_check_dest = 0;
-		$b_check_out = 0;
-		$OUTPUT_TYPE = 'UNSET';},
+		$test{'update'} = 1;},
 	# legacy
 	'verbose'=> sub { 
 		$VERBOSITY = 2;},
@@ -5090,6 +5016,8 @@ sub get{
 		}
 		else {
 			$Z_MIN_SIZE = $arg;
+			$test{'checksum'} = 1;
+			$test{'z-min'} = 1;
 		}},
 	'z-min-time:i' => sub { 
 		my ($opt,$arg) = @_;
@@ -5099,126 +5027,134 @@ sub get{
 		}
 		else {
 			$Z_MIN_TIME = $arg;
+			$test{'checksum'} = 1;
+			$test{'z-min'} = 1;
 		}},
 	'<>' => sub {
 		my ($opt) = @_;
-		main::error_handler('unsupported-option', "Unsupported option: $opt",1); }
+		main::error_handler('unsupported-option', "Unsupported option: $opt",1);}
 	);
+	set_switches();
 	verify_selections();
 }
-sub verify_selections {
-	## Test To See if sync Should Be Enabled/Disabled ##
-	if ($test{'aggregate'} || $test{'autotag'} || $test{'checksum'} || 
+sub set_switches {
+	# Test to see if sync should be enabled/disabled
+	if ($run{'aggregate'} || $test{'autotag'} || $test{'checksum'} || 
 	$test{'info'} || $test{'tag'} || $test{'update'}){
 		$run{'clean'} = 0;
 		$run{'sync'} = 0;
+		$b_check_dest = 0 if !$run{'aggregate'};
+		$b_check_out = 0;
+		$OUTPUT_TYPE = 'UNSET';
 	}
 	else {
 		$run{'sync'} = 1;
 	}
+}
+sub verify_selections {
 	##############################
 	## Destination/Source Tests ##
 	##############################
 	# aggregate requires destination and cannot be used with any other action
-	if ($test{'aggregate'} && !$test{'destination'}){
+	if ($run{'aggregate'} && !$test{'destination'}){
 		main::error_handler('invalid-options', 
 		 "--aggregate requires destination.",1);
 	}
 	# prevent tagging/checksum operations without explicitly set source
-	if (!$test{'source'} && ($test{'aggregate'} || $test{'autotag-create'} || 
+	if (!$test{'source'} && ($run{'aggregate'} || $test{'autotag'} || 
 	$test{'checksum'} || $test{'info'} || $test{'tag'})){
 		main::error_handler('invalid-options', 
 		 "explicit --source is required for all checksum/info/tagging options.",1);
 	}
-	if ($test{'source-glob'} && ! -e $SOURCE_DIRECTORY){
+	if ($run{'source-glob'} && ! -e $SOURCE_DIRECTORY){
 		main::error_handler('invalid-options', 
 		 "--source-glob/-g must be used with valid --source/-s.",1);
 	}
-	if ($test{'source-glob'} && ($test{'clean'} || $test{'prefill'})){
+	if ($run{'source-glob'} && ($run{'clean'} || $run{'prefill'})){
 		main::error_handler('invalid-options', 
 		 "--source-glob/-g cannot be used with --clean/--prefill.",1);
 	}
 	###############################
 	## Invalid Combination Tests ##
 	###############################
-	# aggregate only runs alone
-	if ($test{'aggregate'} && (($test{'autotag-create'} || $test{'checksum'} || 
-	$test{'clean'} || $test{'info'} || $test{'sync'} || $test{'tag'}))){
+	# aggregate/update only run alone
+	if (($run{'aggregate'} || $test{'update'}) && ($test{'autotag'} || 
+	$test{'checksum'} || $test{'info'} || $test{'sync'} || $test{'tag'})){
+		my $type = ($run{'aggregate'}) ? '--aggregate' : '--update';
 		main::error_handler('invalid-options', 
-		 "--aggregate cannot be combined with any other actions.",1);
-	}
-	# update only runs alone
-	if ($test{'update'} && (($test{'autotag-create'} || $test{'checksum'} || 
-	$test{'clean'} || $test{'info'} || $test{'sync'} || $test{'tag'}))){
-		main::error_handler('invalid-options', 
-		 "-U cannot be combined with any other actions.",1);
+		 "$type cannot be combined with any other actions.",1);
 	}
 	# prevent running any syncing options with tagging/checksum/info options
-	if (($test{'clean'} || $test{'sync'}) && ($test{'autotag-create'} || 
-	$test{'checksum'} || $test{'info'} || $test{'tag'})){
+	if ($test{'sync'} && ($test{'autotag'} || $test{'checksum'} || 
+	$test{'info'} || $test{'tag'})){
 		main::error_handler('invalid-options', 
-		 "checksum/tagging/info options cannot be used with clean/sync options.",1);
+		 "checksum/tagging/info options cannot be used with sync options.",1);
 	}
 	# checksum can be run with taggingr: -AD -AK but not with info/tag-create
-	if ($test{'checksum'} && ($test{'autotag-create'} || $test{'info'})){
+	if ($test{'checksum'} && ($test{'autotag'} || $test{'info'})){
 		main::error_handler('invalid-options', 
 		 "checksum options cannot be used with info/prefill/tag-create options.",1);
 	}
 	# creating auto.tag cannot be combined with info, tagging options
-	if (($test{'autotag-create'} || $test{'prefill'} || $test{'prefill-tag'}) && 
-	($test{'info-create'} || $test{'infofix'} || $test{'tag'} || $test{'taglist'})){
+	if ($test{'autotag'} && ($run{'info'} || $test{'tag'})){
 		main::error_handler('invalid-options', 
-		 "tag-create/prefill options cannot be used with image/info/tagging options.",1);
+		 "tag-create/prefill options cannot be used with info/image/tagging options.",1);
 	}
 	# analyze options cannot be used with checksum/verify options
-	if (($test{'analyze'} || $run{'infofix-quality'}) && 
-	($test{'checksum-generate'} || $test{'checksum-verify'} || 
-	$test{'checksum-delete'})){
+	if (($run{'analyze'} || $run{'infofix-quality'}) && 
+	($test{'checksum-generate'} || $run{'checksum-verify'})){
 		main::error_handler('invalid-options', 
 		 "you cannot use -Z/-Xq with --checksum or --checksum-verify.",1);
 	}
 	## Specific Not Allowed Combos ##
-	# protect against dot/ffmpeg being used with any non sync option
-	if (!$run{'sync'} && ($run{'ffmpeg'} || $run{'dot'})){
-		main::error_handler('invalid-options', 
-		 "you can only use --dot/--ffmpeg with sync operations.",1);
-	}
 	# there's no tests to run if you block md5 and ffp!
-	if (($test{'checksum'} || $run{'infofix-verify'}) && 
-	$run{'no-ffp'} && $run{'no-md5'}){
+	if (($test{'checksum'} || $run{'infofix-verify'}) && $run{'no-ffp'} && 
+	$run{'no-md5'}){
 		main::error_handler('invalid-options', 
 		 "you cannot use both --no-ffp and --no-md5 with checksum options.",1);
 	}
 	# duplicates/checksum-ffps uses ffps
-	if (($test{'duplicates'} || $test{'checksum-ffps'}) && $run{'no-ffp'}){
+	if (($run{'duplicates'} || $run{'checksum-ffps'}) && $run{'no-ffp'}){
 		main::error_handler('invalid-options', 
 		 "you cannot use --no-ffp with --duplicates or --checksum-verify.",1);
 	}
 	#################################
 	## Required Option Combo Tests ##
 	#################################
-	# info-file requires either prefill, info-create, or infofix options
-	if ($test{'info-file'} && !$test{'autotag-create'} && !$test{'info-create'} && 
-	!$test{'infofix'}){
+	if ($test{'dither'} && !$run{'resample'}){
 		main::error_handler('invalid-options', 
-		 "--info-file/--prefill-file require --info-create/--infofix/--autotag-create.",1);
+		 "--dither requires --resample.",1);
+	}
+	# info-file requires either prefill, info-create, or infofix options
+	if ($test{'info-file'} && !$run{'prefill'} && !$run{'info-create'} && 
+	!$run{'infofix'}){
+		main::error_handler('invalid-options', 
+		 "--info-file/--prefill-file require --info-create/--infofix/--prefill.",1);
 	}
 	# prefill options require tag-create options
-	if (($test{'prefill'} || $test{'prefill-tag'}) && !$test{'autotag-create'}){
+	if ($test{'prefill'} && !$run{'autotag-create'}){
 		main::error_handler('invalid-options', 
-		 "prefill options require tag-create options (-M,-S).",1);
+		 "prefill options require an autotag-create option (-C,-M,-S).",1);
 	}
-	if ($test{'multiartist'} && !$test{'prefill'}){
+	if ($test{'info-rating'} && !$run{'infofix-quality'}){
 		main::error_handler('invalid-options', 
-		 "--multiartist requires --prefill.",1);
+		 "--info-rating can only be used with --infofix [qv].",1);
 	}
-	if ($test{'info-rating'} && !$test{'infofix'}){
+	if ($run{'no-ssl'} && !$run{'update'}){
 		main::error_handler('invalid-options', 
-		 "--info-rating can only be used with --infofix.",1);
+		 "--no-ssl can only be used with --update.",1);
 	}
-	if ($test{'taglist-file'} && !$test{'taglist'}){
+	if (($run{'remove-image'} || $test{'remove-padding'}) && !$run{'tagger'}){
+		main::error_handler('invalid-options', 
+		 "remove image/padding can only be used with --image/--autotag.",1);
+	}
+	if ($test{'taglist-file'} && !$run{'taglist'}){
 		main::error_handler('invalid-options', 
 		 "--taglist-file can only be used with --taglist.",1);
+	}
+	if ($test{'z-min'} && !$run{'analyze'}){
+		main::error_handler('invalid-options', 
+		 "--z-min-time/--z-min-size can only be used with --analyze.",1);
 	}
 	##################################################
 	## Invalid Data - Usually Handled in Validation ##

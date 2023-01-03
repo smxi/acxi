@@ -1,6 +1,6 @@
 ================================================================================
 Version: 3.6.00
-Patch: 
+Patch: 00
 Date: 2023-??-??
 --------------------------------------------------------------------------------
 RELEASE NOTES:
@@ -10,8 +10,11 @@ Big MP3 tag update, added tags that are same in id3v2.3 and id3v2.4 and have
 FLAC equivalents. Used this as an excuse to also review and add some Vorbis tags
 that make sense for acxi to include in auto.tag and tagging/prefill features.
 
-And this review of tagging led to the second major update, which is a new set of
-featurers, new InfoCreate class/package, so acxi goes to 3.6.00.
+This review of tagging led to the second major update: the new InfoCreate 
+class/package for --info-create/--taglist. This sends acxi to 3.6.00 since this 
+is a significant set of new features, and creates an entire new type of 
+functionality, which also blends very well with newer and existing 
+tagging/prefill type features. 
 
 --------------------------------------------------------------------------------
 SPECIAL THANKS:
@@ -19,6 +22,11 @@ SPECIAL THANKS:
 1. Once again, to the people who helped make free / libre audio possible, and in
 particular, the people who worked so hard for so long at xiph.org to provide the
 world with the codecs and tools we now use to listen to and work on audio.
+
+2. To fourtysixandtwo, the acxi packager for Slackware (slackbuilds). The new
+--info-create/--taglist options were his suggestion. This is turning out to be
+really good and useful already, since it allows for easy bulk testing of entire
+sets of recordings at once, which acxi can then be used to correct.
 
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
@@ -54,6 +62,8 @@ remove that from the file string, so tag updates failed unless you were using
 
 This led to things like --glob failing too, since it was never working from the
 right directory in terms of the path/filename metaflac received.
+
+2. --nlink would never have worked because it was missing the 'n' ('link').
 
 --------------------------------------------------------------------------------
 FIXES:
@@ -115,8 +125,14 @@ correctly. See Known Issues 2.
 exist from FLAC tag data. This creates something that acxi can read and use as 
 prefill data source, as well as giving a nice overview of a set of tagged, or 
 non tagged, recordings. To get the raw tags, added --taglist, which will write 
-to screen or taglist.txt file in each directory the full set of tags for all the 
+to screen or taglist.tag file in each directory the full set of tags for all the 
 files in the directory.
+
+5. Added $self_patch to allow for checking development patch versions, like 
+pinxi uses. Helpful to make sure you have the right version. Also added to
+--help (and date).
+
+6. Added --glob as alternative to --source-glob/-g. 
 
 --------------------------------------------------------------------------------
 CHANGES:
@@ -140,6 +156,10 @@ more consistent prefill tag listing.
 5. Updated README.txt, help, and man page for new --info-create, --taglist, 
 --taglist-file options.
 
+6. Updated man/help to add --glob.
+
+7. Updated help top part to have better examples with long and short forms.
+
 --------------------------------------------------------------------------------
 CODE:
 
@@ -150,17 +170,19 @@ hash.
 
 3. Added --dbg [x-xx] for granular debugging. This will need some documentation.
 
-4. Major refactor of options validation, which had gotten messy and hard to 
+4. Major refactor of options handler, which had gotten messy and hard to 
 follow/read/use. Also got rid of the hack I used to turn off features by setting 
 to 0 in each major option item. Now all that is handled in 
-OptionsHandler::verify_selections(), and options only switch on $run and $test 
-switches.
+OptionsHandler::set_switches() and OptionsHandler::verify_selections(), and 
+options themselves only switch on $run and $test switches and assign values.
 
 5. Extended main::get_flac_tags() to return 'all' tags in flac file, for new 
 package InfoCreate.
 
 6. Changed to explicit sync switched on only if no other actions conflict in 
-OptionsHandler::verify_selections(). 
+OptionsHandler::set_switches(). This was previously always set to 1, true, on 
+top of acxi by default, now it's only set to true if no conflicting options are 
+used.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Fri, 30 Dec 2022 12:57:40 -0800

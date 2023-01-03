@@ -1,4 +1,4 @@
-.TH ACXI 1 "2023\-01\-02" acxi "acxi manual"
+.TH ACXI 1 "2023\-01\-03" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -8,7 +8,7 @@ faster.
 Directories: [\fB\-\-destination\fR, \fB\-d\fR {destination-path}]
 [\fB\-\-dot\fR] [\fB\-\-nlink\fR] [\fB\-\-no\-dot\fR] [\fB\-\-no\-nlink\fR]
 [\fB\-\-recurse\fR {-1-xx}] [\fB\-\-source\fR, \fB\-s\fR {source\-path}] 
-[\fB\-\-source\-glob\fR, \fB\-g\fR {relative path}]
+[\fB\-\-source\-glob\fR, \fB\-\-glob\fR, \fB\-g\fR {relative path}]
 .IP * 2
 Input/Output: [\fB\-\-input\fR, \fB\-i\fR {flac|raw|shn|wave}] 
 [\fB\-\-output\fR, \fB\-d\fR {flac|mp3|ogg|opus}]
@@ -28,8 +28,10 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-autotag\-create\fR, \fB\-C\fR] 
 [\fB\-\-autotag\-create\-single\fR, \fB\-S\fR] 
 [\fB\-\-autotag\-create\-multi\fR, \fB\-M\fR {filename start ID}]
-[\fB\-\-image\fR, \fB\-I\fR {cover image filename}] [\fB\-\-info\-create\fR]
-[\fB\-\-info\-file\fR, \fB\-\-prefill\-file\fR {release info file name}] 
+[\fB\-\-image\fR, \fB\-I\fR {cover image filename}] 
+[\fB\-\-info\-create\fR, \fB\-\-ic\fR]
+[\fB\-\-info\-file\fR, \fB\-\-if\fR, \fB\-\-prefill\-file\fR, \fB\-\-pf\fR 
+{release info file name}] 
 [\fB\-\-infofix\fR, \fB\-X\fR [0|a|c|d|k|l|m|n|q|t|u|v|w]] 
 [\fB\-\-info\-rating\fR {2\-xxx}
 [\fB\-\-multiartist\fR, \fB\-\-ma\fR {[at|ta]:separator}]
@@ -39,7 +41,8 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-remove\-images\fR, \fB\-R\fR] [\fB\-\-remove\-padding\fR, \fB\-P\fR] 
 [\fB\-\-start\fR {0-xx}] 
 [\fB\-\-tag\fR, \fB\-T\fR] {"TAG1%:tag value^^TAG2%:tag value"}] 
-[\fB\-\-taglist\fR] [\fB\-\-taglist\-file\fR {tag list file}] 
+[\fB\-\-taglist\fR, \fB\-\-tl\fR] 
+[\fB\-\-taglist\-file\fR, \fB\-\-tlf\fR, \fB\-\-tf\fR {tag list file}] 
 .IP * 2
 Analyze/Checksums: [\fB\-\-analyze\fR, \fB\-Z\fR]
 [\fB\-\-checksum\fR, \fB\-K\fR] [\fB\-\-checksum\-delete\fR, \fB\-D\fR] 
@@ -207,6 +210,11 @@ consequences. Note that if you do find unintended consequences, you should be
 able to filter those out using additional \fB\-\-exclude\fR lists.
 
 .TP
+.B \-\-glob\fR, \fB\-g\fR, \fB\-\-source\-glob {path relative to \-s path}\fR
+.br
+See \fB\-\-source\-glob\fR.
+
+.TP
 .B \-\-input\fR, \fB\-i {aif|flac|raw|shn|wav}\fR
 Input type. Supported types: flac, wav, raw, shn. 
 
@@ -281,7 +289,7 @@ Path to the top-most directory containing your source files (eg, flac). Cannot
 start with \fB../\fR.
 
 .TP
-.B \-\-source\-glob\fR, \fB\-g {path relative to \-s path}\fR
+.B \-\-source\-glob\fR, \fB\-\-glob\fR, \fB\-g {path relative to \-s path}\fR
 Accepts wild card paths if you only want to update or check certain directories 
 within the main \fB\-\-source\fR working directory. Requires \fB\-\-source\fR 
 (or pre-configured \fBSOURCE_DIRECTORY\fR), wild card path must be within 
@@ -1116,7 +1124,7 @@ Sample: \fBacxi \-s ./ \-\-tag "COMMENT%:UNSET^^ARTIST%:Black Sabbath"\fR
 
 .TP
 .B \-\-taglist\fR, \fB\-\-tl\fR
-Use alone to create only taglist.txt files, or with \fB\-\-info\-create\fR, if 
+Use alone to create only taglist.tag files, or with \fB\-\-info\-create\fR, if 
 you want to create a list of the raw tags in each directory of FLACS. 
 
 .TP
@@ -1548,8 +1556,8 @@ Sample: \fBPREFILL_TAG=GENRE%:Heavy Metal^^IMAGE%:cover.jpg\fR
 
 \fBTAGLIST_FILE\fR \- Sample: \fBTAGLIST_FILE=taglists.txt\fR 
 
-\fBtaglist.txt\fR \- The filename to be used to by \fB\-\-taglist\fR. Default is 
-\fBtaglist.txt\fR
+\fBtaglist.tag\fR \- The filename to be used to by \fB\-\-taglist\fR. Default is 
+\fBtaglist.tag\fR
 
 Filename must be unique, and must not be found anywhere else in your collection. 
 Do not change unless you have a very good reason to.
