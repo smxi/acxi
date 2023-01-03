@@ -1,5 +1,5 @@
 ================================================================================
-Version: 3.5.07
+Version: 3.6.00
 Patch: 
 Date: 2023-??-??
 --------------------------------------------------------------------------------
@@ -9,6 +9,9 @@ RELEASE NOTES:
 Big MP3 tag update, added tags that are same in id3v2.3 and id3v2.4 and have 
 FLAC equivalents. Used this as an excuse to also review and add some Vorbis tags
 that make sense for acxi to include in auto.tag and tagging/prefill features.
+
+And this review of tagging led to the second major update, which is a new set of
+featurers, new InfoCreate class/package, so acxi goes to 3.6.00.
 
 --------------------------------------------------------------------------------
 SPECIAL THANKS:
@@ -97,8 +100,8 @@ Note that because id3v2.x either doesn't have comparable DATE, LOCATION, OPUS,
 PERFORMER, PRODUCER, VENUE tags, or v2.3 name is different from v2.4, those tags 
 are not supported.
 
-2. To auto.tag generator, added CONDUCTOR, MIXER, REMIXER, and variants for 
-prefill, like:
+2. AUTOTAG: To auto.tag generator, added CONDUCTOR, MIXER, REMIXER, and variants 
+for prefill, like:
 
 CONDUCTOR: Conductor, Conducted by.
 MIXER: Mixed by, Mixer, Mastered by, Masterer.
@@ -108,8 +111,12 @@ REMIXER: Remixer, remixed by, remasterer, remastered by.
 because it's made for very specific purposes and is unlikely to be used 
 correctly. See Known Issues 2.
 
-4. New feature: --info-create/--ic: creates info.txt files if non exist from 
-FLAC tag data.
+4. INFOCREATE/TAGLIST: New features: --info-create/--ic: creates info.txt files if non 
+exist from FLAC tag data. This creates something that acxi can read and use as 
+prefill data source, as well as giving a nice overview of a set of tagged, or 
+non tagged, recordings. To get the raw tags, added --taglist, which will write 
+to screen or taglist.txt file in each directory the full set of tags for all the 
+files in the directory.
 
 --------------------------------------------------------------------------------
 CHANGES:
@@ -130,6 +137,9 @@ more consistent prefill tag listing.
 
 4. Updated man page debugger section for --dbg xx triggers.
 
+5. Updated README.txt, help, and man page for new --info-create, --taglist, 
+--taglist-file options.
+
 --------------------------------------------------------------------------------
 CODE:
 
@@ -138,15 +148,19 @@ hash.
 
 2. Switched to qw(...) in some tag lists that are being updated frequently.
 
-3. Added --dbg [x-xx] for granular debugging.
+3. Added --dbg [x-xx] for granular debugging. This will need some documentation.
 
-4. Major  refactor of options validation, which had gotten messy and hard to 
-follow/read/use.
+4. Major refactor of options validation, which had gotten messy and hard to 
+follow/read/use. Also got rid of the hack I used to turn off features by setting 
+to 0 in each major option item. Now all that is handled in 
+OptionsHandler::verify_selections(), and options only switch on $run and $test 
+switches.
 
-5. Extended main::get_flac_tags() to return all tags in flac file, for new 
+5. Extended main::get_flac_tags() to return 'all' tags in flac file, for new 
 package InfoCreate.
 
-6. Changed to explicit sync switched on only if no other actions conflict.
+6. Changed to explicit sync switched on only if no other actions conflict in 
+OptionsHandler::verify_selections(). 
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Fri, 30 Dec 2022 12:57:40 -0800

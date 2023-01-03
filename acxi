@@ -2026,10 +2026,17 @@ package InfoCreate;
 my ($file_tags,$print_src);
 sub process {
 	say $line_large;
-	say "Starting info file checks in: " . main::sourcer("$SOURCE_DIRECTORY");
+	my $type;
+	$type = 'info ' . $INFO_FILE if $run{'info-create'};
+	if ($run{'taglist'}){
+		$type .= '/' if $type;
+		$type .= 'tag ' . $TAGLIST_FILE;
+	}
+	say "Starting $type file checks in: " . main::sourcer("$SOURCE_DIRECTORY");
 	process_directories();
 	say $line_small;
-	say "Completed info file generation.";
+	
+	say "Completed $type file generation.";
 	say $line_large;
 }
 sub process_directories {
@@ -2263,13 +2270,19 @@ sub generate_info_file {
 	say $line_small;
 }
 sub generate_taglist_file {
-	my (@contents);
+	my ($b_tags,@contents);
 	say "  Generating $TAGLIST_FILE file...";
 	if ($file_tags && %$file_tags){
 		foreach my $file (sort keys %$file_tags){
-			push(@contents,'FILE:' . $file,@{$file_tags->{$file}{'taglist'}},'');
+			if (defined $file_tags->{$file}{'taglist'}){
+				push(@contents,'FILE:' . $file,@{$file_tags->{$file}{'taglist'}},'');
+				$b_tags = 1;
+			}
+			else {
+				push(@contents,'FILE:' . $file . ': NO TAGS FOUND','');
+			}
 		}
-		if (@contents){
+		if ($b_tags){
 			if ($b_test){
 				say "  Would have printed this to $TAGLIST_FILE:";
 				say $line_small;
