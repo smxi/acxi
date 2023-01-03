@@ -108,6 +108,9 @@ FLAC tag data.
 --------------------------------------------------------------------------------
 CHANGES:
 
+1. Configuration item TAG_FILE has been changed to AUTOTAG_FILE, but TAG_FILE 
+will keep working. This is because we needed non-ambiguous names with new 
+TAGLIST_FILE configuration item. 
 
 --------------------------------------------------------------------------------
 DOCUMENTATION:
@@ -136,6 +139,8 @@ follow/read/use.
 
 5. Extended main::get_flac_tags() to return all tags in flac file, for new 
 package InfoCreate.
+
+6. Changed to explicit sync switched on only if no other actions conflict.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Fri, 30 Dec 2022 12:57:40 -0800

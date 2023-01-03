@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_date='2023-01-01';
+my $self_date='2023-01-02';
 
 ## GLOBALS ##
 ## Booleans
@@ -103,7 +103,6 @@ my (@excludes,@excludes_stripped,@extension_list,@found_list,@source_glob,@tags)
 
 ## Execution/Debug Switches
 my (@dbg,%run);
-$run{'sync'} = 1; # set default to sync collection
 
 ## CONSTANTS ##
 my $path_separator = ($b_win) ? '\\' : '/';
@@ -253,15 +252,17 @@ my $Z_MIN_TIME = 10; # in seconds
 #### AUTO TAGGING
 #### -------------------------------------------------------------------
 
+# This is the file that contains the syntax found in auto.tag file. But
+# you can call it something else if you prefer.
+my $AUTOTAG_FILE = 'auto.tag';
 # For -S/-M/--prefill/--infofix can be overridden with config or --info-file []
 my $INFO_FILE = 'info.txt';
 # For -Xf, the rating shown in Quality: /[rating] item.
 my $INFO_RATING = 4;
 # Uses --tag syntax: TAG%:value^^TAG%:value, remember to clear when done!
 my $PREFILL_TAG = '';
-# This is the file that contains the syntax found in auto.tag file. But
-# you can call it something else if you prefer.
-my $TAG_FILE = 'auto.tag';
+# This is for --info-create + --tag-list, writes to this file per directory
+my $TAGLIST_FILE = 'taglist.txt';
 
 #### -------------------------------------------------------------------
 #### CHECKSUM DATA
@@ -337,7 +338,7 @@ sub main {
 	AutoTag::create() if $run{'autotag-create'};
 	AutoTag::run_tagger() if $run{'autotag'};
 	Checksums::process() if ($run{'checksum'} || $run{'checksum-verify'});
-	InfoCreate::process() if $run{'info-create'};
+	InfoCreate::process() if $run{'info-create'} || $run{'taglist'};
 	CleanCollection::process() if $run{'clean'};
 	InfoFix::process() if $run{'infofix'};
 	SyncCollection::process() if $run{'sync'};
@@ -733,7 +734,7 @@ sub run_tagger {
 }
 sub create {
 	say $line_large;
-	say "Creating $TAG_FILE in: " . main::sourcer("$SOURCE_DIRECTORY");
+	say "Creating $AUTOTAG_FILE in: " . main::sourcer("$SOURCE_DIRECTORY");
 	make_tag_file();
 	say $line_small;
 	if (!$b_test){
@@ -747,7 +748,7 @@ sub create {
 sub get_tag_files {
 	my ($item,$print_file,$result,$working_dir);
 	$list_type = 'file';
-	$extension = $TAG_FILE;
+	$extension = $AUTOTAG_FILE;
 	@found_list = ();
 	File::Find::find(\&main::wanted, @source_glob);
 	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
@@ -766,11 +767,11 @@ sub get_tag_files {
 		$b_dest_changed = 1;
 	}
 	if (!@found_list){
-		say "No $TAG_FILE files found.";
+		say "No $AUTOTAG_FILE files found.";
 	}
 }
 sub process_tags {
-	my @tags = main::reader($TAG_FILE,'strip');
+	my @tags = main::reader($AUTOTAG_FILE,'strip');
 	say Data::Dumper::Dumper \@tags if $dbg[2];
 	my ($args,$error_message,@image_args,@images,@main_tags,
 	@track_tags,@working);
@@ -930,12 +931,12 @@ sub make_tag_file {
 	# $source_dir =~ s|([\(\)\$])|\\$1|g;
 	$source_dir =~ s|^\Q$source_dir$path_separator\E||;
 	# say "source1:  $source_dir";
-	print "Checking for pre-existing $TAG_FILE... ";
+	print "Checking for pre-existing $AUTOTAG_FILE... ";
 	if ($b_test){
 		say "Running test mode.";
 	}
-	elsif (-e $source_dir . $path_separator . $TAG_FILE){
-		main::error_handler('file-exists', "File $TAG_FILE already exists in:\n$source_dir",1);
+	elsif (-e $source_dir . $path_separator . $AUTOTAG_FILE){
+		main::error_handler('file-exists', "File $AUTOTAG_FILE already exists in:\n$source_dir",1);
 	}
 	else {
 		say "none found. Proceeding.";
@@ -945,7 +946,7 @@ sub make_tag_file {
 		system 'pwd';
 		say "start1: $start_dir"
 	}
-	print "Creating $TAG_FILE file... ";
+	print "Creating $AUTOTAG_FILE file... ";
 	$extension = $INPUT_TYPE;
 	$list_type = 'file';
 	@found_list = ();
@@ -1370,7 +1371,7 @@ sub populate_tag_file {
 		say join("\n", @tags),"\n";
 	}
 	else {
-		main::writer($TAG_FILE,\@tags);
+		main::writer($AUTOTAG_FILE,\@tags);
 	}
 }
 sub image_embedder{
@@ -1637,7 +1638,7 @@ sub generate_md5 {
 		main::error_handler('application-error', $error_message,1);
 	}
 	else {
-		chomp (@output = grep {$_ !~ m^($TAG_FILE|\.ffp|\.md5)^} @output);
+		chomp (@output = grep {$_ !~ m^($AUTOTAG_FILE|\.ffp|\.md5)^} @output);
 		if (!$b_test){
 			main::writer("$MD5_FILE.md5",\@output);
 			say 'created for ' . scalar(@output) . ' files';
@@ -2056,19 +2057,38 @@ sub process_directories {
 		my @files = main::globber("*.{$file_type}");
 		# say "\n", Data::Dumper::Dumper \@files;
 		if (grep -f, @files){
-			if (!-e $INFO_FILE){
-				say "  No $INFO_FILE file found. Processing $INPUT_TYPE files....";
-				undef $file_tags;
+			undef $file_tags;
+			if (($run{'info-create'} && !-e $INFO_FILE) || 
+			($run{'taglist'} && !-e $TAGLIST_FILE)){
 				process_tags(\@files);
-				if ($file_tags && %$file_tags){
-					generate_info_file();
+			}
+			if ($run{'info-create'}){
+				if (!-e $INFO_FILE){
+					say "  No $INFO_FILE file found. Processing $INPUT_TYPE files....";
+					if ($file_tags && %$file_tags){
+						generate_info_file();
+					}
+					else {
+						say "  No tag data found in $INPUT_TYPE files.";
+					}
 				}
 				else {
-					say "  No tag data found in $INPUT_TYPE files.";
+					say "  $INFO_FILE file present. Skipping this directory.";
 				}
 			}
-			else {
-				say "  $INFO_FILE file present. Skipping this directory.";
+			if ($run{'taglist'}){
+				if (!-e $TAGLIST_FILE){
+					say "  No $TAGLIST_FILE file found. Processing $INPUT_TYPE files....";
+					if ($file_tags && %$file_tags){
+						generate_taglist_file();
+					}
+					else {
+						say "  No tag data found in $INPUT_TYPE files.";
+					}
+				}
+				else {
+					say "  $TAGLIST_FILE file present. Skipping this directory.";
+				}
 			}
 		}
 		else {
@@ -2078,50 +2098,56 @@ sub process_directories {
 }
 sub process_tags {
 	my ($files) = @_;
-	my ($b_tags);
 	foreach my $file (@$files){
-		$file_tags->{$file} = main::get_flac_tags('all',$file);
-		$b_tags = 1 if !$b_tags && %{$file_tags->{$file}};
+		# returns single hash ref of file + array ref of tags
+		my $tags = main::get_flac_tags('all',$file);
+		if ($run{'taglist'}){
+			$file_tags->{$file}{'taglist'} = $tags->{$file};
+		}
+		if ($run{'info-create'}){
+			foreach my $tag (@{$tags->{$file}}){
+				my @working = split(/=/,$tag,2);
+				push(@{$file_tags->{$file}{uc($working[0])}},$working[1]);
+			}
+		}
 	}
 	say Data::Dumper::Dumper $file_tags if $dbg[4];
 }
 # note: in order to handle > 1 type per tag name, all are contained in arrays.
 sub generate_info_file {
-	my (@comments,@info,@lyrics,@main,@performers,@rating,@tracks);
+	my (@general,@info,@lyrics,@main,@performers,@rating,@temp,@tracks);
 	my (%found,%multi,%track_data);
 	say "  Generating $INFO_FILE data...";
-	# $multi{'album'} = check_multi('ALBUM');
-	$multi{'artist'} = check_multi('ARTIST');
-	# $multi{'date'} = check_multi('DATE');
-	$multi{'performer'} = check_multi('PERFORMER');
-	$multi{'rating'} = check_multi('RATING');
-	# $multi{'year'} = check_multi('YEAR');
-	# This is the order we want the basic data in:
+	my $tags = [qw(ALBUM ARTIST DATE DISCNUMBER PERFORMER RATING YEAR)];
+	my $multi = check_multi($tags);
 	my @main_checks = qw(ARTIST ALBUM ALBUMSORT COMPILATION ALBUMARTIST ENSEMBLE 
 	COMPOSER CONDUCTOR OPUS DATE ORIGINALDATE YEAR VENUE LOCATION);
-	my @comments_checks = qw(COMMENT DESCRIPTION);
+	# These can have > 1 item so let's treat them differently
+	my @general_checks = qw(COMMENT DESCRIPTION SOURCE);
 	my @info_checks = qw(GENRE MOOD BPM MEASURE INITIAL_KEY TUNING
 	ORGANIZATION PRODUCER PUBLISHER MIXER REMIXER 
 	URL WEBSITE CHAPTER COPYRIGHT LICENSE CONTACT
 	BARCODE EAN/UPN UPC PRODUCTNUMBER CATALOGNUMBER LABELNO CATALOG
 	ISRC ETREE SHNID ACOUSTIC_ID ACOUSTID_FINGERPRINT ACCURATERIPDISCID CDTOC
-	ENCODED-BY ENCODER ENCODING MEDIA SOURCEMEDIA SOURCE);
-	splice(@info_checks,2,0,'RATING') if !$multi{'rating'};
+	ENCODED-BY ENCODER ENCODING MEDIA SOURCEMEDIA );
+	splice(@info_checks,2,0,'RATING') if !$multi->{'RATING'};
 	foreach my  $file (sort keys %$file_tags){
 		my ($track) = ('');
 		foreach my $check (@main_checks){
 			my ($lc,$ucf) = (lc($check),ucfirst(lc($check)));
-			if (!$found{$lc} && ($check ne 'ARTIST' || !$multi{'artist'}) && 
+			if (!$found{$lc} && ($check ne 'ARTIST' || !$multi->{'ARTIST'}) && 
 			$file_tags->{$file}{$check}){
 				push(@main,"$ucf: " . join("\n$ucf: ", @{$file_tags->{$file}{$check}}));
 				$found{$lc} = 1;
+				delete $file_tags->{$file}{$check};
 			}
 		}
-		foreach my $check (@comments_checks){
+		foreach my $check (@general_checks){
 			my ($lc,$ucf) = (lc($check),ucfirst(lc($check)));
 			if (!$found{$lc} && $file_tags->{$file}{$check}){
-				push(@comments,'',"$ucf:",@{$file_tags->{$file}{$check}});
+				push(@general,'',"$ucf: " . join("\n$ucf: ",@{$file_tags->{$file}{$check}}));
 				$found{$lc} = 1;
+				delete $file_tags->{$file}{$check};
 			}
 		}
 		foreach my $check (@info_checks){
@@ -2129,69 +2155,82 @@ sub generate_info_file {
 			if (!$found{$lc} && $file_tags->{$file}{$check}){
 				push(@info,"$ucf: " . join("\n$ucf: ", @{$file_tags->{$file}{$check}}));
 				$found{$lc} = 1;
+				delete $file_tags->{$file}{$check};
 			}
 		}
-		if ($file_tags->{$file}{'DISCNUMBER'}[0] && 
-		($file_tags->{$file}{'DISCTOTAL'}[0] && $file_tags->{$file}{'DISCTOTAL'}[0] > 1)){
-			$track = $file_tags->{$file}{'DISCNUMBER'}[0] . '-';
+		if ($file_tags->{$file}{'DISCNUMBER'}[0] && ($multi->{'DISCNUMBER'} ||
+		($file_tags->{$file}{'DISCTOTAL'}[0] && $file_tags->{$file}{'DISCTOTAL'}[0] > 1) || 
+		($file_tags->{$file}{'TOTALDISCS'}[0] && $file_tags->{$file}{'TOTALDISCS'}[0] > 1))){
+			@temp = split(/\s*\/\s*/,$file_tags->{$file}{'DISCNUMBER'}[0]);
+			$track = $temp[0] . '-';
+			
 		}
 		if ($file_tags->{$file}{'TRACKNUMBER'}[0]){
-			$track .= sprintf('%02d',$file_tags->{$file}{'TRACKNUMBER'}[0]) . '. '; 
+			@temp = split(/\s*\/\s*/,$file_tags->{$file}{'TRACKNUMBER'}[0]);
+			$track .= sprintf('%02d',$temp[0]) . '. ';
+			delete $file_tags->{$file}{'TRACKNUMBER'};
 		}
 		if ($file_tags->{$file}{'TITLE'}[0]){
-			if ($multi{'artist'} && $file_tags->{$file}{'ARTIST'}[0]){
-				$track .= $file_tags->{$file}{'ARTIST'}[0] . ' - '; 
+			if ($multi->{'ARTIST'} && $file_tags->{$file}{'ARTIST'}[0]){
+				$track .= $file_tags->{$file}{'ARTIST'}[0] . ' - ';
+				delete $file_tags->{$file}{'ARTIST'};
 			}
 			$track .= $file_tags->{$file}{'TITLE'}[0]; 
 			if ($file_tags->{$file}{'VERSION'}[0]){
 				$track .= ' (' . $file_tags->{$file}{'VERSION'}[0] . ')';
+				delete $file_tags->{$file}{'VERSION'};
 			}
 			if ($file_tags->{$file}{'PART'}[0]){
 				$track .= ' (' . $file_tags->{$file}{'PART'}[0] . ')';
+				delete $file_tags->{$file}{'PART'};
 			}
 		}
 		# these are probably going to be per file/track
 		if ($track){
 			$track_data{$file}->{'string'} = $track;
-			if ($multi{'performer'} && $file_tags->{$file}{'PERFORMER'} && 
+			if ($multi->{'PERFORMER'} && $file_tags->{$file}{'PERFORMER'} && 
 			join('',@{$file_tags->{$file}{'PERFORMER'}}) ne join('',@performers)){
 				$track_data{$file}->{'performers'} = "Performers:\n";
 				$track_data{$file}->{'performers'} .= join("\n",@{$file_tags->{$file}{'PERFORMER'}});
-				$track_data{$file}->{'performers'} .= "\n";
 				@performers = @{$file_tags->{$file}{'PERFORMER'}};
+				delete $file_tags->{$file}{'PERFORMER'};
 			}
 			if ($file_tags->{$file}{'LYRICS'}){
 				push(@lyrics,$track,join("\n",@{$file_tags->{$file}{'LYRICS'}}),'');
+				delete $file_tags->{$file}{'LYRICS'};
 			}
-			if ($multi{'rating'} && $file_tags->{$file}{'RATING'}){
+			if ($multi->{'RATING'} && $file_tags->{$file}{'RATING'}){
 				push(@rating,$track,join("\n",@{$file_tags->{$file}{'RATING'}}),'');
+				delete $file_tags->{$file}{'RATING'};
 			}
 		}
 		# these will be array already, but each track can have different performers
-		if (!$multi{'performer'} && !$found{'performer'} && 
+		if (!$multi->{'PERFORMER'} && !$found{'performer'} && 
 		$file_tags->{$file}{'PERFORMER'}){
 			@performers = @{$file_tags->{$file}{'PERFORMER'}};
 			$found{'performer'} = 1;
+			delete $file_tags->{$file}{'PERFORMER'};
 		}
 	}
-	@performers = () if $multi{'performer'};
+	@performers = () if $multi->{'PERFORMER'};
 	say Data::Dumper::Dumper \%track_data if $dbg[7];
 	if (%track_data){
 		my $b_starter;
 		foreach my $track (sort keys %track_data){
 			if ($track_data{$track}->{'performers'}){
-				push(@tracks,'',$track_data{$track}->{'performers'});
+				push(@tracks,'',$track_data{$track}->{'performers'},'');
 			}
 			# we want Tracks: to come AFTER first performers list if multiperf.
 			if (!$b_starter){
-				push(@tracks,'','Tracks:');
+				push (@tracks,'') if !$track_data{$track}->{'performers'};
+				push(@tracks,'Tracks:');
 				$b_starter = 1;
 			}
 			push(@tracks,$track_data{$track}->{'string'});
 		}
 		push(@tracks,'',':et:');
 	}
-	if (!$multi{'performer'} && @performers){
+	if (!$multi->{'PERFORMER'} && @performers){
 		@performers = ('','Performers:',@performers);
 	}
 	if (@info){
@@ -2203,8 +2242,9 @@ sub generate_info_file {
 	if (@rating){
 		@rating = ('','Ratings:',@rating);
 	}
-	my @info_data = (@main,@performers,@tracks,@comments,@info,@rating,@lyrics);
-	say Data::Dumper::Dumper \@info_data if $dbg[5];
+	my @info_data = (@main,@performers,@tracks,@general,@info,@rating,@lyrics);
+	say "info_data: ", Data::Dumper::Dumper \@info_data if $dbg[5];
+	say "file_tags: ", Data::Dumper::Dumper $file_tags if $dbg[7];
 	if (@info_data){
 		if ($b_test){
 			say "  Would have printed this to $INFO_FILE:";
@@ -2220,17 +2260,47 @@ sub generate_info_file {
 	}
 	say $line_small;
 }
-sub check_multi {
-	my ($type) = @_;
-	my ($b_multi,%multi);
-	foreach my $key (sort keys %$file_tags){
-		if (defined $file_tags->{$key}{$type}){
-			$multi{join(';',@{$file_tags->{$key}{$type}})} = 1;
+sub generate_taglist_file {
+	my (@contents);
+	say "  Generating $TAGLIST_FILE file...";
+	if ($file_tags && %$file_tags){
+		foreach my $file (sort keys %$file_tags){
+			push(@contents,'FILE:' . $file,@{$file_tags->{$file}{'taglist'}},'');
+		}
+		if (@contents){
+			if ($b_test){
+				say "  Would have printed this to $TAGLIST_FILE:";
+				say $line_small;
+				say join("\n",@contents);
+			}
+			else {
+				say "  (Beta no writes) Writing tag data to: $TAGLIST_FILE";
+			}
+		}
+		else {
+			say "  No tag data found to use! Are the files tagged?";
 		}
 	}
-	$b_multi = 1 if scalar keys %multi > 1;
+	else {
+		say "  No tags found! Are the files tagged?";
+	}
+	say "taglist contents: ", Data::Dumper::Dumper \@contents if $dbg[5];
+}
+sub check_multi {
+	my ($tags) = @_;
+	my ($b_multi,%multi);
+	foreach my $key (sort keys %$file_tags){
+		foreach my $tag (@$tags){
+			if (defined $file_tags->{$key}{$tag}){
+				$multi{$tag}->{join(';',@{$file_tags->{$key}{$tag}})} = 1;
+			}
+		}
+	}
+	foreach my $tag (keys %multi){
+		$multi{$tag} = (scalar keys %{$multi{$tag}} > 1) ? 1 : 0;
+	}
 	say Data::Dumper::Dumper \%multi if $dbg[6];
-	return $b_multi;
+	return \%multi;
 }
 }
 
@@ -3071,7 +3141,7 @@ sub flac2mp3_cmd {
 # artist, album, title, genre, date, tracknumber
 sub get_flac_tags {
 	my ($type,$i_file) = @_;
-	my (%tag_list,@tags,@working);
+	my (%tags,@tags,@working);
 	if ($type eq 'standard'){
 		# note: no opus, venue, location, producer tags in standard mp3
 		@tags = qw(ALBUM ALBUMARTIST ARTIST ARTISTSORT 
@@ -3096,23 +3166,24 @@ sub get_flac_tags {
 	my @orig_tags = qx($cmd);
 	chomp @orig_tags;
 	foreach (@orig_tags){
-		@working = split /=/,$_;
+		next if !$_; # seen case where somehow a returned tag is temp, no tag=value
 		if ($type ne 'all'){
-			$tag_list{$working[0]} = $working[1];
+			@working = split(/=/,$_,2);
+			$tags{$working[0]} = $working[1];
 		}
 		# while most tags occur single, easier to just treat them all as possible multi
 		else {
-			push(@{$tag_list{uc($working[0])}},$working[1]);
+			push(@{$tags{$i_file}},$_);
 		}
 	}
 	if ($type ne 'all'){
 		# create missing hash keys
 		foreach (@tags){
-			$tag_list{$_} = '' if !defined $tag_list{$_};
+			$tags{$_} = '' if !defined $tags{$_};
 		}
 	}
-	say Dumper \%tag_list if $dbg[1];
-	return \%tag_list;
+	say Dumper \%tags if $dbg[1];
+	return \%tags;
 }
 
 #########################################################################
@@ -3638,7 +3709,7 @@ sub check_application_paths {
 				}
 			}
 		}
-		if ($run{'autotag'} || $run{'info-create'}){
+		if ($run{'autotag'} || $run{'info-create'} || $run{'taglist'}){
 			if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
 				push(@app_paths,$COMMAND_METAFLAC);
 			}
@@ -4200,7 +4271,7 @@ sub show_options {
 	$output .= "                  Deletes all existing tags, then creates a fully tagged set of\n";
 	$output .= "                  files.\n";
 	$output .= "--autotag-create, -C\n";
-	$output .= "                  Create $TAG_FILE template in source directory. Will be\n";
+	$output .= "                  Create $AUTOTAG_FILE template in source directory. Will be\n";
 	$output .= "                  populated with file names for recording filled in already in\n";
 	$output .= "                  track listing. Preserves existing REPLAYGAIN values. Not\n";
 	$output .= "                  recommended, use -S or -M instead.\n";
@@ -4218,7 +4289,7 @@ sub show_options {
 	$output .= "--autotag-create-single, -S\n";
 	$output .= "                  For single disc recordings, will also add TRACKTOTAL and\n";
 	$output .= "                  TRACKNUMBER counts when creating and populating the\n";
-	$output .= "                  $TAG_FILE file. See -E for more prefill options.\n";
+	$output .= "                  $AUTOTAG_FILE file. See -E for more prefill options.\n";
 	$output .= "--ffprobe         Force use of ffprobe for FLAC analysis in -Z/-Xq\n";
 	$output .= "--image, -I {jpg,png image file name|remove}\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
@@ -4308,7 +4379,7 @@ sub show_options {
 	$output .= "Miscellaneous options:\n";
 	$output .= "--aggregate, -G   [filename|extension] Copy file name or extension type to\n";
 	$output .= "                  --destination directory. If no argument given, copies over\n";
-	$output .= "                  $TAG_FILE. Do not use . in extension (jpg good, .jpg bad)\n";
+	$output .= "                  $AUTOTAG_FILE. Do not use . in extension (jpg good, .jpg bad)\n";
 	$output .= "                  You can supply more than one filename or extension:\n";
 	$output .= "                  (file name): acxi -d ~/music/cdinfo --aggregate info.txt\n";
 	$output .= "                  (extension): acxi -d ~/music/cdinfo --aggregate jpg\n";
@@ -4498,7 +4569,9 @@ sub set {
 }
 sub assign_value {
 	my ($var,$value) = @_;
-	if ($var eq 'CLEAN'){
+	# TAG_FILE is legacy, but just leave it
+	if ($var eq 'AUTOTAG_FILE' || $var eq 'TAG_FILE'){$AUTOTAG_FILE = $value}
+	elsif ($var eq 'CLEAN'){
 		$value = get_boolean($value);
 		if ($value =~ /^[10]$/){
 			$run{'clean'} = $value;
@@ -4542,7 +4615,7 @@ sub assign_value {
 	elsif ($var eq 'SELF_DIRECTORY'){$SELF_DIRECTORY = $value}
 	elsif ($var eq 'SOURCE_DIRECTORY' || $var eq 'DIR_PREFIX_SOURCE'){
 		$SOURCE_DIRECTORY = $value;}
-	elsif ($var eq 'TAG_FILE'){$TAG_FILE = $value}
+	elsif ($var eq 'TAGLIST_FILE'){$TAGLIST_FILE = $value}
 	# LOG_LEVEL is legacy name, leave in always.
 	elsif ($var eq 'VERBOSITY' || $var eq 'LOG_LEVEL'){$VERBOSITY = $value;}
 	elsif ($var eq 'Z_MIN_TIME'){$Z_MIN_TIME = $value}
@@ -4572,20 +4645,15 @@ sub get{
 		if ($arg){
 			if ($arg eq 'file'){
 				$run{'aggregate-file'} = 1;
-				$arg = $TAG_FILE;
+				$arg = $AUTOTAG_FILE;
 			}
 			$run{'ag-file'} = $arg;
 		}
 		else {
-			$run{'ag-file'} = $TAG_FILE;
+			$run{'ag-file'} = $AUTOTAG_FILE;
 		}
 		$run{'aggregate'} = 1;
 		$run{'autotag'} = 1;
-		$run{'autotag-create'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		$run{'checksum'} = 0;
-		$run{'checksum-verify'} = 0;
 		$test{'aggregate'} = 1;
 		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';
@@ -4593,11 +4661,6 @@ sub get{
 	'analyze|Z' => sub { 
 		$run{'checksum'} = 1;
 		$run{'analyze'} = 1;
-		$run{'duplicates'} = 0;
-		$run{'checksum-delete'} = 0;
-		$run{'checksum-verify'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
 		$run{'no-md5'} = 1;
 		$test{'checksum'} = 1;
 		$test{'analyze'} = 1;
@@ -4609,11 +4672,6 @@ sub get{
 		$COPY_TYPES .= ',' . $arg if $arg;},
 	'A|autotag' => sub { 
 		$run{'autotag'} = 1;
-		$run{'autotag-create'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		# $run{'checksum'} = 0;
-		$run{'checksum-verify'} = 0;
 		$test{'tag'} = 1;
 		$b_check_dest = 0;
 		$b_check_out = 0;
@@ -4621,11 +4679,6 @@ sub get{
 		},
 	'C|autotag-create' => sub { 
 		$run{'autotag-create'} = 1;
-		$run{'autotag'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		$run{'checksum'} = 0;
-		$run{'checksum-verify'} = 0;
 		$test{'autotag-create'} = 1;
 		$b_check_dest = 0;
 		$b_check_out = 0;
@@ -4640,11 +4693,7 @@ sub get{
 		$autotag_multi = $arg;
 		$run{'autotag-create'} = 1;
 		$run{'autotag-multi'} = 1;
-		$run{'autotag'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		$run{'checksum'} = 0;
-		$run{'checksum-verify'} = 0;
+		$test{'autotag-multi'} = 1;
 		$test{'autotag-create'} = 1;
 		$b_check_dest = 0;
 		$b_check_out = 0;
@@ -4653,11 +4702,7 @@ sub get{
 	'S|autotag-create-single' => sub { 
 		$run{'autotag-create'} = 1;
 		$run{'autotag-single'} = 1;
-		$run{'autotag'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		$run{'checksum'} = 0;
-		$run{'checksum-verify'} = 0;
+		$test{'autotag-single'} = 1;
 		$test{'autotag-create'} = 1;
 		$b_check_dest = 0;
 		$b_check_out = 0;
@@ -4668,12 +4713,6 @@ sub get{
 		$VERBOSITY = 1 },
 	'K|checksum' => sub { 
 		$run{'checksum'} = 1;
-		$run{'checksum-verify'} = 0;
-		$run{'analyze'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		$run{'duplicates'} = 0;
-		# $run{'autotag'} = 0;
 		$test{'checksum'} = 1;
 		$test{'checksum-generate'} = 1;
 		$b_check_dest = 0;
@@ -4683,12 +4722,6 @@ sub get{
 	'D|checksum-delete' => sub { 
 		$run{'checksum'} = 1;
 		$run{'checksum-delete'} = 1; 
-		$run{'checksum-verify'} = 0;
-		$run{'analyze'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		$run{'duplicates'} = 0;
-		# $run{'autotag'} = 0;
 		$test{'checksum'} = 1;
 		$test{'checksum-delete'} = 1;
 		$b_check_dest = 0;
@@ -4697,12 +4730,6 @@ sub get{
 		},
 	'checksum-ffps|ffps' => sub { 
 		$run{'checksum'} = 1;
-		$run{'checksum-verify'} = 0;
-		$run{'analyze'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		$run{'duplicates'} = 0;
-		# $run{'autotag'} = 0;
 		$run{'checksum-ffps'} = 1;
 		$run{'no-md5'} = 1;
 		$test{'checksum'} = 1;
@@ -4714,12 +4741,6 @@ sub get{
 		},
 	'V|checksum-verify' => sub { 
 		$run{'checksum-verify'} = 1;
-		$run{'checksum-delete'} = 0; 
-		$run{'analyze'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		$run{'autotag'} = 0;
-		$run{'duplicates'} = 0;
 		$test{'checksum'} = 1;
 		$test{'checksum-verify'} = 1;
 		$b_check_dest = 0;
@@ -4763,20 +4784,16 @@ sub get{
 	'dither:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires value.",1) if !defined $arg;
-		$DITHER = $arg;},
+		$DITHER = $arg;
+		$test{'sync'} = 1;},
 	'dot' => sub { 
 		$run{'dot'} = 1;},
 	'dry-run|dr|dry|test' => sub { 
-		$b_test = 1 },
+		$b_test = 1;},
 	'dupes|duplicates' => sub { 
 		$run{'checksum'} = 1;
 		$run{'duplicates'} = 1;
 		$run{'no-md5'} = 1;
-		$run{'analyze'} = 0;
-		$run{'checksum-delete'} = 0;
-		$run{'checksum-verify'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
 		$test{'checksum'} = 1;
 		$test{'duplicates'} = 1;
 		$b_check_dest = 0;
@@ -4792,13 +4809,14 @@ sub get{
 	'y|exclude-append:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires exclude list.",1) if !$arg;
-		$exclude_append = $arg },
+		$exclude_append = $arg;
+		$test{'sync'} = 1;},
 	'f|force' => sub { 
-		$b_force = 1 },
+		$b_force = 1;},
 	'ffmpeg' => sub { 
-		$run{'ffmpeg'} = 1 },
+		$run{'ffmpeg'} = 1;},
 	'ffprobe' => sub { 
-		$run{'ffprobe'} = 1 },
+		$run{'ffprobe'} = 1;},
 	'F|fork:i' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires fork count integer.",1) if not defined $arg;
@@ -4807,7 +4825,7 @@ sub get{
 		},
 	# legacy
 	'full' => sub { 
-		$VERBOSITY = 3 },
+		$VERBOSITY = 3;},
 	'h|help|?' => sub { 
 		main::show_options();},
 	'I|image:s' => sub { 
@@ -4820,29 +4838,18 @@ sub get{
 		$run{'remove-images'} = 1 if $embed_image eq 'remove';
 		$run{'embed-image'} = 1;
 		$run{'autotag'} = 1;
-		$run{'autotag-create'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		# $run{'checksum'} = 0;
-		$run{'checksum-verify'} = 0;
+		$test{'tag'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
 		$b_check_dest = 0;
 		$b_check_out = 0;
-		$test{'tag'} = 1;
 		},
 	'ic|info-create' => sub { 
-		$run{'autotag'} = 0;
-		$run{'autotag-create'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		$run{'checksum'} = 0;
-		$run{'checksum-verify'} = 0;
 		$run{'info-create'} = 1;
+		$test{'info'} = 1;
+		$test{'info-create'} = 1;
 		$OUTPUT_TYPE = 'UNSET';
 		$b_check_dest = 0;
 		$b_check_out = 0;
-		$test{'info'} = 1;
-		$test{'info-create'} = 1;
 	},
 	'info-file|prefill-file|if|pf:s' => sub { 
 		my ($opt,$arg) = @_;
@@ -4874,12 +4881,6 @@ sub get{
 				main::error_handler('missing-arg',$msg,1);
 			}
 		}
-		$run{'autotag'} = 0;
-		$run{'autotag-create'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		$run{'checksum'} = 0;
-		$run{'checksum-verify'} = 0;
 		$test{'info'} = 1;
 		$test{'infofix'} = 1;
 		$b_check_dest = 0;
@@ -4900,7 +4901,6 @@ sub get{
 		main::error_handler('missing-arg',"$opt requires type.",1) if !$arg;
 		$test{'input'} = 1;
 		$INPUT_TYPE = $arg;
-		# $test{'sync'} = 1;
 		},
 	'link' => sub { 
 		$DONT_USE_NLINK = 0 },
@@ -4921,25 +4921,20 @@ sub get{
 	'no-md5' => sub { 
 		$run{'no-md5'} = 1;},
 	'no-nlink' => sub { 
-		$DONT_USE_NLINK = 1 },
+		$DONT_USE_NLINK = 1;},
 	'no-replaygain' => sub { 
-		$run{'no-replaygain'} = 1 },
+		$run{'no-replaygain'} = 1;},
 	'no-ssl' => sub { 
-		$run{'no-ssl'} = 1 },
+		$run{'no-ssl'} = 1;},
 	'o|output:s' => sub {
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires type.",1) if !$arg;
 		$test{'output'} = 1;
-		$OUTPUT_TYPE = $arg;
 		$test{'sync'} = 1;
+		$OUTPUT_TYPE = $arg;
 		},
 	'E|prefill' => sub { 
 		$run{'prefill'} = 1;
-		$run{'autotag'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		$run{'checksum'} = 0;
-		$run{'checksum-verify'} = 0;
 		$test{'info'} = 1;
 		$test{'prefill'} = 1;
 		},
@@ -4995,7 +4990,7 @@ sub get{
 		else {
 			main::error_handler('missing-arg',"Incorrect syntax for $opt: bits:khz, see -h or man.",1);
 		}
-		$test{'resample'} = 1;
+		$test{'sync'} = 1;
 		},
 	'resample-override' => sub {
 		$run{'resample-override'} = 1; },
@@ -5029,36 +5024,40 @@ sub get{
 		@tags = split(/\Q^^\E/, $arg);
 		$run{'update-tag'} = 1;
 		$run{'autotag'} = 1;
-		$run{'autotag-create'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		# $run{'checksum'} = 0;
-		$run{'checksum-verify'} = 0;
+		$test{'tag'} = 1;
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';
-		$test{'tag'} = 1;
+		},
+	'taglist|tl' => sub { 
+		$run{'taglist'} = 1;
+		$test{'info'} = 1;
+		$test{'taglist'} = 1;
+		$OUTPUT_TYPE = 'UNSET';
+		$b_check_dest = 0;
+		$b_check_out = 0;
+		},
+	'taglist-file|tlf|tf:s' => sub { 
+		my ($opt,$arg) = @_;
+		main::error_handler('missing-arg',"$opt requires file name.",1) if !$arg;
+		$TAGLIST_FILE = $arg;
+		$test{'taglist-file'} = 1;
 		},
 	'U|update:i'=> sub { 
 		my ($opt,$arg) = @_;
 		$run{'update'} = 1; 
 		$run{'update-type'} = $arg if $arg; 
-		$run{'checksum'} = 0;
-		$run{'checksum-delete'} = 0; 
-		$run{'checksum-verify'} = 0;
-		$run{'sync'} = 0;
-		$run{'clean'} = 0;
-		$run{'autotag'} = 0;
+		$test{'update'} = 1;
 		$b_check_dest = 0;
 		$b_check_out = 0;
 		$OUTPUT_TYPE = 'UNSET';},
 	# legacy
 	'verbose'=> sub { 
-		$VERBOSITY = 2 },
+		$VERBOSITY = 2;},
 	'v|verbosity|log:i' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt verbosity integer.",1) if not defined $arg;
-		$VERBOSITY = $arg; },
+		$VERBOSITY = $arg;},
 	'version' => sub { 
 		main::show_version(); },
 	'z-min-size:i' => sub { 
@@ -5086,6 +5085,15 @@ sub get{
 	verify_selections();
 }
 sub verify_selections {
+	## Test To See if sync Should Be Enabled/Disabled ##
+	if ($test{'aggregate'} || $test{'autotag'} || $test{'checksum'} || 
+	$test{'info'} || $test{'tag'} || $test{'update'}){
+		$run{'clean'} = 0;
+		$run{'sync'} = 0;
+	}
+	else {
+		$run{'sync'} = 1;
+	}
 	##############################
 	## Destination/Source Tests ##
 	##############################
@@ -5113,9 +5121,15 @@ sub verify_selections {
 	###############################
 	# aggregate only runs alone
 	if ($test{'aggregate'} && (($test{'autotag-create'} || $test{'checksum'} || 
-	$test{'info'} || $test{'sync'} || $test{'tag'}))){
+	$test{'clean'} || $test{'info'} || $test{'sync'} || $test{'tag'}))){
 		main::error_handler('invalid-options', 
 		 "--aggregate cannot be combined with any other actions.",1);
+	}
+	# update only runs alone
+	if ($test{'update'} && (($test{'autotag-create'} || $test{'checksum'} || 
+	$test{'clean'} || $test{'info'} || $test{'sync'} || $test{'tag'}))){
+		main::error_handler('invalid-options', 
+		 "-U cannot be combined with any other actions.",1);
 	}
 	# prevent running any syncing options with tagging/checksum/info options
 	if (($test{'clean'} || $test{'sync'}) && ($test{'autotag-create'} || 
@@ -5126,11 +5140,11 @@ sub verify_selections {
 	# checksum can be run with taggingr: -AD -AK but not with info/tag-create
 	if ($test{'checksum'} && ($test{'autotag-create'} || $test{'info'})){
 		main::error_handler('invalid-options', 
-		 "checksum options cannot be used with info/image/prefill/tag-create options.",1);
+		 "checksum options cannot be used with info/prefill/tag-create options.",1);
 	}
 	# creating auto.tag cannot be combined with info, tagging options
 	if (($test{'autotag-create'} || $test{'prefill'} || $test{'prefill-tag'}) && 
-	($test{'info-create'} || $test{'infofix'} || $test{'tag'})){
+	($test{'info-create'} || $test{'infofix'} || $test{'tag'} || $test{'taglist'})){
 		main::error_handler('invalid-options', 
 		 "tag-create/prefill options cannot be used with image/info/tagging options.",1);
 	}
@@ -5142,10 +5156,10 @@ sub verify_selections {
 		 "you cannot use -Z/-Xq with --checksum or --checksum-verify.",1);
 	}
 	## Specific Not Allowed Combos ##
-	# protect against ffmpeg being used with any non sync option
-	if (!$test{'sync'} && $run{'ffmpeg'}){
+	# protect against dot/ffmpeg being used with any non sync option
+	if (!$run{'sync'} && ($run{'ffmpeg'} || $run{'dot'})){
 		main::error_handler('invalid-options', 
-		 "you can only use --ffmpeg with sync operations.",1);
+		 "you can only use --dot/--ffmpeg with sync operations.",1);
 	}
 	# there's no tests to run if you block md5 and ffp!
 	if (($test{'checksum'} || $run{'infofix-verify'}) && 
@@ -5179,6 +5193,10 @@ sub verify_selections {
 	if ($test{'info-rating'} && !$test{'infofix'}){
 		main::error_handler('invalid-options', 
 		 "--info-rating can only be used with --infofix.",1);
+	}
+	if ($test{'taglist-file'} && !$test{'taglist'}){
+		main::error_handler('invalid-options', 
+		 "--taglist-file can only be used with --taglist.",1);
 	}
 	##################################################
 	## Invalid Data - Usually Handled in Validation ##

@@ -1,4 +1,4 @@
-.TH ACXI 1 "2023\-01\-01" acxi "acxi manual"
+.TH ACXI 1 "2023\-01\-02" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -630,6 +630,13 @@ acxi \-s ./ \-RI cover.jpg\fR
 .fi
 
 .TP
+.B \-\-info\-create\fR, \fB\-\-ic\fR
+Create an info file in each directory where one is not already present using the 
+tags collected from all FLACs in that directory. If you want to get the raw tags 
+per directory, use \fB\-\-taglist\fR alone or together with 
+\fB\-\-info\-create\fR.
+
+.TP
 .B \-\-info\-file\fR, \fB\-\-if\fR, \fB\-\-prefill\-file\fR, \fB\-\-pf\fR {file}
 An alternate file name to use for prefill or infofix. Note that file MUST have a 
 *.txt extension, and should not be anything other than ASCII or UTF8, otherwise 
@@ -1103,6 +1110,17 @@ If tag value is \fBUNSET\fR it will just remove that tag and its contents.
 
 Sample: \fBacxi \-s ./ \-\-tag "COMMENT%:UNSET^^ARTIST%:Black Sabbath"\fR
 
+.TP
+.B \-\-taglist\fR, \fB\-\-tl\fR
+Use alone to create only taglist.txt files, or with \fB\-\-info\-create\fR, if 
+you want to create a list of the raw tags in each directory of FLACS. 
+
+.TP
+.B \-\-taglist\-file\fR, \fB\-\-tlf\fR, \fB\-\-tf\fR {file}
+An alternate file name to use for \fB\-\-taglist\fR. Note that file MUST have a 
+*.txt extension, and should not be anything other than ASCII or UTF8, otherwise 
+you will get ungood results.
+
 .SH ANALYZE/CHECKSUM OPTIONS
 Create checksum files (ffp/md5), verify checksums, analyze sets of files, check 
 collection for duplicate ffps.
@@ -1505,6 +1523,12 @@ These only apply to the \fB\-\-autotag\fR option, and set a different name for
 the default auto.tag filename. The filename must be unique and never occur in 
 any other context in your music collection files.
 
+\fBAUTOTAG_FILE\fR \- Sample: \fBAUTOTAG_FILE=autotags.tag\fR 
+
+\fBauto.tag\fR \- The filename to be used to autotag. Default is \fBauto.tag\fR. 
+Filename must be unique, and must not be found anywhere else in your collection. 
+Do not change unless you have a very good reason to.
+
 \fBINFO_FILE\fR \- Sample (default value): \fBINFO_FILE=info.txt\fR 
 
 \fBinfo.txt\fR \- The filename in the flac directory being processed that will
@@ -1518,9 +1542,11 @@ don't want these tags to be always used in prefill actions.
 
 Sample: \fBPREFILL_TAG=GENRE%:Heavy Metal^^IMAGE%:cover.jpg\fR 
 
-\fBTAG_FILE\fR \- Sample: \fBTAG_FILE=autotags.tag\fR 
+\fBTAGLIST_FILE\fR \- Sample: \fBTAGLIST_FILE=taglists.txt\fR 
 
-\fBauto.tag\fR \- The filename to be used to autotag. Default is \fBauto.tag\fR. 
+\fBtaglist.txt\fR \- The filename to be used to by \fB\-\-taglist\fR. Default is 
+\fBtaglist.txt\fR
+
 Filename must be unique, and must not be found anywhere else in your collection. 
 Do not change unless you have a very good reason to.
 
