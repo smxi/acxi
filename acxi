@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='04';
+my $self_patch='05';
 my $self_date='2023-01-03';
 
 ## GLOBALS ##
@@ -2256,13 +2256,14 @@ sub generate_info_file {
 	say "info_data: ", Data::Dumper::Dumper \@info_data if $dbg[5];
 	say "file_tags: ", Data::Dumper::Dumper $file_tags if $dbg[7];
 	if (@info_data){
-		if ($b_test){
-			say "  Would have printed this to $INFO_FILE:";
+		if (!$run{'info-create-write'}){
+			say "  Here is the $INFO_FILE data (use 'w' to write file):";
 			say $line_small;
 			say join("\n",@info_data);
 		}
 		else {
-			say "  (Beta no writes) Writing tag data to: $INFO_FILE";
+			say "  Writing tag data to: $INFO_FILE";
+			main::writer($INFO_FILE,\@info_data,1); # 1 forces utf8
 		}
 	}
 	else {
@@ -2284,13 +2285,14 @@ sub generate_taglist_file {
 			}
 		}
 		if ($b_tags){
-			if ($b_test){
-				say "  Would have printed this to $TAGLIST_FILE:";
+			if (!$run{'taglist-write'}){
+				say "  Here is the $TAGLIST_FILE data (use 'w' to write file):";
 				say $line_small;
 				say join("\n",@contents);
 			}
 			else {
-				say "  (Beta no writes) Writing tag data to: $TAGLIST_FILE";
+				say "  Writing tag data to: $TAGLIST_FILE";
+				main::writer($TAGLIST_FILE,\@contents,1); # 1 forces utf8
 			}
 		}
 		else {
@@ -2301,6 +2303,7 @@ sub generate_taglist_file {
 		say "  No tags found! Are the files tagged?";
 	}
 	say "taglist contents: ", Data::Dumper::Dumper \@contents if $dbg[5];
+	say $line_small;
 }
 sub check_multi {
 	my ($tags) = @_;
@@ -3410,9 +3413,10 @@ sub wanted {
 # arg: 1 file full  path to write to; 2 - arrayof data to write. 
 # note: turning off strict refs so we can pass it a scalar or an array reference.
 sub writer {
-	my ($path, $ref_content) = @_;
+	my ($path, $ref_content,$b_utf8) = @_;
 	my ($content);
 	no strict 'refs';
+	my $utf8 = ($b_utf8) ? ':utf8' : '';
 	# say Dumper $ref_content;
 	if (ref $ref_content eq 'ARRAY'){
 		$content = join "\n", @$ref_content or die "failed with error $!";
@@ -3420,7 +3424,7 @@ sub writer {
 	else {
 		$content = scalar $ref_content;
 	}
-	open(my $fh, ">", $path) or 
+	open(my $fh, ">$utf8", $path) or 
 	 error_handler('open',"$path failed to open for writing.\nMessage: $!",1);
 	print $fh $content;
 	close $fh;
@@ -4316,9 +4320,10 @@ sub show_options {
 	$output .= "--image, -I {jpg,png image file name|remove}\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
-	$output .= "--info-create, --ic\n";
-	$output .= "                  Create $INFO_FILE in FLAC directories without one using file\n";
-	$output .= "                  tags. See also --taglist.\n";
+	$output .= "--info-create, --ic [w]\n";
+	$output .= "                  Print to screen generated $INFO_FILE data in FLAC directories\n";
+	$output .= "                  without $INFO_FILE, using processed tag data from files.\n";
+	$output .= "                  Use 'w' to write to file. See also --taglist.\n";
 	$output .= "--info-file, --if, --prefill-file, --pf {file name}\n";
 	$output .= "                  Alternate file name to use for --prefill, --info-create,\n";
 	$output .= "                  --infofix.\n";
@@ -4369,8 +4374,9 @@ sub show_options {
 	$output .= "                  tag/value pairs. Removes existing sets of the given type.\n";
 	$output .= "                  Use ^^ to separate tag key/value pairs, and %: to separate\n";
 	$output .= "                  the tag name and its value. Value 'UNSET' removes the tag.\n";
-	$output .= "--taglist, --tl   Create $TAGLIST_FILE in FLAC directories without one using file\n";
-	$output .= "                  tags. Creates raw tags per file. See also --info-create.\n";
+	$output .= "--taglist, --tl   [w] Print to screen generated $TAGLIST_FILE data in FLAC\n";
+	$output .= "                  directories without $TAGLIST_FILE using full raw tag data from\n";
+	$output .= "                  files. Use 'w' to write to file. See also --info-create.\n";
 	$output .= "--taglist-file, --tlf, --tf {file}\n";
 	$output .= "                  Alternate file name to use for --taglist.\n";
 	$output .= $line_small . "\n";
@@ -4816,7 +4822,14 @@ sub get{
 		$run{'embed-image'} = 1;
 		$run{'tagger'} = 1;
 		$test{'tag'} = 1;},
-	'ic|info-create' => sub { 
+	'ic|info-create:s' => sub {
+		my ($opt,$arg) = @_;
+		if ($arg){
+			if ($arg ne 'w'){
+				main::error_handler('missing-arg',"$opt use 'w' to write. See -h.",1);
+			}
+			$run{'info-create-write'} = 1;
+		}
 		$run{'info-create'} = 1;
 		$test{'info'} = 1;},
 	'info-file|prefill-file|if|pf:s' => sub { 
@@ -4985,7 +4998,14 @@ sub get{
 		$run{'update-tag'} = 1;
 		$run{'tagger'} = 1;
 		$test{'tag'} = 1;},
-	'taglist|tl' => sub { 
+	'taglist|tl:s' => sub {
+		my ($opt,$arg) = @_;
+		if ($arg){
+			if ($arg ne 'w'){
+				main::error_handler('missing-arg',"$opt use 'w' to write. See -h.",1);
+			}
+			$run{'taglist-write'} = 1;
+		}
 		$run{'taglist'} = 1;
 		$test{'info'} = 1;},
 	'taglist-file|tlf|tf:s' => sub { 

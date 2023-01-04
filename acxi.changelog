@@ -31,9 +31,9 @@ sets of recordings at once, which acxi can then be used to correct.
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
 
-1. Because MP3 tagging changed too much between versions, only id3v2.3/id3v2.4 
-tags that are the same between versions AND have Vorbis equivalents are 
-supported.
+1. SYNC: Because MP3 tagging changed too much between versions, only 
+id3v2.3/id3v2.4 tags that are the same between versions AND have Vorbis 
+equivalents are supported.
 
 Good tag FLAC > MP3 id3v2.x mapping resources: 
 
@@ -41,8 +41,8 @@ https://wiki.hydrogenaud.io/index.php?title=Tag_Mapping
 https://docs.mp3tag.de/mapping/
 https://docs.mp3tag.de/mapping-table/
 
-2. SUBTITLE FLAC tag is super specific, and should be avoided.
-https://web.archive.org/web/20120429102447/http://reallylongword.org/\
+2. AUTOTAG: The tag SUBTITLE in Vorbis/FLAC is super specific, and should be 
+avoided. https://web.archive.org/web/20120429102447/http://reallylongword.org/\ 
 vorbiscomment/
 
 "SUBTITLE: This field is intended for use with FLAC, in order to connect 
@@ -56,19 +56,20 @@ titles."
 --------------------------------------------------------------------------------
 BUGS:
 
-1. In --tag, it was changing directory to SOURCE_DIRECTORY, but failed to 
+1. TAG: In --tag, it was changing directory to SOURCE_DIRECTORY, but failed to 
 remove that from the file string, so tag updates failed unless you were using 
 -s ./. I hadn't noticed that because I almost always use -s./ with -T.
 
 This led to things like --glob failing too, since it was never working from the
 right directory in terms of the path/filename metaflac received.
 
-2. --nlink would never have worked because it was missing the 'n' ('link').
+2. OPTIONS: --nlink would never have worked because it was missing the 'n' 
+('link').
 
 --------------------------------------------------------------------------------
 FIXES:
 
-1. For mp3 tagging, was using DATE, didn't check for YEAR, but mp3 is very 
+1. SYNC: For mp3 tagging, was using DATE, didn't check for YEAR, but mp3 is very 
 likely to fail if you put a date in that value. Now checks for YEAR first, and 
 falls back to using year (YYYY) extracted from DATE. 
 
@@ -88,18 +89,17 @@ I don't want to get into detecting idv2 subversion, this is a messy non-free
 codec and it shows by how poorly they did tagging version to version, as well as 
 how focused on corporate interests their efforts were. 
 
-2. Some of the prefill field names didn't fully match the listed possible 
+2. PREFILL: Some of the prefill field names didn't fully match the listed possible 
 values. Also made all 2 word type field names support space, -, _, or no space.
 
-3. Added --no-utf8-convert to flac > mp3 tag command generator, also for 'all' 
-flac tags.
+3. INFOCREATE/TAGLIST/SYNC: Added --no-utf8-convert to main::get_flac_tags(), 
+this is for all types, mp3, replaygain, and full tag lists.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
-1. Significantly expanded MP3 tags. Mapped all acxi tags in auto.tag/--tag that 
-have native mp3 id3v2 tags.
-Now supported:
+1. SYNC: Significantly expanded MP3 tags. Mapped all acxi tags in auto.tag/--tag 
+that have native mp3 id3v2 tags. Now supported:
 
 ALBUM ALBUMARTIST ARTIST ARTISTSORT COMMENT COMPILATION COMPOSER CONDUCTOR 
 COPYRIGHT DATE DESCRIPTION DISKNUMBER DISCSUBTITLE DISKTOTAL GENRE ISRC LABEL 
@@ -110,8 +110,8 @@ Note that because id3v2.x either doesn't have comparable DATE, LOCATION, OPUS,
 PERFORMER, PRODUCER, VENUE tags, or v2.3 name is different from v2.4, those tags 
 are not supported.
 
-2. AUTOTAG: To auto.tag generator, added CONDUCTOR, MIXER, REMIXER, and variants 
-for prefill, like:
+2. AUTOTAG/PREFILL: To auto.tag generator, added CONDUCTOR, MIXER, REMIXER, and 
+variants for prefill, like:
 
 CONDUCTOR: Conductor, Conducted by.
 MIXER: Mixed by, Mixer, Mastered by, Masterer.
@@ -121,18 +121,19 @@ REMIXER: Remixer, remixed by, remasterer, remastered by.
 because it's made for very specific purposes and is unlikely to be used 
 correctly. See Known Issues 2.
 
-4. INFOCREATE/TAGLIST: New features: --info-create/--ic: creates info.txt files if non 
-exist from FLAC tag data. This creates something that acxi can read and use as 
-prefill data source, as well as giving a nice overview of a set of tagged, or 
-non tagged, recordings. To get the raw tags, added --taglist, which will write 
-to screen or taglist.tag file in each directory the full set of tags for all the 
-files in the directory.
+4. INFOCREATE/TAGLIST: New features: --info-create/--ic: creates data info.txt 
+files if non exist from FLAC tag data. 'w' writes it to file. This creates 
+something that acxi can read and use as prefill data source, as well as giving a 
+nice overview of a set of tagged, or non tagged, recordings. To get the raw tags 
+for all files in directory, use --taglist, which will write to screen or 
+taglist.tag file in each directory the full set of tags for all the files in the 
+directory.
 
 5. Added $self_patch to allow for checking development patch versions, like 
 pinxi uses. Helpful to make sure you have the right version. Also added to
 --help (and date).
 
-6. Added --glob as alternative to --source-glob/-g. 
+6. OPTIONS: Added --glob as alternative to --source-glob/-g. 
 
 --------------------------------------------------------------------------------
 CHANGES:

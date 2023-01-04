@@ -29,7 +29,7 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-autotag\-create\-single\fR, \fB\-S\fR] 
 [\fB\-\-autotag\-create\-multi\fR, \fB\-M\fR {filename start ID}]
 [\fB\-\-image\fR, \fB\-I\fR {cover image filename}] 
-[\fB\-\-info\-create\fR, \fB\-\-ic\fR]
+[\fB\-\-info\-create\fR, \fB\-\-ic\fR [w]]
 [\fB\-\-info\-file\fR, \fB\-\-if\fR, \fB\-\-prefill\-file\fR, \fB\-\-pf\fR 
 {release info file name}] 
 [\fB\-\-infofix\fR, \fB\-X\fR [0|a|c|d|k|l|m|n|q|t|u|v|w]] 
@@ -41,7 +41,7 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-remove\-images\fR, \fB\-R\fR] [\fB\-\-remove\-padding\fR, \fB\-P\fR] 
 [\fB\-\-start\fR {0-xx}] 
 [\fB\-\-tag\fR, \fB\-T\fR] {"TAG1%:tag value^^TAG2%:tag value"}] 
-[\fB\-\-taglist\fR, \fB\-\-tl\fR] 
+[\fB\-\-taglist\fR, \fB\-\-tl\fR [w]] 
 [\fB\-\-taglist\-file\fR, \fB\-\-tlf\fR, \fB\-\-tf\fR {tag list file}] 
 .IP * 2
 Analyze/Checksums: [\fB\-\-analyze\fR, \fB\-Z\fR]
@@ -642,11 +642,22 @@ acxi \-s ./ \-RI cover.jpg\fR
 .fi
 
 .TP
-.B \-\-info\-create\fR, \fB\-\-ic\fR
-Create an info file in each directory where one is not already present using the 
-tags collected from all FLACs in that directory. If you want to get the raw tags 
-per directory, use \fB\-\-taglist\fR alone or together with 
-\fB\-\-info\-create\fR.
+.B \-\-info\-create\fR, \fB\-\-ic [w]\fR
+Create info file data and output it to screen in each directory where one is not 
+already present. The data is generated and populated using the tags collected 
+from all FLACs in that directory. To write the info file to the directory, add 
+\fBw\fR. If you want to get the raw tags per directory, use \fB\-\-taglist\fR 
+alone, or together with \fB\-\-info\-create\fR.
+
+Sample (writes out info.txt files, no tag data printed to screen):
+.EX
+\fBacxi \-s ./ \-\-info-create w\fB
+.EE
+
+Sample (prints to screen, redirects stderr to stdout, prints to file):
+.EX
+\fBacxi \-s ./ \-\-info-create 2>&1 | tee info-files-full.txt\fB
+.EE
 
 .TP
 .B \-\-info\-file\fR, \fB\-\-if\fR, \fB\-\-prefill\-file\fR, \fB\-\-pf\fR {file}
@@ -1123,9 +1134,20 @@ If tag value is \fBUNSET\fR it will just remove that tag and its contents.
 Sample: \fBacxi \-s ./ \-\-tag "COMMENT%:UNSET^^ARTIST%:Black Sabbath"\fR
 
 .TP
-.B \-\-taglist\fR, \fB\-\-tl\fR
-Use alone to create only taglist.tag files, or with \fB\-\-info\-create\fR, if 
-you want to create a list of the raw tags in each directory of FLACS. 
+.B \-\-taglist\fR, \fB\-\-tl [w]\fR
+Use to create full raw tag data output to screen. Generates a list of the raw 
+tags per file in each directory of FLACS. To create the taglist.tag file in the 
+directory, add \fBw\fR. Can be used together with \fB\-\-info\-create\fR.
+
+Sample (writes out taglist.tag files, no tag data printed to screen):
+.EX
+\fBacxi \-s ./ \-\-taglist w\fB
+.EE
+
+Sample (prints to screen, redirects stderr to stdout, prints to file):
+.EX
+\fBacxi \-s ./ \-\-taglist 2>&1 | tee taglists-full.txt\fB
+.EE
 
 .TP
 .B \-\-taglist\-file\fR, \fB\-\-tlf\fR, \fB\-\-tf\fR {file}
