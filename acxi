@@ -80,8 +80,8 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='05';
-my $self_date='2023-01-03';
+my $self_patch='06';
+my $self_date='2023-01-06';
 
 ## GLOBALS ##
 ## Booleans
@@ -339,7 +339,7 @@ sub main {
 	AutoTag::create() if $run{'autotag-create'};
 	AutoTag::run_tagger() if $run{'tagger'};
 	Checksums::process() if ($run{'checksum'} || $run{'checksum-verify'});
-	InfoCreate::process() if $run{'info-create'} || $run{'taglist'};
+	TagList::process() if $run{'taglist-info'} || $run{'taglist-tags-full'};
 	CleanCollection::process() if $run{'clean'};
 	InfoFix::process() if $run{'infofix'};
 	SyncCollection::process() if $run{'sync'};
@@ -2018,310 +2018,8 @@ sub confirm_deletion {
 }
 
 #### -------------------------------------------------------------------
-#### INFO FILE PROCESSING
+#### INFO / TAGS FILE PROCESSING
 #### -------------------------------------------------------------------
-
-## InfoCreate
-{
-package InfoCreate;
-my ($file_tags,$print_src);
-sub process {
-	say $line_large;
-	my $type;
-	$type = 'info ' . $INFO_FILE if $run{'info-create'};
-	if ($run{'taglist'}){
-		$type .= '/' if $type;
-		$type .= 'tag ' . $TAGLIST_FILE;
-	}
-	say "Starting $type file checks in: " . main::sourcer("$SOURCE_DIRECTORY");
-	process_directories();
-	say $line_small;
-	
-	say "Completed $type file generation.";
-	say $line_large;
-}
-sub process_directories {
-	my ($result);
-	$list_type = 'dir';
-	say $line_small;
-	say "Checking directories...";
-	@found_list = ();
-	chdir "$start_dir";
-	File::Find::find(\&main::wanted, @source_glob);
-	say 'start dir: ', $start_dir if $dbg[3];
-	my $file_type = lc($INPUT_TYPE) . ',' . uc($INPUT_TYPE) . ',';
-	$file_type .= ucfirst(lc($INPUT_TYPE)); # flac,FLAC,Flac
-	foreach my $item (sort { "\L$a" cmp "\L$b" } @found_list){
-		my $b_valid;
-		$print_src = $item;
-		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
-		chdir "$start_dir";
-		chdir "$item";
-		if ($dbg[3]){
-			say 'srcdir: ', $SOURCE_DIRECTORY;
-			say 'item: ', $item;
-			say 'cwd: ', Cwd::getcwd();
-			system 'pwd';
-		}
-		say " Processing: $print_src";
-		my @files = main::globber("*.{$file_type}");
-		# say "\n", Data::Dumper::Dumper \@files;
-		if (grep -f, @files){
-			undef $file_tags;
-			if (($run{'info-create'} && !-e $INFO_FILE) || 
-			($run{'taglist'} && !-e $TAGLIST_FILE)){
-				process_tags(\@files);
-			}
-			if ($run{'info-create'}){
-				if (!-e $INFO_FILE){
-					say "  No $INFO_FILE file found. Processing $INPUT_TYPE files....";
-					if ($file_tags && %$file_tags){
-						generate_info_file();
-					}
-					else {
-						say "  No tag data found in $INPUT_TYPE files.";
-					}
-				}
-				else {
-					say "  $INFO_FILE file present. Skipping this directory.";
-				}
-			}
-			if ($run{'taglist'}){
-				if (!-e $TAGLIST_FILE){
-					say "  No $TAGLIST_FILE file found. Processing $INPUT_TYPE files....";
-					if ($file_tags && %$file_tags){
-						generate_taglist_file();
-					}
-					else {
-						say "  No tag data found in $INPUT_TYPE files.";
-					}
-				}
-				else {
-					say "  $TAGLIST_FILE file present. Skipping this directory.";
-				}
-			}
-		}
-		else {
-			say "  No $INPUT_TYPE files";
-		}
-	}
-}
-sub process_tags {
-	my ($files) = @_;
-	foreach my $file (@$files){
-		# returns single hash ref of file + array ref of tags
-		my $tags = main::get_flac_tags('all',$file);
-		if ($run{'taglist'}){
-			$file_tags->{$file}{'taglist'} = $tags->{$file};
-		}
-		if ($run{'info-create'}){
-			foreach my $tag (@{$tags->{$file}}){
-				my @working = split(/=/,$tag,2);
-				push(@{$file_tags->{$file}{uc($working[0])}},$working[1]);
-			}
-		}
-	}
-	say Data::Dumper::Dumper $file_tags if $dbg[4];
-}
-# note: in order to handle > 1 type per tag name, all are contained in arrays.
-sub generate_info_file {
-	my (@general,@info,@lyrics,@main,@performers,@rating,@temp,@tracks);
-	my (%found,%multi,%track_data);
-	say "  Generating $INFO_FILE data...";
-	my $tags = [qw(ALBUM ARTIST DATE DISCNUMBER PERFORMER RATING YEAR)];
-	my $multi = check_multi($tags);
-	my @main_checks = qw(ARTIST ALBUM ALBUMSORT COMPILATION ALBUMARTIST ENSEMBLE 
-	COMPOSER CONDUCTOR OPUS DATE ORIGINALDATE YEAR VENUE LOCATION);
-	# These can have > 1 item so let's treat them differently
-	my @general_checks = qw(COMMENT DESCRIPTION SOURCE);
-	my @info_checks = qw(GENRE MOOD BPM MEASURE INITIAL_KEY TUNING
-	ORGANIZATION PRODUCER PUBLISHER MIXER REMIXER 
-	URL WEBSITE CHAPTER COPYRIGHT LICENSE CONTACT
-	BARCODE EAN/UPN UPC PRODUCTNUMBER CATALOGNUMBER LABELNO CATALOG
-	ISRC ETREE SHNID ACOUSTIC_ID ACOUSTID_FINGERPRINT ACCURATERIPDISCID CDTOC
-	ENCODED-BY ENCODER ENCODING MEDIA SOURCEMEDIA );
-	splice(@info_checks,2,0,'RATING') if !$multi->{'RATING'};
-	foreach my  $file (sort keys %$file_tags){
-		my ($track) = ('');
-		foreach my $check (@main_checks){
-			my ($lc,$ucf) = (lc($check),ucfirst(lc($check)));
-			if (!$found{$lc} && ($check ne 'ARTIST' || !$multi->{'ARTIST'}) && 
-			$file_tags->{$file}{$check}){
-				push(@main,"$ucf: " . join("\n$ucf: ", @{$file_tags->{$file}{$check}}));
-				$found{$lc} = 1;
-				delete $file_tags->{$file}{$check};
-			}
-		}
-		foreach my $check (@general_checks){
-			my ($lc,$ucf) = (lc($check),ucfirst(lc($check)));
-			if (!$found{$lc} && $file_tags->{$file}{$check}){
-				push(@general,'',"$ucf: " . join("\n$ucf: ",@{$file_tags->{$file}{$check}}));
-				$found{$lc} = 1;
-				delete $file_tags->{$file}{$check};
-			}
-		}
-		foreach my $check (@info_checks){
-			my ($lc,$ucf) = (lc($check),ucfirst(lc($check)));
-			if (!$found{$lc} && $file_tags->{$file}{$check}){
-				push(@info,"$ucf: " . join("\n$ucf: ", @{$file_tags->{$file}{$check}}));
-				$found{$lc} = 1;
-				delete $file_tags->{$file}{$check};
-			}
-		}
-		if ($file_tags->{$file}{'DISCNUMBER'}[0] && ($multi->{'DISCNUMBER'} ||
-		($file_tags->{$file}{'DISCTOTAL'}[0] && $file_tags->{$file}{'DISCTOTAL'}[0] > 1) || 
-		($file_tags->{$file}{'TOTALDISCS'}[0] && $file_tags->{$file}{'TOTALDISCS'}[0] > 1))){
-			@temp = split(/\s*\/\s*/,$file_tags->{$file}{'DISCNUMBER'}[0]);
-			$track = $temp[0] . '-';
-			
-		}
-		if ($file_tags->{$file}{'TRACKNUMBER'}[0]){
-			@temp = split(/\s*\/\s*/,$file_tags->{$file}{'TRACKNUMBER'}[0]);
-			$track .= sprintf('%02d',$temp[0]) . '. ';
-			delete $file_tags->{$file}{'TRACKNUMBER'};
-		}
-		if ($file_tags->{$file}{'TITLE'}[0]){
-			if ($multi->{'ARTIST'} && $file_tags->{$file}{'ARTIST'}[0]){
-				$track .= $file_tags->{$file}{'ARTIST'}[0] . ' - ';
-				delete $file_tags->{$file}{'ARTIST'};
-			}
-			$track .= $file_tags->{$file}{'TITLE'}[0]; 
-			if ($file_tags->{$file}{'VERSION'}[0]){
-				$track .= ' (' . $file_tags->{$file}{'VERSION'}[0] . ')';
-				delete $file_tags->{$file}{'VERSION'};
-			}
-			if ($file_tags->{$file}{'PART'}[0]){
-				$track .= ' (' . $file_tags->{$file}{'PART'}[0] . ')';
-				delete $file_tags->{$file}{'PART'};
-			}
-		}
-		# these are probably going to be per file/track
-		if ($track){
-			$track_data{$file}->{'string'} = $track;
-			if ($multi->{'PERFORMER'} && $file_tags->{$file}{'PERFORMER'} && 
-			join('',@{$file_tags->{$file}{'PERFORMER'}}) ne join('',@performers)){
-				$track_data{$file}->{'performers'} = "Performers:\n";
-				$track_data{$file}->{'performers'} .= join("\n",@{$file_tags->{$file}{'PERFORMER'}});
-				@performers = @{$file_tags->{$file}{'PERFORMER'}};
-				delete $file_tags->{$file}{'PERFORMER'};
-			}
-			if ($file_tags->{$file}{'LYRICS'}){
-				push(@lyrics,$track,join("\n",@{$file_tags->{$file}{'LYRICS'}}),'');
-				delete $file_tags->{$file}{'LYRICS'};
-			}
-			if ($multi->{'RATING'} && $file_tags->{$file}{'RATING'}){
-				push(@rating,$track,join("\n",@{$file_tags->{$file}{'RATING'}}),'');
-				delete $file_tags->{$file}{'RATING'};
-			}
-		}
-		# these will be array already, but each track can have different performers
-		if (!$multi->{'PERFORMER'} && !$found{'performer'} && 
-		$file_tags->{$file}{'PERFORMER'}){
-			@performers = @{$file_tags->{$file}{'PERFORMER'}};
-			$found{'performer'} = 1;
-			delete $file_tags->{$file}{'PERFORMER'};
-		}
-	}
-	@performers = () if $multi->{'PERFORMER'};
-	say Data::Dumper::Dumper \%track_data if $dbg[7];
-	if (%track_data){
-		my $b_starter;
-		foreach my $track (sort keys %track_data){
-			if ($track_data{$track}->{'performers'}){
-				push(@tracks,'',$track_data{$track}->{'performers'},'');
-			}
-			# we want Tracks: to come AFTER first performers list if multiperf.
-			if (!$b_starter){
-				push (@tracks,'') if !$track_data{$track}->{'performers'};
-				push(@tracks,'Tracks:');
-				$b_starter = 1;
-			}
-			push(@tracks,$track_data{$track}->{'string'});
-		}
-		push(@tracks,'',':et:');
-	}
-	if (!$multi->{'PERFORMER'} && @performers){
-		@performers = ('','Performers:',@performers);
-	}
-	if (@info){
-		@info = ('','Info:',@info);
-	}
-	if (@lyrics){
-		@lyrics = ('','Lyrics:',@lyrics);
-	}
-	if (@rating){
-		@rating = ('','Ratings:',@rating);
-	}
-	my @info_data = (@main,@performers,@tracks,@general,@info,@rating,@lyrics);
-	say "info_data: ", Data::Dumper::Dumper \@info_data if $dbg[5];
-	say "file_tags: ", Data::Dumper::Dumper $file_tags if $dbg[7];
-	if (@info_data){
-		if (!$run{'info-create-write'}){
-			say "  Here is the $INFO_FILE data (use 'w' to write file):";
-			say $line_small;
-			say join("\n",@info_data);
-		}
-		else {
-			say "  Writing tag data to: $INFO_FILE";
-			main::writer($INFO_FILE,\@info_data,1); # 1 forces utf8
-		}
-	}
-	else {
-		say "  No tag data found! Are the files tagged?";
-	}
-	say $line_small;
-}
-sub generate_taglist_file {
-	my ($b_tags,@contents);
-	say "  Generating $TAGLIST_FILE file...";
-	if ($file_tags && %$file_tags){
-		foreach my $file (sort keys %$file_tags){
-			if (defined $file_tags->{$file}{'taglist'}){
-				push(@contents,'FILE:' . $file,@{$file_tags->{$file}{'taglist'}},'');
-				$b_tags = 1;
-			}
-			else {
-				push(@contents,'FILE:' . $file . ': NO TAGS FOUND','');
-			}
-		}
-		if ($b_tags){
-			if (!$run{'taglist-write'}){
-				say "  Here is the $TAGLIST_FILE data (use 'w' to write file):";
-				say $line_small;
-				say join("\n",@contents);
-			}
-			else {
-				say "  Writing tag data to: $TAGLIST_FILE";
-				main::writer($TAGLIST_FILE,\@contents,1); # 1 forces utf8
-			}
-		}
-		else {
-			say "  No tag data found to use! Are the files tagged?";
-		}
-	}
-	else {
-		say "  No tags found! Are the files tagged?";
-	}
-	say "taglist contents: ", Data::Dumper::Dumper \@contents if $dbg[5];
-	say $line_small;
-}
-sub check_multi {
-	my ($tags) = @_;
-	my ($b_multi,%multi);
-	foreach my $key (sort keys %$file_tags){
-		foreach my $tag (@$tags){
-			if (defined $file_tags->{$key}{$tag}){
-				$multi{$tag}->{join(';',@{$file_tags->{$key}{$tag}})} = 1;
-			}
-		}
-	}
-	foreach my $tag (keys %multi){
-		$multi{$tag} = (scalar keys %{$multi{$tag}} > 1) ? 1 : 0;
-	}
-	say Data::Dumper::Dumper \%multi if $dbg[6];
-	return \%multi;
-}
-}
 
 ## InfoFix
 {
@@ -2735,6 +2433,308 @@ sub open_info_file {
 		push(@$data,'') if @$data;
 	}
 	return $data;
+}
+}
+
+## TagList
+{
+package TagList;
+my ($file_tags,$print_src);
+sub process {
+	say $line_large;
+	my $type;
+	$type = 'info ' . $INFO_FILE if $run{'taglist-info'};
+	if ($run{'taglist-tags-full'}){
+		$type .= '/' if $type;
+		$type .= 'tag ' . $TAGLIST_FILE;
+	}
+	say "Starting $type file checks in: " . main::sourcer("$SOURCE_DIRECTORY");
+	process_directories();
+	say $line_small;
+	
+	say "Completed $type file generation.";
+	say $line_large;
+}
+sub process_directories {
+	my ($result);
+	$list_type = 'dir';
+	say $line_small;
+	say "Checking directories...";
+	@found_list = ();
+	chdir "$start_dir";
+	File::Find::find(\&main::wanted, @source_glob);
+	say 'start dir: ', $start_dir if $dbg[3];
+	my $file_type = lc($INPUT_TYPE) . ',' . uc($INPUT_TYPE) . ',';
+	$file_type .= ucfirst(lc($INPUT_TYPE)); # flac,FLAC,Flac
+	foreach my $item (sort { "\L$a" cmp "\L$b" } @found_list){
+		my $b_valid;
+		$print_src = $item;
+		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
+		chdir "$start_dir";
+		chdir "$item";
+		if ($dbg[3]){
+			say 'srcdir: ', $SOURCE_DIRECTORY;
+			say 'item: ', $item;
+			say 'cwd: ', Cwd::getcwd();
+			system 'pwd';
+		}
+		say " Processing: $print_src";
+		my @files = main::globber("*.{$file_type}");
+		# say "\n", Data::Dumper::Dumper \@files;
+		if (grep -f, @files){
+			undef $file_tags;
+			if (($run{'taglist-info'} && !-e $INFO_FILE) || 
+			($run{'taglist-tags-full'} && !-e $TAGLIST_FILE)){
+				process_tags(\@files);
+			}
+			if ($run{'taglist-info'}){
+				if (!-e $INFO_FILE){
+					say "  No $INFO_FILE file found. Processing $INPUT_TYPE files....";
+					if ($file_tags && %$file_tags){
+						generate_info_file();
+					}
+					else {
+						say "  No tag data found in $INPUT_TYPE files.";
+					}
+				}
+				else {
+					say "  $INFO_FILE file present. Skipping this directory.";
+				}
+			}
+			if ($run{'taglist-tags-full'}){
+				if (!-e $TAGLIST_FILE){
+					say "  No $TAGLIST_FILE file found. Processing $INPUT_TYPE files....";
+					if ($file_tags && %$file_tags){
+						generate_taglist_file();
+					}
+					else {
+						say "  No tag data found in $INPUT_TYPE files.";
+					}
+				}
+				else {
+					say "  $TAGLIST_FILE file present. Skipping this directory.";
+				}
+			}
+		}
+		else {
+			say "  No $INPUT_TYPE files";
+		}
+	}
+}
+sub process_tags {
+	my ($files) = @_;
+	foreach my $file (@$files){
+		# returns single hash ref of file + array ref of tags
+		my $tags = main::get_flac_tags('all',$file);
+		if ($run{'taglist-tags-full'}){
+			$file_tags->{$file}{'taglist'} = $tags->{$file};
+		}
+		if ($run{'taglist-info'}){
+			foreach my $tag (@{$tags->{$file}}){
+				my @working = split(/=/,$tag,2);
+				push(@{$file_tags->{$file}{uc($working[0])}},$working[1]);
+			}
+		}
+	}
+	say Data::Dumper::Dumper $file_tags if $dbg[4];
+}
+# note: in order to handle > 1 type per tag name, all are contained in arrays.
+sub generate_info_file {
+	my (@general,@info,@lyrics,@main,@performers,@rating,@temp,@tracks);
+	my (%found,%multi,%track_data);
+	say "  Generating $INFO_FILE data...";
+	my $tags = [qw(ALBUM ARTIST DATE DISCNUMBER PERFORMER RATING YEAR)];
+	my $multi = check_multi($tags);
+	my @main_checks = qw(ARTIST ALBUM ALBUMSORT COMPILATION ALBUMARTIST ENSEMBLE 
+	COMPOSER CONDUCTOR OPUS DATE ORIGINALDATE YEAR VENUE LOCATION);
+	# These can have > 1 item so let's treat them differently
+	my @general_checks = qw(COMMENT DESCRIPTION SOURCE);
+	my @info_checks = qw(GENRE MOOD BPM MEASURE INITIAL_KEY TUNING
+	ORGANIZATION PRODUCER PUBLISHER MIXER REMIXER 
+	URL WEBSITE CHAPTER COPYRIGHT LICENSE CONTACT
+	BARCODE EAN/UPN UPC PRODUCTNUMBER CATALOGNUMBER LABELNO CATALOG
+	ISRC ETREE SHNID ACOUSTIC_ID ACOUSTID_FINGERPRINT ACCURATERIPDISCID CDTOC
+	ENCODED-BY ENCODER ENCODING MEDIA SOURCEMEDIA );
+	splice(@info_checks,2,0,'RATING') if !$multi->{'RATING'};
+	foreach my  $file (sort keys %$file_tags){
+		my ($track) = ('');
+		foreach my $check (@main_checks){
+			my ($lc,$ucf) = (lc($check),ucfirst(lc($check)));
+			if (!$found{$lc} && ($check ne 'ARTIST' || !$multi->{'ARTIST'}) && 
+			$file_tags->{$file}{$check}){
+				push(@main,"$ucf: " . join("\n$ucf: ", @{$file_tags->{$file}{$check}}));
+				$found{$lc} = 1;
+				delete $file_tags->{$file}{$check};
+			}
+		}
+		foreach my $check (@general_checks){
+			my ($lc,$ucf) = (lc($check),ucfirst(lc($check)));
+			if (!$found{$lc} && $file_tags->{$file}{$check}){
+				push(@general,'',"$ucf: " . join("\n$ucf: ",@{$file_tags->{$file}{$check}}));
+				$found{$lc} = 1;
+				delete $file_tags->{$file}{$check};
+			}
+		}
+		foreach my $check (@info_checks){
+			my ($lc,$ucf) = (lc($check),ucfirst(lc($check)));
+			if (!$found{$lc} && $file_tags->{$file}{$check}){
+				push(@info,"$ucf: " . join("\n$ucf: ", @{$file_tags->{$file}{$check}}));
+				$found{$lc} = 1;
+				delete $file_tags->{$file}{$check};
+			}
+		}
+		if ($file_tags->{$file}{'DISCNUMBER'}[0] && ($multi->{'DISCNUMBER'} ||
+		($file_tags->{$file}{'DISCTOTAL'}[0] && $file_tags->{$file}{'DISCTOTAL'}[0] > 1) || 
+		($file_tags->{$file}{'TOTALDISCS'}[0] && $file_tags->{$file}{'TOTALDISCS'}[0] > 1))){
+			@temp = split(/\s*\/\s*/,$file_tags->{$file}{'DISCNUMBER'}[0]);
+			$track = $temp[0] . '-';
+			
+		}
+		if ($file_tags->{$file}{'TRACKNUMBER'}[0]){
+			@temp = split(/\s*\/\s*/,$file_tags->{$file}{'TRACKNUMBER'}[0]);
+			$track .= sprintf('%02d',$temp[0]) . '. ';
+			delete $file_tags->{$file}{'TRACKNUMBER'};
+		}
+		if ($file_tags->{$file}{'TITLE'}[0]){
+			if ($multi->{'ARTIST'} && $file_tags->{$file}{'ARTIST'}[0]){
+				$track .= $file_tags->{$file}{'ARTIST'}[0] . ' - ';
+				delete $file_tags->{$file}{'ARTIST'};
+			}
+			$track .= $file_tags->{$file}{'TITLE'}[0]; 
+			if ($file_tags->{$file}{'VERSION'}[0]){
+				$track .= ' (' . $file_tags->{$file}{'VERSION'}[0] . ')';
+				delete $file_tags->{$file}{'VERSION'};
+			}
+			if ($file_tags->{$file}{'PART'}[0]){
+				$track .= ' (' . $file_tags->{$file}{'PART'}[0] . ')';
+				delete $file_tags->{$file}{'PART'};
+			}
+		}
+		# these are probably going to be per file/track
+		if ($track){
+			$track_data{$file}->{'string'} = $track;
+			if ($multi->{'PERFORMER'} && $file_tags->{$file}{'PERFORMER'} && 
+			join('',@{$file_tags->{$file}{'PERFORMER'}}) ne join('',@performers)){
+				$track_data{$file}->{'performers'} = "Performers:\n";
+				$track_data{$file}->{'performers'} .= join("\n",@{$file_tags->{$file}{'PERFORMER'}});
+				@performers = @{$file_tags->{$file}{'PERFORMER'}};
+				delete $file_tags->{$file}{'PERFORMER'};
+			}
+			if ($file_tags->{$file}{'LYRICS'}){
+				push(@lyrics,$track,join("\n",@{$file_tags->{$file}{'LYRICS'}}),'');
+				delete $file_tags->{$file}{'LYRICS'};
+			}
+			if ($multi->{'RATING'} && $file_tags->{$file}{'RATING'}){
+				push(@rating,$track,join("\n",@{$file_tags->{$file}{'RATING'}}),'');
+				delete $file_tags->{$file}{'RATING'};
+			}
+		}
+		# these will be array already, but each track can have different performers
+		if (!$multi->{'PERFORMER'} && !$found{'performer'} && 
+		$file_tags->{$file}{'PERFORMER'}){
+			@performers = @{$file_tags->{$file}{'PERFORMER'}};
+			$found{'performer'} = 1;
+			delete $file_tags->{$file}{'PERFORMER'};
+		}
+	}
+	@performers = () if $multi->{'PERFORMER'};
+	say Data::Dumper::Dumper \%track_data if $dbg[7];
+	if (%track_data){
+		my $b_starter;
+		foreach my $track (sort keys %track_data){
+			if ($track_data{$track}->{'performers'}){
+				push(@tracks,'',$track_data{$track}->{'performers'},'');
+			}
+			# we want Tracks: to come AFTER first performers list if multiperf.
+			if (!$b_starter){
+				push (@tracks,'') if !$track_data{$track}->{'performers'};
+				push(@tracks,'Tracks:');
+				$b_starter = 1;
+			}
+			push(@tracks,$track_data{$track}->{'string'});
+		}
+		push(@tracks,'',':et:');
+	}
+	if (!$multi->{'PERFORMER'} && @performers){
+		@performers = ('','Performers:',@performers);
+	}
+	if (@info){
+		@info = ('','Info:',@info);
+	}
+	if (@lyrics){
+		@lyrics = ('','Lyrics:',@lyrics);
+	}
+	if (@rating){
+		@rating = ('','Ratings:',@rating);
+	}
+	my @info_data = (@main,@performers,@tracks,@general,@info,@rating,@lyrics);
+	say "info_data: ", Data::Dumper::Dumper \@info_data if $dbg[5];
+	say "file_tags: ", Data::Dumper::Dumper $file_tags if $dbg[7];
+	if (@info_data){
+		if (!$run{'taglist-write'}){
+			say "  Here is the $INFO_FILE data (use 'w' to write file):";
+			say $line_small;
+			say join("\n",@info_data);
+		}
+		else {
+			say "  Writing tag data to: $INFO_FILE";
+			main::writer($INFO_FILE,\@info_data,1); # 1 forces utf8
+		}
+	}
+	else {
+		say "  No tag data found! Are the files tagged?";
+	}
+	say $line_small;
+}
+sub generate_taglist_file {
+	my ($b_tags,@contents);
+	say "  Generating $TAGLIST_FILE file...";
+	if ($file_tags && %$file_tags){
+		foreach my $file (sort keys %$file_tags){
+			if (defined $file_tags->{$file}{'taglist'}){
+				push(@contents,'FILE:' . $file,@{$file_tags->{$file}{'taglist'}},'');
+				$b_tags = 1;
+			}
+			else {
+				push(@contents,'FILE:' . $file . ': NO TAGS FOUND','');
+			}
+		}
+		if ($b_tags){
+			if (!$run{'taglist-write'}){
+				say "  Here is the $TAGLIST_FILE data (use 'w' to write file):";
+				say $line_small;
+				say join("\n",@contents);
+			}
+			else {
+				say "  Writing tag data to: $TAGLIST_FILE";
+				main::writer($TAGLIST_FILE,\@contents,1); # 1 forces utf8
+			}
+		}
+		else {
+			say "  No tag data found to use! Are the files tagged?";
+		}
+	}
+	else {
+		say "  No tags found! Are the files tagged?";
+	}
+	say "taglist contents: ", Data::Dumper::Dumper \@contents if $dbg[5];
+	say $line_small;
+}
+sub check_multi {
+	my ($tags) = @_;
+	my ($b_multi,%multi);
+	foreach my $key (sort keys %$file_tags){
+		foreach my $tag (@$tags){
+			if (defined $file_tags->{$key}{$tag}){
+				$multi{$tag}->{join(';',@{$file_tags->{$key}{$tag}})} = 1;
+			}
+		}
+	}
+	foreach my $tag (keys %multi){
+		$multi{$tag} = (scalar keys %{$multi{$tag}} > 1) ? 1 : 0;
+	}
+	say Data::Dumper::Dumper \%multi if $dbg[6];
+	return \%multi;
 }
 }
 
@@ -3729,7 +3729,7 @@ sub check_application_paths {
 				}
 			}
 		}
-		if ($run{'tagger'} || $run{'info-create'} || $run{'taglist'}){
+		if ($run{'tagger'} || $run{'taglist-info'} || $run{'taglist-tags-full'}){
 			if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
 				push(@app_paths,$COMMAND_METAFLAC);
 			}
@@ -3911,7 +3911,7 @@ sub check_in_out_types {
 	}
 	if ((!$run{'analyze'} && (!$run{'infofix-quality'} || $run{'infofix-verify'})) && 
 	($run{'tagger'} || $run{'checksum'} || $run{'checksum-verify'} || 
-	$run{'info-create'} || $run{'infofix-verify'} || $run{'resample'}) && 
+	$run{'taglist-info'} || $run{'infofix-verify'} || $run{'resample'}) && 
 	$INPUT_TYPE !~ m/^(flac)$/i){
 		$b_error = 1;
 		$error_message .= "\n The input type you entered is not supported for the ";
@@ -4320,10 +4320,6 @@ sub show_options {
 	$output .= "--image, -I {jpg,png image file name|remove}\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
-	$output .= "--info-create, --ic [w]\n";
-	$output .= "                  Print to screen generated $INFO_FILE data in FLAC directories\n";
-	$output .= "                  without $INFO_FILE, using processed tag data from files.\n";
-	$output .= "                  Use 'w' to write to file. See also --taglist.\n";
 	$output .= "--info-file, --if, --prefill-file, --pf {file name}\n";
 	$output .= "                  Alternate file name to use for --prefill, --info-create,\n";
 	$output .= "                  --infofix.\n";
@@ -4374,9 +4370,14 @@ sub show_options {
 	$output .= "                  tag/value pairs. Removes existing sets of the given type.\n";
 	$output .= "                  Use ^^ to separate tag key/value pairs, and %: to separate\n";
 	$output .= "                  the tag name and its value. Value 'UNSET' removes the tag.\n";
-	$output .= "--taglist, --tl   [w] Print to screen generated $TAGLIST_FILE data in FLAC\n";
-	$output .= "                  directories without $TAGLIST_FILE using full raw tag data from\n";
-	$output .= "                  files. Use 'w' to write to file. See also --info-create.\n";
+	$output .= "--taglist, -L     [citw] Print to screen generated tag data in FLAC\n";
+	$output .= "                  directories using Vorbis tag data found in each file.\n";
+	$output .= "                  Use 'w' to write to data to file9s).\n";
+	$output .= "                  c: Generate condensed $TAGLIST_FILE data.\n";
+	$output .= "                  i: Generate $INFO_FILE data. Disables taglist unless c/t used.\n";
+	$output .= "                  t: Generate full per audio file $TAGLIST_FILE data.\n";
+	$output .= "                  w: Write changes to file(s). Only writes if $INFO_FILE\n";
+	$output .= "                  and/or $TAGLIST_FILE files are not already present.\n";
 	$output .= "--taglist-file, --tlf, --tf {file}\n";
 	$output .= "                  Alternate file name to use for --taglist.\n";
 	$output .= $line_small . "\n";
@@ -4822,16 +4823,6 @@ sub get{
 		$run{'embed-image'} = 1;
 		$run{'tagger'} = 1;
 		$test{'tag'} = 1;},
-	'ic|info-create:s' => sub {
-		my ($opt,$arg) = @_;
-		if ($arg){
-			if ($arg ne 'w'){
-				main::error_handler('missing-arg',"$opt use 'w' to write. See -h.",1);
-			}
-			$run{'info-create-write'} = 1;
-		}
-		$run{'info-create'} = 1;
-		$test{'info'} = 1;},
 	'info-file|prefill-file|if|pf:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires file name.",1) if !$arg;
@@ -4998,15 +4989,22 @@ sub get{
 		$run{'update-tag'} = 1;
 		$run{'tagger'} = 1;
 		$test{'tag'} = 1;},
-	'taglist|tl:s' => sub {
+	'L|taglist:s' => sub {
 		my ($opt,$arg) = @_;
 		if ($arg){
-			if ($arg ne 'w'){
-				main::error_handler('missing-arg',"$opt use 'w' to write. See -h.",1);
+			if ($arg =~ /^[citw]+$/){
+				$run{'taglist-condensed'} = 1 if $arg =~ /c/;
+				$run{'taglist-info'} = 1 if $arg =~ /i/;
+				$run{'taglist-full'} = 1 if $arg =~ /t/;
+				$run{'taglist-write'} = 1 if $arg =~ /w/;
 			}
-			$run{'taglist-write'} = 1;
+			else {
+				main::error_handler('missing-arg',"$opt unsupported argument. See -h.",1);
+			}
 		}
-		$run{'taglist'} = 1;
+		else {
+			$run{'taglist-full'} = 1;
+		}
 		$test{'info'} = 1;},
 	'taglist-file|tlf|tf:s' => sub { 
 		my ($opt,$arg) = @_;
@@ -5146,7 +5144,7 @@ sub verify_selections {
 		 "--dither requires --resample.",1);
 	}
 	# info-file requires either prefill, info-create, or infofix options
-	if ($test{'info-file'} && !$run{'prefill'} && !$run{'info-create'} && 
+	if ($test{'info-file'} && !$run{'prefill'} && !$run{'taglist-info'} && 
 	!$run{'infofix'}){
 		main::error_handler('invalid-options', 
 		 "--info-file/--prefill-file require --info-create/--infofix/--prefill.",1);
@@ -5168,7 +5166,7 @@ sub verify_selections {
 		main::error_handler('invalid-options', 
 		 "remove image/padding can only be used with --image/--autotag.",1);
 	}
-	if ($test{'taglist-file'} && !$run{'taglist'}){
+	if ($test{'taglist-file'} && !$run{'taglist-tags-full'}){
 		main::error_handler('invalid-options', 
 		 "--taglist-file can only be used with --taglist.",1);
 	}
