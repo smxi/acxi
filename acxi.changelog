@@ -23,10 +23,10 @@ SPECIAL THANKS:
 particular, the people who worked so hard for so long at xiph.org to provide the
 world with the codecs and tools we now use to listen to and work on audio.
 
-2. To fourtysixandtwo, the acxi packager for Slackware (slackbuilds). The new
---info-create/--taglist options were his suggestion. This is turning out to be
-really good and useful already, since it allows for easy bulk testing of entire
-sets of recordings at once, which acxi can then be used to correct.
+2. To fourtysixandtwo, the acxi packager for Slackware (slackbuilds). The new 
+-taglist option was his suggestion. This is turning out to be really good and 
+useful already, since it allows for easy bulk testing of entire sets of 
+recordings at once, which acxi can then be used to correct.
 
 --------------------------------------------------------------------------------
 KNOWN ISSUES:
@@ -121,13 +121,19 @@ REMIXER: Remixer, remixed by, remasterer, remastered by.
 because it's made for very specific purposes and is unlikely to be used 
 correctly. See Known Issues 2.
 
-4. INFOCREATE/TAGLIST: New features: --info-create/--ic: creates data info.txt 
-files if non exist from FLAC tag data. 'w' writes it to file. This creates 
-something that acxi can read and use as prefill data source, as well as giving a 
-nice overview of a set of tagged, or non tagged, recordings. To get the raw tags 
-for all files in directory, use --taglist, which will write to screen or 
-taglist.tag file in each directory the full set of tags for all the files in the 
-directory.
+4. TAGLIST: New features: --taglist/-L. Depending on switches, can generate full 
+report of all tags per FLAC file in directory, a condensed version of those 
+tags, or data for creating an info.txt file. As with -X, w writes the data to 
+the file(s).
+
+* c: generates condensed data from flac tags for screen/taglist.tag.
+
+* i: generates info file data from flac tags for screen/info.txt.
+
+* t: generates full taglist data for taglist.tag. This is default if no args 
+used.
+
+* w: writes c, i, or t data to respective info.txt or taglist.tag files.
 
 5. Added $self_patch to allow for checking development patch versions, like 
 pinxi uses. Helpful to make sure you have the right version. Also added to
