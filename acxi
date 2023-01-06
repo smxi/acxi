@@ -339,9 +339,9 @@ sub main {
 	AutoTag::create() if $run{'autotag-create'};
 	AutoTag::run_tagger() if $run{'tagger'};
 	Checksums::process() if ($run{'checksum'} || $run{'checksum-verify'});
-	TagList::process() if $run{'taglist-info'} || $run{'taglist-tags-full'};
 	CleanCollection::process() if $run{'clean'};
 	InfoFix::process() if $run{'infofix'};
+	TagList::process() if $run{'taglist'};
 	SyncCollection::process() if $run{'sync'};
 	print_completion_message();
 }
@@ -2442,17 +2442,16 @@ package TagList;
 my ($file_tags,$print_src);
 sub process {
 	say $line_large;
-	my $type;
+	my $type = '';
 	$type = 'info ' . $INFO_FILE if $run{'taglist-info'};
-	if ($run{'taglist-tags-full'}){
+	if ($run{'taglist-full'} || $run{'taglist-condensed'}){
 		$type .= '/' if $type;
 		$type .= 'tag ' . $TAGLIST_FILE;
 	}
 	say "Starting $type file checks in: " . main::sourcer("$SOURCE_DIRECTORY");
 	process_directories();
 	say $line_small;
-	
-	say "Completed $type file generation.";
+	say "Completed taglist $type processing.";
 	say $line_large;
 }
 sub process_directories {
@@ -2484,14 +2483,14 @@ sub process_directories {
 		if (grep -f, @files){
 			undef $file_tags;
 			if (($run{'taglist-info'} && !-e $INFO_FILE) || 
-			($run{'taglist-tags-full'} && !-e $TAGLIST_FILE)){
+			(($run{'taglist-full'} || $run{'taglist-condensed'})&& !-e $TAGLIST_FILE)){
 				process_tags(\@files);
 			}
 			if ($run{'taglist-info'}){
 				if (!-e $INFO_FILE){
 					say "  No $INFO_FILE file found. Processing $INPUT_TYPE files....";
 					if ($file_tags && %$file_tags){
-						generate_info_file();
+						generate_info_data();
 					}
 					else {
 						say "  No tag data found in $INPUT_TYPE files.";
@@ -2501,11 +2500,11 @@ sub process_directories {
 					say "  $INFO_FILE file present. Skipping this directory.";
 				}
 			}
-			if ($run{'taglist-tags-full'}){
+			if ($run{'taglist-full'} || $run{'taglist-condensed'}){
 				if (!-e $TAGLIST_FILE){
 					say "  No $TAGLIST_FILE file found. Processing $INPUT_TYPE files....";
 					if ($file_tags && %$file_tags){
-						generate_taglist_file();
+						generate_taglist_data();
 					}
 					else {
 						say "  No tag data found in $INPUT_TYPE files.";
@@ -2526,7 +2525,7 @@ sub process_tags {
 	foreach my $file (@$files){
 		# returns single hash ref of file + array ref of tags
 		my $tags = main::get_flac_tags('all',$file);
-		if ($run{'taglist-tags-full'}){
+		if ($run{'taglist-full'}){
 			$file_tags->{$file}{'taglist'} = $tags->{$file};
 		}
 		if ($run{'taglist-info'}){
@@ -2539,7 +2538,7 @@ sub process_tags {
 	say Data::Dumper::Dumper $file_tags if $dbg[4];
 }
 # note: in order to handle > 1 type per tag name, all are contained in arrays.
-sub generate_info_file {
+sub generate_info_data {
 	my (@general,@info,@lyrics,@main,@performers,@rating,@temp,@tracks);
 	my (%found,%multi,%track_data);
 	say "  Generating $INFO_FILE data...";
@@ -2686,7 +2685,7 @@ sub generate_info_file {
 	}
 	say $line_small;
 }
-sub generate_taglist_file {
+sub generate_taglist_data {
 	my ($b_tags,@contents);
 	say "  Generating $TAGLIST_FILE file...";
 	if ($file_tags && %$file_tags){
@@ -3729,7 +3728,7 @@ sub check_application_paths {
 				}
 			}
 		}
-		if ($run{'tagger'} || $run{'taglist-info'} || $run{'taglist-tags-full'}){
+		if ($run{'tagger'} || $run{'taglist'}){
 			if (!grep {$_ eq $COMMAND_METAFLAC} @app_paths){
 				push(@app_paths,$COMMAND_METAFLAC);
 			}
@@ -3911,7 +3910,7 @@ sub check_in_out_types {
 	}
 	if ((!$run{'analyze'} && (!$run{'infofix-quality'} || $run{'infofix-verify'})) && 
 	($run{'tagger'} || $run{'checksum'} || $run{'checksum-verify'} || 
-	$run{'taglist-info'} || $run{'infofix-verify'} || $run{'resample'}) && 
+	$run{'taglist'} || $run{'infofix-verify'} || $run{'resample'}) && 
 	$INPUT_TYPE !~ m/^(flac)$/i){
 		$b_error = 1;
 		$error_message .= "\n The input type you entered is not supported for the ";
@@ -4995,7 +4994,7 @@ sub get{
 			if ($arg =~ /^[citw]+$/){
 				$run{'taglist-condensed'} = 1 if $arg =~ /c/;
 				$run{'taglist-info'} = 1 if $arg =~ /i/;
-				$run{'taglist-full'} = 1 if $arg =~ /t/;
+				$run{'taglist-full'} = 1 if $arg =~ /t/ || $arg !~ /[ci]/;
 				$run{'taglist-write'} = 1 if $arg =~ /w/;
 			}
 			else {
@@ -5005,6 +5004,7 @@ sub get{
 		else {
 			$run{'taglist-full'} = 1;
 		}
+		$run{'taglist'} = 1;
 		$test{'info'} = 1;},
 	'taglist-file|tlf|tf:s' => sub { 
 		my ($opt,$arg) = @_;
@@ -5166,9 +5166,10 @@ sub verify_selections {
 		main::error_handler('invalid-options', 
 		 "remove image/padding can only be used with --image/--autotag.",1);
 	}
-	if ($test{'taglist-file'} && !$run{'taglist-tags-full'}){
+	if ($test{'taglist-file'} && !$run{'taglist-full'} && 
+	!$run{'taglist-condensed'}){
 		main::error_handler('invalid-options', 
-		 "--taglist-file can only be used with --taglist.",1);
+		 "--taglist-file can only be used with -L/-L [ct].",1);
 	}
 	if ($test{'z-min'} && !$run{'analyze'}){
 		main::error_handler('invalid-options', 
