@@ -2484,7 +2484,7 @@ sub process_directories {
 		if (grep -f, @files){
 			undef $file_tags;
 			if (($run{'taglist-info'} && !-e $INFO_FILE) || 
-			(($run{'taglist-full'} || $run{'taglist-condensed'})&& !-e $TAGLIST_FILE)){
+			(($run{'taglist-full'} || $run{'taglist-condensed'})&& !-e $tag_file)){
 				process_tags(\@files);
 			}
 			if ($run{'taglist-info'}){
