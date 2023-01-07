@@ -1140,7 +1140,7 @@ sub prefill_data {
 }
 sub populate_tag_file {
 	my ($files) = @_;
-	my (@multi,@replaygain,@tags,$info);
+	my ($info,@multi,@tags);
 	my ($b_first,$j,$holder,$starter) = (1,0,'','');
 	my $counter=$start;
 	my $b_prefill_tag = ($run{'prefill-tag'} && %{$run{'prefill-tag'}}) ? 1 : 0;
@@ -1361,9 +1361,9 @@ sub populate_tag_file {
 			}
 		}
 		if (!$run{'no-replaygain'}){
-			@replaygain = get_replaygain(main::escape_item("$_"));
+			my $replaygain = get_replaygain(main::escape_item("$_"));
 			# we want the replaygain data right before FILE
-			splice (@track_working, 6, 0, @replaygain) if @replaygain;
+			splice(@track_working, 5, 0, @$replaygain) if @$replaygain;
 		}
 		push(@tags,@track_working);
 		# this allows for 0 track numbers
@@ -1490,12 +1490,12 @@ sub create_track_total {
 }
 sub get_replaygain {
 	my ($input_file) = @_;
-	my (@tags);
+	my @tags;
 	my $replaygain = main::get_flac_tags('replaygain',$input_file);
 	foreach (keys %$replaygain){
 		push(@tags, $_ . '%:' . $replaygain->{$_}) if $replaygain->{$_};
 	}
-	return @tags;
+	return \@tags;
 }
 # --preserve-modtime --remove-all-tags --remove-tag
 ## end of AutoTag
@@ -2018,7 +2018,7 @@ sub confirm_deletion {
 }
 
 #### -------------------------------------------------------------------
-#### INFO / TAGS FILE PROCESSING
+#### INFO / TAGLIST PROCESSING
 #### -------------------------------------------------------------------
 
 ## InfoFix
@@ -2439,14 +2439,15 @@ sub open_info_file {
 ## TagList
 {
 package TagList;
-my ($file_tags,$print_src);
+my ($file_tags,$print_src,$tag_file);
 sub process {
 	say $line_large;
 	my $type = '';
 	$type = 'info ' . $INFO_FILE if $run{'taglist-info'};
 	if ($run{'taglist-full'} || $run{'taglist-condensed'}){
+		$tag_file = ($run{'taglist-autotag'}) ? $AUTOTAG_FILE: $TAGLIST_FILE;
 		$type .= '/' if $type;
-		$type .= 'tag ' . $TAGLIST_FILE;
+		$type .= 'tag ' . $tag_file;
 	}
 	say "Starting $type file checks in: " . main::sourcer("$SOURCE_DIRECTORY");
 	process_directories();
@@ -2501,8 +2502,8 @@ sub process_directories {
 				}
 			}
 			if ($run{'taglist-full'} || $run{'taglist-condensed'}){
-				if (!-e $TAGLIST_FILE){
-					say "  No $TAGLIST_FILE file found. Processing $INPUT_TYPE files....";
+				if (!-e $tag_file){
+					say "  No $tag_file found. Processing $INPUT_TYPE files....";
 					if ($file_tags && %$file_tags){
 						generate_taglist_data();
 					}
@@ -2511,7 +2512,7 @@ sub process_directories {
 					}
 				}
 				else {
-					say "  $TAGLIST_FILE file present. Skipping this directory.";
+					say "  $tag_file file present. Skipping this directory.";
 				}
 			}
 		}
@@ -2525,13 +2526,13 @@ sub process_tags {
 	foreach my $file (@$files){
 		# returns single hash ref of file + array ref of tags
 		my $tags = main::get_flac_tags('all',$file);
-		if ($run{'taglist-full'}){
+		if ($run{'taglist-full'} || $run{'taglist-condensed'}){
 			$file_tags->{$file}{'taglist'} = $tags->{$file};
 		}
 		if ($run{'taglist-info'}){
 			foreach my $tag (@{$tags->{$file}}){
 				my @working = split(/=/,$tag,2);
-				push(@{$file_tags->{$file}{uc($working[0])}},$working[1]);
+				push(@{$file_tags->{$file}{$working[0]}},$working[1]);
 			}
 		}
 	}
@@ -2583,8 +2584,7 @@ sub generate_info_data {
 			}
 		}
 		if ($file_tags->{$file}{'DISCNUMBER'}[0] && ($multi->{'DISCNUMBER'} ||
-		($file_tags->{$file}{'DISCTOTAL'}[0] && $file_tags->{$file}{'DISCTOTAL'}[0] > 1) || 
-		($file_tags->{$file}{'TOTALDISCS'}[0] && $file_tags->{$file}{'TOTALDISCS'}[0] > 1))){
+		($file_tags->{$file}{'DISCTOTAL'}[0] && $file_tags->{$file}{'DISCTOTAL'}[0] > 1))){
 			@temp = split(/\s*\/\s*/,$file_tags->{$file}{'DISCNUMBER'}[0]);
 			$track = $temp[0] . '-';
 			
@@ -2689,24 +2689,32 @@ sub generate_taglist_data {
 	my ($b_tags,@contents);
 	say "  Generating $TAGLIST_FILE file...";
 	if ($file_tags && %$file_tags){
+		my $sep = ($run{'taglist-autotag'}) ? '%:': '=' ;
 		foreach my $file (sort keys %$file_tags){
 			if (defined $file_tags->{$file}{'taglist'}){
-				push(@contents,'FILE:' . $file,@{$file_tags->{$file}{'taglist'}},'');
+				# translate to acxi tag:value sep %:
+				if ($run{'taglist-autotag'}){
+					@{$file_tags->{$file}{'taglist'}} = map {
+					$_ =~ s/^([^=]{4,})=/$1$sep/;
+					$_;
+					} @{$file_tags->{$file}{'taglist'}};
+				}
+				push(@contents,"FILE$sep$file",@{$file_tags->{$file}{'taglist'}},'');
 				$b_tags = 1;
 			}
 			else {
-				push(@contents,'FILE:' . $file . ': NO TAGS FOUND','');
+				push(@contents,"FILE$sep$file",'STATUS: NO TAGS FOUND','');
 			}
 		}
 		if ($b_tags){
 			if (!$run{'taglist-write'}){
-				say "  Here is the $TAGLIST_FILE data (use 'w' to write file):";
+				say "  Here is the $tag_file data (use 'w' to write file):";
 				say $line_small;
 				say join("\n",@contents);
 			}
 			else {
-				say "  Writing tag data to: $TAGLIST_FILE";
-				main::writer($TAGLIST_FILE,\@contents,1); # 1 forces utf8
+				say "  Writing tag data to: $tag_file";
+				main::writer($tag_file,\@contents,1); # 1 forces utf8
 			}
 		}
 		else {
@@ -2744,7 +2752,6 @@ sub check_multi {
 ## SyncCollection 
 {
 package SyncCollection; 
-
 sub process {
 	my (@extension_files);
 	eval $print_line_heavy;
@@ -3088,7 +3095,7 @@ sub convert_file {
 # Revised many times since, full refactor 2022-12-30.
 sub flac2mp3_cmd {
 	my ($i_file, $o_file) = @_;
-	my $tags = get_flac_tags('standard',"$i_file");
+	my $tags = get_flac_tags('flac-mp3',"$i_file");
 	my $lame_params = '';
 	foreach (keys %$tags){
 		$tags->{$_} = escape_item($tags->{$_});
@@ -3159,22 +3166,27 @@ sub flac2mp3_cmd {
 # artist, album, title, genre, date, tracknumber
 sub get_flac_tags {
 	my ($type,$i_file) = @_;
-	my (%tags,@tags,@working);
-	if ($type eq 'standard'){
-		# note: no opus, venue, location, producer tags in standard mp3
-		@tags = qw(ALBUM ALBUMARTIST ARTIST ARTISTSORT 
-		COMMENT COMPILATION COMPOSER CONDUCTOR COPYRIGHT
-		DATE DESCRIPTION DISKNUMBER DISCSUBTITLE DISKTOTAL 
-		GENRE ISRC LABEL MEDIA MOOD MOVEMENTNAME PUBLISHER REMIXER
-		SOURCEMEDIA SUBTITLE TITLE TRACKNUMBER TRACKTOTAL YEAR);
-	}
-	elsif ($type eq 'replaygain'){
-		@tags = qw(REPLAYGAIN_TRACK_PEAK REPLAYGAIN_TRACK_GAIN REPLAYGAIN_ALBUM_PEAK 
-		REPLAYGAIN_ALBUM_GAIN WAVEFORMATEXTENSIBLE_CHANNEL_MASK);
-	}
+	my (%tags,@working);
+	state @tags_working; # cannot assign values at declare in earlier perls.
 	my $cmd = "$COMMAND_METAFLAC --no-utf8-convert \"$i_file\" ";
 	if ($type ne 'all'){
-		foreach (@tags){
+		# replaygain/flac to mp3 tags will never happen in same action: sync, autotag
+		if ($type eq 'flac-mp3'){
+			if (!@tags_working){
+				@tags_working = qw(ALBUM ALBUMARTIST ARTIST ARTISTSORT COMMENT COMPILATION 
+				COMPOSER CONDUCTOR COPYRIGHT DATE DESCRIPTION DISKNUMBER DISCSUBTITLE 
+				DISKTOTAL GENRE ISRC LABEL MEDIA MOOD MOVEMENTNAME PUBLISHER REMIXER 
+				SOURCEMEDIA SUBTITLE TITLE TRACKNUMBER TRACKTOTAL YEAR);
+			}
+		}
+		elsif ($type eq 'replaygain'){
+			if (!@tags_working){
+				@tags_working = qw(REPLAYGAIN_TRACK_PEAK REPLAYGAIN_TRACK_GAIN 
+				REPLAYGAIN_ALBUM_PEAK REPLAYGAIN_ALBUM_GAIN 
+				WAVEFORMATEXTENSIBLE_CHANNEL_MASK);
+			}
+		}
+		foreach (@tags_working){
 			$cmd .= "--show-tag=\"$_\" ";
 		}
 	}
@@ -3185,12 +3197,18 @@ sub get_flac_tags {
 	chomp @orig_tags;
 	foreach (@orig_tags){
 		next if !$_; # seen case where somehow a returned tag is temp, no tag=value
+		# make all tag names uppercase to make following processing easier
+		$_ =~ s/^([^=]{4,})=/\U$1=/;
 		if ($type ne 'all'){
 			@working = split(/=/,$_,2);
 			$tags{$working[0]} = $working[1];
 		}
 		# while most tags occur single, easier to just treat them all as possible multi
 		else {
+			# map some inconsistent tag names here
+			$_ =~ s/^(DIS[CK][\s_-]?(#|NUMBER)?)=/DISCNUMBER=/;
+			$_ =~ s/^(DIS[CK](C|[\s_-]?TOTAL)|TOTAL[\s_-]?DIS[CK]S)=/DISCTOTAL=/;
+			$_ =~ s/^(TOTAL[\s_-]?TRACKS|TRACK[\s_-]?TOTAL)=/TRACKTOTAL=/;
 			push(@{$tags{$i_file}},$_);
 		}
 	}
@@ -4991,8 +5009,9 @@ sub get{
 	'L|taglist:s' => sub {
 		my ($opt,$arg) = @_;
 		if ($arg){
-			if ($arg =~ /^[citw]+$/){
-				$run{'taglist-condensed'} = 1 if $arg =~ /c/;
+			if ($arg =~ /^[acitw]+$/){
+				$run{'taglist-autotag'} = 1 if $arg =~ /a/;
+				$run{'taglist-condensed'} = 1 if $arg =~ /[ac]/;
 				$run{'taglist-info'} = 1 if $arg =~ /i/;
 				$run{'taglist-full'} = 1 if $arg =~ /t/ || $arg !~ /[ci]/;
 				$run{'taglist-write'} = 1 if $arg =~ /w/;
