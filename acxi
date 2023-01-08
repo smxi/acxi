@@ -2717,7 +2717,6 @@ sub generate_taglist_data {
 			if ($file_tags->{$files[0]}{'DISCSUBTITLE'}[0]){
 				push(@contents,'DISCSUBTITLE' . $sep . $file_tags->{$files[0]}{'DISCSUBTITLE'});
 			}
-			say $files[0];
 			if ($file_tags->{$files[0]}{'TRACKTOTAL'}[0] || 
 			($multi->{'DISCNUMBER'} && $file_tags->{$files[0]}{'DISCNUMBER'}[0] &&
 			$disc_data->{$file_tags->{$files[0]}{'DISCNUMBER'}[0]})){
