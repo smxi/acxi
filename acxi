@@ -2715,7 +2715,7 @@ sub generate_taglist_data {
 				}
 			}
 			if ($file_tags->{$files[0]}{'DISCSUBTITLE'}[0]){
-				push(@contents,'DISCSUBTITLE' . $sep . $file_tags->{$files[0]}{'DISCSUBTITLE'});
+				push(@contents,'DISCSUBTITLE' . $sep . $file_tags->{$files[0]}{'DISCSUBTITLE'}[0]);
 			}
 			if ($file_tags->{$files[0]}{'TRACKTOTAL'}[0] || 
 			($disc_data->{'total-discs'} && $file_tags->{$files[0]}{'DISCNUMBER'}[0] &&
@@ -2851,6 +2851,7 @@ sub get_disc_data {
 		}
 		$disc->{'total-tracks'}++;
 	}
+	
 	say 'Disc Totals: ', Data::Dumper::Dumper $disc if $dbg[8];
 	return $disc;
 }
