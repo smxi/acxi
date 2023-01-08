@@ -2678,7 +2678,7 @@ sub generate_info_data {
 	say $line_small;
 }
 sub generate_taglist_data {
-	my (@contents,@disk_tags,@general_tags,%holder,@track_tags);
+	my (@contents,$disc_data,@disk_tags,@general_tags,%holder,@track_tags);
 	my ($b_tags,$multi,$track_total);
 	say "  Generating $tag_file file...";
 	if ($file_tags && %$file_tags){
@@ -2691,6 +2691,7 @@ sub generate_taglist_data {
 			!/^(DISCNUMBER|DISCSUBTITLE|DISCTOTAL|PART|SUBTITLE|TITLE|TRACKNUMBER|TRACKTOTAL|VERSION)$/
 			} @$all_tags;
 			$multi = check_multi($all_tags);
+			$disc_data = get_disc_data();
 			my @files = sort keys %$file_tags;
 			foreach my $tag (@general_tags){
 				if (!$multi->{$tag}){
@@ -2705,7 +2706,7 @@ sub generate_taglist_data {
 					$disc_total = $file_tags->{$files[0]}{'DISCTOTAL'}[0];
 				}
 				else {
-					$disc_total = get_disc_total();
+					$disc_total = $disc_data->{'total'};
 				}
 				push(@contents,"DISCTOTAL$sep" . $disc_total);
 				if ($multi->{'DISCNUMBER'}){
@@ -2744,6 +2745,10 @@ sub generate_taglist_data {
 							if ($file_tags->{$file}{$tag}[0]){
 								push(@contents,$tag . $sep . $file_tags->{$file}{$tag}[0]);
 							}
+						}
+						if (!$file_tags->{$file}{'TRACKTOTAL'}[0] && 
+						$disc_data->{$holder{'DISCNUMBER'}}){
+							push(@contents,'TRACKTOTAL' . $sep . $disc_data->{$holder{'DISCNUMBER'}});
 						}
 						push(@contents,'');
 					}
@@ -2788,16 +2793,25 @@ sub generate_taglist_data {
 	say "taglist contents: ", Data::Dumper::Dumper \@contents if $dbg[5];
 	say $line_small;
 }
-sub get_disc_total {
-	my $total = 0;
+sub get_disc_data {
+	my $disc = {};
+	$disc->{'total'} = 0;
+	$disc->{1} = 0;
 	foreach my $file (sort keys %$file_tags){
 		if ($file_tags->{$file}{'DISCNUMBER'}[0]){
-			if ($file_tags->{$file}{'DISCNUMBER'}[0] > $total){
-				$total = $file_tags->{$file}{'DISCNUMBER'}[0];
+			if ($file_tags->{$file}{'DISCNUMBER'}[0] > $disc->{'total'}){
+				$disc->{'total'} = $file_tags->{$file}{'DISCNUMBER'}[0];
 			}
+			if (!$disc->{$file_tags->{$file}{'DISCNUMBER'}[0]} ){
+				$disc->{$file_tags->{$file}{'DISCNUMBER'}[0]} = 0;
+			}
+			$disc->{$file_tags->{$file}{'DISCNUMBER'}[0]}++;
+		}
+		else {
+			$disc->{1}++;
 		}
 	}
-	return $total;
+	return $disc;
 }
 sub get_tags_used {
 	my $tags = [];
