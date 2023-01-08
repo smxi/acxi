@@ -2699,16 +2699,16 @@ sub generate_taglist_data {
 				}
 			}
 			push(@contents,'') if @contents;
-			if ($multi->{'DISCNUMBER'} || ($file_tags->{$files[0]}{'DISCTOTAL'} && 
+			if ($disc_data->{'total-discs'} || ($file_tags->{$files[0]}{'DISCTOTAL'} && 
 			$file_tags->{$files[0]}{'DISCTOTAL'}[0] > 1)){
 				if ($file_tags->{$files[0]}{'DISCTOTAL'}){
 					$temp = $file_tags->{$files[0]}{'DISCTOTAL'}[0];
 				}
 				else {
-					$temp = $disc_data->{'total'};
+					$temp = $disc_data->{'total-discs'};
 				}
 				push(@contents,"DISCTOTAL$sep" . int($temp));
-				if ($multi->{'DISCNUMBER'}){
+				if ($disc_data->{'total-discs'}){
 					@split = split(/\s*\/\s*/,$file_tags->{$files[0]}{'DISCNUMBER'}[0]);
 					push(@contents,'DISCNUMBER' . $sep . int($split[0]));
 					$holder{'DISCNUMBER'} = $split[0];
@@ -2718,10 +2718,10 @@ sub generate_taglist_data {
 				push(@contents,'DISCSUBTITLE' . $sep . $file_tags->{$files[0]}{'DISCSUBTITLE'});
 			}
 			if ($file_tags->{$files[0]}{'TRACKTOTAL'}[0] || 
-			($multi->{'DISCNUMBER'} && $file_tags->{$files[0]}{'DISCNUMBER'}[0] &&
+			($disc_data->{'total-discs'} && $file_tags->{$files[0]}{'DISCNUMBER'}[0] &&
 			$disc_data->{$file_tags->{$files[0]}{'DISCNUMBER'}[0]})){
 				# correct for tracktotal used as total recording, not disc, tracks
-				if ($multi->{'DISCNUMBER'} && $file_tags->{$files[0]}{'TRACKTOTAL'}[0] && 
+				if ($disc_data->{'total-discs'} && $file_tags->{$files[0]}{'TRACKTOTAL'}[0] && 
 				$file_tags->{$files[0]}{'TRACKTOTAL'}[0] == $disc_data->{'total-tracks'}){
 					$value = $disc_data->{$file_tags->{$files[0]}{'DISCNUMBER'}[0]};
 				}
@@ -2733,7 +2733,7 @@ sub generate_taglist_data {
 				}
 				push(@contents,"TRACKTOTAL$sep" . int($value));
 			}
-			elsif (!$multi->{'DISCNUMBER'} && @contents){
+			elsif (!$disc_data->{'total-discs'} && @contents){
 				push(@contents,"TRACKTOTAL$sep" . scalar @files);
 			}
 			push(@contents,'') if @contents;
@@ -2751,7 +2751,7 @@ sub generate_taglist_data {
 						}
 					}
 					push(@contents,'') if $b_general;
-					if ($multi->{'DISCNUMBER'}){ 
+					if ($disc_data->{'total-discs'}){ 
 						@split = split(/\s*\/\s*/,$file_tags->{$file}{'DISCNUMBER'}[0]);
 						if ($split[0] != $holder{'DISCNUMBER'}){
 							$holder{'DISCNUMBER'} = $split[0];
@@ -2833,15 +2833,15 @@ sub generate_taglist_data {
 }
 sub get_disc_data {
 	my $disc = {};
-	$disc->{'total'} = 0;
+	$disc->{'total-discs'} = 0;
 	$disc->{'total-tracks'} = 0;
 	$disc->{1} = 0;
 	foreach my $file (sort keys %$file_tags){
 		if ($file_tags->{$file}{'DISCNUMBER'}[0]){
 			# rarely seen: 1/2, 1 / 2
 			my @split = split(/\s*\/\s*/,$file_tags->{$file}{'DISCNUMBER'}[0]);
-			if ($split[0] > $disc->{'total'}){
-				$disc->{'total'} = $split[0];
+			if ($split[0] > $disc->{'total-discs'}){
+				$disc->{'total-discs'} = $split[0];
 			}
 			$disc->{$split[0]} = 0 if !$disc->{$split[0]};
 			$disc->{$split[0]}++;
