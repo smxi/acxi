@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='08';
+my $self_patch='09';
 my $self_date='2023-01-07';
 
 ## GLOBALS ##
@@ -2678,8 +2678,8 @@ sub generate_info_data {
 	say $line_small;
 }
 sub generate_taglist_data {
-	my (@contents,$disc_data,@disk_tags,@general_tags,%holder,@track_tags);
-	my ($b_tags,$multi,$track_total);
+	my (@contents,$disc_data,@disk_tags,@general_tags,%holder,@split,@track_tags);
+	my ($b_tags,$multi,$temp,$track_total,$value);
 	say "  Generating $tag_file file...";
 	if ($file_tags && %$file_tags){
 		my $sep = ($run{'taglist-autotag'}) ? '%:': '=' ;
@@ -2701,24 +2701,33 @@ sub generate_taglist_data {
 			push(@contents,'') if @contents;
 			if ($multi->{'DISCNUMBER'} || ($file_tags->{$files[0]}{'DISCTOTAL'} && 
 			$file_tags->{$files[0]}{'DISCTOTAL'}[0] > 1)){
-				my $disc_total;
 				if ($file_tags->{$files[0]}{'DISCTOTAL'}){
-					$disc_total = $file_tags->{$files[0]}{'DISCTOTAL'}[0];
+					$temp = $file_tags->{$files[0]}{'DISCTOTAL'}[0];
 				}
 				else {
-					$disc_total = $disc_data->{'total'};
+					$temp = $disc_data->{'total'};
 				}
-				push(@contents,"DISCTOTAL$sep" . $disc_total);
+				push(@contents,"DISCTOTAL$sep" . int($temp));
 				if ($multi->{'DISCNUMBER'}){
-					push(@contents,'DISCNUMBER' . $sep . $file_tags->{$files[0]}{'DISCNUMBER'}[0]);
-					$holder{'DISCNUMBER'} = $file_tags->{$files[0]}{'DISCNUMBER'}[0];
+					@split = split(/\s*\/\s*/,$file_tags->{$files[0]}{'DISCNUMBER'}[0]);
+					push(@contents,'DISCNUMBER' . $sep . int($split[0]));
+					$holder{'DISCNUMBER'} = $split[0];
 				}
 			}
 			if ($file_tags->{$files[0]}{'DISCSUBTITLE'}[0]){
 				push(@contents,'DISCSUBTITLE' . $sep . $file_tags->{$files[0]}{'DISCSUBTITLE'});
 			}
-			if ($file_tags->{$files[0]}{'TRACKTOTAL'}[0]){
-				push(@contents,"TRACKTOTAL$sep" . $file_tags->{$files[0]}{'TRACKTOTAL'}[0]);
+			say $files[0];
+			if ($file_tags->{$files[0]}{'TRACKTOTAL'}[0] || 
+			($multi->{'DISCNUMBER'} && $file_tags->{$files[0]}{'DISCNUMBER'}[0] &&
+			$disc_data->{$file_tags->{$files[0]}{'DISCNUMBER'}[0]})){
+				if ($file_tags->{$files[0]}{'TRACKTOTAL'}[0]){
+					$value = $file_tags->{$files[0]}{'TRACKTOTAL'}[0];
+				}
+				else {
+					$value = $disc_data->{$file_tags->{$files[0]}{'DISCNUMBER'}[0]};
+				}
+				push(@contents,"TRACKTOTAL$sep" . int($value));
 			}
 			elsif (!$multi->{'DISCNUMBER'} && @contents){
 				push(@contents,"TRACKTOTAL$sep" . scalar @files);
@@ -2738,23 +2747,33 @@ sub generate_taglist_data {
 						}
 					}
 					push(@contents,'') if $b_general;
-					if ($multi->{'DISCNUMBER'} && 
-					$file_tags->{$file}{'DISCNUMBER'}[0] != $holder{'DISCNUMBER'}){
-						$holder{'DISCNUMBER'} = $file_tags->{$file}{'DISCNUMBER'}[0];
-						foreach my $tag (@disk_tags){
-							if ($file_tags->{$file}{$tag}[0]){
-								push(@contents,$tag . $sep . $file_tags->{$file}{$tag}[0]);
+					if ($multi->{'DISCNUMBER'}){ 
+						@split = split(/\s*\/\s*/,$file_tags->{$file}{'DISCNUMBER'}[0]);
+						if ($split[0] != $holder{'DISCNUMBER'}){
+							$holder{'DISCNUMBER'} = $split[0];
+							foreach my $tag (@disk_tags){
+								if ($file_tags->{$file}{$tag}[0]){
+									$value = ($tag ne 'DISCNUMBER') ? $file_tags->{$file}{$tag}[0]: int($split[0]);
+									push(@contents,$tag . $sep . $value);
+								}
 							}
+							if (!$file_tags->{$file}{'TRACKTOTAL'}[0] && 
+							$disc_data->{$holder{'DISCNUMBER'}}){
+								push(@contents,'TRACKTOTAL' . $sep . int($disc_data->{$holder{'DISCNUMBER'}}));
+							}
+							push(@contents,'');
 						}
-						if (!$file_tags->{$file}{'TRACKTOTAL'}[0] && 
-						$disc_data->{$holder{'DISCNUMBER'}}){
-							push(@contents,'TRACKTOTAL' . $sep . $disc_data->{$holder{'DISCNUMBER'}});
-						}
-						push(@contents,'');
 					}
 					foreach my $tag (@track_tags){
 						if (defined $file_tags->{$file}{$tag}[0]){
-							push(@contents,$tag . $sep . $file_tags->{$file}{$tag}[0]);
+							if ($tag eq 'TRACKNUMBER'){
+								@split = split(/\s*\/\s*/,$file_tags->{$file}{'TRACKNUMBER'}[0]);
+								$value = int($split[0]);
+							}
+							else {
+								$value = $file_tags->{$file}{$tag}[0];
+							}
+							push(@contents,$tag . $sep . $value);
 						}
 					}
 					push(@contents,"FILE$sep$file",'') if @contents;
@@ -2799,18 +2818,19 @@ sub get_disc_data {
 	$disc->{1} = 0;
 	foreach my $file (sort keys %$file_tags){
 		if ($file_tags->{$file}{'DISCNUMBER'}[0]){
-			if ($file_tags->{$file}{'DISCNUMBER'}[0] > $disc->{'total'}){
-				$disc->{'total'} = $file_tags->{$file}{'DISCNUMBER'}[0];
+			# rarely seen: 1/2, 1 / 2
+			my @split = split(/\s*\/\s*/,$file_tags->{$file}{'DISCNUMBER'}[0]);
+			if ($split[0] > $disc->{'total'}){
+				$disc->{'total'} = $split[0];
 			}
-			if (!$disc->{$file_tags->{$file}{'DISCNUMBER'}[0]} ){
-				$disc->{$file_tags->{$file}{'DISCNUMBER'}[0]} = 0;
-			}
-			$disc->{$file_tags->{$file}{'DISCNUMBER'}[0]}++;
+			$disc->{$split[0]} = 0 if !$disc->{$split[0]};
+			$disc->{$split[0]}++;
 		}
 		else {
 			$disc->{1}++;
 		}
 	}
+	say 'Disc Totals: ', Data::Dumper::Dumper $disc if $dbg[8];
 	return $disc;
 }
 sub get_tags_used {
@@ -3293,26 +3313,49 @@ sub get_flac_tags {
 		 $cmd .= "--export-tags-to=- ";
 	}
 	my @orig_tags = qx($cmd);
+	# say 'qx cmd: ', qx($cmd);
 	chomp @orig_tags;
+	push(@orig_tags,'--END--');
 	foreach (@orig_tags){
 		next if !$_; # seen case where somehow a returned tag is temp, no tag=value
-		# make all tag names uppercase to make following processing easier
-		$_ =~ s/^([^=]{4,})=/\U$1=/;
-		if ($type eq 'all'){
-			# map some inconsistent tag names here
-			$_ =~ s/^ALBUM[\s_-]ARTIST=/ALBUMARTIST=/;
-			$_ =~ s/^(DIS[CK][\s_-]?(#|NUMBER)?)=/DISCNUMBER=/;
-			$_ =~ s/^(DIS[CK](C|[\s_-]?TOTAL)|TOTAL[\s_-]?DIS[CK]S)=/DISCTOTAL=/;
-			$_ =~ s/^SOURCE[\s_-]MED(IA|UM)=/SOURCEMEDIA=/;
-			$_ =~ s/^(TOTAL[\s_-]?TRACKS|TRACK[\s_-]?TOTAL)=/TRACKTOTAL=/;
+		if (/^[^=]{4,}/ || $_ eq '--END--'){
+# 			if ($type ne 'all'){
+# 				$tags{$working[0]} = $working[1];
+# 			}
+# 			else {
+# 				push(@{$tags{$working[0]}},$working[1]);
+# 			}
+			last if $_ eq '--END--';
+			# make all tag names uppercase to make following processing easier
+			$_ =~ s/^([^=]{4,})=/\U$1=/;
+			if ($type eq 'all'){
+				# map some inconsistent tag names here
+				$_ =~ s/^ALBUM[\s_-]ARTIST=/ALBUMARTIST=/;
+				$_ =~ s/^(DIS[CK][\s_-]?(#|NUMBER)?)=/DISCNUMBER=/;
+				$_ =~ s/^(DIS[CK](C|[\s_-]?TOTAL)|TOTAL[\s_-]?DIS[CK]S)=/DISCTOTAL=/;
+				$_ =~ s/^SOURCE[\s_-]MED(IA|UM)=/SOURCEMEDIA=/;
+				$_ =~ s/^(TOTAL[\s_-]?TRACKS|TRACK[\s_-]?TOTAL)=/TRACKTOTAL=/;
+			}
+			@working = split(/=/,$_,2);
 		}
-		@working = split(/=/,$_,2);
-		next if !defined $working[1];
+# 		else {
+# 			$working[1] = '' if !defined $working[1];
+# 			$working[1] .= $_ . "\n";
+# 		}
 		if ($type ne 'all'){
+			next if !defined $working[1];
 			$tags{$working[0]} = $working[1];
 		}
 		# while most tags occur single, easier to just treat them all as possible multi
 		else {
+# 			if (/^[^=]{4,}/){
+# 				@working = split(/=/,$_,2);
+				next if !defined $working[1];
+# 			}
+# 			else {
+# 				$working[1] .= $_ . "\n";
+# 				next;
+# 			}
 			push(@{$tags{$working[0]}},$working[1]);
 		}
 	}
@@ -3322,7 +3365,7 @@ sub get_flac_tags {
 			$tags{$_} = '' if !defined $tags{$_};
 		}
 	}
-	say Dumper \%tags if $dbg[1];
+	say 'Raw tag data: ', Dumper \%tags if $dbg[1];
 	return \%tags;
 }
 
