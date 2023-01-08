@@ -80,8 +80,8 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='09';
-my $self_date='2023-01-07';
+my $self_patch='10';
+my $self_date='2023-01-08';
 
 ## GLOBALS ##
 ## Booleans
@@ -2721,7 +2721,12 @@ sub generate_taglist_data {
 			if ($file_tags->{$files[0]}{'TRACKTOTAL'}[0] || 
 			($multi->{'DISCNUMBER'} && $file_tags->{$files[0]}{'DISCNUMBER'}[0] &&
 			$disc_data->{$file_tags->{$files[0]}{'DISCNUMBER'}[0]})){
-				if ($file_tags->{$files[0]}{'TRACKTOTAL'}[0]){
+				# correct for tracktotal used as total recording, not disc, tracks
+				if ($multi->{'DISCNUMBER'} && $file_tags->{$files[0]}{'TRACKTOTAL'}[0] && 
+				$file_tags->{$files[0]}{'TRACKTOTAL'}[0] == $disc_data->{'total-tracks'}){
+					$value = $disc_data->{$file_tags->{$files[0]}{'DISCNUMBER'}[0]};
+				}
+				elsif ($file_tags->{$files[0]}{'TRACKTOTAL'}[0]){
 					$value = $file_tags->{$files[0]}{'TRACKTOTAL'}[0];
 				}
 				else {
@@ -2753,7 +2758,22 @@ sub generate_taglist_data {
 							$holder{'DISCNUMBER'} = $split[0];
 							foreach my $tag (@disk_tags){
 								if ($file_tags->{$file}{$tag}[0]){
-									$value = ($tag ne 'DISCNUMBER') ? $file_tags->{$file}{$tag}[0]: int($split[0]);
+									if ($tag eq 'DISCNUMBER'){
+										$value = int($split[0]);
+									}
+									elsif ($tag eq 'TRACKTOTAL'){
+										# correct for tracktotal used as total recording, not disc, tracks
+										if ($file_tags->{$file}{'TRACKTOTAL'}[0] == $disc_data->{'total-tracks'}){
+											$value = $disc_data->{$file_tags->{$file}{'DISCNUMBER'}[0]};
+										}
+										else {
+											$value = $file_tags->{$file}{'TRACKTOTAL'}[0];
+										}
+										$value = int($value);
+									}
+									else {
+										$value = $file_tags->{$file}{$tag}[0];
+									}
 									push(@contents,$tag . $sep . $value);
 								}
 							}
@@ -2815,6 +2835,7 @@ sub generate_taglist_data {
 sub get_disc_data {
 	my $disc = {};
 	$disc->{'total'} = 0;
+	$disc->{'total-tracks'} = 0;
 	$disc->{1} = 0;
 	foreach my $file (sort keys %$file_tags){
 		if ($file_tags->{$file}{'DISCNUMBER'}[0]){
@@ -2829,6 +2850,7 @@ sub get_disc_data {
 		else {
 			$disc->{1}++;
 		}
+		$disc->{'total-tracks'}++;
 	}
 	say 'Disc Totals: ', Data::Dumper::Dumper $disc if $dbg[8];
 	return $disc;
