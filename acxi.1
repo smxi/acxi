@@ -1,4 +1,4 @@
-.TH ACXI 1 "2023\-01\-05" acxi "acxi manual"
+.TH ACXI 1 "2023\-01\-07" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -40,7 +40,7 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-remove\-images\fR, \fB\-R\fR] [\fB\-\-remove\-padding\fR, \fB\-P\fR] 
 [\fB\-\-start\fR {0-xx}] 
 [\fB\-\-tag\fR, \fB\-T\fR] {"TAG1%:tag value^^TAG2%:tag value"}] 
-[\fB\-\-taglist\fR, \fB\-L\fR [citw]] 
+[\fB\-\-taglist\fR, \fB\-L\fR [cfiw]] 
 [\fB\-\-taglist\-file\fR, \fB\-\-tlf\fR, \fB\-\-tf\fR {tag list file}] 
 .IP * 2
 Analyze/Checksums: [\fB\-\-analyze\fR, \fB\-Z\fR]
@@ -1133,20 +1133,25 @@ If tag value is \fBUNSET\fR it will just remove that tag and its contents.
 Sample: \fBacxi \-s ./ \-\-tag "COMMENT%:UNSET^^ARTIST%:Black Sabbath"\fR
 
 .TP
-.B \-\-taglist\fR, \fB\-L [citw]\fR
+.B \-\-taglist\fR, \fB\-L [acfiw]\fR
 Use to create tag data output to screen. Generates a list of the raw tags per 
 file in each directory of FLACS. To create the info.txt or taglist.tag file(s) 
 per FLAC directory, add \fBw\fR.
 
 * \fBnothing\fR \- same as \fBt\fR. Create full tag list output.
 
+* \fBa\fR \- Switch output to tag key/value \fB%:\fR separator from \fB=\fR, and 
+change output file from \fBtaglist.tag\fR to \fBauto.tag\fR. If \fBc\fR and 
+\fBf\fR not used, defaults to \fBc\fR. This allows you to use the resulting file 
+as a source for \fB\-\-autotag\fR.
+
 * \fBc\fR \- Generate condensed taglist data. Useful if each file has 
 mostly the same tags, with only a few differing.
 
-* \fBi\fR \- Generate info file data. Disables taglist unless c/t used.
-
-* \fBt\fR \- Generate full per audio file taglist data. This is all the tags 
+* \fBf\fR \- Generate full per audio file taglist data. This is all the tags 
 found per audio file in the order the files occur. This is the default action.
+
+* \fBi\fR \- Generate info file data. Disables taglist unless c/t used.
 
 * \fBw\fR \- Write changes to file(s). Only writes if info.txt and/or 
 taglist.tag files are not in directory.
@@ -1154,21 +1159,27 @@ taglist.tag files are not in directory.
 Sample (print condensed taglist file to screen):
 
 .EX
-\fBacxi \-s ./ \-Lc\fB
+\fBacxi \-s ./ \-Lc\fR
 .EE
 
 Sample (creates taglist.tag file(s), no tag data printed to screen):
 
 .EX
-\fBacxi \-s ./ \-\-taglist w\fB
+\fBacxi \-s ./ \-\-taglist w\fR
 .EE
 
 Sample (creates taglist condensed and info file data, prints to screen, and to
 file to store this data):
 
 .EX
-\fBacxi \-s ./ \-Lci 2>&1 | tee taglist-data.txt\fB
+\fBacxi \-s ./ \-Lci 2>&1 | tee taglist-data.txt\fR
 .EE
+
+Hint: if you want to check many directory tag sets but some have \fBinfo.txt\fR 
+or \fBtaglist.tag\fR and some don't, use a fake info or taglist file value, but 
+don't use \fBw\fR:
+
+\fB--info-file foo.txt\fR / \fB--taglist-file foo.tag\fR
 
 .TP
 .B \-\-taglist\-file\fR, \fB\-\-tlf\fR, \fB\-\-tf\fR {file}

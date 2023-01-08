@@ -126,14 +126,17 @@ report of all tags per FLAC file in directory, a condensed version of those
 tags, or data for creating an info.txt file. As with -X, w writes the data to 
 the file(s).
 
-* c: generates condensed data from flac tags for screen/taglist.tag.
+* a: switch output file from taglist.tag to auto.tag, and change tag:value 
+separator from '=' to '%:'
+
+* c: generates condensed data from flac tags for tag list.
+
+* f: generates full taglist data. This is default if no args used.
 
 * i: generates info file data from flac tags for screen/info.txt.
 
-* t: generates full taglist data for taglist.tag. This is default if no args 
-used.
-
-* w: writes c, i, or t data to respective info.txt or taglist.tag files.
+* w: writes c, i, or t data to respective info.txt, taglist.tag, or auto.tag 
+files.
 
 5. Added $self_patch to allow for checking development patch versions, like 
 pinxi uses. Helpful to make sure you have the right version. Also added to

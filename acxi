@@ -80,8 +80,8 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='06';
-my $self_date='2023-01-06';
+my $self_patch='08';
+my $self_date='2023-01-07';
 
 ## GLOBALS ##
 ## Booleans
@@ -2524,17 +2524,9 @@ sub process_directories {
 sub process_tags {
 	my ($files) = @_;
 	foreach my $file (@$files){
-		# returns single hash ref of file + array ref of tags
+		# returns single hash ref of hash ref of tag => [array ref values]
 		my $tags = main::get_flac_tags('all',$file);
-		if ($run{'taglist-full'} || $run{'taglist-condensed'}){
-			$file_tags->{$file}{'taglist'} = $tags->{$file};
-		}
-		if ($run{'taglist-info'}){
-			foreach my $tag (@{$tags->{$file}}){
-				my @working = split(/=/,$tag,2);
-				push(@{$file_tags->{$file}{$working[0]}},$working[1]);
-			}
-		}
+		$file_tags->{$file} = $tags;
 	}
 	say Data::Dumper::Dumper $file_tags if $dbg[4];
 }
@@ -2556,7 +2548,7 @@ sub generate_info_data {
 	ISRC ETREE SHNID ACOUSTIC_ID ACOUSTID_FINGERPRINT ACCURATERIPDISCID CDTOC
 	ENCODED-BY ENCODER ENCODING MEDIA SOURCEMEDIA );
 	splice(@info_checks,2,0,'RATING') if !$multi->{'RATING'};
-	foreach my  $file (sort keys %$file_tags){
+	foreach my $file (sort keys %$file_tags){
 		my ($track) = ('');
 		foreach my $check (@main_checks){
 			my ($lc,$ucf) = (lc($check),ucfirst(lc($check)));
@@ -2686,24 +2678,93 @@ sub generate_info_data {
 	say $line_small;
 }
 sub generate_taglist_data {
-	my ($b_tags,@contents);
-	say "  Generating $TAGLIST_FILE file...";
+	my (@contents,@disk_tags,@general_tags,%holder,@track_tags);
+	my ($b_tags,$multi,$track_total);
+	say "  Generating $tag_file file...";
 	if ($file_tags && %$file_tags){
 		my $sep = ($run{'taglist-autotag'}) ? '%:': '=' ;
-		foreach my $file (sort keys %$file_tags){
-			if (defined $file_tags->{$file}{'taglist'}){
-				# translate to acxi tag:value sep %:
-				if ($run{'taglist-autotag'}){
-					@{$file_tags->{$file}{'taglist'}} = map {
-					$_ =~ s/^([^=]{4,})=/$1$sep/;
-					$_;
-					} @{$file_tags->{$file}{'taglist'}};
+		if ($run{'taglist-condensed'}){
+			my $all_tags = get_tags_used();
+			@disk_tags = grep {/^(DISCNUMBER|DISCSUBTITLE|TRACKTOTAL)$/} @$all_tags;
+			@track_tags = grep {/^(PART|SUBTITLE|TITLE|TRACKNUMBER|VERSION)$/} @$all_tags;
+			@general_tags = grep {
+			!/^(DISCNUMBER|DISCSUBTITLE|DISCTOTAL|PART|SUBTITLE|TITLE|TRACKNUMBER|TRACKTOTAL|VERSION)$/
+			} @$all_tags;
+			$multi = check_multi($all_tags);
+			my @files = sort keys %$file_tags;
+			foreach my $tag (@general_tags){
+				if (!$multi->{$tag}){
+					push(@contents,(map {$tag . $sep . $_} @{$file_tags->{$files[0]}{$tag}}));
 				}
-				push(@contents,"FILE$sep$file",@{$file_tags->{$file}{'taglist'}},'');
-				$b_tags = 1;
+			}
+			push(@contents,'') if @contents;
+			if ($multi->{'DISCNUMBER'} || ($file_tags->{$files[0]}{'DISCTOTAL'} && 
+			$file_tags->{$files[0]}{'DISCTOTAL'}[0] > 1)){
+				my $disc_total;
+				if ($file_tags->{$files[0]}{'DISCTOTAL'}){
+					$disc_total = $file_tags->{$files[0]}{'DISCTOTAL'}[0];
+				}
+				else {
+					$disc_total = get_disc_total();
+				}
+				push(@contents,"DISCTOTAL$sep" . $disc_total);
+				if ($multi->{'DISCNUMBER'}){
+					push(@contents,'DISCNUMBER' . $sep . $file_tags->{$files[0]}{'DISCNUMBER'}[0]);
+					$holder{'DISCNUMBER'} = $file_tags->{$files[0]}{'DISCNUMBER'}[0];
+				}
+			}
+			if ($file_tags->{$files[0]}{'DISCSUBTITLE'}[0]){
+				push(@contents,'DISCSUBTITLE' . $sep . $file_tags->{$files[0]}{'DISCSUBTITLE'});
+			}
+			if ($file_tags->{$files[0]}{'TRACKTOTAL'}[0]){
+				push(@contents,"TRACKTOTAL$sep" . $file_tags->{$files[0]}{'TRACKTOTAL'}[0]);
+			}
+			elsif (!$multi->{'DISCNUMBER'} && @contents){
+				push(@contents,"TRACKTOTAL$sep" . scalar @files);
+			}
+			push(@contents,'') if @contents;
+		}
+		foreach my $file (sort keys %$file_tags){
+			if (defined $file_tags->{$file}){
+				my $b_general;
+				if ($run{'taglist-condensed'}){
+					foreach my $tag (@general_tags){
+						if ($multi->{$tag} && ref $file_tags->{$file}{$tag} eq 'ARRAY' &&
+						(!$holder{$tag} || $holder{$tag} ne join('',@{$file_tags->{$file}{$tag}}))){
+							$holder{$tag} = join('',@{$file_tags->{$file}{$tag}});
+							push(@contents,(map {$tag . $sep . $_} @{$file_tags->{$file}{$tag}}));
+							$b_general = 1;
+						}
+					}
+					push(@contents,'') if $b_general;
+					if ($multi->{'DISCNUMBER'} && 
+					$file_tags->{$file}{'DISCNUMBER'}[0] != $holder{'DISCNUMBER'}){
+						$holder{'DISCNUMBER'} = $file_tags->{$file}{'DISCNUMBER'}[0];
+						foreach my $tag (@disk_tags){
+							if ($file_tags->{$file}{$tag}[0]){
+								push(@contents,$tag . $sep . $file_tags->{$file}{$tag}[0]);
+							}
+						}
+						push(@contents,'');
+					}
+					foreach my $tag (@track_tags){
+						if (defined $file_tags->{$file}{$tag}[0]){
+							push(@contents,$tag . $sep . $file_tags->{$file}{$tag}[0]);
+						}
+					}
+					push(@contents,"FILE$sep$file",'') if @contents;
+				}
+				else {
+					push(@contents,"FILE$sep$file");
+					foreach my $tag (sort keys %{$file_tags->{$file}}){
+						push(@contents,(map {$tag . $sep . $_} @{$file_tags->{$file}{$tag}}));
+					}
+					push(@contents,'') if @contents;
+				}
+				$b_tags = 1 if @contents;
 			}
 			else {
-				push(@contents,"FILE$sep$file",'STATUS: NO TAGS FOUND','');
+				push(@contents,"FILE$sep$file","STATUS${sep} No Tags Found",'');
 			}
 		}
 		if ($b_tags){
@@ -2727,20 +2788,44 @@ sub generate_taglist_data {
 	say "taglist contents: ", Data::Dumper::Dumper \@contents if $dbg[5];
 	say $line_small;
 }
+sub get_disc_total {
+	my $total = 0;
+	foreach my $file (sort keys %$file_tags){
+		if ($file_tags->{$file}{'DISCNUMBER'}[0]){
+			if ($file_tags->{$file}{'DISCNUMBER'}[0] > $total){
+				$total = $file_tags->{$file}{'DISCNUMBER'}[0];
+			}
+		}
+	}
+	return $total;
+}
+sub get_tags_used {
+	my $tags = [];
+	my %keys;
+	foreach my $file (sort keys %$file_tags){
+		if (defined $file_tags->{$file}){
+			map {$keys{$_} = 1} keys %{$file_tags->{$file}};
+		}
+	}
+	$tags = [sort keys %keys];
+	say 'Used Tags: ', Data::Dumper::Dumper $tags if $dbg[8];
+	return $tags;
+}
 sub check_multi {
 	my ($tags) = @_;
 	my ($b_multi,%multi);
-	foreach my $key (sort keys %$file_tags){
+	foreach my $file (sort keys %$file_tags){
+		# map {$multi{$_}->{join(';',@{$file_tags->{$file}{$tag}})} = 1} @$tags;
 		foreach my $tag (@$tags){
-			if (defined $file_tags->{$key}{$tag}){
-				$multi{$tag}->{join(';',@{$file_tags->{$key}{$tag}})} = 1;
+			if (defined $file_tags->{$file}{$tag} && @{$file_tags->{$file}{$tag}}){
+				$multi{$tag}->{join(';',@{$file_tags->{$file}{$tag}})} = 1;
 			}
 		}
 	}
 	foreach my $tag (keys %multi){
 		$multi{$tag} = (scalar keys %{$multi{$tag}} > 1) ? 1 : 0;
 	}
-	say Data::Dumper::Dumper \%multi if $dbg[6];
+	say 'Multi Tags: ', Data::Dumper::Dumper \%multi if $dbg[6];
 	return \%multi;
 }
 }
@@ -3199,17 +3284,20 @@ sub get_flac_tags {
 		next if !$_; # seen case where somehow a returned tag is temp, no tag=value
 		# make all tag names uppercase to make following processing easier
 		$_ =~ s/^([^=]{4,})=/\U$1=/;
-		if ($type ne 'all'){
-			@working = split(/=/,$_,2);
-			$tags{$working[0]} = $working[1];
-		}
-		# while most tags occur single, easier to just treat them all as possible multi
-		else {
+		if ($type eq 'all'){
 			# map some inconsistent tag names here
 			$_ =~ s/^(DIS[CK][\s_-]?(#|NUMBER)?)=/DISCNUMBER=/;
 			$_ =~ s/^(DIS[CK](C|[\s_-]?TOTAL)|TOTAL[\s_-]?DIS[CK]S)=/DISCTOTAL=/;
 			$_ =~ s/^(TOTAL[\s_-]?TRACKS|TRACK[\s_-]?TOTAL)=/TRACKTOTAL=/;
-			push(@{$tags{$i_file}},$_);
+		}
+		@working = split(/=/,$_,2);
+		next if !defined $working[1];
+		if ($type ne 'all'){
+			$tags{$working[0]} = $working[1];
+		}
+		# while most tags occur single, easier to just treat them all as possible multi
+		else {
+			push(@{$tags{$working[0]}},$working[1]);
 		}
 	}
 	if ($type ne 'all'){
@@ -4387,14 +4475,15 @@ sub show_options {
 	$output .= "                  tag/value pairs. Removes existing sets of the given type.\n";
 	$output .= "                  Use ^^ to separate tag key/value pairs, and %: to separate\n";
 	$output .= "                  the tag name and its value. Value 'UNSET' removes the tag.\n";
-	$output .= "--taglist, -L     [citw] Print to screen generated tag data in FLAC\n";
+	$output .= "--taglist, -L     [acfiw] Print to screen generated tag data in FLAC\n";
 	$output .= "                  directories using Vorbis tag data found in each file.\n";
 	$output .= "                  Use 'w' to write to data to file9s).\n";
-	$output .= "                  c: Generate condensed $TAGLIST_FILE data.\n";
-	$output .= "                  i: Generate $INFO_FILE data. Disables taglist unless c/t used.\n";
-	$output .= "                  t: Generate full per audio file $TAGLIST_FILE data.\n";
+	$output .= "                  a: Switch to '%:' separator, and write to $AUTOTAG_FILE.\n";
+	$output .= "                  c: Generate condensed tag list data.\n";
+	$output .= "                  f: Generate full per audio file tag list data.\n";
+	$output .= "                  i: Generate $INFO_FILE data. Can be used with a or f.\n";
 	$output .= "                  w: Write changes to file(s). Only writes if $INFO_FILE\n";
-	$output .= "                  and/or $TAGLIST_FILE files are not already present.\n";
+	$output .= "                  and/or $TAGLIST_FILE/$AUTOTAG_FILE files are not already present.\n";
 	$output .= "--taglist-file, --tlf, --tf {file}\n";
 	$output .= "                  Alternate file name to use for --taglist.\n";
 	$output .= $line_small . "\n";
@@ -5009,12 +5098,16 @@ sub get{
 	'L|taglist:s' => sub {
 		my ($opt,$arg) = @_;
 		if ($arg){
-			if ($arg =~ /^[acitw]+$/){
+			if ($arg =~ /^[acfiw]+$/){
 				$run{'taglist-autotag'} = 1 if $arg =~ /a/;
-				$run{'taglist-condensed'} = 1 if $arg =~ /[ac]/;
+				$run{'taglist-condensed'} = 1 if $arg =~ /c/;
+				$run{'taglist-full'} = 1 if $arg =~ /f/;
 				$run{'taglist-info'} = 1 if $arg =~ /i/;
-				$run{'taglist-full'} = 1 if $arg =~ /t/ || $arg !~ /[ci]/;
 				$run{'taglist-write'} = 1 if $arg =~ /w/;
+				if ($run{'taglist-autotag'} && !$run{'taglist-condensed'} && 
+				!$run{'taglist-full'}){
+					$run{'taglist-condensed'} = 1;
+				}
 			}
 			else {
 				main::error_handler('missing-arg',"$opt unsupported argument. See -h.",1);
@@ -5154,6 +5247,10 @@ sub verify_selections {
 	if (($run{'duplicates'} || $run{'checksum-ffps'}) && $run{'no-ffp'}){
 		main::error_handler('invalid-options', 
 		 "you cannot use --no-ffp with --duplicates or --checksum-verify.",1);
+	}
+	if ($run{'taglist-condensed'} && $run{'taglist-full'}){
+		main::error_handler('invalid-options', 
+		 "you cannot use --taglist=c with --taglist=f.",1);
 	}
 	#################################
 	## Required Option Combo Tests ##
