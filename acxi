@@ -3286,8 +3286,10 @@ sub get_flac_tags {
 		$_ =~ s/^([^=]{4,})=/\U$1=/;
 		if ($type eq 'all'){
 			# map some inconsistent tag names here
+			$_ =~ s/^ALBUM[\s_-]ARTIST=/ALBUMARTIST=/;
 			$_ =~ s/^(DIS[CK][\s_-]?(#|NUMBER)?)=/DISCNUMBER=/;
 			$_ =~ s/^(DIS[CK](C|[\s_-]?TOTAL)|TOTAL[\s_-]?DIS[CK]S)=/DISCTOTAL=/;
+			$_ =~ s/^SOURCE[\s_-]MED(IA|UM)=/SOURCEMEDIA=/;
 			$_ =~ s/^(TOTAL[\s_-]?TRACKS|TRACK[\s_-]?TOTAL)=/TRACKTOTAL=/;
 		}
 		@working = split(/=/,$_,2);
