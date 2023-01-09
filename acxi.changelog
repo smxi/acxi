@@ -95,6 +95,8 @@ values. Also made all 2 word type field names support space, -, _, or no space.
 3. INFOCREATE/TAGLIST/SYNC: Added --no-utf8-convert to main::get_flac_tags(), 
 this is for all types, mp3, replaygain, and full tag lists.
 
+4. Added $line_small when no info.txt file found for --infofix, forgot that.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
@@ -152,12 +154,22 @@ correctly. But needed since --taglist t/c support multiline tag values.
 This was an oversight, but never had cause for it until testing -La exposed the 
 utility of being able to change auto.tag name to something else.
 
+9. Added new print line type: $line_result. This is used to separate result 
+blocks from processing blocks, before was using $line_small for both types.
+
 --------------------------------------------------------------------------------
 CHANGES:
 
 1. Configuration item TAG_FILE has been changed to AUTOTAG_FILE, but TAG_FILE 
 will keep working. This is because we needed non-ambiguous names with new 
-TAGLIST_FILE configuration item. 
+TAGLIST_FILE configuration item.
+
+2. Changed print line small:
+-----------------------------------------------------------------
+to print line result:
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+for blocks of results like for -X or -L. This makes it easier to tell the 
+results apart from the processing blocks.
 
 --------------------------------------------------------------------------------
 DOCUMENTATION:
