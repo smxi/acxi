@@ -144,6 +144,14 @@ pinxi uses. Helpful to make sure you have the right version. Also added to
 
 6. OPTIONS: Added --glob as alternative to --source-glob/-g. 
 
+7. AutoTag::process_tags() now handles multiline tag values. Which should be 
+avoided like the plague because virtually no media players support those 
+correctly. But needed since --taglist t/c support multiline tag values.
+
+8. Added --autotag-file/--atf/--af for one time changes of auto.tag file name.
+This was an oversight, but never had cause for it until testing -La exposed the 
+utility of being able to change auto.tag name to something else.
+
 --------------------------------------------------------------------------------
 CHANGES:
 

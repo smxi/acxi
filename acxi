@@ -80,8 +80,8 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='11';
-my $self_date='2023-01-08';
+my $self_patch='12';
+my $self_date='2023-01-09';
 
 ## GLOBALS ##
 ## Booleans
@@ -725,7 +725,7 @@ sub run_tagger {
 		say $line_small;
 		say 'Completed tag update.';
 	}
-	else {
+	elsif ($run{'autotagger'}){
 		say 'Starting auto-tagging in: ' . main::sourcer($SOURCE_DIRECTORY);
 		get_tag_files();
 		say $line_small;
@@ -773,50 +773,65 @@ sub get_tag_files {
 }
 sub process_tags {
 	my @tags = main::reader($AUTOTAG_FILE,'strip');
-	say Data::Dumper::Dumper \@tags if $dbg[2];
-	my ($args,$error_message,@image_args,@images,@main_tags,
-	@track_tags,@working);
+	push(@tags,'--END--') if @tags;
+	say 'Raw tags: ', Data::Dumper::Dumper \@tags if $dbg[2];
+	my ($args,$error_message,$holder);
+	my (@image_args,@images,@main_tags,@temp,@track_tags);
 	my ($b_image_check,$b_tracks);
-	my ($cmd,$comments,$tag) = ('','','');
+	my ($i,$cmd,$comments,$tag) = (0,'','','');
 	state %set;
-	foreach (@tags){
-		@working=split /%:/, $_;
-		# say Data::Dumper::Dumper \@working;
-		next if !$working[1];
-		say "@working" if $b_debug;
-		# $working[1] =~ s/"/\\\"/g;
-		# $working[1] =~ s/\$/\\\$/g;
-		$working[1] = main::escape_item("$working[1]");
-		if ($working[0] =~ /^(PART|SUBTITLE|TITLE|TRACKNUMBER|VERSION)$/){
-			$tag = qq(--set-tag=$working[0]="$working[1]" );
+	# handle corner case multi line tag content
+	foreach my $line (@tags){
+		if ($line =~ /^([^:%]{4,30})%:(.*)/ || $line eq '--END--'){
+			if ($temp[$i]){
+				$i++;
+			}
+			last if $line eq '--END--';
+			$temp[$i] = [$1,$2];
+		}
+		else {
+			$temp[$i]->[1] .= "\n" . $line;
+		}
+	}
+	@tags = @temp;
+	say 'Processed raw tags: ', Data::Dumper::Dumper \@tags if $dbg[2];
+	foreach my $working (@tags){
+		# say Data::Dumper::Dumper $working;
+		next if !$working->[1];
+		say "@$working" if $b_debug;
+		# $working->[1] =~ s/"/\\\"/g;
+		# $working->[1] =~ s/\$/\\\$/g;
+		$working->[1] = main::escape_item("$working->[1]");
+		if ($working->[0] =~ /^(PART|SUBTITLE|TITLE|TRACKNUMBER|VERSION)$/){
+			$tag = qq(--set-tag=$working->[0]="$working->[1]" );
 			push(@track_tags,$tag);
 		}
-		elsif ($working[0] ne 'FILE'){
+		elsif ($working->[0] ne 'FILE'){
 			# delete all previous items for key, to avoid multi tagging
-			if ($b_tracks && (!$set{$working[0]} || $working[1] eq 'UNSET')){
-				if ($working[0] eq 'IMAGE'){
+			if ($b_tracks && (!$set{$working->[0]} || $working->[1] eq 'UNSET')){
+				if ($working->[0] eq 'IMAGE'){
 					@images = (); # reset the images completely
 				}
 				else {
-					@main_tags = grep {!/^--set-tag=$working[0]/} @main_tags;
+					@main_tags = grep {!/^--set-tag=$working->[0]/} @main_tags;
 				}
-				next if $working[1] eq 'UNSET';
+				next if $working->[1] eq 'UNSET';
 			}
 			# then set the key flag again
-			$set{$working[0]} = 1;
-			if ($working[0] eq 'IMAGE'){
-				$tag = qq($working[1]);
+			$set{$working->[0]} = 1;
+			if ($working->[0] eq 'IMAGE'){
+				$tag = qq($working->[1]);
 				push(@images,$tag);
 			}
 			else {
-				$tag = qq(--set-tag=$working[0]="$working[1]");
+				$tag = qq(--set-tag=$working->[0]="$working->[1]");
 				push(@main_tags,$tag);
 			}
 		}
-		elsif ($working[0] eq 'FILE'){
+		elsif ($working->[0] eq 'FILE'){
 			## NOTE: we have to unescape $ in paths for -e tests, but leave it escaped
 			## for qq cmd strings. Why? Shell expands it, perl does not.
-			my $temp = $working[1];
+			my $temp = $working->[1];
 			# $temp =~ s/\\\$/\$/g;
 			# $temp =~ s/\\\"/"/g;
 			$temp = main::unescape_item("$temp");
@@ -824,8 +839,8 @@ sub process_tags {
 			main::error_handler('file-missing',"Missing file: $temp",1) if ! -e "$temp";
 			# note: must be set here, not in qx to avoid quote errors
 			# single quotes, in case contains $ symbol
-			# say File::stat::stat("$working[1]")->size;
-			$cmd = qq($COMMAND_METAFLAC --remove-all-tags $padding "$working[1]");
+			# say File::stat::stat("$working->[1]")->size;
+			$cmd = qq($COMMAND_METAFLAC --remove-all-tags $padding "$working->[1]");
 			say "\n", $cmd if $b_debug;
 			if (!$b_test){
 				qx($cmd);
@@ -835,12 +850,12 @@ sub process_tags {
 				}
 			}
 			if ($run{'remove-images'}){
-				image_remover("$working[1]");
+				image_remover("$working->[1]");
 			}
-			# say File::stat::stat("$working[1]")->size;
+			# say File::stat::stat("$working->[1]")->size;
 			# disable for now, the test for type isn't working, metaflac is making types
 			# 3 regardless of actual type.
-			@image_args = image_handler("$working[1]",@images) if @images;
+			@image_args = image_handler("$working->[1]",@images) if @images;
 			@track_tags = (@main_tags,@image_args,@track_tags);
 			$args = join ' ', @track_tags;
 			@track_tags = ();
@@ -849,7 +864,7 @@ sub process_tags {
 			foreach (keys %set){
 				$set{$_} = 0;
 			}
-			$cmd = qq($COMMAND_METAFLAC $args "$working[1]");
+			$cmd = qq($COMMAND_METAFLAC $args "$working->[1]");
 			say "\n", $cmd if $b_debug;
 			$b_tracks = 1;
 			if (!$b_test){
@@ -865,7 +880,7 @@ sub process_tags {
 			else {
 				say '  Test mode, no tag';
 			}
-			# say File::stat::stat("$working[1]")->size;
+			# say File::stat::stat("$working->[1]")->size;
 		}
 	}
 }
@@ -4487,6 +4502,8 @@ sub show_options {
 	$output .= "                  For single disc recordings, will also add TRACKTOTAL and\n";
 	$output .= "                  TRACKNUMBER counts when creating and populating the\n";
 	$output .= "                  $AUTOTAG_FILE file. See -E for more prefill options.\n";
+	$output .= "--autotag-file, --atf, --af {file name}\n";
+	$output .= "                  One time change of $AUTOTAG_FILE file name. Use unique name.\n";
 	$output .= "--ffprobe         Force use of ffprobe for FLAC analysis in -Z/-Xq\n";
 	$output .= "--image, -I {jpg,png image file name|remove}\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
@@ -4543,7 +4560,7 @@ sub show_options {
 	$output .= "                  the tag name and its value. Value 'UNSET' removes the tag.\n";
 	$output .= "--taglist, -L     [acfiw] Print to screen generated tag data in FLAC\n";
 	$output .= "                  directories using Vorbis tag data found in each file.\n";
-	$output .= "                  Use 'w' to write to data to file9s).\n";
+	$output .= "                  Use 'w' to write to data to file(s).\n";
 	$output .= "                  a: Switch to '%:' separator, and write to $AUTOTAG_FILE.\n";
 	$output .= "                  c: Generate condensed tag list data.\n";
 	$output .= "                  f: Generate full per audio file tag list data.\n";
@@ -4846,7 +4863,7 @@ package OptionsHandler;
 my (%test,$msg);
 sub get{
 	# single letters used:
-	# aAcCdDEfFgGhiIKMoPqRsSTUvVxXyZ
+	# aAcCdDEfFgGhiIKLMoPqRsSTUvVxXyZ
 	Getopt::Long::GetOptions (
 	'G|aggregate:s' => sub { 
 		my ($opt,$arg) = @_;
@@ -4861,7 +4878,7 @@ sub get{
 			$run{'ag-file'} = $AUTOTAG_FILE;
 		}
 		$run{'aggregate'} = 1;},
-	'analyze|Z' => sub { 
+	'Z|analyze' => sub { 
 		$run{'checksum'} = 1;
 		$run{'analyze'} = 1;
 		$run{'no-md5'} = 1;
@@ -4871,6 +4888,7 @@ sub get{
 		$COPY_TYPES .= ',' . $arg if $arg;
 		$test{'sync'} = 1;},
 	'A|autotag' => sub { 
+		$run{'autotagger'} = 1;
 		$run{'tagger'} = 1;
 		$test{'tag'} = 1;},
 	'C|autotag-create' => sub { 
@@ -4890,6 +4908,11 @@ sub get{
 		$run{'autotag-create'} = 1;
 		$run{'autotag-single'} = 1;
 		$test{'autotag'} = 1;},
+	'autotag-file|atf|af:s' => sub { 
+		my ($opt,$arg) = @_;
+		main::error_handler('missing-arg',"$opt requires file name.",1) if !$arg;
+		$AUTOTAG_FILE = $arg;
+		$test{'autotag-file'} = 1;},
 	# legacy
 	'basic|default' => sub { 
 		$VERBOSITY = 1 },
@@ -4949,7 +4972,7 @@ sub get{
 		$test{'sync'} = 1;},
 	'dot' => sub { 
 		$run{'dot'} = 1;},
-	'dry-run|dr|dry|test' => sub { 
+	'dry-run|dry|test' => sub { 
 		$b_test = 1;},
 	'dupes|duplicates' => sub { 
 		$run{'checksum'} = 1;
@@ -5321,6 +5344,11 @@ sub verify_selections {
 	#################################
 	## Required Option Combo Tests ##
 	#################################
+	if ($test{'autotag-file'} && !$run{'autotagger'} && !$run{'autotag-create'} &&
+	!$run{'taglist-autotag'}){
+		main::error_handler('invalid-options', 
+		 "--autoag-file can only be used with -A/-C/-L/-M/-S.",1);
+	}
 	if ($test{'dither'} && !$run{'resample'}){
 		main::error_handler('invalid-options', 
 		 "--dither requires --resample.",1);

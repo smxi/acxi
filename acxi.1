@@ -1,4 +1,4 @@
-.TH ACXI 1 "2023\-01\-08" acxi "acxi manual"
+.TH ACXI 1 "2023\-01\-09" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -28,6 +28,7 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-autotag\-create\fR, \fB\-C\fR] 
 [\fB\-\-autotag\-create\-single\fR, \fB\-S\fR] 
 [\fB\-\-autotag\-create\-multi\fR, \fB\-M\fR {filename start ID}]
+[\fB\-\-autotag\-file\fR, \fB\-\-atf\fR, \fB\-\-af\fR, {file name}]
 [\fB\-\-image\fR, \fB\-I\fR {cover image filename}] 
 [\fB\-\-info\-file\fR, \fB\-\-if\fR, \fB\-\-prefill\-file\fR, \fB\-\-pf\fR 
 {release info file name}] 
@@ -613,7 +614,13 @@ file.
 
 Use together with \fB\-E\fR (\fB\-\-prefill\fR) To prepopulate the \fBALBUM,\fR 
 \fBARTIST\fR, \fBALBUMARTIST\fR, \fBPERFORMER\fR, \fBDATE\fR, \fBYEAR\fR, and 
-\fBTITLE\fR fields as well. 
+\fBTITLE\fR fields as well.
+
+.TP
+.B \-\-autotag\-file\fR, \fB\-\-atf\fR, \fB\-\-af\fR {file}
+An alternate file name to use for auto.tag file. Note that file MUST have a 
+*.tag extension, and should not be anything other than ASCII or UTF8, otherwise 
+you will get ungood results.
 
 .TP
 .B \-\-image\fR, \fB\-I {cover image file name|remove}\fR
@@ -1589,7 +1596,8 @@ These only apply to the \fB\-\-autotag\fR option, and set a different name for
 the default auto.tag filename. The filename must be unique and never occur in 
 any other context in your music collection files.
 
-\fBAUTOTAG_FILE\fR \- Sample: \fBAUTOTAG_FILE=autotags.tag\fR 
+\fBAUTOTAG_FILE\fR \- Sample: \fBAUTOTAG_FILE=autotags.tag\fR. Test with 
+\fB\-\-autotag\-file {file}\fR.
 
 \fBauto.tag\fR \- The filename to be used to autotag. Default is \fBauto.tag\fR. 
 Filename must be unique, and must not be found anywhere else in your collection. 
