@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='12';
+my $self_patch='13';
 my $self_date='2023-01-09';
 
 ## GLOBALS ##
@@ -786,7 +786,8 @@ sub process_tags {
 		next if $line =~ /^\s*#/;
 		if ($line =~ /^\s*([^:%]{3,30})\s*%:\s*(.*)?\s*$/ || $line eq '--END--'){
 			if ($temp[$i]){
-				$temp[$i]->[1] =~ s/[\s\r\n]+$//;
+				# get rid of any newlines or spaces at end of value
+				$temp[$i]->[1] =~ s/[\s\r\n]+$//; 
 				$i++;
 			}
 			last if $line eq '--END--';
@@ -802,7 +803,7 @@ sub process_tags {
 	say 'Processed raw tags: ', Data::Dumper::Dumper \@tags if $dbg[2];
 	foreach my $working (@tags){
 		# say Data::Dumper::Dumper $working;
-		# next if !$working->[1];
+		next if !$working->[1];
 		say "@$working" if $b_debug;
 		# $working->[1] =~ s/"/\\\"/g;
 		# $working->[1] =~ s/\$/\\\$/g;
