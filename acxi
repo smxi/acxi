@@ -773,9 +773,9 @@ sub get_tag_files {
 	}
 }
 sub process_tags {
-	my @tags = main::reader($AUTOTAG_FILE,'strip');
-	push(@tags,'--END--') if @tags;
+	my @tags = main::reader($AUTOTAG_FILE);
 	say 'Raw tags: ', Data::Dumper::Dumper \@tags if $dbg[2];
+	push(@tags,'--END--') if @tags;
 	my ($args,$error_message,$holder);
 	my (@image_args,@images,@main_tags,@temp,@track_tags);
 	my ($b_image_check,$b_tracks);
@@ -783,22 +783,26 @@ sub process_tags {
 	state %set;
 	# handle corner case multi line tag content
 	foreach my $line (@tags){
-		if ($line =~ /^([^:%]{4,30})%:(.*)/ || $line eq '--END--'){
+		next if $line =~ /^\s*#/;
+		if ($line =~ /^\s*([^:%]{3,30})\s*%:\s*(.*)?\s*$/ || $line eq '--END--'){
 			if ($temp[$i]){
+				$temp[$i]->[1] =~ s/[\s\r\n]+$//;
 				$i++;
 			}
 			last if $line eq '--END--';
 			$temp[$i] = [$1,$2];
 		}
 		else {
-			$temp[$i]->[1] .= "\n" . $line;
+			$line =~ s/^\s+|\s+$//g;
+			# this will handle freak blank first line issues
+			$temp[$i]->[1] .= "\n" . $line if defined $temp[$i];
 		}
 	}
 	@tags = @temp;
 	say 'Processed raw tags: ', Data::Dumper::Dumper \@tags if $dbg[2];
 	foreach my $working (@tags){
 		# say Data::Dumper::Dumper $working;
-		next if !$working->[1];
+		# next if !$working->[1];
 		say "@$working" if $b_debug;
 		# $working->[1] =~ s/"/\\\"/g;
 		# $working->[1] =~ s/\$/\\\$/g;
@@ -3351,7 +3355,7 @@ sub get_flac_tags {
 	push(@orig_tags,'--END--');
 	foreach (@orig_tags){
 		# next if !$_; # 
-		if (/^[^=]{4,30}=/ || $_ eq '--END--'){
+		if (/^[^=]{3,30}=/ || $_ eq '--END--'){
 			if ($working[0]){
 				if ($type ne 'all'){
 					$tags{$working[0]} = $working[1];
@@ -3362,7 +3366,7 @@ sub get_flac_tags {
 			}
 			last if $_ eq '--END--';
 			# make all tag names uppercase to make following processing easier
-			$_ =~ s/^([^=]{4,})=/\U$1=/;
+			$_ =~ s/^([^=]{3,})=/\U$1=/;
 			if ($type eq 'all'){
 				# map some inconsistent tag names here
 				$_ =~ s/^ALBUM[\s_-]ARTIST=/ALBUMARTIST=/;
