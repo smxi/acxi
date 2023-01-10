@@ -2549,7 +2549,7 @@ sub process_tags {
 }
 # note: in order to handle > 1 type per tag name, all are contained in arrays.
 sub generate_info_data {
-	my (@general,@info,@lyrics,@main,@performers,@rating,@temp,@tracks);
+	my (@general,@info,@main,@performers,@rating,@temp,@tracks);
 	my (%found,%multi,%track_data);
 	say "  Generating $INFO_FILE data...";
 	my $tags = [qw(ALBUM ARTIST DATE DISCNUMBER PERFORMER RATING YEAR)];
@@ -2628,10 +2628,6 @@ sub generate_info_data {
 				@performers = @{$file_tags->{$file}{'PERFORMER'}};
 				delete $file_tags->{$file}{'PERFORMER'};
 			}
-			if ($file_tags->{$file}{'LYRICS'}){
-				push(@lyrics,$track,join("\n",@{$file_tags->{$file}{'LYRICS'}}),'');
-				delete $file_tags->{$file}{'LYRICS'};
-			}
 			if ($multi->{'RATING'} && $file_tags->{$file}{'RATING'}){
 				push(@rating,$track,join("\n",@{$file_tags->{$file}{'RATING'}}),'');
 				delete $file_tags->{$file}{'RATING'};
@@ -2669,19 +2665,16 @@ sub generate_info_data {
 	if (@info){
 		@info = ('','Info:',@info);
 	}
-	if (@lyrics){
-		@lyrics = ('','Lyrics:',@lyrics);
-	}
 	if (@rating){
 		@rating = ('','Ratings:',@rating);
 	}
-	my @info_data = (@main,@performers,@tracks,@general,@info,@rating,@lyrics);
+	my @info_data = (@main,@performers,@tracks,@general,@info,@rating);
 	say "info_data: ", Data::Dumper::Dumper \@info_data if $dbg[5];
 	say "file_tags: ", Data::Dumper::Dumper $file_tags if $dbg[7];
 	if (@info_data){
 		if (!$run{'taglist-write'}){
 			say "  Here is the $INFO_FILE data (use 'w' to write file):";
-			say $line_small;
+			say $line_result;
 			say join("\n",@info_data);
 		}
 		else {
