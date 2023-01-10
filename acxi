@@ -803,7 +803,8 @@ sub process_tags {
 	say 'Processed raw tags: ', Data::Dumper::Dumper \@tags if $dbg[2];
 	foreach my $working (@tags){
 		# say Data::Dumper::Dumper $working;
-		next if !$working->[1];
+		# note: TRACKNUMBER%:0 would trip this, so test explicitly
+		next if !defined $working->[1] || $working->[1] eq '';
 		say "@$working" if $b_debug;
 		# $working->[1] =~ s/"/\\\"/g;
 		# $working->[1] =~ s/\$/\\\$/g;
