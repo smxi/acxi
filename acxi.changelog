@@ -97,6 +97,9 @@ this is for all types, mp3, replaygain, and full tag lists.
 
 4. Added $line_small when no info.txt file found for --infofix, forgot that.
 
+5. Made $line_small more consistent across -Z, -X, and -L to separate directory
+processing items.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
