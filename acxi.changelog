@@ -75,6 +75,8 @@ right directory in terms of the path/filename metaflac received.
 2. OPTIONS: --nlink would never have worked because it was missing the 'n' 
 ('link').
 
+3. Bug with date fix, was always showing true for test for dd-mm-yyyy type.
+
 --------------------------------------------------------------------------------
 FIXES:
 
