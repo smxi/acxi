@@ -2341,7 +2341,7 @@ sub date_fix {
 	# then string month
 	$pattern1 .= '(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\S*?([\s\/,-]+';
 	# then alternate position day: July 12th, 1972
-	$pattern1 .= '(0?[1-9]|[12][0-9]|3[01])(nd|rd|st|th)?)?[\s\/,-]+';
+	$pattern1 .= '(0?[1-9]|[12][0-9]|3[01])(nd|rd|st|th)?[\s\/,-]+)?';
 	# then year: July 12, 72 or July 12, 1972 or July-12th, 1972 etc
 	$pattern1 .= '((19)?[4-9][0-9]|(20)?[0-3][0-9]))\b';
 	# $pattern1 = qr/$pattern1/i; # qr/../i not supported til Perl 5.014
