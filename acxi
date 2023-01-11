@@ -1126,8 +1126,14 @@ sub prefill_data {
 			elsif ($field_name =~ /^(Type)$/i){
 				$info->{'type'} = $field_value;
 			}
+			# an event/festival can be at a club/venue
 			elsif ($field_name =~ /^(Club|Event|Festival|Lieu|Venue)$/i){
-				$info->{'venue'} = $field_value;
+				if ($info->{'venue'}){
+				 $info->{'venue'}.= ', ' . $field_value;
+				}
+				else {
+					$info->{'venue'} = $field_value;
+				}
 			}
 			elsif ($field_name =~ /^(Year)$/i){
 				$info->{'year'} = $field_value;
@@ -2331,7 +2337,7 @@ sub date_fix {
 	my ($b_dow,$dd,$dow,$mm,$regex,$yyyy);
 	my $type = 2; # default to standard mm/dd/yyyy type regex
 	# first day, aka: 12th July, 1972
-	my $pattern1 = '\b(((0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?\s+)?';
+	my $pattern1 = '\b(((0?[1-9]|[12][0-9]|30|31)(nd|rd|st|th)?[\s\/,-]+)?';
 	# then string month
 	$pattern1 .= '(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\S*?([\s\/,-]+';
 	# then alternate position day: July 12th, 1972
@@ -2610,7 +2616,12 @@ sub generate_info_data {
 		}
 		if ($file_tags->{$file}{'TRACKNUMBER'}[0]){
 			@temp = split(/\s*\/\s*/,$file_tags->{$file}{'TRACKNUMBER'}[0]);
-			$track .= sprintf('%02d',$temp[0]) . '. ';
+			if ($temp[0] =~ /^\d+$/){
+				$track .= sprintf('%02d',$temp[0]) . '. ';
+			}
+			else {
+				$track .= $temp[0] . '. ';
+			}
 		}
 		if ($file_tags->{$file}{'TITLE'}[0]){
 			if ($multi->{'ARTIST'} && $file_tags->{$file}{'ARTIST'}[0]){
@@ -2718,10 +2729,10 @@ sub generate_taglist_data {
 			else {
 				$temp = $disc_data->{'total-discs'};
 			}
-			push(@contents,"DISCTOTAL$sep" . int($temp));
+			push(@contents,"DISCTOTAL$sep" . main::check_int($temp));
 			if ($disc_data->{'total-discs'}){
 				@split = split(/\s*\/\s*/,$file_tags->{$files[0]}{'DISCNUMBER'}[0]);
-				push(@contents,'DISCNUMBER' . $sep . int($split[0]));
+				push(@contents,'DISCNUMBER' . $sep . main::check_int($split[0]));
 				$holder{'DISCNUMBER'} = $split[0];
 			}
 		}
@@ -2742,7 +2753,7 @@ sub generate_taglist_data {
 			else {
 				$value = $disc_data->{$file_tags->{$files[0]}{'DISCNUMBER'}[0]};
 			}
-			push(@contents,"TRACKTOTAL$sep" . int($value));
+			push(@contents,"TRACKTOTAL$sep" . main::check_int($value));
 		}
 		elsif (!$disc_data->{'total-discs'} && @contents){
 			push(@contents,"TRACKTOTAL$sep" . scalar @files);
@@ -2769,7 +2780,7 @@ sub generate_taglist_data {
 						foreach my $tag (@disk_tags){
 							if ($file_tags->{$file}{$tag}[0]){
 								if ($tag eq 'DISCNUMBER'){
-									$value = int($split[0]);
+									$value = main::check_int($split[0]);
 								}
 								elsif ($tag eq 'TRACKTOTAL'){
 									# correct for tracktotal used as total recording, not disc, tracks
@@ -2779,7 +2790,7 @@ sub generate_taglist_data {
 									else {
 										$value = $file_tags->{$file}{'TRACKTOTAL'}[0];
 									}
-									$value = int($value);
+									$value = main::check_int($value);
 								}
 								else {
 									$value = $file_tags->{$file}{$tag}[0];
@@ -2789,7 +2800,7 @@ sub generate_taglist_data {
 						}
 						if (!$file_tags->{$file}{'TRACKTOTAL'}[0] && 
 						$disc_data->{$holder{'DISCNUMBER'}}){
-							push(@contents,'TRACKTOTAL' . $sep . int($disc_data->{$holder{'DISCNUMBER'}}));
+							push(@contents,'TRACKTOTAL' . $sep . main::check_int($disc_data->{$holder{'DISCNUMBER'}}));
 						}
 						push(@contents,'');
 					}
@@ -2798,7 +2809,7 @@ sub generate_taglist_data {
 					if (defined $file_tags->{$file}{$tag}[0]){
 						if ($tag eq 'TRACKNUMBER'){
 							@split = split(/\s*\/\s*/,$file_tags->{$file}{'TRACKNUMBER'}[0]);
-							$value = int($split[0]);
+							$value = main::check_int($split[0]);
 						}
 						else {
 							$value = $file_tags->{$file}{$tag}[0];
@@ -2809,13 +2820,10 @@ sub generate_taglist_data {
 				push(@contents,"FILE$sep$file",'') if @contents;
 			}
 			else {
-				if (%{$file_tags->{$file}}){
-					foreach my $tag (sort keys %{$file_tags->{$file}}){
-						push(@contents,(map {$tag . $sep . $_} @{$file_tags->{$file}{$tag}}));
-					}
-					push(@contents,"FILE$sep$file");
-					push(@contents,'') if @contents;
+				foreach my $tag (sort keys %{$file_tags->{$file}}){
+					push(@contents,(map {$tag . $sep . $_} @{$file_tags->{$file}{$tag}}));
 				}
+				push(@contents,"FILE$sep$file",'');
 			}
 			$b_tags = 1 if @contents;
 		}
@@ -2848,11 +2856,16 @@ sub get_disc_data {
 		if ($file_tags->{$file}{'DISCNUMBER'}[0]){
 			# rarely seen: 1/2, 1 / 2
 			my @split = split(/\s*\/\s*/,$file_tags->{$file}{'DISCNUMBER'}[0]);
-			if ($split[0] > $disc->{'total-discs'}){
-				$disc->{'total-discs'} = $split[0];
+			if ($split[0] =~ /^\d+$/){
+				if ($split[0] > $disc->{'total-discs'}){
+					$disc->{'total-discs'} = $split[0];
+				}
+				$disc->{$split[0]} = 0 if !$disc->{$split[0]};
+				$disc->{$split[0]}++;
 			}
-			$disc->{$split[0]} = 0 if !$disc->{$split[0]};
-			$disc->{$split[0]}++;
+			else {
+				main::error_handler('non-integer',"DISCNUMBER: $split[0]",0);
+			}
 		}
 		else {
 			$disc->{1}++;
@@ -3406,6 +3419,12 @@ sub check_module {
 	$b_present = 1 if !$@;
 	return $b_present;
 }
+# $1 - tests that expected value is integer, returns error if not
+sub check_int {
+	return int($_[0]) if $_[0] =~ /^\d+$/;
+	error_handler('non-integer',"non-integer value: $_[0]",0);
+	return $_[0];
+}
 
 sub dotify {
 	my $string = $_[0];
@@ -3750,6 +3769,7 @@ sub error_handler {
 	elsif ($error eq 'convert'){$error_no = 32;}
 	elsif ($error eq 'multiartist-split'){$error_no = 33;}
 	elsif ($error eq 'infofix-bad-character'){$error_no = 34;}
+	elsif ($error eq 'non-integer'){$error_no = 35;;$br=''}
 	if ($error eq 'validation-errors'){
 		if (!$b_valid){
 			$message = "${br}Failed pretests. Please correct the listed errors.";

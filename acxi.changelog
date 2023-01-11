@@ -110,6 +110,8 @@ all types, mp3, replaygain, and full tag lists.
 5. Made $line_small more consistent across -Z, -X, and -L to separate directory
 processing items.
 
+6. Was missing a date variant: dd-month-yyyy
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
