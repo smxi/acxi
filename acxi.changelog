@@ -24,7 +24,7 @@ particular, the people who worked so hard for so long at xiph.org to provide the
 world with the codecs and tools we now use to listen to and work on audio.
 
 2. To fourtysixandtwo, the acxi packager for Slackware (slackbuilds). The new 
--taglist option was his suggestion. This is turning out to be really good and 
+--taglist option was his suggestion. This is turning out to be really good and 
 useful already, since it allows for easy bulk testing of entire sets of 
 recordings at once, which acxi can then be used to correct.
 
@@ -52,6 +52,15 @@ and they can be specified using subscripts like “SUBTITLE[TRACK 3]” or
 “SUBTITLE[TRACK 7:INDEX 2]”. This should only be used for the case of multiple 
 works in the same file and not for cases where a single work has multiple 
 titles."
+
+3. With certain Vorbis tags when output to Perl, that contain cp-1252 windows 
+characters, Perl simply crashes, or appears to be crashing, when those get 
+output to screen. This happens currently only with -L [acfi], and basically,
+the crash happens when the data is being printed out. You can still find which
+track it was to manually correct the tags with acxi, but as far as I know, there
+is no way to trap this error and handle it more elegantly since it either just
+hangs, or crashes, depending on whether print to screen or Dumper print to 
+screen. Dumper just crashes when it hits that string.
 
 --------------------------------------------------------------------------------
 BUGS:

@@ -2471,7 +2471,7 @@ sub open_info_file {
 ## TagList
 {
 package TagList;
-my ($file_tags,$print_src,$tag_file);
+my ($file_tags,$tag_file);
 sub process {
 	say $line_large;
 	my $type = '';
@@ -2487,7 +2487,6 @@ sub process {
 	say $line_large;
 }
 sub process_directories {
-	my ($result);
 	$list_type = 'dir';
 	say $line_small;
 	say "Checking directories...";
@@ -2499,7 +2498,7 @@ sub process_directories {
 	$file_type .= ucfirst(lc($INPUT_TYPE)); # flac,FLAC,Flac
 	foreach my $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		my $b_valid;
-		$print_src = $item;
+		my $print_src = $item;
 		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 		chdir "$start_dir";
 		chdir "$item";
@@ -2534,7 +2533,7 @@ sub process_directories {
 						generate_info_data();
 						say $line_small;
 					}
-					if ($run{'taglist-full'} || $run{'taglist-condensed'} && !-e $tag_file){
+					if (($run{'taglist-full'} || $run{'taglist-condensed'}) && !-e $tag_file){
 						generate_taglist_data();
 						say $line_small;
 					}
@@ -2578,7 +2577,7 @@ sub generate_info_data {
 	URL WEBSITE CHAPTER COPYRIGHT LICENSE CONTACT
 	BARCODE EAN/UPN UPC PRODUCTNUMBER CATALOGNUMBER LABELNO CATALOG CDDB
 	ISRC ETREE SHNID ACOUSTIC_ID ACOUSTID_FINGERPRINT ACCURATERIPDISCID CDTOC
-	ENCODED-BY ENCODER ENCODING MEDIA SOURCEMEDIA );
+	ENCODED-BY ENCODER ENCODING MEDIA SOURCEMEDIA);
 	foreach my $file (sort keys %$file_tags){
 		my ($track) = ('');
 		foreach my $check (@main_checks){
@@ -2811,11 +2810,10 @@ sub generate_taglist_data {
 			}
 			else {
 				if (%{$file_tags->{$file}}){
-					push(@contents,"FILE$sep$file") if !$run{'taglist-autotag'};
 					foreach my $tag (sort keys %{$file_tags->{$file}}){
 						push(@contents,(map {$tag . $sep . $_} @{$file_tags->{$file}{$tag}}));
 					}
-					push(@contents,"FILE$sep$file") if $run{'taglist-autotag'};
+					push(@contents,"FILE$sep$file");
 					push(@contents,'') if @contents;
 				}
 			}
@@ -3252,7 +3250,8 @@ sub flac2mp3_cmd {
 		$tags->{$_} = escape_item($tags->{$_});
 	}
 	# say Dumper $tags;
-	my %mp3_tags = (
+	state %mp3_tags; # cannot assign values at declare in earlier perls.
+	%mp3_tags = (
 	'ALBUM' => '--tl "',
 	'ALBUMARTIST' => '--tv "TPE2=',
 	'ALBUMSORT' => '--tv "TSOA=',
@@ -3283,7 +3282,7 @@ sub flac2mp3_cmd {
 	'TITLE' => '--tt "',
 	'TITLESORT' => '--tv "TSOT=',
 	'YEAR' => '--ty "',
-	);
+	) if !%mp3_tags;
 	# start building MP3 id3v2 tags
 	foreach my $key (keys %mp3_tags){
 		if ($tags->{$key}){
