@@ -108,7 +108,7 @@ my (@dbg,%run);
 ## CONSTANTS ##
 my $path_separator = ($b_win) ? '\\' : '/';
 my $line_heavy = '===========================================================================';
-my $line_result = '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::';
+my $line_result = ':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::';
 my $line_small = '-----------------------------------------------------------------';
 my $line_large = '---------------------------------------------------------------------------';
 
@@ -263,7 +263,7 @@ my $INFO_FILE = 'info.txt';
 my $INFO_RATING = 4;
 # Uses --tag syntax: TAG%:value^^TAG%:value, remember to clear when done!
 my $PREFILL_TAG = '';
-# This is for --info-create + --tag-list, writes to this file per directory
+# This is for --taglist, writes to this file per directory
 my $TAGLIST_FILE = 'taglist.tag';
 
 #### -------------------------------------------------------------------
@@ -3922,8 +3922,7 @@ sub check_application_paths {
 			# Added: Odd @2011-03-23 01:55:28
 			if (! -x "$COMMAND_METAFLAC"){
 				$b_error = 1;
-				$error_message .= "\n $COMMAND_METAFLAC not found. Required for -A, ";
-				$error_message .= "--info-create.";
+				$error_message .= "\n $COMMAND_METAFLAC not found. Required for -A, -L.";
 			}
 		}
 		if ($run{'prefill'} && $PREFILL_TAG){
@@ -4509,7 +4508,7 @@ sub show_options {
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
 	$output .= "                  value only removes images.\n";
 	$output .= "--info-file, --if, --prefill-file, --pf {file name}\n";
-	$output .= "                  Alternate file name to use for --prefill, --info-create,\n";
+	$output .= "                  Alternate file name to use for --prefill, --taglist=i,\n";
 	$output .= "                  --infofix.\n";
 	$output .= "--infofix, -X [0acdklmnqtuvw]\n";
 	$output .= "                  Fix info.txt files. Use any combination. Always corrects white\n";
@@ -4563,7 +4562,7 @@ sub show_options {
 	$output .= "                  Use 'w' to write to data to file(s).\n";
 	$output .= "                  a: Switch to '%:' separator, and write to $AUTOTAG_FILE.\n";
 	$output .= "                  c: Generate condensed tag list data.\n";
-	$output .= "                  f: Generate full per audio file tag list data.\n";
+	$output .= "                  f: Generate full per audio file tag list data (default).\n";
 	$output .= "                  i: Generate $INFO_FILE data. Can be used with a or f.\n";
 	$output .= "                  w: Write changes to file(s). Only writes if $INFO_FILE\n";
 	$output .= "                  and/or $TAGLIST_FILE/$AUTOTAG_FILE files are not already present.\n";
@@ -5065,7 +5064,7 @@ sub get{
 	'multiartist|ma:s' => sub { 
 		my ($opt,$arg) = @_;
 		if (!$arg || $arg !~ /^(at|ta):\S+$/i){
-			main::error_handler('missing-arg',"$opt AT|TA:[separator].",1);
+			main::error_handler('missing-arg',"$opt at|ta:[separator].",1);
 		}
 		else {
 			$run{'multiartist'} = [split(/:/,$arg)];
@@ -5296,13 +5295,20 @@ sub verify_selections {
 	###############################
 	## Invalid Combination Tests ##
 	###############################
-	# aggregate/update only run alone
-	if (($run{'aggregate'} || $test{'update'}) && ($test{'autotag'} || 
-	$test{'checksum'} || $test{'info'} || $test{'sync'} || $test{'tag'})){
-		my $type = ($run{'aggregate'}) ? '--aggregate' : '--update';
+	## Specific Run Alone ##
+	# aggregate only run alone
+	if ($run{'aggregate'} && ($test{'autotag'} || $test{'checksum'} || 
+	$test{'info'} || $test{'sync'} || $test{'tag'} || $test{'update'})){
 		main::error_handler('invalid-options', 
-		 "$type cannot be combined with any other actions.",1);
+		 "--aggregate cannot be combined with any other actions.",1);
 	}
+	# update only run alone
+	if ($run{'update'} && ($run{'aggregate'} || $test{'autotag'} || 
+	$test{'checksum'} || $test{'info'} || $test{'sync'} || $test{'tag'})){
+		main::error_handler('invalid-options', 
+		 "--update cannot be combined with any other actions.",1);
+	}
+	## Most General To Less General ##
 	# prevent running any syncing options with tagging/checksum/info options
 	if ($test{'sync'} && ($test{'autotag'} || $test{'checksum'} || 
 	$test{'info'} || $test{'tag'})){
@@ -5315,15 +5321,19 @@ sub verify_selections {
 		 "checksum options cannot be used with info/prefill/tag-create options.",1);
 	}
 	# creating auto.tag cannot be combined with info, tagging options
-	if ($test{'autotag'} && ($run{'info'} || $test{'tag'})){
+	if ($test{'autotag'} && ($test{'info'} || $test{'tag'})){
 		main::error_handler('invalid-options', 
 		 "tag-create/prefill options cannot be used with info/image/tagging options.",1);
 	}
 	# analyze options cannot be used with checksum/verify options
-	if (($run{'analyze'} || $run{'infofix-quality'}) && 
-	($test{'checksum-generate'} || $run{'checksum-verify'})){
+	if ($run{'analyze'} && ($test{'checksum-generate'} || $run{'checksum-verify'})){
 		main::error_handler('invalid-options', 
-		 "you cannot use -Z/-Xq with --checksum or --checksum-verify.",1);
+		 "you cannot use -Z/-X[qv] with --checksum or --checksum-verify.",1);
+	}
+	# You cannot run taglist with anything else 
+	if ($run{'taglist'} && ($run{'infofix'} || $test{'tag'})){
+		main::error_handler('invalid-options', 
+		 "you cannot use --taglist with checksum/infofix/tagging options.",1);
 	}
 	## Specific Not Allowed Combos ##
 	# there's no tests to run if you block md5 and ffp!
@@ -5342,7 +5352,7 @@ sub verify_selections {
 		 "you cannot use --taglist=c with --taglist=f.",1);
 	}
 	#################################
-	## Required Option Combo Tests ##
+	## Required Option Missing Combo Tests ##
 	#################################
 	if ($test{'autotag-file'} && !$run{'autotagger'} && !$run{'autotag-create'} &&
 	!$run{'taglist-autotag'}){
@@ -5353,11 +5363,11 @@ sub verify_selections {
 		main::error_handler('invalid-options', 
 		 "--dither requires --resample.",1);
 	}
-	# info-file requires either prefill, info-create, or infofix options
+	# info-file requires either prefill, taglist-info, or infofix options
 	if ($test{'info-file'} && !$run{'prefill'} && !$run{'taglist-info'} && 
 	!$run{'infofix'}){
 		main::error_handler('invalid-options', 
-		 "--info-file/--prefill-file require --info-create/--infofix/--prefill.",1);
+		 "--info-file/--prefill-file require -L i/--infofix/--prefill.",1);
 	}
 	# prefill options require tag-create options
 	if ($test{'prefill'} && !$run{'autotag-create'}){

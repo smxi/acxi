@@ -32,7 +32,7 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-image\fR, \fB\-I\fR {cover image filename}] 
 [\fB\-\-info\-file\fR, \fB\-\-if\fR, \fB\-\-prefill\-file\fR, \fB\-\-pf\fR 
 {release info file name}] 
-[\fB\-\-infofix\fR, \fB\-X\fR [0|a|c|d|k|l|m|n|q|t|u|v|w]] 
+[\fB\-\-infofix\fR, \fB\-X\fR [0acdklmnqtuvw]] 
 [\fB\-\-info\-rating\fR {2\-xxx}
 [\fB\-\-multiartist\fR, \fB\-\-ma\fR {[at|ta]:separator}]
 [\fB\-\-prefill\fR, \fB\-E\fR] 
@@ -41,7 +41,7 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-remove\-images\fR, \fB\-R\fR] [\fB\-\-remove\-padding\fR, \fB\-P\fR] 
 [\fB\-\-start\fR {0-xx}] 
 [\fB\-\-tag\fR, \fB\-T\fR] {"TAG1%:tag value^^TAG2%:tag value"}] 
-[\fB\-\-taglist\fR, \fB\-L\fR [cfiw]] 
+[\fB\-\-taglist\fR, \fB\-L\fR [acfiw]] 
 [\fB\-\-taglist\-file\fR, \fB\-\-tlf\fR, \fB\-\-tf\fR {tag list file}] 
 .IP * 2
 Analyze/Checksums: [\fB\-\-analyze\fR, \fB\-Z\fR]
@@ -49,7 +49,7 @@ Analyze/Checksums: [\fB\-\-analyze\fR, \fB\-Z\fR]
 [\fB\-\-checksum\-ffps\fR, \fB\-\-ffps\fR] 
 [\fB\-\-checksum\-verify\fR, \fB\-V\fR] 
 [\fB\-\-duplicates\fR, \fB\-\-dupes\fR] [\fB\-\-ffprobe\fR]
-[\fB\-\-infofix\fR, \fB\-X\fR [q|v]] [\fB\-\-no\-ffp\fR] 
+[\fB\-\-infofix\fR, \fB\-X\fR [qv]] [\fB\-\-no\-ffp\fR] 
 [\fB\-\-no\-md5\fR] 
 [\fB\-\-z\-min\-size\fR {0\-xxx}] [\fB\-\-z\-min\-time\fR {0\-xxx}]
 .IP * 2
@@ -144,16 +144,13 @@ flac. MP3 encoding does not support wav or raw input formats.
 \fBffmpeg\fR.
 .IP * 2
 \fB\-\-analyze\fR, \fB\-\-duplicates\fR, \fB\-\-ffps\fR, and \fB\-\-infofix 
-[q|v]\fR require \fBmetaflac\fR (with the following exception).
+[qv]\fR require \fBmetaflac\fR (with the following exception).
 .IP * 2
 \fB\-\-analyze\fR, \fB\-\-infofix q\fR require \fBffprobe\fR for non \fBflac \fR 
 input types, or if using \fB\-\-ffprobe\fR option with input type \fBflac\fR.
 .IP * 2
 \fB\-\-autotag\fR, \fB\-\-tag\fR, \fB\-\-image\fR, and \fB\-\-image\-remove\fR 
 require \fBmetaflac\fR for \fBVORBIS\fR tagging.
-.IP * 2
-\fB\-\-info\-create\fR, \fB\-\-taglist\fR require \fBmetaflac\fR for getting 
-\fBFLAC\fR tags.
 .IP * 2
 \fB\-\-checksum\fR and \fB\-\-checksum\-delete\fR require \fBmetaflac\fR and 
 \fBmd5sum\fR (or any comparable program that generates md5sums). 
@@ -170,7 +167,9 @@ generates md5 hashes).
 .IP * 2
 \fB\-\-infofix k\fR requires Perl Core Module \fBPOSIX::strftime\fR. 
 .IP * 2
-\fB\-\-infofix [t|u]\fR require Perl module \fBText::Autoformat\fR. 
+\fB\-\-infofix [tu]\fR require Perl module \fBText::Autoformat\fR. 
+.IP * 2
+\fB\-\-taglist\fR require \fBmetaflac\fR for getting \fBFLAC\fR tags.
 .IP * 2
 \fB\-U\fR Self-updater requires \fBcurl\fR. 
 .PP
@@ -648,31 +647,13 @@ acxi \-s ./ \-RI cover.jpg\fR
 .fi
 
 .TP
-.B \-\-info\-create\fR, \fB\-\-ic [w]\fR
-Create info file data and output it to screen in each directory where one is not 
-already present. The data is generated and populated using the tags collected 
-from all FLACs in that directory. To write the info file to the directory, add 
-\fBw\fR. If you want to get the raw tags per directory, use \fB\-\-taglist\fR 
-alone, or together with \fB\-\-info\-create\fR.
-
-Sample (writes out info.txt files, no tag data printed to screen):
-.EX
-\fBacxi \-s ./ \-\-info-create w\fB
-.EE
-
-Sample (prints to screen, redirects stderr to stdout, prints to file):
-.EX
-\fBacxi \-s ./ \-\-info-create 2>&1 | tee info-files-full.txt\fB
-.EE
-
-.TP
 .B \-\-info\-file\fR, \fB\-\-if\fR, \fB\-\-prefill\-file\fR, \fB\-\-pf\fR {file}
 An alternate file name to use for prefill or infofix. Note that file MUST have a 
 *.txt extension, and should not be anything other than ASCII or UTF8, otherwise 
 you will get ungood results.
 
 .TP
-.B \-\-infofix\fR, \fB\-X [0|a|c|d|k|l|n|q|t|u|v|w|z]\fR
+.B \-\-infofix\fR, \fB\-X [0acdklnqtuvwz]\fR
 Correct common corruptions to info.txt files. Note that this can be used in bulk 
 mode on sets of directories if all the info text files have the same name.
 
@@ -1387,14 +1368,15 @@ Show acxi version.
 These options allow you to modify the output, or to test actions before doing 
 them for real.
 
+.TP
 .B \-\-dbg {1\-xx}[,1\-xx]\fR
 Activate specialized debugger outputs. Don't use unless you are asked to, or are 
 a developer or something like that. Accepts comma separated list of integers to
 trigger > 1 debugger action.
 
-.B 1\fR \- main::get_flac_tags() print resultant tag hash.
+\fB1\fR \- main::get_flac_tags() print resultant tag hash.
 
-.B 1\fR \- AutoTag::process_tags() print auto.tag tag array result.
+\fB2\fR \- AutoTag::process_tags() print auto.tag tag array result.
 
 .TP
 .B \-\-debug\fR

@@ -89,11 +89,12 @@ I don't want to get into detecting idv2 subversion, this is a messy non-free
 codec and it shows by how poorly they did tagging version to version, as well as 
 how focused on corporate interests their efforts were. 
 
-2. PREFILL: Some of the prefill field names didn't fully match the listed possible 
-values. Also made all 2 word type field names support space, -, _, or no space.
+2. PREFILL: Some of the prefill field names didn't fully match the listed 
+possible values. Also made all 2 word type field names support space, -, _, or 
+no space.
 
-3. INFOCREATE/TAGLIST/SYNC: Added --no-utf8-convert to main::get_flac_tags(), 
-this is for all types, mp3, replaygain, and full tag lists.
+3. TAGLIST/SYNC: Added --no-utf8-convert to main::get_flac_tags(), this is for 
+all types, mp3, replaygain, and full tag lists.
 
 4. Added $line_small when no info.txt file found for --infofix, forgot that.
 
@@ -108,8 +109,8 @@ that have native mp3 id3v2 tags. Now supported:
 
 ALBUM ALBUMARTIST ARTIST ARTISTSORT COMMENT COMPILATION COMPOSER CONDUCTOR 
 COPYRIGHT DATE DESCRIPTION DISKNUMBER DISCSUBTITLE DISKTOTAL GENRE ISRC LABEL 
-MEDIA MOOD MOVEMENTNAME PUBLISHER REMIXER SOURCEMEDIA SUBTITLE TITLE TRACKNUMBER 
-TRACKTOTAL YEAR
+MEDIA MOOD MOVEMENTNAME ORGANIZATION PUBLISHER REMIXER SOURCEMEDIA SUBTITLE 
+TITLE TITLESORT TRACKNUMBER TRACKTOTAL YEAR
 		
 Note that because id3v2.x either doesn't have comparable DATE, LOCATION, OPUS, 
 PERFORMER, PRODUCER, VENUE tags, or v2.3 name is different from v2.4, those tags 
@@ -122,9 +123,9 @@ CONDUCTOR: Conductor, Conducted by.
 MIXER: Mixed by, Mixer, Mastered by, Masterer.
 REMIXER: Remixer, remixed by, remasterer, remastered by.
 
-3. Added SUBTITLE tag to list of supported tags for tagging, but not to auto.tag 
-because it's made for very specific purposes and is unlikely to be used 
-correctly. See Known Issues 2.
+3. Added SUBTITLE, TITLESORT tags to list of supported tags for tagging, but not 
+to auto.tag because those are made for very specific purposes and are unlikely 
+to be used correctly. See Known Issues 2.
 
 4. TAGLIST: New features: --taglist/-L. Depending on switches, can generate full 
 report of all tags per FLAC file in directory, a condensed version of those 
@@ -143,22 +144,29 @@ separator from '=' to '%:'
 * w: writes c, i, or t data to respective info.txt, taglist.tag, or auto.tag 
 files.
 
+i and c or f can be used together. a activates c by default, unless you specify 
+f. c and f can't be used together.
+
 5. Added $self_patch to allow for checking development patch versions, like 
 pinxi uses. Helpful to make sure you have the right version. Also added to
---help (and date).
+--help (and date). This can be helpful during active development.
+
+acxi --version
+acxi version: 3.5.06-14 (2023-01-10)
 
 6. OPTIONS: Added --glob as alternative to --source-glob/-g. 
 
 7. AutoTag::process_tags() now handles multiline tag values. Which should be 
-avoided like the plague because virtually no media players support those 
-correctly. But needed since --taglist t/c support multiline tag values.
+avoided because very few media players support those correctly. But needed since 
+--taglist t/c support multiline tag values.
 
 8. Added --autotag-file/--atf/--af for one time changes of auto.tag file name.
 This was an oversight, but never had cause for it until testing -La exposed the 
 utility of being able to change auto.tag name to something else.
 
 9. Added new print line type: $line_result. This is used to separate result 
-blocks from processing blocks, before was using $line_small for both types.
+blocks from processing blocks, before was using $line_small for both types. this 
+is used in -X, -L.
 
 --------------------------------------------------------------------------------
 CHANGES:
@@ -210,7 +218,8 @@ OptionsHandler::set_switches() and OptionsHandler::verify_selections(), and
 options themselves only switch on $run and $test switches and assign values.
 
 5. Extended main::get_flac_tags() to return 'all' tags in flac file, for new 
-package InfoCreate.
+package TagList. Changed old 'standard' to 'flac-mp3', since that was used only 
+to get flac to mp3 tags.
 
 6. Changed to explicit sync switched on only if no other actions conflict in 
 OptionsHandler::set_switches(). This was previously always set to 1, true, on 
