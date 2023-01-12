@@ -2532,25 +2532,26 @@ sub process_directories {
 			(($run{'taglist-full'} || $run{'taglist-condensed'}) && -e $tag_file)){
 				say "  $tag_file tag file present. Skipping taglist processing.";
 			}
-			if ($run{'taglist-skip'}){
-				my $skip;
-				if ($run{'taglist-info'}){
-					$skip = "  Skipped $INFO_FILE file check actions: file ";
-					$skip .= (-e $INFO_FILE) ? "exists." : "not present.";
-					say $skip;
-				}
-				if (($run{'taglist-full'} || $run{'taglist-condensed'}) && -e $tag_file){
-					$skip = "  Skipped $tag_file file check actions: file ";
-					$skip .= (-e $tag_file) ? "exists." : "not present.";
-					say $skip;
-				}
-			}
 			say $line_small if !$b_processed;
 			if ($b_processed){
 				if ($b_tags){
+					if ($run{'taglist-skip'}){
+						if ($run{'taglist-info'}){
+							my $skip = "  Skipped $INFO_FILE file check actions: file ";
+							$skip .= (-e $INFO_FILE) ? "exists." : "not present.";
+							say $skip;
+						}
+					}
 					if ($run{'taglist-skip'} || ($run{'taglist-info'} && !-e $INFO_FILE)){
 						generate_info_data();
 						say $line_small;
+					}
+					if ($run{'taglist-skip'}){
+						if (($run{'taglist-full'} || $run{'taglist-condensed'}) && -e $tag_file){
+							my $skip = "  Skipped $tag_file file check actions: file ";
+							$skip .= (-e $tag_file) ? "exists." : "not present.";
+							say $skip;
+						}
 					}
 					if ($run{'taglist-skip'} || 
 					($run{'taglist-full'} || ($run{'taglist-condensed'}) && !-e $tag_file)){
