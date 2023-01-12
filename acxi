@@ -80,8 +80,8 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='14';
-my $self_date='2023-01-10';
+my $self_patch='16';
+my $self_date='2023-01-11';
 
 ## GLOBALS ##
 ## Booleans
@@ -1406,7 +1406,7 @@ sub populate_tag_file {
 		$counter++;
 	}
 	if ($b_test){
-		say "$line_small\nStart Test Output\n$line_small\n";
+		say "Test mode $AUTOTAG_FILE data:\n$line_result\n";
 		say join("\n", @tags),"\n";
 	}
 	else {
@@ -2518,26 +2518,28 @@ sub process_directories {
 		if (grep -f, @files){
 			my ($b_processed,$b_tags);
 			undef $file_tags;
-			if (($run{'taglist-info'} && !-e $INFO_FILE) || 
-			(($run{'taglist-full'} || $run{'taglist-condensed'}) && !-e $tag_file)){
+			if ($run{'taglist-skip'} | (($run{'taglist-info'} && !-e $INFO_FILE) || 
+			(($run{'taglist-full'} || $run{'taglist-condensed'}) && !-e $tag_file))){
 				say "  Processing $INPUT_TYPE files...";
 				$b_tags = process_tags(\@files,$b_tags);
 				$b_processed = 1;
 			}
-			if ($run{'taglist-info'} && -e $INFO_FILE){
+			if (!$run{'taglist-skip'} && $run{'taglist-info'} && -e $INFO_FILE){
 				say "  $INFO_FILE info file present. Skipping info processing.";
 			}
-			if (($run{'taglist-full'} || $run{'taglist-condensed'}) && -e $tag_file){
+			if (!$run{'taglist-skip'} && 
+			($run{'taglist-full'} || $run{'taglist-condensed'}) && -e $tag_file){
 				say "  $tag_file tag file present. Skipping taglist processing.";
 			}
 			say $line_small if !$b_processed;
 			if ($b_processed){
 				if ($b_tags){
-					if ($run{'taglist-info'} && !-e $INFO_FILE){
+					if ($run{'taglist-skip'} || ($run{'taglist-info'} && !-e $INFO_FILE)){
 						generate_info_data();
 						say $line_small;
 					}
-					if (($run{'taglist-full'} || $run{'taglist-condensed'}) && !-e $tag_file){
+					if ($run{'taglist-skip'} || 
+					($run{'taglist-full'} || ($run{'taglist-condensed'}) && !-e $tag_file)){
 						generate_taglist_data();
 						say $line_small;
 					}
@@ -4574,13 +4576,14 @@ sub show_options {
 	$output .= "                  tag/value pairs. Removes existing sets of the given type.\n";
 	$output .= "                  Use ^^ to separate tag key/value pairs, and %: to separate\n";
 	$output .= "                  the tag name and its value. Value 'UNSET' removes the tag.\n";
-	$output .= "--taglist, -L     [acfiw] Print to screen generated tag data in FLAC\n";
+	$output .= "--taglist, -L     [acfisw] Print to screen generated tag data in FLAC\n";
 	$output .= "                  directories using Vorbis tag data found in each file.\n";
 	$output .= "                  Use 'w' to write to data to file(s).\n";
 	$output .= "                  a: Switch to '%:' separator, and write to $AUTOTAG_FILE.\n";
 	$output .= "                  c: Generate condensed tag list data.\n";
 	$output .= "                  f: Generate full per audio file tag list data (default).\n";
-	$output .= "                  i: Generate $INFO_FILE data. Can be used with a or f.\n";
+	$output .= "                  i: Generate $INFO_FILE data. Can be used with 'a' or 'f'.\n";
+	$output .= "                  s: Skip file(s) exist tests. Don't use with 'w'.\n";
 	$output .= "                  w: Write changes to file(s). Only writes if $INFO_FILE\n";
 	$output .= "                  and/or $TAGLIST_FILE/$AUTOTAG_FILE files are not already present.\n";
 	$output .= "--taglist-file, --tlf, --tf {file}\n";
@@ -5203,11 +5206,12 @@ sub get{
 	'L|taglist:s' => sub {
 		my ($opt,$arg) = @_;
 		if ($arg){
-			if ($arg =~ /^[acfiw]+$/){
+			if ($arg =~ /^[acfisw]+$/){
 				$run{'taglist-autotag'} = 1 if $arg =~ /a/;
 				$run{'taglist-condensed'} = 1 if $arg =~ /c/;
 				$run{'taglist-full'} = 1 if $arg =~ /f/;
 				$run{'taglist-info'} = 1 if $arg =~ /i/;
+				$run{'taglist-skip'} = 1 if $arg =~ /s/;
 				$run{'taglist-write'} = 1 if $arg =~ /w/;
 				if ($run{'taglist-autotag'} && !$run{'taglist-condensed'} && 
 				!$run{'taglist-full'}){
@@ -5347,6 +5351,11 @@ sub verify_selections {
 		main::error_handler('invalid-options', 
 		 "you cannot use -Z/-X[qv] with --checksum or --checksum-verify.",1);
 	}
+	# You cannot run infofix with anything else 
+	if ($run{'infofix'} && ($run{'taglist'} || $test{'tag'})){
+		main::error_handler('invalid-options', 
+		 "you cannot use --infofix with checksum/taglist/tagging options.",1);
+	}
 	# You cannot run taglist with anything else 
 	if ($run{'taglist'} && ($run{'infofix'} || $test{'tag'})){
 		main::error_handler('invalid-options', 
@@ -5367,6 +5376,10 @@ sub verify_selections {
 	if ($run{'taglist-condensed'} && $run{'taglist-full'}){
 		main::error_handler('invalid-options', 
 		 "you cannot use --taglist=c with --taglist=f.",1);
+	}
+	if ($run{'taglist-skip'} && $run{'taglist-write'}){
+		main::error_handler('invalid-options', 
+		 "you cannot use --taglist=s with --taglist=w.",1);
 	}
 	#################################
 	## Required Option Missing Combo Tests ##

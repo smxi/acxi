@@ -47,7 +47,8 @@ Program:
  sudo wget -O /usr/local/bin/acxi https://github.com/smxi/acxi/raw/stable/acxi
 
 Man page:
- sudo wget -O /usr/local/share/man/man1/acxi.1 https://github.com/smxi/acxi/raw/stable/acxi.1
+ sudo wget -O /usr/local/share/man/man1/acxi.1 \
+ https://github.com/smxi/acxi/raw/stable/acxi.1
  
 If you want to use the -U self-updater option, both acxi and the man page must 
 be present on your system, and paths to them set either by placing them in the 
@@ -60,12 +61,16 @@ MAIN FEATURES
 acxi is a tool that syncs/converts lossless (flac, wav, raw) music libraries to 
 compressed (mp3,ogg,opus) versions of the lossless library. It also can convert 
 aif, raw, shn, and wav to flac. It also creates/checks md5, ffp files, tags your 
-collection (read man page), embeds images, and much more.
+collection, embeds images, gets tags from your collection, and much more. Read 
+the man page for specifics on how to use the features. Some are quite powerful
+but have a significant learning curve to use effectively.
 
 acxi is developed as features are requested or discovered useful. It will in 
 general 'just work' for as long as it's installed, though it is a good idea to 
 check for updates now and then since bugs get fixed, new features are added or 
 extended. Changes will not break existing configurations.
+
+Most options where it makes sense have corresponding configuration items.
 
 --------------------------------------------------------------------------------
 TEST ACTIONS:
@@ -131,7 +136,17 @@ file.
 You can also manually add tags using the --tag/-T option, or embed / remove 
 images with the --image/-I and --remove-images/-R options.
 
-Read the man page for more on auto tagging and info file processing. 
+-L/--taglist shows you what tags exist in one or more directories of FLACs. That 
+works in a similar way to -X, offering a variety of actions, to either create an 
+info.txt file from the existing tags, or to output the tags in either full per 
+file format (default, -L f), or a condensed format, which puts all common tag 
+data on top of the file, and only different data per file/block of files. 
+
+With -La, you end up with an auto.tag file, which can then be used, or 
+modified/edited, then used, to tag your files using -A. As with -X, adding w 
+writes out the file(s).
+
+Read the man page for more on auto tagging and info file/tag processing. 
 
 --------------------------------------------------------------------------------
 CHECKSUMS AND TESTS:
@@ -309,7 +324,7 @@ inside each album/collection directory.
 
 * --fork requires Perl module Parallel::ForkManager
 
-* --image, --info-create, --remove-images, --taglist require metaflac.
+* --image, --remove-images, and --taglist require metaflac.
 
 * --infofix c requires Perl Core Module Encoding::Guess
 
