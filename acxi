@@ -2485,7 +2485,8 @@ sub process {
 		$type .= '/' if $type;
 		$type .= 'tag ' . $tag_file;
 	}
-	say "Starting $type file checks in: " . main::sourcer("$SOURCE_DIRECTORY");
+	my $checks = ($run{'taglist-skip'}) ? 'Skipping' : 'Starting';
+	say "$checks $type file checks in: " . main::sourcer("$SOURCE_DIRECTORY");
 	process_directories();
 	say "Completed taglist $type processing.";
 	say $line_large;
