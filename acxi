@@ -2709,7 +2709,7 @@ sub generate_info_data {
 			say join("\n",@info_data);
 		}
 		else {
-			say "  Writing tag data to: $INFO_FILE";
+			say "  Writing generated tag data to: $INFO_FILE";
 			main::writer($INFO_FILE,\@info_data,1); # 1 forces utf8
 		}
 	}
@@ -2861,7 +2861,7 @@ sub generate_taglist_data {
 			say join("\n",@contents);
 		}
 		else {
-			say "  Writing tag data to: $tag_file";
+			say "  Writing generated tag data to: $tag_file";
 			main::writer($tag_file,\@contents,1); # 1 forces utf8
 		}
 	}
