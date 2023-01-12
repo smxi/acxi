@@ -2525,12 +2525,25 @@ sub process_directories {
 				$b_tags = process_tags(\@files,$b_tags);
 				$b_processed = 1;
 			}
-			if (!$run{'taglist-skip'} && $run{'taglist-info'} && -e $INFO_FILE){
+			if (!$run{'taglist-skip'} && ($run{'taglist-info'} && -e $INFO_FILE)){
 				say "  $INFO_FILE info file present. Skipping info processing.";
 			}
 			if (!$run{'taglist-skip'} && 
-			($run{'taglist-full'} || $run{'taglist-condensed'}) && -e $tag_file){
+			(($run{'taglist-full'} || $run{'taglist-condensed'}) && -e $tag_file)){
 				say "  $tag_file tag file present. Skipping taglist processing.";
+			}
+			if ($run{'taglist-skip'}){
+				my $skip;
+				if ($run{'taglist-info'}){
+					$skip = "  Skipped $INFO_FILE file checks. File ";
+					$skip .= (-e $INFO_FILE) ? "exists." : "is not present.";
+					say $skip;
+				}
+				if (($run{'taglist-full'} || $run{'taglist-condensed'}) && -e $tag_file){
+					$skip = "  Skipped $tag_file file checks. File ";
+					$skip .= (-e $tag_file) ? "exists." : "is not present.";
+					say $skip;
+				}
 			}
 			say $line_small if !$b_processed;
 			if ($b_processed){
