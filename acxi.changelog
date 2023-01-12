@@ -114,6 +114,12 @@ processing items.
 
 6. Was missing a date variant: dd-month-yyyy
 
+7. Flac tag reader wasn't escaping file name, which led to name with $ failing.
+Also, the mp3 tag string generator was passing the file name in double quotes,
+which meant that the $ string was being treated as a scalar and would have been 
+empty as well. Or maybe caused perl to exit with error since non declared 
+variable was being attempted.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 

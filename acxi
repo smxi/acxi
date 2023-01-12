@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='16';
+my $self_patch='17';
 my $self_date='2023-01-11';
 
 ## GLOBALS ##
@@ -3280,7 +3280,7 @@ sub convert_file {
 # Revised many times since, full refactor 2022-12-30.
 sub flac2mp3_cmd {
 	my ($i_file, $o_file) = @_;
-	my $tags = get_flac_tags('flac-mp3',"$i_file");
+	my $tags = get_flac_tags('flac-mp3',$i_file);
 	my $lame_params = '';
 	foreach (keys %$tags){
 		$tags->{$_} = escape_item($tags->{$_});
@@ -3356,6 +3356,7 @@ sub get_flac_tags {
 	my ($type,$i_file) = @_;
 	my (%tags,@working);
 	state @tags_working; # cannot assign values at declare in earlier perls.
+	$i_file = escape_item($i_file);
 	my $cmd = "$COMMAND_METAFLAC --no-utf8-convert \"$i_file\" ";
 	if ($type ne 'all'){
 		# replaygain/flac to mp3 tags will never happen in same action: sync, autotag
@@ -3411,9 +3412,13 @@ sub get_flac_tags {
 				$_ =~ s/^(TOTAL[\s_-]?TRACKS|TRACK[\s_-]?TOTAL)=/TRACKTOTAL=/;
 			}
 			@working = split(/=/,$_,2);
+			# we don't want empty tags, but remember, valid value can be 0
+			if (!defined $working[1] || $working[1] eq ''){
+				@working = ();
+			}
 		}
 		else {
-			$working[1] .= "\n" . $_;
+			$working[1] .= "\n" . $_ if defined $working[1];
 		}
 	}
 	if ($type ne 'all'){
