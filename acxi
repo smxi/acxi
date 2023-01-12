@@ -2535,12 +2535,12 @@ sub process_directories {
 			if ($run{'taglist-skip'}){
 				my $skip;
 				if ($run{'taglist-info'}){
-					$skip = "  Skipped $INFO_FILE file check actions. File ";
+					$skip = "  Skipped $INFO_FILE file check actions: file ";
 					$skip .= (-e $INFO_FILE) ? "exists." : "is not present.";
 					say $skip;
 				}
 				if (($run{'taglist-full'} || $run{'taglist-condensed'}) && -e $tag_file){
-					$skip = "  Skipped $tag_file file check actions. File ";
+					$skip = "  Skipped $tag_file file check actions: file ";
 					$skip .= (-e $tag_file) ? "exists." : "is not present.";
 					say $skip;
 				}
