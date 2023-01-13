@@ -95,7 +95,6 @@ ORGANIZATION%:
 # Database type IDs
 CDDB%:
 ETREE%:
-ISRC%:
 SHNID%:
 
 ## TECHNICAL INFORMATION ##

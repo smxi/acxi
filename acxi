@@ -813,7 +813,9 @@ sub process_tags {
 		@unique = split(/\s*,\s*/,uc($run{'autotag-unique'}));
 	}
 	@tags = @temp;
-	my @tt = qw(PART SUBTITLE TITLE TITLESORT TRACKNUMBER VERSION);
+	my @tt = qw(ACCURATERIPDISCID ACCURATERIPRESULT ACOUSTID_ID 
+	ACOUSTID_FINGERPRINT ISRC PART REPLAYGAIN_TRACK_GAIN REPLAYGAIN_TRACK_PEAK 
+	SUBTITLE TITLE TITLESORT TRACKNUMBER VERSION);
 	push (@tt,@unique) if @unique;
 	my $track_pattern = join('|',@tt);
 	$track_pattern = qr/^($track_pattern)$/;
@@ -1021,8 +1023,7 @@ sub prefill_data {
 	Artist\s*\/\s*Band Band CDDB CDDB[\s_-]?ID City Club 
 	Composer Composed[\s_-]?by Conducted[\s_-]?by Conductor Country Cover Date 
 	Ensemble Etree Etree[\s_-]?ID Event Festival Genre 
-	Image ISRC ISRC[\s_-]?ID Lieu Location 
-	Media Mastered[\s_-]?by Masterer Mixed[\s_-]?by Mixer 
+	Image Lieu Location Media Mastered[\s_-]?by Masterer Mixed[\s_-]?by Mixer 
 	Opus Orquestr?a Producer 
 	Recorded[\s_-]?by Remastered[\s_-]?by Remasterer Remixed[\s_-]?by Remixer 
 	SHNID Source[\s_-]?Media State Symphony Taper Taped[\s_-]?by Type
@@ -1110,9 +1111,6 @@ sub prefill_data {
 			}
 			elsif ($field_name =~ /^(Cover|Image)$/i){
 				$info->{'image'} = $field_value;
-			}
-			elsif ($field_name =~ /^(ISRC([\s_-]?ID)?)$/i){
-				$info->{'isrc'} = $field_value;
 			}
 			elsif ($field_name =~ /^(City|Country|Location|State|Ville)$/i){
 				if ($info->{'location'}){
@@ -1228,7 +1226,7 @@ sub populate_tag_file {
 	'MIXER','REMIXER',
 	'# Person responsible, either taper, funder, etc.','PRODUCER','PUBLISHER',
 	'# e.g. record label, taper group.','ORGANIZATION',
-	'# Database type IDs', 'CDDB','ETREE','ISRC','SHNID',
+	'# Database type IDs', 'CDDB','ETREE','SHNID',
 	'## TECHNICAL INFORMATION ##',
 	'ENCODING',
 	'# Useful for tapers etc','SOURCE','SOURCE','SOURCE','SOURCE',
@@ -1250,7 +1248,7 @@ sub populate_tag_file {
 	@collection = map {$_ .= '%:' if /^[A-Z]/; $_;} @collection;
 	# ALBUM, ALBUMARTIST, TYPE handled explicitly below
 	my @prefills = qw(ALBUMSORT ARTIST CDDB COMPOSER CONDUCTOR DATE ENSEMBLE 
-	ETREE GENRE IMAGE ISRC LOCATION MIXER OPUS PRODUCER REMIXER SHNID SOURCEMEDIA 
+	ETREE GENRE IMAGE LOCATION MIXER OPUS PRODUCER REMIXER SHNID SOURCEMEDIA 
 	VENUE YEAR);
 	@prefills = map {$_ .= '%:'; $_;} @prefills;
 	if ($info && %$info && @collection){
@@ -2630,8 +2628,7 @@ sub generate_info_data {
 	ORGANIZATION PRODUCER PUBLISHER MIXER REMIXER 
 	URL WEBSITE CHAPTER COPYRIGHT LICENSE CONTACT
 	BARCODE EAN/UPN UPC PRODUCTNUMBER CATALOGNUMBER LABELNO CATALOG CDDB
-	ISRC ETREE SHNID ACOUSTIC_ID ACOUSTID_FINGERPRINT ACCURATERIPDISCID CDTOC
-	ENCODED-BY ENCODER ENCODING MEDIA SOURCEMEDIA);
+	ETREE SHNID CDTOC ENCODED-BY ENCODER ENCODING MEDIA SOURCEMEDIA);
 	foreach my $file (sort keys %$file_tags){
 		my ($track) = ('');
 		foreach my $check (@main_checks){
@@ -2744,7 +2741,7 @@ sub generate_info_data {
 }
 sub generate_taglist_data {
 	my (@contents,$disc_data,@disk_tags,@general_tags,%holder,@split,@track_tags);
-	my ($b_tags,$multi,$temp,$track_total,$value);
+	my ($b_tags,$index,$multi,$temp,$track_total,$value);
 	say "  Generating $tag_file data...";
 	if (!$file_tags || !%$file_tags){
 		say "  No tags found! Are the files tagged?";
@@ -2753,13 +2750,21 @@ sub generate_taglist_data {
 	my $sep = ($run{'taglist-autotag'}) ? '%:': '=' ;
 	if ($run{'taglist-condensed'}){
 		my $all_tags = get_tags_used();
-		@disk_tags = grep {
-		/^(DISCNUMBER|DISCSUBTITLE|TRACKTOTAL)$/} @$all_tags;
-		@track_tags = grep {
-		/^(PART|SUBTITLE|TITLE|TITLESORT|TRACKNUMBER|VERSION)$/} @$all_tags;
-		@general_tags = grep {
-		!/^(DISCNUMBER|DISCSUBTITLE|DISCTOTAL|PART|SUBTITLE|TITLE|TITLESORT|TRACKNUMBER|TRACKTOTAL|VERSION)$/
-		} @$all_tags;
+		state ($disk_pattern,$track_pattern,$general_pattern);
+		if (!$disk_pattern){
+			$disk_pattern = 'DISCNUMBER|DISCSUBTITLE|TRACKTOTAL';
+			$track_pattern = 'ACCURATERIPDISCID|ACCURATERIPRESULT|';
+			$track_pattern .= 'ACOUSTIC_ID|ACOUSTID_FINGERPRINT|ISRC|PART|';
+			$track_pattern .= 'REPLAYGAIN_TRACK_GAIN|REPLAYGAIN_TRACK_PEAK|';
+			$track_pattern .= 'SUBTITLE|TITLE|TITLESORT|TRACKNUMBER|VERSION';
+			$general_pattern = $disk_pattern . '|DISCTOTAL|' . $track_pattern;
+			$disk_pattern = qr/^($disk_pattern)$/;
+			$track_pattern = qr/^($track_pattern)$/;
+			$general_pattern = qr/^($general_pattern)$/;
+		}
+		@disk_tags = grep {$_ =~ $disk_pattern} @$all_tags;
+		@track_tags = grep {$_ =~ $track_pattern} @$all_tags;
+		@general_tags = grep {$_ !~ $general_pattern} @$all_tags;
 		$multi = check_multi($all_tags);
 		$disc_data = get_disc_data();
 		my @files = sort keys %$file_tags;
@@ -2771,7 +2776,11 @@ sub generate_taglist_data {
 				push(@contents,(map {$tag . $sep . $_} @{$file_tags->{$files[0]}{$tag}}));
 			}
 		}
-		push(@contents,'') if @contents;
+		if (@contents){
+			splice(@contents,0,0,'# General shared tags for all files');
+			push(@contents,'');
+		}
+		$index = scalar @contents;
 		if ($disc_data->{'total-discs'} || ($file_tags->{$files[0]}{'DISCTOTAL'} && 
 		$file_tags->{$files[0]}{'DISCTOTAL'}[0] > 1)){
 			if ($file_tags->{$files[0]}{'DISCTOTAL'}){
@@ -2809,12 +2818,16 @@ sub generate_taglist_data {
 		elsif (!$disc_data->{'total-discs'} && @contents){
 			push(@contents,"TRACKTOTAL$sep" . scalar @files);
 		}
-		push(@contents,'') if @contents;
+		if (@contents){
+			splice(@contents,$index,0,'# Disc data/track totals per disc');
+			push(@contents,'');
+		}
 	}
 	foreach my $file (sort keys %$file_tags){
 		if ($file_tags->{$file} && %{$file_tags->{$file}}){
 			my $b_general;
 			if ($run{'taglist-condensed'}){
+				$index = scalar @contents;
 				foreach my $tag (@general_tags){
 					if ($multi->{$tag} && ref $file_tags->{$file}{$tag} eq 'ARRAY' &&
 					(!$holder{$tag} || $holder{$tag} ne join('',@{$file_tags->{$file}{$tag}}))){
@@ -2823,10 +2836,14 @@ sub generate_taglist_data {
 						$b_general = 1;
 					}
 				}
-				push(@contents,'') if $b_general;
+				if ($b_general){
+					splice(@contents,$index,0,'# Following block of files/unique tag');
+					push(@contents,'');
+				}
 				if ($disc_data->{'total-discs'}){ 
 					@split = split(/\s*\/\s*/,$file_tags->{$file}{'DISCNUMBER'}[0]);
 					if ($split[0] != $holder{'DISCNUMBER'}){
+						$index = scalar @contents;
 						$holder{'DISCNUMBER'} = $split[0];
 						foreach my $tag (@disk_tags){
 							if ($file_tags->{$file}{$tag}[0]){
@@ -2853,6 +2870,7 @@ sub generate_taglist_data {
 						$disc_data->{$holder{'DISCNUMBER'}}){
 							push(@contents,'TRACKTOTAL' . $sep . main::check_int($disc_data->{$holder{'DISCNUMBER'}}));
 						}
+						splice(@contents,$index,0,'# Disc number/disc track total');
 						push(@contents,'');
 					}
 				}
@@ -3420,6 +3438,9 @@ sub get_flac_tags {
 		# note that in theory, you can have a < 3 character tag name, but too unsafe
 		if (/^[^=~]{3,40}=/ || $_ eq '--END--'){
 			if ($working[0]){
+				# keep in tag data, but it gets cleared out in -A preprocessor
+				# $working[1] =~ s/[\s]+$//;
+				# $working[1] =~ s/\n{3,}/\n\n/;
 				if ($type ne 'all'){
 					$tags{$working[0]} = $working[1];
 				}
