@@ -18,6 +18,12 @@
 ## NOTE: almost no media players support > 1 tag type the way the specifications 
 ## say, so multiple values, like GENRE, ARTIST, often fail to work as intended.
 
+## SPECIAL FEATURES
+# Comma separated tag names to be used per file, and unset after each file
+# is tagged. This terminates default cascade tag to next file behavior.
+# This allows you for instance to set a COMPOSER for a single track.
+UNIQUE%:
+
 ## COLLECTION/RECORDING NAME/CREATORS ##
 ALBUM%:
 # name to sort under

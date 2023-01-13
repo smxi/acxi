@@ -160,6 +160,9 @@ separator from '=' to '%:'
 
 * i: generates info file data from flac tags for screen/info.txt.
 
+* s: skips file exist tests, so will always run in each directory. Not used with 
+'w'.
+
 * w: writes c, i, or t data to respective info.txt, taglist.tag, or auto.tag 
 files.
 
@@ -185,7 +188,11 @@ utility of being able to change auto.tag name to something else.
 
 9. Added new print line type: $line_result. This is used to separate result 
 blocks from processing blocks, before was using $line_small for both types. this 
-is used in -X, -L.
+is used in -X, -L, and -C/-S/-M --dry.
+
+10. Added --unique, which allows setting one time list of tags to use only 1x in 
+the file following that list in the auto.tag file. This can be used with -A, -S, 
+-M or -La.
 
 --------------------------------------------------------------------------------
 CHANGES:
@@ -200,6 +207,10 @@ to print line result:
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 for blocks of results like for -X or -L. This makes it easier to tell the 
 results apart from the processing blocks.
+
+3. -C, -S, -M should not be allowed to run external to the directory that 
+contains the flac files, that's too risky, so disabled that. I think that was 
+an oversight.
 
 --------------------------------------------------------------------------------
 DOCUMENTATION:

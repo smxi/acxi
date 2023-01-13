@@ -80,8 +80,8 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='17';
-my $self_date='2023-01-11';
+my $self_patch='18';
+my $self_date='2023-01-12';
 
 ## GLOBALS ##
 ## Booleans
@@ -777,11 +777,11 @@ sub process_tags {
 	say 'Raw tags: ', Data::Dumper::Dumper \@tags if $dbg[2];
 	push(@tags,'--END--') if @tags;
 	my ($args,$error_message,$holder);
-	my (@image_args,@images,@main_tags,@temp,@track_tags);
+	my (@image_args,@images,@main_tags,@temp,@track_tags,@unique);
 	my ($b_image_check,$b_tracks);
 	my ($i,$cmd,$comments,$tag) = (0,'','','');
 	state %set;
-	# handle corner case multi line tag content
+	# handle corner case multi line tag content, and populate unique if found
 	foreach my $line (@tags){
 		next if $line =~ /^\s*#/;
 		if ($line =~ /^\s*([^:%]+)\s*%:\s*(.*)?\s*$/ || $line eq '--END--'){
@@ -793,7 +793,15 @@ sub process_tags {
 				$i++;
 			}
 			last if $line eq '--END--';
-			$temp[$i] = [$1,$2];
+			# Handle occurances of per file tags, plus --unique override
+			if ($1 && $1 eq 'UNIQUE'){
+				if (!$run{'autotag-unique'} && $2){
+					$run{'autotag-unique'} = $2;
+				}
+			}
+			else {
+				$temp[$i] = [$1,$2];
+			}
 		}
 		else {
 			$line =~ s/^\s+|\s+$//g;
@@ -801,7 +809,14 @@ sub process_tags {
 			$temp[$i]->[1] .= "\n" . $line if defined $temp[$i];
 		}
 	}
+	if ($run{'autotag-unique'}){
+		@unique = map {uc($_);} split(/\s*,\s*/,$run{'autotag-unique'});
+	}
 	@tags = @temp;
+	my @tt = qw(PART SUBTITLE TITLE TITLESORT TRACKNUMBER VERSION);
+	push (@tt,@unique) if @unique;
+	my $track_pattern = join('|',@tt);
+	$track_pattern = qr/^($track_pattern)$/;
 	say 'Processed raw tags: ', Data::Dumper::Dumper \@tags if $dbg[2];
 	foreach my $working (@tags){
 		# say Data::Dumper::Dumper $working;
@@ -811,7 +826,7 @@ sub process_tags {
 		# $working->[1] =~ s/"/\\\"/g;
 		# $working->[1] =~ s/\$/\\\$/g;
 		$working->[1] = main::escape_item("$working->[1]");
-		if ($working->[0] =~ /^(PART|SUBTITLE|TITLE|TITLESORT|TRACKNUMBER|VERSION)$/){
+		if ($working->[0] =~ $track_pattern){
 			$tag = qq(--set-tag=$working->[0]="$working->[1]" );
 			push(@track_tags,$tag);
 		}
@@ -841,8 +856,6 @@ sub process_tags {
 			## NOTE: we have to unescape $ in paths for -e tests, but leave it escaped
 			## for qq cmd strings. Why? Shell expands it, perl does not.
 			my $temp = $working->[1];
-			# $temp =~ s/\\\$/\$/g;
-			# $temp =~ s/\\\"/"/g;
 			$temp = main::unescape_item("$temp");
 			print " Tagging \"$temp\"...";
 			main::error_handler('file-missing',"Missing file: $temp",1) if ! -e "$temp";
@@ -1015,6 +1028,9 @@ sub prefill_data {
 	SHNID Source[\s_-]?Media State Symphony Taper Taped[\s_-]?by Type
 	Venue Ville Year)
 	);
+	if ($run{'autotag-unique'}){
+		$info->{'unique'} = uc($run{'autotag-unique'});
+	}
 	foreach my $line (@$data){
 		$line = main::trimmer($line);
 		$counter++;
@@ -1183,6 +1199,10 @@ sub populate_tag_file {
 	$info = prefill_data() if $run{'prefill'};
 	say Data::Dumper::Dumper $info if $b_debug;
 	my @collection = (
+	'## SPECIAL FEATURES',
+	'# Comma separated tag names to be used per file, and unset after each file',
+	'# is tagged. This terminates default cascade tag to next file behavior.',
+	'UNIQUE',
 	'## RECORDING NAME/CREATORS ##',
 	'ALBUM','# Name to sort under','ALBUMSORT',
 	'ARTIST','# Multi-Artist only','ALBUMARTIST',
@@ -1275,6 +1295,11 @@ sub populate_tag_file {
 			elsif ($item eq 'PERFORMER%:'){
 				if ($info->{'performers'} && @{$info->{'performers'}}){
 					$item .= shift @{$info->{'performers'}};
+				}
+			}
+			elsif ($item eq 'UNIQUE%:'){
+				if ($info->{'unique'}){
+					$item .= $info->{'unique'};
 				}
 			}
 			# and these are generic prefills
@@ -2515,7 +2540,7 @@ sub process_directories {
 		}
 		say " Processing: $print_src";
 		my @files = main::globber("*.{$file_type}");
-		# say "\n", Data::Dumper::Dumper \@files;
+		# say $file_type, "\n", Data::Dumper::Dumper \@files;
 		if (grep -f, @files){
 			my ($b_processed,$b_tags);
 			undef $file_tags;
@@ -2738,6 +2763,9 @@ sub generate_taglist_data {
 		$multi = check_multi($all_tags);
 		$disc_data = get_disc_data();
 		my @files = sort keys %$file_tags;
+		if ($run{'taglist-autotag'} && $run{'autotag-unique'}){
+			push(@contents,"UNIQUE%:$sep" . uc($run{'autotag-unique'}));
+		}
 		foreach my $tag (@general_tags){
 			if (!$multi->{$tag}){
 				push(@contents,(map {$tag . $sep . $_} @{$file_tags->{$files[0]}{$tag}}));
@@ -3453,7 +3481,6 @@ sub check_int {
 	error_handler('non-integer',"non-integer value: $_[0]",0);
 	return $_[0];
 }
-
 sub dotify {
 	my $string = $_[0];
 	while (length($string) < 53){
@@ -3462,7 +3489,6 @@ sub dotify {
 	$string .= ' ';
 	return $string;
 }
-
 sub escape_item {
 	my ($file) = @_;
 	$file =~ s/"/\\"/g;
@@ -3475,11 +3501,13 @@ sub escape_item {
 # Note: because of spaces and other strange user file paths, need to use 
 # bsd glob, which returns space agnostic globs, as you'd expect. 
 sub globber {
-	# my @files = glob qq{"$_[0]"};
-	# say Data::Dumper::Dumper \@files;
 	# say $_[0];
-	# return @files;
-	return <$_[0]>;
+	my @files = glob($_[0]);
+	# say Data::Dumper::Dumper \@files;
+	return @files;
+	# note: creates a fh with global scope? for some weird reason, which will then 
+	# be returned each call once set even though that's not what $_[0] is running.
+	# return glob($_[0]); 
 }
 # args: 1 size in KiB
 sub print_size {
@@ -4356,10 +4384,11 @@ sub check_src_dest_directories {
 		$error_message = "Destination directory cannot be same as Source directory!";
 		main::error_handler('dest-eq-src-dir',$error_message,0);
 	}
-	if ($run{'prefill'} && 
+	if (((!$b_test && ($run{'autotag-unique'} || $run{'autotag-create'})) || 
+	($run{'taglist-autotag'} && $run{'taglist-write'})) && 
 	 !(main::globber("$SOURCE_DIRECTORY${path_separator}*.$INPUT_TYPE"))){
-		my $error_message = "The --prefill option can only be run on a directory ";
-		$error_message .= "containing\n$INPUT_TYPE files. None found in: ";
+		$error_message = "autotag-create/--unique write file options can only be run on ";
+		$error_message .= "\ndirectory containing $INPUT_TYPE files. None found in: ";
 		$error_message .= "$SOURCE_DIRECTORY";
 		main::error_handler('prefill-error',$error_message,0);
 	}
@@ -4616,6 +4645,10 @@ sub show_options {
 	$output .= "                  and/or $TAGLIST_FILE/$AUTOTAG_FILE files are not already present.\n";
 	$output .= "--taglist-file, --tlf, --tf {file}\n";
 	$output .= "                  Alternate file name to use for --taglist.\n";
+	$output .= "--unique {tags}   Comma separated list of tags to be used only 1x per file, and\n";
+	$output .= "                  unset after. Use with -A only after setting tags in $AUTOTAG_FILE.\n";
+	$output .= "                  Can also be set on top of $AUTOTAG_FILE with UNIQUE%:.\n";
+	$output .= "                  Use use with -La/-C/-S/-M to set UNIQUE%: in $AUTOTAG_FILE.\n";
 	$output .= $line_small . "\n";
 	$output .= "Analyze/Checksum options:\n";
 	$output .= "--analyze, -Z     Analyze contents of directories, creates screen report per\n";
@@ -5261,6 +5294,11 @@ sub get{
 		$TAGLIST_FILE = $arg;
 		$test{'info'} = 1;
 		$test{'taglist-file'} = 1;},
+	'unique:s' => sub { 
+ 		my ($opt,$arg) = @_;
+		main::error_handler(
+		'missing-arg',"$opt requires comma separated list of tags.",1) if !$arg;
+ 		$run{'autotag-unique'} = $arg;},
 	'U|update:i'=> sub { 
 		my ($opt,$arg) = @_;
 		$run{'update'} = 1; 
@@ -5375,9 +5413,10 @@ sub verify_selections {
 		 "tag-create/prefill options cannot be used with info/image/tagging options.",1);
 	}
 	# analyze options cannot be used with checksum/verify options
-	if ($run{'analyze'} && ($test{'checksum-generate'} || $run{'checksum-verify'})){
+	if ($run{'analyze'} && ($test{'checksum-generate'} || $run{'checksum-verify'} || 
+	$test{'tag'})){
 		main::error_handler('invalid-options', 
-		 "you cannot use -Z/-X[qv] with --checksum or --checksum-verify.",1);
+		 "you cannot use --analyze with other checksum or tagging options.",1);
 	}
 	# You cannot run infofix with anything else 
 	if ($run{'infofix'} && ($run{'taglist'} || $test{'tag'})){
@@ -5412,6 +5451,11 @@ sub verify_selections {
 	#################################
 	## Required Option Missing Combo Tests ##
 	#################################
+	if ($run{'autotag-unique'} && !$run{'autotag-create'} && !$run{'autotagger'} &&
+	!$run{'taglist-autotag'}){
+		main::error_handler('invalid-options', 
+		 "--unique requires -La/autotag-create/-A.",1);
+	}
 	if ($test{'autotag-file'} && !$run{'autotagger'} && !$run{'autotag-create'} &&
 	!$run{'taglist-autotag'}){
 		main::error_handler('invalid-options', 

@@ -1,4 +1,4 @@
-.TH ACXI 1 "2023\-01\-10" acxi "acxi manual"
+.TH ACXI 1 "2023\-01\-11" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -42,7 +42,7 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-start\fR {0-xx}] 
 [\fB\-\-tag\fR, \fB\-T\fR] {"TAG1%:tag value^^TAG2%:tag value"}] 
 [\fB\-\-taglist\fR, \fB\-L\fR [acfiw]] 
-[\fB\-\-taglist\-file\fR, \fB\-\-tlf\fR, \fB\-\-tf\fR {tag list file}] 
+[\fB\-\-taglist\-file\fR {comma separated tags}] 
 .IP * 2
 Analyze/Checksums: [\fB\-\-analyze\fR, \fB\-Z\fR]
 [\fB\-\-checksum\fR, \fB\-K\fR] [\fB\-\-checksum\-delete\fR, \fB\-D\fR] 
@@ -1176,6 +1176,27 @@ don't use \fBw\fR:
 An alternate file name to use for \fB\-\-taglist\fR. Note that file MUST have a 
 *.tag extension, and should not be anything other than ASCII or UTF8, otherwise 
 you will get ungood results.
+
+.TP
+.B \-\-unique\fR {comma separated list of tag names}
+The comma separated list of tag names will be used to set those tags to be used 
+only 1x per file when found in \fBauto.tag\fR file, and unset after. You can 
+also set this list manually in the auto.tag file top special field 
+\fBUNIQUE%\fR. This will make those tags work in a similar way to \fBVERSION\fR 
+or \fBPART\fR or \fBTITLE\fR.
+
+You want to set these tags in \fBauto.tag\fR right before the file data block 
+for that file. Note that this will override any global use of that tag name.
+
+Alternately, when used with \fB\-La\fR, \fB\-C\fR, \fB\-M\fR, \fB\-S\fR will 
+automatically set the UNIQUE%: value in the generated \fBauto.tag\fR file.
+
+Sample: with command line:
+.br
+\fBacxi \-s ./ -A \-\-unique COMPOSER,ARRANGER\fR
+.br
+Sample: in \fBauto.tag\fR file:
+\fBUNIQUE%:COMPOSER\,ARRANGERfR
 
 .SH ANALYZE/CHECKSUM OPTIONS
 Create checksum files (ffp/md5), verify checksums, analyze sets of files, check 
