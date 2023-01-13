@@ -2862,7 +2862,7 @@ sub generate_taglist_data {
 					$index = scalar @contents;
 					$holder{'DISCNUMBER'} = $split[0];
 					foreach my $tag (@disk_tags){
-						if ($use->($tag) && $tags->{$tag}[0]){
+						if ($use->{$tag} && $tags->{$tag}[0]){
 							if ($tag eq 'DISCNUMBER'){
 								$value = main::check_int($split[0]);
 							}
