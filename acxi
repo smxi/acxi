@@ -810,7 +810,7 @@ sub process_tags {
 		}
 	}
 	if ($run{'autotag-unique'}){
-		@unique = map {uc($_);} split(/\s*,\s*/,$run{'autotag-unique'});
+		@unique = split(/\s*,\s*/,uc($run{'autotag-unique'}));
 	}
 	@tags = @temp;
 	my @tt = qw(PART SUBTITLE TITLE TITLESORT TRACKNUMBER VERSION);
@@ -5454,7 +5454,7 @@ sub verify_selections {
 	if ($run{'autotag-unique'} && !$run{'autotag-create'} && !$run{'autotagger'} &&
 	!$run{'taglist-autotag'}){
 		main::error_handler('invalid-options', 
-		 "--unique requires -La/autotag-create/-A.",1);
+		 "--unique requires -La/--autotag-create/-A.",1);
 	}
 	if ($test{'autotag-file'} && !$run{'autotagger'} && !$run{'autotag-create'} &&
 	!$run{'taglist-autotag'}){
