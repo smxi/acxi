@@ -2653,13 +2653,15 @@ sub generate_info_data {
 				$found{$lc} = 1;
 			}
 		}
-		if ($file_tags->{$file}{'DISCNUMBER'}[0] && ($multi->{'DISCNUMBER'} ||
-		($file_tags->{$file}{'DISCTOTAL'}[0] && $file_tags->{$file}{'DISCTOTAL'}[0] > 1))){
+		if ($file_tags->{$file}{'DISCNUMBER'} && 
+		$file_tags->{$file}{'DISCNUMBER'}[0] && ($multi->{'DISCNUMBER'} ||
+		($file_tags->{$file}{'DISCTOTAL'} && $file_tags->{$file}{'DISCTOTAL'}[0] &&
+		$file_tags->{$file}{'DISCTOTAL'}[0] > 1))){
 			@temp = split(/\s*\/\s*/,$file_tags->{$file}{'DISCNUMBER'}[0]);
 			$track = $temp[0] . '-';
-			
 		}
-		if ($file_tags->{$file}{'TRACKNUMBER'}[0]){
+		if ($file_tags->{$file}{'TRACKNUMBER'} && 
+		$file_tags->{$file}{'TRACKNUMBER'}[0]){
 			@temp = split(/\s*\/\s*/,$file_tags->{$file}{'TRACKNUMBER'}[0]);
 			if ($temp[0] =~ /^\d+$/){
 				$track .= sprintf('%02d',$temp[0]) . '. ';
@@ -2673,10 +2675,10 @@ sub generate_info_data {
 				$track .= $file_tags->{$file}{'ARTIST'}[0] . ' - ';
 			}
 			$track .= $file_tags->{$file}{'TITLE'}[0]; 
-			if ($file_tags->{$file}{'VERSION'}[0]){
+			if ($file_tags->{$file}{'VERSION'} && $file_tags->{$file}{'VERSION'}[0]){
 				$track .= ' (' . $file_tags->{$file}{'VERSION'}[0] . ')';
 			}
-			if ($file_tags->{$file}{'PART'}[0]){
+			if ($file_tags->{$file}{'PART'} && $file_tags->{$file}{'PART'}[0]){
 				$track .= ' (' . $file_tags->{$file}{'PART'}[0] . ')';
 			}
 		}
@@ -2752,6 +2754,7 @@ sub generate_taglist_data {
 		my $all_tags = get_tags_used();
 		state ($disk_pattern,$track_pattern,$general_pattern);
 		if (!$disk_pattern){
+			# don't include DISCTOTAL because that only shows 1x, top
 			$disk_pattern = 'DISCNUMBER|DISCSUBTITLE|TRACKTOTAL';
 			$track_pattern = 'ACCURATERIPDISCID|ACCURATERIPRESULT|';
 			$track_pattern .= 'ACOUSTIC_ID|ACOUSTID_FINGERPRINT|ISRC|PART|';
@@ -2783,7 +2786,8 @@ sub generate_taglist_data {
 		$index = scalar @contents;
 		if ($disc_data->{'total-discs'} || ($file_tags->{$files[0]}{'DISCTOTAL'} && 
 		$file_tags->{$files[0]}{'DISCTOTAL'}[0] > 1)){
-			if ($file_tags->{$files[0]}{'DISCTOTAL'}){
+			# note: -Lai appears to generate fake DISCTOTAL key but no idea how!
+			if ($file_tags->{$files[0]}{'DISCTOTAL'}[0]){
 				$temp = $file_tags->{$files[0]}{'DISCTOTAL'}[0];
 			}
 			else {
@@ -3498,6 +3502,7 @@ sub check_module {
 }
 # $1 - tests that expected value is integer, returns error if not
 sub check_int {
+	return if !defined $_[0];
 	return int($_[0]) if $_[0] =~ /^\d+$/;
 	error_handler('non-integer',"non-integer value: $_[0]",0);
 	return $_[0];
