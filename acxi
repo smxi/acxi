@@ -2661,7 +2661,7 @@ sub generate_info_data {
 		if ($use->{'DISCNUMBER'} && ($multi->{'DISCNUMBER'} ||
 		($use->{'DISCTOTAL'} && $tags->{'DISCTOTAL'}[0] > 1))){
 			@temp = split(/\s*\/\s*/,$tags->{'DISCNUMBER'}[0]);
-			$track = $temp[0] . '-';
+			$track = main::check_int($temp[0]) . '-';
 		}
 		# this can be 0 or string, remember
 		if ($use->{'TRACKNUMBER'} && defined $tags->{'TRACKNUMBER'}[0]){
