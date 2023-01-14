@@ -2895,14 +2895,21 @@ sub generate_taglist_data {
 			foreach my $tag (@track_tags){
 				# track number can be 0, so use defined test, already dumped '' values
 				if ($use->{$tag} && defined $tags->{$tag}[0]){
-					if ($tag eq 'TRACKNUMBER'){
-						@split = split(/\s*\/\s*/,$tags->{'TRACKNUMBER'}[0]);
-						$value = main::check_int($split[0]);
+					# known issue with musicbrainz having > 1 isrc id per filej. Sigh...
+					if ($tag eq 'ISRC'){
+						push(@contents,(map {$tag . $sep . $_} @{$tags->{$tag}}));
 					}
 					else {
-						$value = $tags->{$tag}[0];
+						if ($tag eq 'TRACKNUMBER'){
+							@split = split(/\s*\/\s*/,$tags->{'TRACKNUMBER'}[0]);
+							$value = main::check_int($split[0]);
+						}
+						
+						else {
+							$value = $tags->{$tag}[0];
+						}
+						push(@contents,$tag . $sep . $value);
 					}
-					push(@contents,$tag . $sep . $value);
 				}
 			}
 			push(@contents,"FILE$sep$file",'') if @contents;
@@ -2996,7 +3003,7 @@ sub check_multi {
 		if ($key_count > 1){
 			$multi{$tag} = 1;
 		}
-		elsif ($key_count > 1) {
+		elsif ($key_count == 1) {
 			my @keys = keys %{$multi{$tag}};
 			# corner case, where only one tag content occured, but not in all files
 			if ($multi{$tag}->{$keys[0]} < $file_count || 
@@ -3470,10 +3477,10 @@ sub get_flac_tags {
 	chomp @orig_tags;
 	say 'Raw tags from export: ', Dumper \@orig_tags if $dbg[1];
 	push(@orig_tags,'--END--');
-	foreach (@orig_tags){
+	foreach my $tag (@orig_tags){
 		# vorbis specs: tag names cannot contain = (0x3D),~ (0x7E)
 		# note that in theory, you can have a < 3 character tag name, but too unsafe
-		if (/^[^=~]{3,40}=/ || $_ eq '--END--'){
+		if ($tag =~ /^[^=~]{3,40}=/ || $tag eq '--END--'){
 			if ($working[0]){
 				# keep in tag data, but it gets cleared out in -A preprocessor
 				# $working[1] =~ s/[\s]+$//;
@@ -3482,29 +3489,33 @@ sub get_flac_tags {
 					$tags{$working[0]} = $working[1];
 				}
 				else {
-					push(@{$tags{$working[0]}},$working[1]);
+					# handle stupid multiple entries with different tag name variants that 
+					# are standardized below. Yes, looking at musicbrainz...
+					if (!grep {$_ eq $working[1]} @{$tags{$working[0]}}){
+						push(@{$tags{$working[0]}},$working[1]);
+					}
 				}
 			}
-			last if $_ eq '--END--';
+			last if $tag eq '--END--';
 			# make all tag names uppercase to make following processing easier
-			$_ =~ s/^([^=~]{3,})=/\U$1=/;
+			$tag =~ s/^([^=~]{3,})=/\U$1=/;
 			if ($type eq 'all'){
 				# map some inconsistent tag names here
-				$_ =~ s/^ALBUM[\s_-]ARTIST=/ALBUMARTIST=/;
-				$_ =~ s/^DIS[CK][\s_-]?(#|NUMBER)?=/DISCNUMBER=/;
-				$_ =~ s/^(DIS[CK](C|[\s_-]?TOTAL)|TOTAL[\s_-]?DIS[CK]S)=/DISCTOTAL=/;
-				$_ =~ s/^SOURCE[\s_-]?MED(IA|UM)=/SOURCEMEDIA=/;
-				$_ =~ s/^TRACK[\s_-]?NUM(BER)?=/TRACKNUMBER=/;
-				$_ =~ s/^(TOTAL[\s_-]?TRACKS|TRACK[\s_-]?TOTAL)=/TRACKTOTAL=/;
+				$tag =~ s/^ALBUM[\s_-]ARTIST=/ALBUMARTIST=/;
+				$tag =~ s/^DIS[CK][\s_-]?(#|NUMBER)?=/DISCNUMBER=/;
+				$tag =~ s/^(DIS[CK](C|[\s_-]?TOTAL)|TOTAL[\s_-]?DIS[CK]S)=/DISCTOTAL=/;
+				$tag =~ s/^SOURCE[\s_-]?MED(IA|UM)=/SOURCEMEDIA=/;
+				$tag =~ s/^TRACK[\s_-]?NUM(BER)?=/TRACKNUMBER=/;
+				$tag =~ s/^(TOTAL[\s_-]?TRACKS|TRACK[\s_-]?TOTAL)=/TRACKTOTAL=/;
 			}
-			@working = split(/=/,$_,2);
+			@working = split(/=/,$tag,2);
 			# we don't want empty tags, but remember, valid value can be 0
 			if (!defined $working[1] || $working[1] eq ''){
 				@working = ();
 			}
 		}
 		else {
-			$working[1] .= "\n" . $_ if defined $working[1];
+			$working[1] .= "\n" . $tag if defined $working[1];
 		}
 	}
 	if ($type ne 'all'){
