@@ -2753,7 +2753,7 @@ sub generate_info_data {
 }
 sub generate_taglist_data {
 	my (@contents,$disc_data,@disk_tags,@general_tags,%holder,@split,@track_tags);
-	my ($b_tags,$index,$multi,$tags,$temp,$track_total,$use,$value);
+	my ($b_tagblock,$b_tags,$index,$multi,$tags,$temp,$track_total,$use,$value);
 	say "  Generating $tag_file data...";
 	if (!$file_tags || !%$file_tags){
 		say "  No tags found! Are the files tagged?";
@@ -2924,6 +2924,13 @@ sub generate_taglist_data {
 			push(@contents,"FILE$sep$file",'') if @contents;
 		}
 		else {
+			if (!$b_tagblock){
+				push(@contents,
+				'# Switch on TAGBLOCK for -A per file block tagging',
+				'UNIQUE%:TAGBLOCK',
+				'');
+				$b_tagblock = 1;
+			}
 			foreach my $tag (sort keys %{$tags}){
 				if ($use->{$tag}){
 					push(@contents,(map {$tag . $sep . $_} @{$tags->{$tag}}));
