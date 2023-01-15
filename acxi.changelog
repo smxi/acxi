@@ -6,15 +6,16 @@ Date: 2023-??-??
 RELEASE NOTES:
 --------------------------------------------------------------------------------
 
-Big MP3 tag update, added tags that are same in id3v2.3 and id3v2.4 and have 
-FLAC equivalents. Used this as an excuse to also review and add some Vorbis tags
-that make sense for acxi to include in auto.tag and tagging/prefill features.
-
-This review of tagging led to the second major update: the new InfoCreate 
-class/package for --info-create/--taglist. This sends acxi to 3.6.00 since this 
-is a significant set of new features, and creates an entire new type of 
+The initial mp3 based review of tagging led to a major update: the new TagList 
+class/package for --taglist. This sends acxi to 3.6.00 since this is a 
+significant set of new features, and creates an entire new type of 
 functionality, which also blends very well with newer and existing 
 tagging/prefill type features. 
+
+The preceding changes were started with a more basic MP3 tag update, which added 
+tags that are same in id3v2.3 and id3v2.4 and have FLAC equivalents. Also used 
+this as an excuse to also review and add some Vorbis tags that make sense for 
+acxi to include in auto.tag and tagging/prefill features.
 
 --------------------------------------------------------------------------------
 SPECIAL THANKS:
@@ -75,7 +76,8 @@ right directory in terms of the path/filename metaflac received.
 2. OPTIONS: --nlink would never have worked because it was missing the 'n' 
 ('link').
 
-3. Bug with date fix, was always showing true for test for dd-mm-yyyy type.
+3. Bug with date fix, was always showing true for test for dd-mm-yyyy type, 
+which could lead to failure to then update those dates.
 
 --------------------------------------------------------------------------------
 FIXES:
@@ -114,11 +116,16 @@ processing items.
 
 6. Was missing a date variant: dd-month-yyyy
 
-7. Flac tag reader wasn't escaping file name, which led to name with $ failing.
-Also, the mp3 tag string generator was passing the file name in double quotes,
-which meant that the $ string was being treated as a scalar and would have been 
-empty as well. Or maybe caused perl to exit with error since non declared 
-variable was being attempted.
+7. SYNC/AUTOTAG/TAGLIST: Flac tag reader wasn't escaping file name, which led to 
+name with $ failing. Also, the mp3 tag string generator was passing the file 
+name in double quotes, which meant that the $ string was being treated as a 
+scalar and would have been empty as well. Or maybe caused perl to exit with 
+error since non declared variable was being attempted.
+
+8. AUTOTAG/PREFILL: Removed ISRC tag from main body of auto.tag, that is a per 
+track always file, it is a unique idenitifier (or idenfiers in rare cases, like 
+musicbrainz) per file. I had always thought it was a per recording, not track,
+id, but that is wrong.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
@@ -142,9 +149,14 @@ CONDUCTOR: Conductor, Conducted by.
 MIXER: Mixed by, Mixer, Mastered by, Masterer.
 REMIXER: Remixer, remixed by, remasterer, remastered by.
 
-3. Added SUBTITLE, TITLESORT tags to list of supported tags for tagging, but not 
-to auto.tag because those are made for very specific purposes and are unlikely 
-to be used correctly. See Known Issues 2.
+3. Added WORK, SUBTITLE, TITLESORT tags to list of supported tags for tagging, 
+but not to auto.tag because those are made for very specific purposes and are 
+unlikely to be used correctly. See Known Issues 2. Also added a number of track 
+file specific tags like REPLAYGAIN*, ACOUSTID*, etc, to the track tags list for 
+-Lc, -La, and -A. This means that track specific tags that should never be 
+carried over to next file are now protected much better. While hard to get a 
+complete list of tags that must only occur per file, never common between files, 
+very good progress was made to tighten this down.
 
 4. TAGLIST: New features: --taglist/-L. Depending on switches, can generate full 
 report of all tags per FLAC file in directory, a condensed version of those 
@@ -163,11 +175,16 @@ separator from '=' to '%:'
 * s: skips file exist tests, so will always run in each directory. Not used with 
 'w'.
 
-* w: writes c, i, or t data to respective info.txt, taglist.tag, or auto.tag 
+* w: writes a, c, i, or f data to respective info.txt, taglist.tag, or auto.tag 
 files.
 
-i and c or f can be used together. a activates c by default, unless you specify 
-f. c and f can't be used together.
+i + [cf] can be used together. a activates c by default, unless you specify f. c 
+and f can't be used together. s can't be used with w.
+
+In latest testing, -Lc is generating the same set of condensed files the 
+original contains, minus some corrected tags, like having 'ALBUM ARTIST' and 
+ALBUMARTIST tags in the same file, or 'TRACKTOTAL' and 'TOTALTRACKS'. This was 
+seen in musicbrainz picard tagging at times. 
 
 5. Added $self_patch to allow for checking development patch versions, like 
 pinxi uses. Helpful to make sure you have the right version. Also added to
@@ -178,21 +195,33 @@ acxi version: 3.5.06-14 (2023-01-10)
 
 6. OPTIONS: Added --glob as alternative to --source-glob/-g. 
 
-7. AutoTag::process_tags() now handles multiline tag values. Which should be 
-avoided because very few media players support those correctly. But needed since 
---taglist t/c support multiline tag values.
+7. AUTOTAG: AutoTag::process_tags() now handles multiline tag values. Which 
+should be avoided because very few media players support those correctly. But 
+needed since --taglist a/c/f support multiline tag values.
 
-8. Added --autotag-file/--atf/--af for one time changes of auto.tag file name.
-This was an oversight, but never had cause for it until testing -La exposed the 
-utility of being able to change auto.tag name to something else.
+8. AUTOTAG/PREFILL/TAGLIST: Added --autotag-file/--atf/--af for one time changes 
+of auto.tag file name. This was an oversight, but never had cause for it until 
+testing -La exposed the utility of being able to change auto.tag name to 
+something else.
 
 9. Added new print line type: $line_result. This is used to separate result 
 blocks from processing blocks, before was using $line_small for both types. this 
 is used in -X, -L, and -C/-S/-M --dry.
 
-10. Added --unique, which allows setting one time list of tags to use only 1x in 
-the file following that list in the auto.tag file. This can be used with -A, -S, 
--M or -La.
+10. TAGLIST/AUTOTAG: Added --unique, which allows setting one time list of tags 
+to use only 1x in the file following that list in the auto.tag file. This can be 
+used with -A, -S, -M or -La. This will either create the UNIQUE%: item (-La) in 
+the tag file, or add it to an existing tag set with -A. This basically adds that 
+set of tags to the per track tag list, which are handled differently than block 
+type tags, which can apply to > 1 file per set. 
+
+The TAGBLOCK value tells -A to discard all previously found tags for each new 
+file processed. This is only useful with -Lf generated auto.tag files. 
+
+-La/-Lf set their respective unique tag markers (UNIQUE%:tag,tag / 
+UNIQUE%:TAGBLOCK) automatically, so you really only need this for auto.tag 
+creation with -C/-S/-M or to force it into the tagging with -A if it was not set 
+in auto.tag already.
 
 --------------------------------------------------------------------------------
 CHANGES:
@@ -224,8 +253,8 @@ more consistent prefill tag listing.
 
 4. Updated man page debugger section for --dbg xx triggers.
 
-5. Updated README.txt, help, and man page for new --info-create, --taglist, 
---taglist-file options.
+5. Updated README.txt, help, and man page for new --taglist, --taglist-file, 
+--unique options.
 
 6. Updated man/help to add --glob.
 
@@ -249,7 +278,8 @@ options themselves only switch on $run and $test switches and assign values.
 
 5. Extended main::get_flac_tags() to return 'all' tags in flac file, for new 
 package TagList. Changed old 'standard' to 'flac-mp3', since that was used only 
-to get flac to mp3 tags.
+to get flac to mp3 tags. Totally rewrote get_flac_tags as well, to be more 
+robust and dynamic.
 
 6. Changed to explicit sync switched on only if no other actions conflict in 
 OptionsHandler::set_switches(). This was previously always set to 1, true, on 

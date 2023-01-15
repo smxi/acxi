@@ -80,8 +80,8 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='21';
-my $self_date='2023-01-13';
+my $self_patch='22';
+my $self_date='2023-01-15';
 
 ## GLOBALS ##
 ## Booleans
@@ -778,7 +778,7 @@ sub process_tags {
 	push(@tags,'--END--') if @tags;
 	my ($args,$error_message,$holder);
 	my (@image_args,@images,@main_tags,@temp,@track_tags,@unique);
-	my ($b_image_check,$b_tracks);
+	my ($b_image_check,$b_tagblock,$b_tracks);
 	my ($i,$cmd,$comments,$tag) = (0,'','','');
 	state %set;
 	# handle corner case multi line tag content, and populate unique if found
@@ -810,7 +810,12 @@ sub process_tags {
 		}
 	}
 	if ($run{'autotag-unique'}){
-		@unique = split(/\s*,\s*/,uc($run{'autotag-unique'}));
+		if ($run{'autotag-unique'} eq 'TAGBLOCK'){
+			$b_tagblock = 1;
+		}
+		else {
+			@unique = split(/\s*,\s*/,uc($run{'autotag-unique'}));
+		}
 	}
 	@tags = @temp;
 	my @tt = qw(ACCURATERIPDISCID ACCURATERIPRESULT ACOUSTID_ID 
@@ -885,6 +890,7 @@ sub process_tags {
 			$args = join ' ', @track_tags;
 			@track_tags = ();
 			@image_args = ();
+			@main_tags = () if $b_tagblock;
 			# reset all detected @main items
 			foreach (keys %set){
 				$set{$_} = 0;
@@ -2774,6 +2780,9 @@ sub generate_taglist_data {
 		@general_tags = grep {$_ !~ $general_pattern} @$all_tags;
 		$multi = check_multi($all_tags);
 		$disc_data = get_disc_data();
+		if ($run{'taglist-autotag'} && !$run{'autotag-unique'}){
+			$run{'autotag-unique'} = join(',',(grep {$multi->{$_}} @general_tags));
+		}
 		my @files = sort keys %$file_tags;
 		if ($run{'taglist-autotag'} && $run{'autotag-unique'}){
 			push(@contents,"UNIQUE%:$sep" . uc($run{'autotag-unique'}));
