@@ -42,7 +42,8 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-start\fR {0-xx}] 
 [\fB\-\-tag\fR, \fB\-T\fR] {"TAG1%:tag value^^TAG2%:tag value"}] 
 [\fB\-\-taglist\fR, \fB\-L\fR [acfiw]] 
-[\fB\-\-taglist\-file\fR {comma separated tags}] 
+[\fB\-\-taglist\-file\fR {file name}] 
+[\fB\-\-unique\fR {TAGBLOCK|comma separated tags}] 
 .IP * 2
 Analyze/Checksums: [\fB\-\-analyze\fR, \fB\-Z\fR]
 [\fB\-\-checksum\fR, \fB\-K\fR] [\fB\-\-checksum\-delete\fR, \fB\-D\fR] 
@@ -1179,7 +1180,7 @@ An alternate file name to use for \fB\-\-taglist\fR. Note that file MUST have a
 you will get ungood results.
 
 .TP
-.B \-\-unique\fR {comma separated list of tag names}
+.B \-\-unique\fR {TAGBLOCK|comma separated tags}
 The comma separated list of tag names will be used to set those tags to be used 
 only 1x per file when found in \fBauto.tag\fR file, and unset after. You can 
 also set this list manually in the auto.tag file top special field 
