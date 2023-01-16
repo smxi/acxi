@@ -19,9 +19,10 @@
 ## say, so multiple values, like GENRE, ARTIST, often fail to work as intended.
 
 ## SPECIAL FEATURES
-# Comma separated tag names to be used per file, and unset after each file
-# is tagged. This terminates default cascade tag to next file behavior.
-# This allows you for instance to set a COMPOSER for a single track.
+# Comma separated tag names to be used per file, and unset after each file is
+# tagged. This terminates default cascade tag to next file behavior. This allows
+# you for instance to set a COMPOSER for a single track. Do not use for any tag 
+# that might apply to more than one consecutive file (remove if auto-added then).
 UNIQUE%:
 
 ## COLLECTION/RECORDING NAME/CREATORS ##

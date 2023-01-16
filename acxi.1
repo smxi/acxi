@@ -1,4 +1,4 @@
-.TH ACXI 1 "2023\-01\-15" acxi "acxi manual"
+.TH ACXI 1 "2023\-01\-16" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -1135,11 +1135,17 @@ as a source for \fB\-\-autotag\fR. This also sets the \fBUNIQUE%:\fR value,
 \fBTAGBLOCK\fR for \fB\-Laf\fR, and a list of general tags that are not global 
 to all tags for \fB\-Lac\fR.
 
-* \fBc\fR \- Generate condensed taglist data. Useful if each file has 
-mostly the same tags, with only a few differing.
+* \fBc\fR \- Generate condensed taglist data. Useful if each file has mostly the 
+same tags, with only a few differing. With \fBac\fR, or \fBa\fR alone, also adds 
+\fBUNIQUE%:[taglist]\fR for any tag that does not occur in every file. Note that 
+if you want a tag to apply to all following files until the next occurance, 
+remove that tag name from the comma separated list. This detection can't be 
+automated, sorry.
 
 * \fBf\fR \- Generate full per audio file taglist data. This is all the tags 
-found per audio file in the order the files occur. This is the default action.
+found per audio file in the order the files occur. This is the default action. 
+With \fBa\fR, adds \fBUNIQUE%:TAGBLOCK\fR so each file is tagged only with the 
+tags in its block, no cascade of tags occurs.
 
 * \fBi\fR \- Generate info file data. Disables taglist unless c/f used.
 
@@ -1164,14 +1170,16 @@ Sample (creates taglist condensed and info file data, prints to screen, and to
 file to store this data):
 
 .EX
-\fBacxi \-s ./ \-Lci 2>&1 | tee taglist-data.txt\fR
+\fBacxi \-s ./ \-Lci 2>&1 | tee taglist\-data.txt\fR
 .EE
 
-Hint: if you want to check many directory tag sets but some have \fBinfo.txt\fR 
-or \fBtaglist.tag\fR and some don't, use a fake info or taglist file value, but 
-don't use \fBw\fR:
+If you want to check many directory tag sets but some have \fBinfo.txt\fR or 
+\fBtaglist.tag\fR and some don't, use \fBs\fR, which will skip the file exist 
+tests.
 
-\fB--info-file foo.txt\fR / \fB--taglist-file foo.tag\fR
+To change on a one time basis the file names to be created or tested for:
+
+\fB\-\-info\-file foo.txt\fR / \fB\-\-taglist\-file foo.tag\fR
 
 .TP
 .B \-\-taglist\-file\fR, \fB\-\-tlf\fR, \fB\-\-tf\fR {file}
@@ -1191,7 +1199,7 @@ before the \fBFILE%:\fR item as applying only to that block of tags.
 You want to set these tags in \fBauto.tag\fR right before the file data block 
 for that file. Note that this will override any global use of that tag name.
 
-\fB\-La\fR/\fB\-Laf\fB will set unique automatically.
+\fB\-La\fR/\fB\-Laf\fR will set unique automatically.
 
 Alternately, when used with \fB\-C\fR, \fB\-M\fR, or \fB\-S\fR will 
 automatically set the UNIQUE%: value in the generated \fBauto.tag\fR file.
@@ -1626,7 +1634,7 @@ don't want these tags to be always used in prefill actions.
 
 Sample: \fBPREFILL_TAG=GENRE%:Heavy Metal^^IMAGE%:cover.jpg\fR 
 
-\fBTAGLIST_FILE\fR \- Sample: \fBTAGLIST_FILE=taglists.txt\fR 
+\fBTAGLIST_FILE\fR \- Sample: \fBTAGLIST_FILE=taglists.tag\fR 
 
 \fBtaglist.tag\fR \- The filename to be used to by \fB\-\-taglist\fR. Default is 
 \fBtaglist.tag\fR

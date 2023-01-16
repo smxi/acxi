@@ -166,9 +166,13 @@ the file(s).
 * a: switch output file from taglist.tag to auto.tag, and change tag:value 
 separator from '=' to '%:'
 
-* c: generates condensed data from flac tags for tag list.
+* c: generates condensed data from flac tags for tag list. With a, or a alone, 
+adds UNIQUE%:[taglist] for each tag that does not occur in every file. If you 
+want those tags to cascade to next files, then remove that tag name from UNIQUE.
 
-* f: generates full taglist data. This is default if no args used.
+* f: generates full taglist data. This is default if no args used. With a, adds 
+UNIQUE%:TAGBLOCK which forces non cascade of tags per file. This is what you 
+want, so don't change that.
 
 * i: generates info file data from flac tags for screen/info.txt.
 
@@ -181,8 +185,8 @@ files.
 i + [cf] can be used together. a activates c by default, unless you specify f. c 
 and f can't be used together. s can't be used with w.
 
-In latest testing, -Lc is generating the same set of condensed files the 
-original contains, minus some corrected tags, like having 'ALBUM ARTIST' and 
+In latest testing, -Lc is generating the same set of condensed tags the original 
+files contain, minus some corrected tags, like having 'ALBUM ARTIST' and 
 ALBUMARTIST tags in the same file, or 'TRACKTOTAL' and 'TOTALTRACKS'. This was 
 seen in musicbrainz picard tagging at times. 
 
@@ -221,7 +225,12 @@ file processed. This is only useful with -Lf generated auto.tag files.
 -La/-Lf set their respective unique tag markers (UNIQUE%:tag,tag / 
 UNIQUE%:TAGBLOCK) automatically, so you really only need this for auto.tag 
 creation with -C/-S/-M or to force it into the tagging with -A if it was not set 
-in auto.tag already.
+in auto.tag already, with the following caveat: 
+
+For -La/- Lac, Don't ever use UNIQUE tag name for any tag that needs to apply to 
+following files also, only ones that definitely only apply to the following 
+single file. You may need to manually remove those from the list of tags 
+automatically generated in that case.
 
 --------------------------------------------------------------------------------
 CHANGES:

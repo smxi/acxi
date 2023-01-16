@@ -80,8 +80,8 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='22';
-my $self_date='2023-01-15';
+my $self_patch='23';
+my $self_date='2023-01-16';
 
 ## GLOBALS ##
 ## Booleans
@@ -1205,8 +1205,9 @@ sub populate_tag_file {
 	say Data::Dumper::Dumper $info if $b_debug;
 	my @collection = (
 	'## SPECIAL FEATURES',
-	'# Comma separated tag names to be used per file, and unset after each file',
-	'# is tagged. This terminates default cascade tag to next file behavior.',
+	'# Comma separated tag names to be used per file, and unset after each file is',
+	'# tagged. This terminates default cascade tag to next file behavior. Not for',
+	'# when tag applies to > 1 file in a row (remove if auto-added in that case).',
 	'UNIQUE',
 	'## RECORDING NAME/CREATORS ##',
 	'ALBUM','# Name to sort under','ALBUMSORT',
@@ -4729,6 +4730,7 @@ sub show_options {
 	$output .= "                  s: Skip file(s) exist tests. Don't use with 'w'.\n";
 	$output .= "                  w: Write changes to file(s). Only writes if $INFO_FILE\n";
 	$output .= "                  and/or $TAGLIST_FILE/$AUTOTAG_FILE files are not already present.\n";
+	$output .= "                  .-Laf/-La/-Lac add UNIQUE%: to $AUTOTAG_FILE. See man.\n";
 	$output .= "--taglist-file, --tlf, --tf {file}\n";
 	$output .= "                  Alternate file name to use for --taglist.\n";
 	$output .= "--unique {tags}   Comma separated list of tags to be used only 1x per file, and\n";
