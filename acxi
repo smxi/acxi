@@ -2622,7 +2622,8 @@ sub process_tags {
 			$b_tags = 1 if !$b_tags;
 		}
 	}
-	say Data::Dumper::Dumper $file_tags if $dbg[4];
+	say '1. file_tags: ', Data::Dumper::Dumper $file_tags if $dbg[4];
+	say '1. key_checks: ', Data::Dumper::Dumper $key_checks if $dbg[4];
 	return $b_tags;
 }
 # note: in order to handle > 1 type per tag name, all are contained in arrays.
@@ -2735,8 +2736,8 @@ sub generate_info_data {
 	}
 	my @info_data = (@main,@performers,@tracks,@general,@info);
 	say "info_data: ", Data::Dumper::Dumper \@info_data if $dbg[5];
-	say "file_tags: ", Data::Dumper::Dumper $file_tags if $dbg[7];
-	say "key_checks: ", Data::Dumper::Dumper $key_checks if $dbg[7];
+	say "2. file_tags: ", Data::Dumper::Dumper $file_tags if $dbg[7];
+	say "2. key_checks: ", Data::Dumper::Dumper $key_checks if $dbg[7];
 	if (@info_data){
 		if (!$run{'taglist-write'}){
 			say "  Here is the $INFO_FILE data (use 'w' to write file):";
@@ -2754,7 +2755,8 @@ sub generate_info_data {
 }
 sub generate_taglist_data {
 	my (@contents,$disc_data,@disk_tags,@general_tags,%holder,@split,@track_tags);
-	my ($b_tagblock,$b_tags,$index,$multi,$tags,$temp,$track_total,$use,$value);
+	my ($b_tagblock,$b_tags);
+	my ($autotag_unique,$index,$multi,$tags,$temp,$track_total,$use,$value);
 	say "  Generating $tag_file data...";
 	if (!$file_tags || !%$file_tags){
 		say "  No tags found! Are the files tagged?";
@@ -2781,17 +2783,23 @@ sub generate_taglist_data {
 		@general_tags = grep {$_ !~ $general_pattern} @$all_tags;
 		$multi = check_multi($all_tags);
 		$disc_data = get_disc_data();
-		if ($run{'taglist-autotag'} && !$run{'autotag-unique'}){
-			$run{'autotag-unique'} = join(',',(grep {$multi->{$_}} @general_tags));
-		}
 		my @files = sort keys %$file_tags;
-		if ($run{'taglist-autotag'} && $run{'autotag-unique'}){
-			push(@contents,"UNIQUE%:$sep" . uc($run{'autotag-unique'}));
+		($tags,$use) = ($file_tags->{$files[0]},$key_checks->{$files[0]});
+		if ($run{'taglist-autotag'}){
+			if (!$run{'autotag-unique'}){
+				$autotag_unique = join(',',(grep {$multi->{$_}} @general_tags));
+			}
+			elsif ($run{'autotag-unique'}){
+				$autotag_unique = $run{'autotag-unique'};
+			}	
+		}
+		if ($run{'taglist-autotag'} && $autotag_unique){
+			push(@contents,"UNIQUE%:$sep" . uc($autotag_unique));
 		}
 		foreach my $tag (@general_tags){
-			if (!$multi->{$tag} && $key_checks->{$files[0]} && 
-			$key_checks->{$files[0]}{$tag} && defined $file_tags->{$files[0]}{$tag}){
-				push(@contents,(map {$tag . $sep . $_} @{$file_tags->{$files[0]}{$tag}}));
+			if (!$multi->{$tag} && %{$use} && %{$tags} && $use->{$tag} && 
+			$tags->{$tag} && defined $tags->{$tag}[0]){
+				push(@contents,(map {$tag . $sep . $_} @{$tags->{$tag}}));
 			}
 		}
 		if (@contents){
@@ -2799,7 +2807,6 @@ sub generate_taglist_data {
 			push(@contents,'');
 		}
 		$index = scalar @contents;
-		($tags,$use) = ($file_tags->{$files[0]},$key_checks->{$files[0]});
 		# these tests assume numeric values in DISCTOTAL/DISCNUMBER
 		if ($disc_data->{'total-discs'} || ($use && %$use && $use->{'DISCTOTAL'} && 
 		$tags->{'DISCTOTAL'}[0] > 1)){
@@ -2956,6 +2963,8 @@ sub generate_taglist_data {
 		say "  No tag data found to use! Are the files tagged?";
 	}
 	say "taglist contents: ", Data::Dumper::Dumper \@contents if $dbg[5];
+	say "2. file_tags: ", Data::Dumper::Dumper $file_tags if $dbg[7];
+	say "2. key_checks: ", Data::Dumper::Dumper $key_checks if $dbg[7];
 }
 sub get_disc_data {
 	my $disc = {};
@@ -3003,7 +3012,8 @@ sub check_multi {
 	my ($b_multi,$key,%multi);
 	foreach my $file (sort keys %$file_tags){
 		foreach my $tag (@$tags){
-			if (defined $file_tags->{$file}{$tag} && @{$file_tags->{$file}{$tag}}){
+			if ($file_tags->{$file} && defined $file_tags->{$file}{$tag} && 
+			@{$file_tags->{$file}{$tag}}){
 				$key = join(';',@{$file_tags->{$file}{$tag}});
 				if (!defined $multi{$tag}->{$key}){
 					$multi{$tag}->{$key} = 1;
