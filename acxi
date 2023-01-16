@@ -2797,8 +2797,8 @@ sub generate_taglist_data {
 			push(@contents,"UNIQUE%:$sep" . uc($autotag_unique));
 		}
 		foreach my $tag (@general_tags){
-			if (!$multi->{$tag} && %{$use} && %{$tags} && $use->{$tag} && 
-			$tags->{$tag} && defined $tags->{$tag}[0]){
+			if (!$multi->{$tag} && $use && $use->{$tag} && $tags->{$tag} && 
+			defined $tags->{$tag}[0]){
 				push(@contents,(map {$tag . $sep . $_} @{$tags->{$tag}}));
 			}
 		}
