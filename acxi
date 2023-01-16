@@ -2789,7 +2789,7 @@ sub generate_taglist_data {
 			if (!$run{'autotag-unique'}){
 				$autotag_unique = join(',',(grep {$multi->{$_}} @general_tags));
 			}
-			elsif ($run{'autotag-unique'}){
+			else {
 				$autotag_unique = $run{'autotag-unique'};
 			}	
 		}
