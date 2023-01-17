@@ -1,4 +1,4 @@
-.TH ACXI 1 "2023\-01\-16" acxi "acxi manual"
+.TH ACXI 1 "2023\-01\-17" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -41,9 +41,9 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-remove\-images\fR, \fB\-R\fR] [\fB\-\-remove\-padding\fR, \fB\-P\fR] 
 [\fB\-\-start\fR {0-xx}] 
 [\fB\-\-tag\fR, \fB\-T\fR] {"TAG1%:tag value^^TAG2%:tag value"}] 
-[\fB\-\-taglist\fR, \fB\-L\fR [acfisw]] 
+[\fB\-\-taglist\fR, \fB\-L\fR [acfiw]] 
 [\fB\-\-taglist\-file\fR {file name}] 
-[\fB\-\-unique\fR {TAGBLOCK|comma separated tags}] 
+[\fB\-\-unique\fR {comma separated tags}] 
 .IP * 2
 Analyze/Checksums: [\fB\-\-analyze\fR, \fB\-Z\fR]
 [\fB\-\-checksum\fR, \fB\-K\fR] [\fB\-\-checksum\-delete\fR, \fB\-D\fR] 
@@ -1132,23 +1132,19 @@ per FLAC directory, add \fBw\fR.
 * \fBa\fR \- Switch output to tag key/value \fB%:\fR separator from \fB=\fR, and 
 change output file from \fBtaglist.tag\fR to \fBauto.tag\fR. If \fBc\fR and 
 \fBf\fR not used, defaults to \fBc\fR. This allows you to use the resulting file 
-as a source for \fB\-\-autotag\fR. This also sets the \fBUNIQUE%:\fR value, 
-\fBTAGBLOCK\fR for \fB\-Laf\fR, and a list of general tags that are not global 
-to all tags for \fB\-Lac\fR.
+as a source for \fB\-\-autotag\fR. 
 
 * \fBc\fR \- Generate condensed taglist data. Useful if each file has mostly the 
-same tags, with only a few differing. With \fBac\fR, or \fBa\fR alone, also adds 
-\fBUNIQUE%:[taglist]\fR for any tag that does not occur in every file. Note that 
-if you want a tag to apply to all following files until the next occurance, 
-remove that tag name from the comma separated list. This detection can't be 
-automated, sorry.
+same tags, with only a few differing. UNSETs tag names after each block of files 
+that used that tag unless that tag's value is replaced by another value or it's 
+the last file.
 
 * \fBf\fR \- Generate full per audio file taglist data. This is all the tags 
 found per audio file in the order the files occur. This is the default action. 
-With \fBa\fR, adds \fBUNIQUE%:TAGBLOCK\fR so each file is tagged only with the 
-tags in its block, no cascade of tags occurs.
+Adds value \fBTAGBLOCK\fR to \fBUNIQUE\fR at top of file so each file is tagged 
+only with the tags in its block, no cascade of tags occurs.
 
-* \fBi\fR \- Generate info file data. Disables taglist unless c/f used.
+* \fBi\fR \- Generate info file data. Disables taglist unless a/c/f used.
 
 * \fBs\fR \- Skip the file exists tests. Can't be used with w. 
 
@@ -1189,28 +1185,38 @@ An alternate file name to use for \fB\-\-taglist\fR. Note that file MUST have a
 you will get ungood results.
 
 .TP
-.B \-\-unique\fR {TAGBLOCK|comma separated tags}
+.B \-\-unique\fR {comma separated tags}
 The comma separated list of tag names will be used to set those tags to be used 
 only 1x per file when found in \fBauto.tag\fR file, and unset after. You can 
-also set this list manually in the auto.tag file top special field 
-\fBUNIQUE%\fR. This will make those tags work in a similar way to \fBVERSION\fR 
-or \fBPART\fR or \fBTITLE\fR. \fBTAGBLOCK\fR value will treat each set of tags 
-before the \fBFILE%:\fR item as applying only to that block of tags.
+also set this list manually in the \fBauto.tag\fR file top special field 
+\fBUNIQUE%:\fR. This will make those tags work in a similar way to \fBVERSION\fR 
+or \fBPART\fR or \fBTITLE\fR. \fBTAGBLOCK\fR value will treat each set of 
+tags before the \fBFILE%:\fR item as applying only to that single file.
 
-You want to set these tags in \fBauto.tag\fR right before the file data block 
-for that file. Note that this will override any global use of that tag name.
+You need to add these tags in \fBauto.tag\fR right before the file tag block 
+that will use that tag. Note that \fBUNIQUE\fR tags will override any global or 
+tag block use of that tag name.
 
-\fB\-La\fR/\fB\-Laf\fR will set unique automatically.
+DO NOT USE IF TAG APPLIES TO MORE THAN ONE CONSECUTIVE FILE! In that case, set 
+the tag before the block of files, and it will apply to all following files 
+until the next new value. If it applies only to a block, and is not replaced by 
+another value, use value \fBUNSET\fR for \fBTAGNAME\fR after the last file that 
+uses it, unless that file is also the last file in the list.
 
-Alternately, when used with \fB\-C\fR, \fB\-M\fR, or \fB\-S\fR will 
-automatically set the UNIQUE%: value in the generated \fBauto.tag\fR file.
+\fB\-La\fR/\fB\-Lc\fR UNSETs the tag at the end of each block of tags 
+automatically.
+
+\fB\-Lf\fR/\fB\-Laf\fR add value \fBTAGBLOCK\fR to \fBUNIQUE\fR automatically.
+
+When used with \fB\-C\fR, \fB\-M\fR, or \fB\-S\fR will set the \fBUNIQUE\fR 
+value in the generated \fBauto.tag\fR file.
 
 Sample: with command line:
 .br
 \fBacxi \-s ./ -A \-\-unique COMPOSER,ARRANGER\fR
 .br
 Sample: in \fBauto.tag\fR file:
-\fBUNIQUE%:COMPOSER\,ARRANGERfR
+\fBUNIQUE%:COMPOSER\,ARRANGER\fR
 
 .SH ANALYZE/CHECKSUM OPTIONS
 Create checksum files (ffp/md5), verify checksums, analyze sets of files, check 

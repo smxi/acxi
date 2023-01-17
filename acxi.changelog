@@ -166,13 +166,14 @@ the file(s).
 * a: switch output file from taglist.tag to auto.tag, and change tag:value 
 separator from '=' to '%:'
 
-* c: generates condensed data from flac tags for tag list. With a, or a alone, 
-adds UNIQUE%:[taglist] for each tag that does not occur in every file. If you 
-want those tags to cascade to next files, then remove that tag name from UNIQUE.
+* c: generates condensed data from flac tags for tag list. For tags that do not
+occur in every file, adds tags before block of tags that use them, and either 
+replaces them with next value. or if file does not have that tag, UNSETs the
+tag.
 
-* f: generates full taglist data. This is default if no args used. With a, adds 
-UNIQUE%:TAGBLOCK which forces non cascade of tags per file. This is what you 
-want, so don't change that.
+* f: generates full taglist data. This is default if no args used. Adds UNIQUE 
+value TAGBLOCK which forces non cascade of tags per file. This is what you want, 
+so don't change that.
 
 * i: generates info file data from flac tags for screen/info.txt.
 
@@ -212,25 +213,24 @@ something else.
 blocks from processing blocks, before was using $line_small for both types. this 
 is used in -X, -L, and -C/-S/-M --dry.
 
-10. TAGLIST/AUTOTAG: Added --unique, which allows setting one time list of tags 
-to use only 1x in the file following that list in the auto.tag file. This can be 
-used with -A, -S, -M or -La. This will either create the UNIQUE%: item (-La) in 
-the tag file, or add it to an existing tag set with -A. This basically adds that 
-set of tags to the per track tag list, which are handled differently than block 
-type tags, which can apply to > 1 file per set. 
+10. AUTOTAG/AUTOTAG-CREATE: Added --unique, which allows setting one time list 
+of tags to use only 1x in the file following that tag in the auto.tag file. This 
+can be used with -A, -S, -M. This will add that list of single use tags to an 
+existing auto.tag file with -A. Adds that set of tags to the per track tag list, 
+which are handled differently than block type tags, which can apply to > 1 file 
+per set. 
 
-The TAGBLOCK value tells -A to discard all previously found tags for each new 
-file processed. This is only useful with -Lf generated auto.tag files. 
+Only supported for auto.tag creation with -C/-S/-M, or to force the list into 
+the tagging with -A if it was not set in auto.tag already. The TAGBLOCK value 
+tells -A to discard all previously found tags after each file processed. This is 
+only useful with -Lf generated auto.tag files that have complete sets of tags 
+per file. 
 
--La/-Lf set their respective unique tag markers (UNIQUE%:tag,tag / 
-UNIQUE%:TAGBLOCK) automatically, so you really only need this for auto.tag 
-creation with -C/-S/-M or to force it into the tagging with -A if it was not set 
-in auto.tag already, with the following caveat: 
+-Lf sets a UNIQUE value TAGBLOCK automatically.
 
-For -La/- Lac, Don't ever use UNIQUE tag name for any tag that needs to apply to 
-following files also, only ones that definitely only apply to the following 
-single file. You may need to manually remove those from the list of tags 
-automatically generated in that case.
+-La/-Lc UNSETs tag after last file that used that tag if the previous value is 
+not replaced by a new one and the next file did not contain that tag in the case 
+of multi use of a tag situations, so you don't need to do anything there.
 
 --------------------------------------------------------------------------------
 CHANGES:

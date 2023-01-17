@@ -80,8 +80,8 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='23';
-my $self_date='2023-01-16';
+my $self_patch='24';
+my $self_date='2023-01-17';
 
 ## GLOBALS ##
 ## Booleans
@@ -776,7 +776,7 @@ sub process_tags {
 	my @tags = main::reader($AUTOTAG_FILE);
 	say 'Raw tags: ', Data::Dumper::Dumper \@tags if $dbg[2];
 	push(@tags,'--END--') if @tags;
-	my ($args,$error_message,$holder);
+	my ($args,$autotag_unique,$error_message,$holder);
 	my (@image_args,@images,@main_tags,@temp,@track_tags,@unique);
 	my ($b_image_check,$b_tagblock,$b_tracks);
 	my ($i,$cmd,$comments,$tag) = (0,'','','');
@@ -796,7 +796,7 @@ sub process_tags {
 			# Handle occurances of per file tags, plus --unique override
 			if ($1 && $1 eq 'UNIQUE'){
 				if (!$run{'autotag-unique'} && $2){
-					$run{'autotag-unique'} = $2;
+					$autotag_unique = $2;
 				}
 			}
 			else {
@@ -809,12 +809,13 @@ sub process_tags {
 			$temp[$i]->[1] .= "\n" . $line if defined $temp[$i];
 		}
 	}
-	if ($run{'autotag-unique'}){
-		if ($run{'autotag-unique'} eq 'TAGBLOCK'){
+	$autotag_unique = $run{'autotag-unique'} if $run{'autotag-unique'};
+	if ($autotag_unique){
+		if ($autotag_unique eq 'TAGBLOCK'){
 			$b_tagblock = 1;
 		}
 		else {
-			@unique = split(/\s*,\s*/,uc($run{'autotag-unique'}));
+			@unique = split(/\s*,\s*/,uc($autotag_unique));
 		}
 	}
 	@tags = @temp;
@@ -1204,10 +1205,15 @@ sub populate_tag_file {
 	$info = prefill_data() if $run{'prefill'};
 	say Data::Dumper::Dumper $info if $b_debug;
 	my @collection = (
-	'## SPECIAL FEATURES',
-	'# Comma separated tag names to be used per file, and unset after each file is',
-	'# tagged. This terminates default cascade tag to next file behavior. Not for',
-	'# when tag applies to > 1 file in a row (remove if auto-added in that case).',
+	'# The default behavior for all non per track specific tags is for the tag to to',
+	'# be applied to all following tags unless that value is replaced by a new value,',
+	'# or if the value UNSET is set for that tag following the last file to use it',
+	'# in a block of tags.',
+	'#',
+	'# To disable this behavior, supply comma separated tag names to be used per file,',
+	'# and unset after each file is tagged. This allows you for instance to set a',
+	'# COMPOSER for a single track. Do not use for any tag that might apply to more',
+	'# than one consecutive file. Use TAGNAME%:UNSET at end of block in that case.',
 	'UNIQUE',
 	'## RECORDING NAME/CREATORS ##',
 	'ALBUM','# Name to sort under','ALBUMSORT',
@@ -2756,7 +2762,8 @@ sub generate_info_data {
 sub generate_taglist_data {
 	my (@contents,$disc_data,@disk_tags,@general_tags,%holder,@split,@track_tags);
 	my ($b_tagblock,$b_tags);
-	my ($autotag_unique,$index,$multi,$tags,$temp,$track_total,$use,$value);
+	my ($index,$multi,$tags,$temp,$track_total,$use,$value);
+	my (%tags_set);
 	say "  Generating $tag_file data...";
 	if (!$file_tags || !%$file_tags){
 		say "  No tags found! Are the files tagged?";
@@ -2785,17 +2792,6 @@ sub generate_taglist_data {
 		$disc_data = get_disc_data();
 		my @files = sort keys %$file_tags;
 		($tags,$use) = ($file_tags->{$files[0]},$key_checks->{$files[0]});
-		if ($run{'taglist-autotag'}){
-			if (!$run{'autotag-unique'}){
-				$autotag_unique = join(',',(grep {$multi->{$_}} @general_tags));
-			}
-			else {
-				$autotag_unique = $run{'autotag-unique'};
-			}	
-		}
-		if ($run{'taglist-autotag'} && $autotag_unique){
-			push(@contents,"UNIQUE%:$sep" . uc($autotag_unique));
-		}
 		foreach my $tag (@general_tags){
 			if (!$multi->{$tag} && $use && $use->{$tag} && $tags->{$tag} && 
 			defined $tags->{$tag}[0]){
@@ -2860,19 +2856,29 @@ sub generate_taglist_data {
 			next;
 		}
 		if ($run{'taglist-condensed'}){
-			my $b_general;
-			$index = scalar @contents;
+			my (@general,@unset);
 			foreach my $tag (@general_tags){
-				if ($multi->{$tag} && $use->{$tag} &&
-				(!$holder{$tag} || $holder{$tag} ne join('',@{$tags->{$tag}}))){
-					$holder{$tag} = join('',@{$tags->{$tag}});
-					push(@contents,(map {$tag . $sep . $_} @{$tags->{$tag}}));
-					$b_general = 1;
+				if ($multi->{$tag}){
+					if ($use->{$tag} &&
+					(!$holder{$tag} || $holder{$tag} ne join('',@{$tags->{$tag}}))){
+						$holder{$tag} = join('',@{$tags->{$tag}});
+						push(@general,(map {$tag . $sep . $_} @{$tags->{$tag}}));
+						$tags_set{$tag} = 1;
+					}
+					elsif (!$use->{$tag} && $tags_set{$tag}){
+						push(@unset,$tag . $sep . 'UNSET');
+						$tags_set{$tag} = 0;
+					}
 				}
 			}
-			if ($b_general){
-				splice(@contents,$index,0,'# Following block of files/unique tag');
-				push(@contents,'');
+			if (@unset){
+				push(@contents,'# Unset general tags:',@unset,'');
+			}
+			if (@general){
+				push(@contents,
+				'# Following file block general tags:',
+				@general,
+				'');
 			}
 			if ($disc_data->{'total-discs'}){ 
 				@split = ($use->{'DISCNUMBER'}) ? split(/\s*\/\s*/,$tags->{'DISCNUMBER'}[0]) : ();
@@ -4740,14 +4746,13 @@ sub show_options {
 	$output .= "                  s: Skip file(s) exist tests. Don't use with 'w'.\n";
 	$output .= "                  w: Write changes to file(s). Only writes if $INFO_FILE\n";
 	$output .= "                  and/or $TAGLIST_FILE/$AUTOTAG_FILE files are not already present.\n";
-	$output .= "                  .-Laf/-La/-Lac add UNIQUE%: to $AUTOTAG_FILE. See man.\n";
 	$output .= "--taglist-file, --tlf, --tf {file}\n";
 	$output .= "                  Alternate file name to use for --taglist.\n";
 	$output .= "--unique {tags}   Comma separated list of tags to be used only 1x per file, and\n";
-	$output .= "                  unset after. Use with -A only after setting tags in $AUTOTAG_FILE.\n";
-	$output .= "                  Can also be manually set on top of $AUTOTAG_FILE with UNIQUE%:.\n";
-	$output .= "                  -La sets automatically. Use with -C/-S/-M to set UNIQUE%:\n";
-	$output .= "                  in $AUTOTAG_FILE, and with -A to manually force UNIQUE%:.\n";
+	$output .= "                  unset after. Can also be manually set on top of $AUTOTAG_FILE\n";
+	$output .= "                  with UNIQUE%:. Use with -C/-S/-M to set UNIQUE%: in\n";
+	$output .= "                  $AUTOTAG_FILE, and with -A to manually add UNIQUE%: tag list.\n";
+	$output .= "                  See man page.\n";
 	$output .= $line_small . "\n";
 	$output .= "Analyze/Checksum options:\n";
 	$output .= "--analyze, -Z     Analyze contents of directories, creates screen report per\n";
@@ -5550,10 +5555,9 @@ sub verify_selections {
 	#################################
 	## Required Option Missing Combo Tests ##
 	#################################
-	if ($run{'autotag-unique'} && !$run{'autotag-create'} && !$run{'autotagger'} &&
-	!$run{'taglist-autotag'}){
+	if ($run{'autotag-unique'} && !$run{'autotag-create'} && !$run{'autotagger'}){
 		main::error_handler('invalid-options', 
-		 "--unique requires -La/--autotag-create/-A.",1);
+		 "--unique requires --autotag-create/-A.",1);
 	}
 	if ($test{'autotag-file'} && !$run{'autotagger'} && !$run{'autotag-create'} &&
 	!$run{'taglist-autotag'}){

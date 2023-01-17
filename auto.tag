@@ -18,11 +18,17 @@
 ## NOTE: almost no media players support > 1 tag type the way the specifications 
 ## say, so multiple values, like GENRE, ARTIST, often fail to work as intended.
 
-## SPECIAL FEATURES
-# Comma separated tag names to be used per file, and unset after each file is
-# tagged. This terminates default cascade tag to next file behavior. This allows
-# you for instance to set a COMPOSER for a single track. Do not use for any tag 
-# that might apply to more than one consecutive file (remove if auto-added then).
+## TAG BLOCKS/UNIQUE PER FILE TAGGING
+# The default behavior for all non per track specific tags is for the tag to to 
+# be applied to all following tags unless that value is replaced by a new value, 
+# or if the value 'UNSET' is set for that tag following the last file to use it 
+# in a block of tags. 
+# 
+# To disable this behavior, supply comma separated tag names to be used per file, 
+# and unset after each file is tagged. This allows you for instance to set a 
+# COMPOSER for a single track. Do not use for any tag that might apply to more 
+# than one consecutive file. Use TAGNAME%:UNSET at end of block in that case. 
+# TAGBLOCK value only with -Lfa generated auto.tag file.
 UNIQUE%:
 
 ## COLLECTION/RECORDING NAME/CREATORS ##
