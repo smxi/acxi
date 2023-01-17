@@ -41,7 +41,7 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-remove\-images\fR, \fB\-R\fR] [\fB\-\-remove\-padding\fR, \fB\-P\fR] 
 [\fB\-\-start\fR {0-xx}] 
 [\fB\-\-tag\fR, \fB\-T\fR] {"TAG1%:tag value^^TAG2%:tag value"}] 
-[\fB\-\-taglist\fR, \fB\-L\fR [acfiw]] 
+[\fB\-\-taglist\fR, \fB\-L\fR [acfisw]] 
 [\fB\-\-taglist\-file\fR {file name}] 
 [\fB\-\-unique\fR {TAGBLOCK|comma separated tags}] 
 .IP * 2
@@ -104,7 +104,8 @@ directories; source globbing, dot files, recursion levels.
 * \fBSYNCING OPTIONS\fR Options related to syncing your collection. Includes 
 forking, clean, copy types, excludes, codecs, dither, quality, resample, 
 
-* \fBTAGGING OPTIONS\fR Includes autotag, image embed, infofix, prefill, tag.
+* \fBTAGGING OPTIONS\fR Includes autotag, image embed, infofix, prefill, tag, 
+tag list.
 
 * \fBANALYZE/CHECKSUMS OPTIONS\fR Analyze, duplicates, checksums.
 
@@ -1121,12 +1122,12 @@ If tag value is \fBUNSET\fR it will just remove that tag and its contents.
 Sample: \fBacxi \-s ./ \-\-tag "COMMENT%:UNSET^^ARTIST%:Black Sabbath"\fR
 
 .TP
-.B \-\-taglist\fR, \fB\-L [acfiw]\fR
+.B \-\-taglist\fR, \fB\-L [acfisw]\fR
 Use to create tag data output to screen. Generates a list of the raw tags per 
 file in each directory of FLACS. To create the info.txt or taglist.tag file(s) 
 per FLAC directory, add \fBw\fR.
 
-* \fBnothing\fR \- same as \fBt\fR. Create full tag list output.
+* \fBnothing\fR \- same as \fBf\fR. Create full tag list output.
 
 * \fBa\fR \- Switch output to tag key/value \fB%:\fR separator from \fB=\fR, and 
 change output file from \fBtaglist.tag\fR to \fBauto.tag\fR. If \fBc\fR and 
