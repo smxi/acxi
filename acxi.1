@@ -1,4 +1,4 @@
-.TH ACXI 1 "2023\-01\-17" acxi "acxi manual"
+.TH ACXI 1 "2023\-01\-18" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -61,7 +61,7 @@ Miscellaneous: [\fB\-\-aggregate\fR, \fB\-G\fR [file name|extension]]
 Output Controls: [\fB\-\-verbosity\fR, \fB\-v\fR {0-3}] 
 [\fB\-\-quiet\fR]
 .IP * 2
-Debugging: [\fB\-\-dbg\fR {1\-xx}[,y][,z]...] [\fB\-\-debug\fR] 
+Debugging: [\fB\-\-dbg\fR {1\-xx}[,y][,z]...]
 [\fB\-\-dry\fR, \fB\-\-dry\-run\fR, \fB\-\-test\fR] 
 
 .SH DESCRIPTION
@@ -1413,18 +1413,27 @@ them for real.
 
 .TP
 .B \-\-dbg {1\-xx}[,1\-xx]\fR
-Activate specialized debugger outputs. Don't use unless you are asked to, or are 
-a developer or something like that. Accepts comma separated list of integers to
-trigger > 1 debugger action.
+Activate specialized debugger outputs. Accepts comma separated list of integers 
+to trigger > 1 debugger action.
 
-\fB1\fR \- main::get_flac_tags() print resultant tag hash.
+See stable branch \fIdocs/acxi\-values.txt\fR for more granular and current 
+explanations.
 
-\fB2\fR \- AutoTag::process_tags() print auto.tag tag array result.
+\fB1\fR \- Primary raw data).
 
-.TP
-.B \-\-debug\fR
-Activate global debugger outputs. Don't use unless you are asked to, or are 
-a developer or something like that.
+\fB2\fR \- Secondary raw data from text files.
+
+\fB3\fR \- Post processed secondary data.
+
+\fB4\fR \- File/Directory data during processing.
+
+\fB5\fR \- Command strings being run.
+
+\fB6\fR \- Generated data by subs, primary.
+
+\fB7\fR, \fB8\fR \- Data from specific tools and utilities.
+
+\fB20+\fR - Advanced data and debuggers.
 
 .TP
 .B \-\-dry\-run\fR, \fB\-\-dry\fR, \fB\-\-test\fR
@@ -1456,8 +1465,8 @@ useful or used for all features.
 
 \fB3\fR \- full output, incuding all conversion tool output.
 
-For other technical data, use \fB\-\-debug\fR, but not unless you know why you 
-are doing it, that output can vary widely.
+For other technical data, see \fB\-\-dbg\fR, but not unless you know why you are 
+doing it. 
 
 .SH CONFIGURATION FILE
 You can see by running \fBacxi \-h\fR the configuration file locations.

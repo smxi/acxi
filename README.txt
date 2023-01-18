@@ -22,6 +22,9 @@ HTML help menu:
 https://smxi.org/docs/acxi-options.htm 
 Useful to get a quick overview of acxi options.
 
+Debugging switches for --dbg, and other developer required data:
+stable branch: docs/acxi-values.txt
+
 ================================================================================
 INSTALLATION
 --------------------------------------------------------------------------------

@@ -250,6 +250,8 @@ results apart from the processing blocks.
 contains the flac files, that's too risky, so disabled that. I think that was 
 an oversight.
 
+4. Removed --debug, replaced with specific --dbg x(,y) options globally.
+
 --------------------------------------------------------------------------------
 DOCUMENTATION:
 
@@ -268,6 +270,10 @@ more consistent prefill tag listing.
 6. Updated man/help to add --glob.
 
 7. Updated help top part to have better examples with long and short forms.
+
+8. Added more granular man docs for --dbg, and created docs/acxi-values.txt to 
+somewhat document, ideally anyway, possible debugging actions. We'll see how 
+this goes, the old --debug was too generic to be useful in real development.
 
 --------------------------------------------------------------------------------
 CODE:
@@ -294,6 +300,10 @@ robust and dynamic.
 OptionsHandler::set_switches(). This was previously always set to 1, true, on 
 top of acxi by default, now it's only set to true if no conflicting options are 
 used.
+
+7. Changed all previous $b_debug to more granular $debug[x] tests, and added 
+many commented out say debugging items now that they can be switched off and on
+in a more granular fashion.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Fri, 30 Dec 2022 12:57:40 -0800

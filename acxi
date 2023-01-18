@@ -80,12 +80,12 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='24';
-my $self_date='2023-01-17';
+my $self_patch='25';
+my $self_date='2023-01-18';
 
 ## GLOBALS ##
 ## Booleans
-my ($b_debug,$b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test);
+my ($b_dest_changed,$b_force,$b_fork,$b_quiet,$b_test);
 my ($b_check_dest,$b_check_out) = (1,1);
 my $b_win = ($^O =~ /win/i) ? 1 : 0; # detect if $^O returns windows 
 
@@ -399,10 +399,10 @@ sub aggregate {
 				File::Path::make_path($path) or die qq("Arg... can't make: $path\n") if !$b_test;
 			}
 			$path .= $path_separator . $name;
-			# say 'path: ', $path;
+			say 'path: ', $path if $dbg[4];
 		}
 		say $file_working;
-		say $file if $b_debug;
+		say $file if $dbg[4];
 		File::Copy::copy($file, $path) if !$b_test;
 		push @files, $file;
 		$path = '';
@@ -411,7 +411,7 @@ sub aggregate {
 		say "No $extension type files found.";
 	}
 	say $line_small;
-	# say Data::Dumper::Dumper \@files;
+	say Data::Dumper::Dumper \@files if $dbg[6];
 	say "Finished copying over $extension type files to " . main::sourcer("$DESTINATION_DIRECTORY");
 }
 }
@@ -460,7 +460,7 @@ sub process {
 	# If we hit error condition, we want to exit for -Xq, but not for -Z
 	my $b_exit = ($type eq 'info') ? 1: 0;
 	foreach my $source_file (@files){
-		# say "Getting metaflac for file: $source_file";
+		say "Getting metaflac for file: $source_file" if $dbg[4];
 		my $info;
 		my $escaped = main::escape_item("$source_file");
 		# metaflac is MUCH faster than ffprobe. at least 25-30x faster!!
@@ -471,7 +471,7 @@ sub process {
 			$info = process_ffprobe($source_file,$escaped,$b_exit);
 		}
 		# We WANT to see 0 data results.
-		#if ($info->{'size'} && $info->{'duration'}){
+		# if ($info->{'size'} && $info->{'duration'}){
 		if ($type eq 'data' || !$source_info){
 			my $source_data = $info->{'bps'} . '/' . sprintf("%.1f", $info->{'sample-rate'}/1000);
 			$source_info = uc($INPUT_TYPE) . ": $source_data";
@@ -513,7 +513,7 @@ sub process {
 			}
 		}
 	}
-	# say "Result: $source_info";
+	say "Result: $source_info" if $dbg[6];
 	$avg_kbs = sprintf("%.0f",$total_size*8/$total_time/1000);
 	# back to KiB
 	$total_size_raw = $total_size;
@@ -535,7 +535,7 @@ sub process_ffprobe {
 			my @split = split(/\s*=\s*/,$_);
 			$outcome{$split[0]} = (!defined $split[1] || $split[1] eq 'N/A') ? undef : $split[1];
 		}
-		# say Data::Dumper::Dumper \@source;
+		say 'ffprobe @source: ', Data::Dumper::Dumper \@source if $dbg[1];
 		if (!$outcome{'format.size'}){
 			main::error_handler('analyze',
 			"ffprobe: source size 0:\n '$source_file'",$b_exit) if $b_exit;
@@ -591,7 +591,7 @@ sub process_metaflac {
 			$_ =~ s/[\r\n]//g;
 			push(@real,$_);
 		}
-		# say $escaped . ' :: ', Data::Dumper::Dumper \@source;
+		say $escaped . ' :: ', Data::Dumper::Dumper \@source if $dbg[1];
 		# the file will have a size even if it's not valid
 		# stat returns size in bytes. 
 		my @stat = stat($source_file);
@@ -760,7 +760,7 @@ sub get_tag_files {
 		$working_dir = File::Basename::dirname($item);
 		chdir "$start_dir";
 		chdir "$working_dir";
-		if ($b_debug){
+		if ($dbg[4]){
 			say Cwd::getcwd();
 			system 'pwd';
 		}
@@ -826,12 +826,12 @@ sub process_tags {
 	push (@tt,@unique) if @unique;
 	my $track_pattern = join('|',@tt);
 	$track_pattern = qr/^($track_pattern)$/;
-	say 'Processed raw tags: ', Data::Dumper::Dumper \@tags if $dbg[2];
+	say 'Processed raw tags: ', Data::Dumper::Dumper \@tags if $dbg[3];
 	foreach my $working (@tags){
-		# say Data::Dumper::Dumper $working;
+		say Data::Dumper::Dumper $working if $dbg[20];
 		# note: TRACKNUMBER%:0 would trip this, so test explicitly
 		next if !defined $working->[1] || $working->[1] eq '';
-		say "@$working" if $b_debug;
+		say "@$working" if $dbg[20];
 		# $working->[1] =~ s/"/\\\"/g;
 		# $working->[1] =~ s/\$/\\\$/g;
 		$working->[1] = main::escape_item("$working->[1]");
@@ -870,9 +870,9 @@ sub process_tags {
 			main::error_handler('file-missing',"Missing file: $temp",1) if ! -e "$temp";
 			# note: must be set here, not in qx to avoid quote errors
 			# single quotes, in case contains $ symbol
-			# say File::stat::stat("$working->[1]")->size;
+			say File::stat::stat("$working->[1]")->size if $dbg[21];
 			$cmd = qq($COMMAND_METAFLAC --remove-all-tags $padding "$working->[1]");
-			say "\n", $cmd if $b_debug;
+			say "\nremove tags: ", $cmd if $dbg[5];
 			if (!$b_test){
 				qx($cmd);
 				if ($? > 0){
@@ -883,7 +883,7 @@ sub process_tags {
 			if ($run{'remove-images'}){
 				image_remover("$working->[1]");
 			}
-			# say File::stat::stat("$working->[1]")->size;
+			say File::stat::stat("$working->[1]")->size if $dbg[21];
 			# disable for now, the test for type isn't working, metaflac is making types
 			# 3 regardless of actual type.
 			@image_args = image_handler("$working->[1]",@images) if @images;
@@ -897,7 +897,7 @@ sub process_tags {
 				$set{$_} = 0;
 			}
 			$cmd = qq($COMMAND_METAFLAC $args "$working->[1]");
-			say "\n", $cmd if $b_debug;
+			say "\nadd tags cmd: ", $cmd if $dbg[5];
 			$b_tracks = 1;
 			if (!$b_test){
 				qx($cmd);
@@ -912,7 +912,7 @@ sub process_tags {
 			else {
 				say '  Test mode, no tag';
 			}
-			# say File::stat::stat("$working->[1]")->size;
+			say File::stat::stat("$working->[1]")->size if $dbg[21];
 		}
 	}
 }
@@ -941,7 +941,7 @@ sub tag_updater {
 		$file = main::escape_item("$file");
 		$file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E||; 
 		$cmd = qq($COMMAND_METAFLAC $remove "$file");
-		# say "sd: $SOURCE_DIRECTORY cmd: $cmd";
+		say "tag updater remove: $SOURCE_DIRECTORY\n cmd: $cmd" if $dbg[5];
 		if (!$b_test){
 			qx($cmd);
 			if ($? > 0){
@@ -954,6 +954,7 @@ sub tag_updater {
 			print 'remove: skip... ';
 		}
 		$cmd = qq($COMMAND_METAFLAC $tag "$file");
+		say 'tag updater add cmd: ', $cmd if $dbg[5];
 		if (!$b_test){
 			# if the only action is to UNSET the tag, $tag will be empty
 			if ($tag){
@@ -980,7 +981,7 @@ sub make_tag_file {
 	my $source_dir = $SOURCE_DIRECTORY;
 	# $source_dir =~ s|([\(\)\$])|\\$1|g;
 	$source_dir =~ s|^\Q$source_dir$path_separator\E||;
-	# say "source1:  $source_dir";
+	say "source1:  $source_dir" if $dbg[4];
 	print "Checking for pre-existing $AUTOTAG_FILE... ";
 	if ($b_test){
 		say "Running test mode.";
@@ -991,7 +992,7 @@ sub make_tag_file {
 	else {
 		say "none found. Proceeding.";
 	}
-	if ($b_debug){
+	if ($dbg[4]){
 		say 'cwd: ', Cwd::getcwd();
 		system 'pwd';
 		say "start1: $start_dir"
@@ -1193,7 +1194,7 @@ sub prefill_data {
 			}
 		}
 	}
-	# say Data::Dumper::Dumper $info;
+	say Data::Dumper::Dumper $info if $dbg[6];
 	return $info;
 }
 sub populate_tag_file {
@@ -1203,7 +1204,6 @@ sub populate_tag_file {
 	my $counter=$start;
 	my $b_prefill_tag = ($run{'prefill-tag'} && %{$run{'prefill-tag'}}) ? 1 : 0;
 	$info = prefill_data() if $run{'prefill'};
-	say Data::Dumper::Dumper $info if $b_debug;
 	my @collection = (
 	'# The default behavior for all non per track specific tags is for the tag to to',
 	'# be applied to all following tags unless that value is replaced by a new value,',
@@ -1330,7 +1330,7 @@ sub populate_tag_file {
 		}
 		@collection = @working if @working;
 	}
-	# say Data::Dumper::Dumper \@collection;
+	say Data::Dumper::Dumper \@collection if $dbg[6];
 	@disc = map {$_ .= '%:' if /^[A-Z]/; $_;} @disc;
 	@discs = map {$_ .= '%:' if /^[A-Z]/; $_;} @discs;
 	if ($run{'autotag-single'} && @$files){
@@ -1369,7 +1369,7 @@ sub populate_tag_file {
 			@disc = map {$_ .= 1 if $_ eq 'DISCNUMBER%:'; $_;} @disc;
 		}
 	}
-	# say Data::Dumper::Dumper \@multi;
+	say Data::Dumper::Dumper \@multi if $dbg[7];
 	@tags = (@collection,@disc);
 	@track = map {$_ .= '%:' if /^[A-Z]/; $_;} @track;
 	my (@disc_working,@info_working);
@@ -1450,7 +1450,7 @@ sub populate_tag_file {
 		main::writer($AUTOTAG_FILE,\@tags);
 	}
 }
-sub image_embedder{
+sub image_embedder {
 	my ($args,$cmd,$error_message,@image_args,$item,$print_file,
 	$result,$working_dir);
 	$list_type = 'file';
@@ -1477,7 +1477,7 @@ sub image_embedder{
 			@image_args = image_handler("$item",("$embed_image"));
 			$args = join ' ', @image_args;
 			$cmd = qq($COMMAND_METAFLAC $args "$item");
-			say "\n", $cmd if $b_debug;
+			say "\nimage embedder", $cmd if $dbg[5];
 			if (!$b_test){
 				qx($cmd);
 				if ($? > 0){
@@ -1511,7 +1511,7 @@ sub image_remover {
 			main::error_handler('application-error', $error_message,1);
 		}
 	}
-	say "\n", $cmd if $b_debug;
+	say "\nimage remover cmd: ", $cmd if $dbg[5];
 }
 # note: metaflac is ignring type integer and assigning 3, not sure why
 sub image_handler {
@@ -1519,6 +1519,7 @@ sub image_handler {
 	my ($size,@args,@result,$working);
 	my $cmd = qq($COMMAND_METAFLAC --list --block-type=PICTURE "$file");
 	@result = qx($cmd);
+	say "\nimage handler cmd: ", $cmd if $dbg[5]; 
 	@result = grep {/type:.*\(PICTURE\)/} @result if @result;
 	# filename: type: 6 (PICTURE) 3||||images/cover.jpg
 	# --import-picture-from="3||||front.jpg"
@@ -1558,7 +1559,7 @@ sub create_track_total {
 	else {
 		$total = $working + $start - 1;
 	}
-	# say "ctt: $start $total";
+	say "ctt: $start $total" if $dbg[8];
 	return $total;
 }
 sub get_replaygain {
@@ -1615,7 +1616,7 @@ sub process_directories {
 	@found_list = ();
 	chdir "$start_dir";
 	File::Find::find(\&main::wanted, @source_glob);
-	say 'start dir: ', $start_dir if $b_debug;
+	say 'start dir: ', $start_dir if $dbg[4];
 	my $file_type = lc($INPUT_TYPE) . ',' . uc($INPUT_TYPE) . ',';
 	$file_type .= ucfirst(lc($INPUT_TYPE)); # flac,FLAC,Flac
 	foreach my $item (sort { "\L$a" cmp "\L$b" } @found_list){
@@ -1628,7 +1629,7 @@ sub process_directories {
 		# }
 		chdir "$start_dir";
 		chdir "$item";
-		if ($b_debug){
+		if ($dbg[4]){
 			say 'srcdir: ', $SOURCE_DIRECTORY;
 			say 'item: ', $item;
 			say 'cwd: ', Cwd::getcwd();
@@ -1637,7 +1638,7 @@ sub process_directories {
 		say $line_small;
 		say " Processing: $print_src";
 		my @files = main::globber("*.{$file_type}");
-		# say "\n", Data::Dumper::Dumper \@files;
+		say "\n", Data::Dumper::Dumper \@files if $dbg[6];
 		if (grep -f, @files){
 			if (!$run{'analyze'}){
 				delete_checksums() if $run{'checksum-delete'};
@@ -1667,7 +1668,7 @@ sub generate_checksums {
 	else {
 		say "  Collecting ffps...";
 	}
-	if ($b_debug){
+	if ($dbg[4]){
 		say 'cwd: ', Cwd::getcwd();
 		system('pwd');
 	}
@@ -1740,7 +1741,7 @@ sub verify_flacs {
 	# note, flac sends output to stderr
 	# NOTE: $_ =~ s/([^\x20-\x7E])/sprintf '\x{%02x}', ord $1/eg;
 	# shows the weird hidden text this command creates
-	# say 'cwd: ', Cwd::getcwd();
+	say 'cwd: ', Cwd::getcwd() if $dbg[4];
 	if (!(grep -f, main::globber("*.$INPUT_TYPE"))){
 		say "No $INPUT_TYPE files found.";
 		return;
@@ -1748,7 +1749,7 @@ sub verify_flacs {
 	my @results = qx($COMMAND_FLAC -wt *.flac 2>&1);
 	$err_nu = $?;
 	chomp @results;
-	if ($b_debug){
+	if ($dbg[21]){
 		say "\@result count: ", scalar @results, "\n  ", join("\n  ",@results);
 	}
 	@results = grep {
@@ -2106,7 +2107,7 @@ sub process {
 	@found_list = ();
 	chdir "$start_dir";
 	File::Find::find(\&main::wanted, @source_glob);
-	say 'start dir: ', $start_dir if $b_debug;
+	say 'start dir: ', $start_dir if $dbg[4];
 	Encode::Guess->set_suspects(qw(ascii utf8 cp1252)) if $run{'infofix-character'};
 	foreach $item (sort { "\L$a" cmp "\L$b" } @found_list){
 		my $b_valid;
@@ -2114,7 +2115,7 @@ sub process {
 		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 		chdir "$start_dir";
 		chdir "$item";
-		if ($b_debug){
+		if ($dbg[4]){
 			say 'srcdir: ', $SOURCE_DIRECTORY;
 			say 'item: ', $item;
 			say 'cwd: ', Cwd::getcwd();
@@ -2535,7 +2536,7 @@ sub process_directories {
 	@found_list = ();
 	chdir "$start_dir";
 	File::Find::find(\&main::wanted, @source_glob);
-	say 'start dir: ', $start_dir if $dbg[3];
+	say 'start dir: ', $start_dir if $dbg[4];
 	my $file_type = lc($INPUT_TYPE) . ',' . uc($INPUT_TYPE) . ',';
 	$file_type .= ucfirst(lc($INPUT_TYPE)); # flac,FLAC,Flac
 	foreach my $item (sort { "\L$a" cmp "\L$b" } @found_list){
@@ -2544,7 +2545,7 @@ sub process_directories {
 		$print_src =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 		chdir "$start_dir";
 		chdir "$item";
-		if ($dbg[3]){
+		if ($dbg[4]){
 			say 'srcdir: ', $SOURCE_DIRECTORY;
 			say 'item: ', $item;
 			say 'cwd: ', Cwd::getcwd();
@@ -2628,8 +2629,8 @@ sub process_tags {
 			$b_tags = 1 if !$b_tags;
 		}
 	}
-	say '1. file_tags: ', Data::Dumper::Dumper $file_tags if $dbg[4];
-	say '1. key_checks: ', Data::Dumper::Dumper $key_checks if $dbg[4];
+	say '1. file_tags: ', Data::Dumper::Dumper $file_tags if $dbg[3];
+	say '1. key_checks: ', Data::Dumper::Dumper $key_checks if $dbg[3];
 	return $b_tags;
 }
 # note: in order to handle > 1 type per tag name, all are contained in arrays.
@@ -2717,7 +2718,7 @@ sub generate_info_data {
 		}
 	}
 	@performers = () if $multi->{'PERFORMER'};
-	say Data::Dumper::Dumper \%track_data if $dbg[7];
+	say Data::Dumper::Dumper \%track_data if $dbg[20];
 	if (%track_data){
 		my $b_starter;
 		foreach my $track (sort keys %track_data){
@@ -2741,9 +2742,9 @@ sub generate_info_data {
 		@info = ('','Info:',@info);
 	}
 	my @info_data = (@main,@performers,@tracks,@general,@info);
-	say "info_data: ", Data::Dumper::Dumper \@info_data if $dbg[5];
-	say "2. file_tags: ", Data::Dumper::Dumper $file_tags if $dbg[7];
-	say "2. key_checks: ", Data::Dumper::Dumper $key_checks if $dbg[7];
+	say "info_data: ", Data::Dumper::Dumper \@info_data if $dbg[6];
+	say "2. file_tags: ", Data::Dumper::Dumper $file_tags if $dbg[22];
+	say "2. key_checks: ", Data::Dumper::Dumper $key_checks if $dbg[22];
 	if (@info_data){
 		if (!$run{'taglist-write'}){
 			say "  Here is the $INFO_FILE data (use 'w' to write file):";
@@ -2968,9 +2969,9 @@ sub generate_taglist_data {
 	else {
 		say "  No tag data found to use! Are the files tagged?";
 	}
-	say "taglist contents: ", Data::Dumper::Dumper \@contents if $dbg[5];
-	say "2. file_tags: ", Data::Dumper::Dumper $file_tags if $dbg[7];
-	say "2. key_checks: ", Data::Dumper::Dumper $key_checks if $dbg[7];
+	say "taglist contents: ", Data::Dumper::Dumper \@contents if $dbg[6];
+	say "2. file_tags: ", Data::Dumper::Dumper $file_tags if $dbg[22];
+	say "2. key_checks: ", Data::Dumper::Dumper $key_checks if $dbg[22];
 }
 sub get_disc_data {
 	my $disc = {};
@@ -2998,7 +2999,7 @@ sub get_disc_data {
 		$disc->{'total-tracks'}++;
 	}
 	
-	say 'Disc Totals: ', Data::Dumper::Dumper $disc if $dbg[8];
+	say 'Disc Totals: ', Data::Dumper::Dumper $disc if $dbg[7];
 	return $disc;
 }
 sub get_tags_used {
@@ -3048,7 +3049,7 @@ sub check_multi {
 			}
 		}
 	}
-	say 'Multi Tags: ', Data::Dumper::Dumper \%multi if $dbg[6];
+	say 'Multi Tags: ', Data::Dumper::Dumper \%multi if $dbg[8];
 	return \%multi;
 }
 }
@@ -4804,8 +4805,7 @@ sub show_options {
 	$output .= "--version         Show $self_name version.\n";
 	$output .= $line_small . "\n";
 	$output .= "Debug/Output control options:\n";
-	$output .= "--dbg             {1-xx}[,xx] Trigger advanced output debugging data. See man.\n";
-	$output .= "--debug           Trigger global debugging data.\n";
+	$output .= "--dbg             {1-xx}[,xx] Trigger specific debuggers data. See man.\n";
 	$output .= "--dry, --dry-run, --test\n";
 	$output .= "                  Test copy, sync, autotag, checksum without actually doing\n";
 	$output .= "--quiet           Turns off most screen output, except for error messages.\n";
@@ -5141,8 +5141,6 @@ sub get{
 		for (split(',',$arg)){
 			$dbg[$_] = 1;
 		}},
-	'debug' => sub { 
-		$b_debug = 1;},
 	'd|destination:s' => sub { 
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires path.",1) if !$arg;
