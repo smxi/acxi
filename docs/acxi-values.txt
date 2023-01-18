@@ -1,0 +1,154 @@
+================================================================================
+ACXI VALUES
+================================================================================
+FILE:    acxi-values.txt
+VERSION: 1.0
+DATE:    2023-01-17
+
+----------------------------------------
+Docs:
+See: 
+
+----------------------------------------
+Comments:
+
+The main values used by acxi internally, this is a reference so you don't always 
+have to look it up in the code.
+
+NOTE: THIS IS ALMOST ALWAYS OUT OF DATE!!
+
+================================================================================
+
+Sections:
+1. CONFIG VALUES
+  USER CONFIG
+2. DEBUGGING SWITCHES
+  DEBUGGER OUTPUT SWITCHES
+3. HASHED/SCALAR/BOOLEAN VALUES
+  ACTION HASHES
+
+================================================================================
+CONFIG VALUES
+--------------------------------------------------------------------------------
+
+========================================
+USER CONFIG
+----------------------------------------
+
+These come from config files:
+/etc/acxi.conf 
+$HOME/.acxi.conf  
+$HOME/.config/acxi.conf  
+
+
+VALUES:
+
+================================================================================
+DEBUGGING SWITCHES
+--------------------------------------------------------------------------------
+
+========================================
+DEBUGGER OUTPUT SWITCHES
+----------------------------------------
+
+Used to trigger various internal print debuggers for dev work
+
+----------------------------------------
+--dbg [0-9]+{,[0-9]+}*
+----------------------------------------
+These are activated by: --dbg [1-xx] 
+Values will change, and this should be the primary reference to use them:
+Sets: @dbg indexes to 1, true, for generating testing output in the system.
+
+These will get updated as acxi gets used and worked on, but this is a 
+good start.
+
+@dbg = (
+1:  Primary data: 
+    main:get_flac_tags(), show raw/post process tag data. Used by:
+      TagList::process_tags(); 
+      AutoTag::process_tags(), replaygain, disable with --no-replaygain; 
+      SyncCollection::convert_file(), via flac2mp3_cmd();
+    Analyze::process_ffprobe(), raw @source;
+    Analyze::process_metaflac(), $escaped + raw @source;
+2:  Secondary primary: data from text files. Show raw content of file.
+    AutoTag::process_tags(), auto.tag contents;
+3:  Post processing Secondary: Shows raw data data after processing.
+    AutoTag::process_tags(), post processed tags;
+    TagList::process_tags(), post process raw tag data;
+4:  File/Directory data: prints internal working file/directory data.
+    Aggregate::aggregate(), path, file;
+    Analyze::process(), source file for metaflac;
+    AutoTag::get_tag_files(); 
+    AutTag::make_tag_file(), source_dir, cwd, start_dir;
+    Checksums::generate_checksums();
+    Checksums::verify_checksums(), cwd;
+    Checksums::process_directories();
+    InfoFix::process(), basic paths;
+    TagList::process_directories();
+5:  Commands: prints out commands in raw form that would run.
+    Note: SyncCollection prints most of these out with --dry.
+    AutoTag::image_embedder(), metaflac command; 
+    AutoTag::image_remover(), metaflac command; 
+    AutTag::process_tags(), metaflac commands, remove, tag;
+    AutTag::tag_updater(), remove/add metaflac, source directory;
+6:  Generated data. Often data generated with subs.
+    Aggregate::aggregate(), @files, list of generated files;
+    Analyze::process(), $source_info;
+    AutoTag::prefill_data(), $info data;
+    AutoTag::populate_tag_file(), \@collection;
+    Checksums::process_directories(), \@files;
+    TagList::generate_info_data(), taglist @contents
+    TagList::generate_taglist_data(), taglist @contents;
+7:  Data from specific tools, part 1. Use to verify what tool generated.
+    AutoTag::populate_tag_file(), \@multi;
+    TagList::get_disc_data(), $disc;
+8:  Data from specific tools, part 2. Use to verify data.
+    AutoTag::create_track_total(), totals;
+    TagList::get_tags_used(), $tags;
+    TagList::check_multi(), $multi;
+20: Temporary or looped data, per iteration. 
+    AutoTag::process_tags(), @working, @$working in main tag loop;
+    TagList::generate_info_data(), \%track_data;
+21: Specific debuggers, uses vary.
+    AutoTag::process_tags(), File::stat::stat("$working->[1]")->size,
+      before and after image remove, and after tagging;
+    Checksums::verify_flacs(), @result count; 
+22: Post processing of core data structures. Verify no corruptions etc.
+    TagList::generate_info_data(), $file_tags, $key_checks;
+    TagList::generate_taglist_data(), $file_tags, $key_checks;
+)
+
+
+================================================================================
+HASHED/SCALAR/BOOLEAN VALUES
+--------------------------------------------------------------------------------
+
+These hashes/booleans contain data that will be used for tests and data 
+collection.
+
+========================================
+ACTION HASHES
+----------------------------------------
+
+These hashes will trigger various behaviors, they are either user set, via 
+options, or internally set flags.
+
+----------------------------------------
+RUN SWITCHES
+----------------------------------------
+
+%run
+
+This is a global that assigns which features to run boolean values.
+
+These are set in the get_options function.
+
+grep -o "run{'[^}]*'}" acxi | sort | uniq
+
+%run = (
+
+);
+
+$verbosit   # -v 0, -v 1, -v 2, -v 3
+
