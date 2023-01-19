@@ -80,8 +80,8 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='25';
-my $self_date='2023-01-18';
+my $self_patch='26';
+my $self_date='2023-01-19';
 
 ## GLOBALS ##
 ## Booleans
@@ -91,7 +91,7 @@ my $b_win = ($^O =~ /win/i) ? 1 : 0; # detect if $^O returns windows
 
 ## Undefined Scalars
 my ($print_line_heavy,$print_line_large,$print_line_small);
-my ($codec,$embed_image,$extension,$exclude_append,$list_type,$start_dir);
+my ($codec,$extension,$exclude_append,$image_embed,$list_type,$start_dir);
 
 ## Defined Scalars
 my ($quality,$autotag_multi,$silent_flac,$silent_ffmpeg,$silent_lame,
@@ -714,13 +714,13 @@ sub generate_output {
 package AutoTag;
 sub run_tagger {
 	say $line_large;
-	if ($run{'embed-image'}){
+	if ($run{'image-embed'}){
 		say 'Starting image embedding in: ' . main::sourcer($SOURCE_DIRECTORY);
 		image_embedder();
 		say $line_small;
 		say 'Completed image embedding.';
 	}
-	if ($run{'update-tag'}){
+	if ($run{'tag-update'}){
 		say 'Starting tag update in: ' . main::sourcer($SOURCE_DIRECTORY);
 		tag_updater();
 		say $line_small;
@@ -880,7 +880,7 @@ sub process_tags {
 					main::error_handler('application-error', $error_message,1);
 				}
 			}
-			if ($run{'remove-images'}){
+			if ($run{'image-remove'}){
 				image_remover("$working->[1]");
 			}
 			say File::stat::stat("$working->[1]")->size if $dbg[21];
@@ -1459,8 +1459,8 @@ sub image_embedder {
 	File::Find::find(\&main::wanted, @source_glob);
 	chdir "$start_dir";
 	chdir "$SOURCE_DIRECTORY";
-	if ($embed_image ne 'remove' && ! -e $embed_image){
-		$error_message = "Embed image $embed_image could not be located!\n";
+	if ($image_embed && ! -e $image_embed){
+		$error_message = "Embed image $image_embed could not be located!\n";
 		$error_message .= "Source directory: $SOURCE_DIRECTORY\n";
 		$error_message .= "Please make sure your embed image file name or path is correct.\n";
 		main::error_handler('file-missing', $error_message,1);
@@ -1470,11 +1470,11 @@ sub image_embedder {
 		$print_file =~ s|^\Q$SOURCE_DIRECTORY$path_separator\E|| if $VERBOSITY < 3;
 		print "Processing: $print_file...";
 		$item = main::escape_item("$item");
-		if ($run{'remove-images'}){
+		if ($run{'image-remove'}){
 			image_remover("$item");
 		}
-		if ($embed_image ne 'remove'){
-			@image_args = image_handler("$item",("$embed_image"));
+		if ($image_embed){
+			@image_args = image_handler("$item",("$image_embed"));
 			$args = join ' ', @image_args;
 			$cmd = qq($COMMAND_METAFLAC $args "$item");
 			say "\nimage embedder", $cmd if $dbg[5];
@@ -1487,7 +1487,7 @@ sub image_embedder {
 				say 'Image embedded';
 			}
 			else {
-				say 'Test mode only';
+				say 'Test mode only: image embed';
 			}
 		}
 		else {
@@ -1513,7 +1513,7 @@ sub image_remover {
 	}
 	say "\nimage remover cmd: ", $cmd if $dbg[5];
 }
-# note: metaflac is ignring type integer and assigning 3, not sure why
+# note: metaflac is ignoring type integer and assigning 3, not sure why
 sub image_handler {
 	my ($file,@images) = @_;
 	my ($size,@args,@result,$working);
@@ -4684,9 +4684,9 @@ sub show_options {
 	$output .= "--autotag-file, --atf, --af {file name}\n";
 	$output .= "                  One time change of $AUTOTAG_FILE file name. Use unique name.\n";
 	$output .= "--ffprobe         Force use of ffprobe for FLAC analysis in -Z/-Xq\n";
-	$output .= "--image, -I {jpg,png image file name|remove}\n";
+	$output .= "--image, -I [jpg,png image file name|remove]\n";
 	$output .= "                  Embed image file into single recording directory. 'remove'\n";
-	$output .= "                  value only removes images.\n";
+	$output .= "                  value only removes images. -RI also removes existing images.\n";
 	$output .= "--info-file, --if, --prefill-file, --pf {file name}\n";
 	$output .= "                  Alternate file name to use for --prefill, --taglist=i,\n";
 	$output .= "                  --infofix.\n";
@@ -4724,9 +4724,9 @@ sub show_options {
 	$output .= "                  Uses same syntax as --tag. Adds tag+values to auto.tag.\n";
 	$output .= "                  Value 'UNSET' removes the PREFILL_TAG configuration value.\n";
 	$output .= "--no-replaygain   Does not preserve REPLAYGAIN values for autotag-create.\n";
-	$output .= "--remove-images, -R\n";
-	$output .= "                  Remove all embedded images and image padding from file\n";
-	$output .= "                  before autotagging.\n";
+	$output .= "--remove-images, -R, --image-remove\n";
+	$output .= "                  Remove all embedded images and image padding from file. Either\n";
+	$output .= "                  prior to embedding new one with -I/-A, or just to remove them.\n";
 	$output .= "--remove-padding, -P\n";
 	$output .= "                  For --autotag and --tag also removes block padding. Slows.\n";
 	$output .= "                  tagging down significantly.\n";
@@ -5191,13 +5191,27 @@ sub get{
 		main::show_options();},
 	'I|image:s' => sub { 
 		my ($opt,$arg) = @_;
-		if (!$arg || $arg !~ /(\.png|\.jpe?g|^remove)$/i){
-			$msg = "$opt requires a cover image file name. See -h.";
-			main::error_handler('missing-arg',$msg,1);
+		if ($arg){
+			if ($arg !~ /(\.png|\.jpe?g|^remove)$/i){
+				if ($arg eq 'R'){
+					$msg = "-IR is not allowed. Must be -RI. See -h.";
+					main::error_handler('missing-arg',$msg,1);
+				}
+				else {
+					$msg = "$opt requires a valid cover image file name/remove. See -h.";
+					main::error_handler('missing-arg',$msg,1);
+				}
+			}
+			else {
+				if (lc($image_embed) eq 'remove'){
+					$run{'image-remove'} = 1;
+				}
+				else {
+					$image_embed = $arg;
+				}
+			}
 		}
-		$embed_image = $arg;
-		$run{'remove-images'} = 1 if $embed_image eq 'remove';
-		$run{'embed-image'} = 1;
+		$run{'image-embed'} = 1;
 		$run{'tagger'} = 1;
 		$test{'tag'} = 1;},
 	'info-file|prefill-file|if|pf:s' => sub { 
@@ -5319,8 +5333,8 @@ sub get{
 			main::error_handler('missing-arg',$msg,1);
 		}
 		$recurse = $arg;},
-	'R|remove-images' => sub { 
-		$run{'remove-images'} = 1;
+	'R|remove-images|image-remove' => sub { 
+		$run{'image-remove'} = 1;
 		$test{'tag'} = 1;},
 	'P|remove-padding' => sub { 
 		$padding = ' --dont-use-padding';
@@ -5363,7 +5377,7 @@ sub get{
 			main::error_handler('missing-arg',$msg,1);
 		}
 		@tags = split(/\Q^^\E/, $arg);
-		$run{'update-tag'} = 1;
+		$run{'tag-update'} = 1;
 		$run{'tagger'} = 1;
 		$test{'tag'} = 1;},
 	'L|taglist:s' => sub {
@@ -5376,8 +5390,7 @@ sub get{
 				$run{'taglist-info'} = 1 if $arg =~ /i/;
 				$run{'taglist-skip'} = 1 if $arg =~ /s/;
 				$run{'taglist-write'} = 1 if $arg =~ /w/;
-				if ($run{'taglist-autotag'} && !$run{'taglist-condensed'} && 
-				!$run{'taglist-full'}){
+				if ($run{'taglist-autotag'} && !$run{'taglist-full'}){
 					$run{'taglist-condensed'} = 1;
 				}
 			}
@@ -5565,6 +5578,14 @@ sub verify_selections {
 	if ($test{'dither'} && !$run{'resample'}){
 		main::error_handler('invalid-options', 
 		 "--dither requires --resample.",1);
+	}
+	if ($run{'image-remove'} && !$run{'autotagger'} && !$run{'image-embed'}){
+		main::error_handler('invalid-options', 
+		 "--image-remove/-R requires -A/-I.",1);
+	}
+	if ($run{'image-embed'} && !$run{'image-remove'} && !$image_embed){
+		main::error_handler('invalid-options', 
+		 "--image requires either image/remove or -R.",1);
 	}
 	# info-file requires either prefill, taglist-info, or infofix options
 	if ($test{'info-file'} && !$run{'prefill'} && !$run{'taglist-info'} && 

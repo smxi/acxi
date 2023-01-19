@@ -127,6 +127,10 @@ track always file, it is a unique idenitifier (or idenfiers in rare cases, like
 musicbrainz) per file. I had always thought it was a per recording, not track,
 id, but that is wrong.
 
+9. IMAGES: -RI to trigger --image-remove has not worked in a long time, that's 
+now corrected so -I accepts no value with -RI, -I remove, -I image, or -RI image 
+as originally intended.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
@@ -232,6 +236,8 @@ per file.
 not replaced by a new one and the next file did not contain that tag in the case 
 of multi use of a tag situations, so you don't need to do anything there.
 
+11. IMAGES: Added --image-remove as synonym for -R, --remove-images
+
 --------------------------------------------------------------------------------
 CHANGES:
 
@@ -252,6 +258,8 @@ an oversight.
 
 4. Removed --debug, replaced with specific --dbg x(,y) options globally.
 
+5. Actually fix 
+
 --------------------------------------------------------------------------------
 DOCUMENTATION:
 
@@ -271,9 +279,22 @@ more consistent prefill tag listing.
 
 7. Updated help top part to have better examples with long and short forms.
 
-8. Added more granular man docs for --dbg, and created docs/acxi-values.txt to 
-somewhat document, ideally anyway, possible debugging actions. We'll see how 
-this goes, the old --debug was too generic to be useful in real development.
+8. Added more granular man docs for --dbg
+
+9. Created docs/acxi-values.txt to document internal acxi values. 
+
+* @dbg - the old --debug was too generic to be useful in real development.
+
+* %run, %test, scalar assignments - document internal use of these variables.
+
+* verbosity levels, and triggering switches.
+
+* configuration items. Always see man for full explanations.
+
+10. Updated man, help for -R/-I cleanups and corrections, and to make actions/
+choices more clear.
+
+11. Fixed typo for config file path, had $HOME/.conf/ not .config/.
 
 --------------------------------------------------------------------------------
 CODE:
@@ -304,6 +325,9 @@ used.
 7. Changed all previous $b_debug to more granular $debug[x] tests, and added 
 many commented out say debugging items now that they can be switched off and on
 in a more granular fashion.
+
+8. Redid $run{'image-embed'} and $run{'image-remove'} logic, and made more 
+predictable and understandable, which is how the failure had crept in.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Fri, 30 Dec 2022 12:57:40 -0800

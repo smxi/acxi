@@ -1,4 +1,4 @@
-.TH ACXI 1 "2023\-01\-18" acxi "acxi manual"
+.TH ACXI 1 "2023\-01\-19" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -29,7 +29,7 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-autotag\-create\-single\fR, \fB\-S\fR] 
 [\fB\-\-autotag\-create\-multi\fR, \fB\-M\fR {filename start ID}]
 [\fB\-\-autotag\-file\fR, \fB\-\-atf\fR, \fB\-\-af\fR, {file name}]
-[\fB\-\-image\fR, \fB\-I\fR {cover image filename}] 
+[\fB\-\-image\fR, \fB\-I\fR [cover image filename|remove]] 
 [\fB\-\-info\-file\fR, \fB\-\-if\fR, \fB\-\-prefill\-file\fR, \fB\-\-pf\fR 
 {release info file name}] 
 [\fB\-\-infofix\fR, \fB\-X\fR [0acdklmnqtuvw]] 
@@ -38,7 +38,8 @@ Tagging: [\fB\-\-autotag\fR, \fB\-A\fR]
 [\fB\-\-prefill\fR, \fB\-E\fR] 
 [\fB\-\-prefill\-tag\fR, \fB\-\-pt\fR {tags}] 
 [\fB\-\-no\-replaygain\fR]
-[\fB\-\-remove\-images\fR, \fB\-R\fR] [\fB\-\-remove\-padding\fR, \fB\-P\fR] 
+[\fB\-\-remove\-images\fR, \fB\-\-image\-remove\fR, \fB\-R\fR] 
+[\fB\-\-remove\-padding\fR, \fB\-P\fR] 
 [\fB\-\-start\fR {0-xx}] 
 [\fB\-\-tag\fR, \fB\-T\fR] {"TAG1%:tag value^^TAG2%:tag value"}] 
 [\fB\-\-taglist\fR, \fB\-L\fR [acfiw]] 
@@ -624,19 +625,20 @@ An alternate file name to use for auto.tag file. Note that file MUST have a
 you will get ungood results.
 
 .TP
-.B \-\-image\fR, \fB\-I {cover image file name|remove}\fR
+.B \-\-image\fR, \fB\-I [cover image file name|remove]\fR
 Flac only. Use only on a single directory. Takes the supplied cover image file 
-and embeds it into the existing flac files. Use with \fB\-\-remove-images\fR if 
-you want to remove existing embedded images. If this option is not used, it will 
-not add images to the file if images are found in it (image embedding is 
-cumulative in FLAC files). 
+and embeds it into the existing flac files. Only use \fB.png\fR or \fB.jpg\fR 
+image types, otherwise the results may be inconsistent. 
 
-Do not use if you are using an \fBauto.tag\fR file, thise is is intended only to 
-add an image to an already tagged .flac file without retagging it.
+Do not use if you are using an \fBauto.tag\fR file, this is is intended only to 
+add an image to an already tagged .flac file without retagging it, or to remove
+images from those files, or to replace old images with the supplied file name.
 
-Only use \fB.png\fR or \fB.jpg\fR image types, otherwise the results may be 
-inconsistent. If you use the value '\fBremove\fR' all embedded images and their 
-padding will be removed.
+The value \fBremove\fR removes all embedded images and their padding. \fB\-RI\fR 
+can be used as shorthand for \fB\-Iremove\fR or \fB\-I[image] 
+\-\-remove\-images\fR. If remove is not used, -I will not add new images to the 
+file if pre-existing images are found in it (image embedding is cumulative in 
+FLAC files). 
 
 Only run this in a single recording directory, do not use globally!!
 
@@ -645,7 +647,8 @@ Samples:
 \fBacxi \-s ./ \-\-image='cover.jpg'
 acxi \-s ./ \-\-image remove
 acxi \-s ./ \-I cover.jpg \-\-remove\-images
-acxi \-s ./ \-RI cover.jpg\fR
+acxi \-s ./ \-RI cover.jpg
+acxi \-s ./ \-RI
 .fi
 
 .TP
@@ -1056,7 +1059,7 @@ values.
 Supports same tags as \fB\-\-prefill\fR field names.s
 
 .TP
-.B \-\-remove\-images\fR, \fB\-R\fR
+.B \-\-remove\-images\fR,  \fB\-\-image\-remove\fR, \fB\-R\fR
 Use with \fB\-\-autotag\fR or \fB\-\-image\fR. Will remove all embedded image data, 
 and the associated padding, prior to tagging (and adding new image if 
 applicable) audio file. Note that simply removing image data will leave the 
@@ -1477,13 +1480,13 @@ acxi will read its configuration/initialization files in the following order.
 .B STANDARD DETECTION
 \fB/etc/acxi.conf\fR contains the default configurations. Also checks 
 \fB/etc/acxi.conf.d/acxi.conf\fR as global override for \fB/etc/acxi.conf\fR  
-config file. Useful in cases if distros ever package acxi.
+config file. Useful in cases if distros package acxi to override any defaults.
 
 These can be overridden by user configurations found in one of the following 
 locations, in this order of priority: \fB$XDG_CONFIG_HOME/acxi.conf\fR, 
-\fB$HOME/.conf/acxi.conf\fR, and, as last default, \fB$HOME/.acxi.conf\fR, i.e.:
+\fB$HOME/.config/acxi.conf\fR, and, as last default, \fB$HOME/.acxi.conf\fR, i.e.:
 
-\fB$XDG_CONFIG_HOME/acxi.conf\fR > \fB$HOME/.conf/acxi.conf\fR >
+\fB$XDG_CONFIG_HOME/acxi.conf\fR > \fB$HOME/.config/acxi.conf\fR >
 \fB$HOME/.acxi.conf\fR
 
 .TP

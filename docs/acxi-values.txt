@@ -2,12 +2,13 @@
 ACXI VALUES
 ================================================================================
 FILE:    acxi-values.txt
-VERSION: 1.0
-DATE:    2023-01-17
+VERSION: 1.1
+DATE:    2023-01-19
 
 ----------------------------------------
 Docs:
-See: 
+See: man acxi / https://smxi.org/docs/acxi-man.htm 
+See: acxi -h / https://smxi.org/docs/acxi-options.htm
 
 ----------------------------------------
 Comments:
@@ -15,47 +16,37 @@ Comments:
 The main values used by acxi internally, this is a reference so you don't always 
 have to look it up in the code.
 
-NOTE: THIS IS ALMOST ALWAYS OUT OF DATE!!
+NOTE: VERIFY WITH CURRENT ACXI! Can be out of date.
 
 ================================================================================
 
 Sections:
-1. CONFIG VALUES
+
+1. DEBUGGING
+  DEBUGGER SWITCHES
+2. HASH/VARIABLE VALUES
+  RUN VALUES
+    RUN HASH
+    RUN VARIABLES
+    VERBOSITY LEVELS
+  TEST HASH
+3. CONFIG VALUES
   USER CONFIG
-2. DEBUGGING SWITCHES
-  DEBUGGER OUTPUT SWITCHES
-3. HASHED/SCALAR/BOOLEAN VALUES
-  ACTION HASHES
 
 ================================================================================
-CONFIG VALUES
+DEBUGGING
 --------------------------------------------------------------------------------
 
 ========================================
-USER CONFIG
-----------------------------------------
-
-These come from config files:
-/etc/acxi.conf 
-$HOME/.acxi.conf  
-$HOME/.config/acxi.conf  
-
-
-VALUES:
-
-================================================================================
-DEBUGGING SWITCHES
---------------------------------------------------------------------------------
-
-========================================
-DEBUGGER OUTPUT SWITCHES
+DEBUGGER SWITCHES
 ----------------------------------------
 
 Used to trigger various internal print debuggers for dev work
 
 ----------------------------------------
---dbg [0-9]+{,[0-9]+}*
+--dbg [0-9]+{,[0-9]+}* - @dbg
 ----------------------------------------
+
 These are activated by: --dbg [1-xx] 
 Values will change, and this should be the primary reference to use them:
 Sets: @dbg indexes to 1, true, for generating testing output in the system.
@@ -119,36 +110,307 @@ good start.
     TagList::generate_taglist_data(), $file_tags, $key_checks;
 )
 
-
 ================================================================================
-HASHED/SCALAR/BOOLEAN VALUES
+HASH/VARIABLE VALUES
 --------------------------------------------------------------------------------
 
-These hashes/booleans contain data that will be used for tests and data 
+These hashes/variables contain data that will be used for tests and data 
 collection.
 
+These values will trigger various behaviors, they are either user set, via 
+options, or internally set flags or variables.
+
 ========================================
-ACTION HASHES
+RUN VALUES
 ----------------------------------------
 
-These hashes will trigger various behaviors, they are either user set, via 
-options, or internally set flags.
+These run values are set in OptionsHandler.
+
+They are used by acxi in Validation, or to trigger all subsequent actions.
 
 ----------------------------------------
-RUN SWITCHES
+RUN HASH
 ----------------------------------------
 
-%run
+%run is a global that assigns which features to run boolean values, or sometimes
+to store data, which also triggers boolean tests, and for initial validation.
 
-This is a global that assigns which features to run boolean values.
-
-These are set in the get_options function.
+These are set in OptionsHandler. All have value 1 unless otherwise specified.
 
 grep -o "run{'[^}]*'}" acxi | sort | uniq
 
 %run = (
-
+aggregate          # --aggregate/-G Aggregate files
+ag-file            # files to aggregate, default auto.tag, optional arg for -G
+analyze            # --analyze/-Z sets checksum, no-md5
+autotag-create     # -C,-M,-S
+autotag-multi      # -M
+autotag-single     # -S
+autotag-unique     # --unique
+autotagger         # -A 
+checksum           # --duplicates,--ffps,-K,-V,-Z
+checksum-delete    # -D, sets checksum
+checksum-ffps      # --ffps, sets checksum, no-md5
+checksum-verify    # -V
+clean              # --clean, set to 0 if not sync action in set_switches()
+clean-sync         # --clean sync, sets clean
+dot                # --dot sets 1, true; --no-dot sets 0, false
+duplicates         # --duplicates, sets checksum,no-md5
+ffmpeg             # --ffmpeg
+image-embed        # -I, sets tagger, $image_embed if image name included
+image-remove       # -I remove, -IR
+infofix            # -X. -X options can be combined
+infofix-autonumber # -Xa, number unnumbered track titles
+infofix-character  # -Xc, cp-1252 character encoding fixes
+infofix-date       # -Xd, date fixes
+infofix-dow        # -Xk, sets infofix-date 
+infofix-lower      # -Xl, sets all to lower, then upper case first per line
+infofix-time       # -Xm, per track times, titles only
+infofix-no         # -Xn, track numbering
+infofix-quality    # -Xq, quality report 
+infofix-title      # -Xt, upper/lower case fixes for track titles 
+infofix-upper      # -Xu, set to lower, then uppercase fixes
+infofix-verify     # -Xv, sets -Xq, verified flac added to q report.
+infofix-write      # -Xw, write out changes to info file
+infofix-zero       # -X0, remove leading info output characters
+ffprobe            # --ffprobe
+infofix            # -X
+multiartist        # --multiartist/--ma, sets array ref in multiartist.
+no-ffp             # --no-ffp
+no-md5             # --no-md5,-Z
+no-ssl             # --no-ssl, only with -U
+prefill            # --prefill/-E
+remove-padding     # --remove-padding/-P
+resample           # --resample, array ref of resample data
+resample-override  # --resample-override, boolean true
+source-glob        # --source-glob/--glob/-g, globbing string 
+sync               # set in set_switches(), sync only if nothing else conflicts
+tagger             # -A
+tag-update         # --tag/-T, sets tagger, @tags as well
+taglist            # --taglist/-L. -L options can be combined
+taglist-autotag    # -La
+taglist-condensed  # -Lc, or -La with no f
+taglist-full       # -Lf, or -L with no i,c,a. c and f can't be used together.
+taglist-info       # -Li
+taglist-skip       # -Ls
+taglist-write      # -Lw
+update             # -U 
+update-type        # -U 3. Other values not allowed.
 );
 
-$verbosit   # -v 0, -v 1, -v 2, -v 3
+----------------------------------------
+RUN VARIABLES
+----------------------------------------
 
+The following are set with various options, not all of which have run values.
+
+$AUTOTAG_FILE           # set with --autotag-file
+$b_check_dest           # set in set_switches(), 0 if not sync, and not -G
+$b_check_out            # set in set_switches(), 0 if not sync
+$b_force                # set with -f/--force
+$b_test                 # set with --dry,--dry-run,--test
+$COPY_TYPES             # set with -a (appends), --copy (replaces)
+$codec                  # set with --codec
+@dbg                    # set with --dbg [1-xx,xx ], comma separated list, set 
+                        # which debug actions to use
+$DESTINATION_DIRECTORY  # set with --destination
+$DITHER                 # set with --dither
+$DONT_USE_NLINK         # t/f boolean, --nlink,--no-nlink
+$EXCLUDE                # set with --exclude
+$exclude_append         # set with --exclude-append
+$FORK                   # set with --fork
+$image_embed            # set with --image if png/jpg
+$INFO_FILE              # set with --info/prefill-file
+$INPUT_TYPE             # set with --input/-i
+$OUTPUT_TYPE            # set with --output/-o, if not syncing action, set to 
+                        # UNSET in set_switches()
+$padding                # set with --remove-padding/-P
+$QUALITY_AAC            # set with --quality/-q
+$QUALITY_FLAC           # set with --quality/-q
+$QUALITY_MP3            # set with --quality/-q
+$QUALITY_OGG            # set with --quality/-q
+$QUALITY_OPUS           # set with --quality/-q
+$PREFILL_TAG            # set with --prefill-tag
+$recurse                # set with --recurse
+$run{'multiartist'}     # set with --ma, creates array ref of ma data
+$run{'resample'}        # set with --resample, array ref of resample data
+$run{'source-glob'}     # set with -g/--glob, globbing string
+$run{'update-type'}     # set with -U 3
+$SOURCE_DIRECTORY       # set with --source/-s
+$start                  # set with --start
+$TAGLIST_FILE           # set with --taglist-file
+@tags                   # set with --tag/-T, ^^ split array of tag data
+$VERBOSITY              # set with --verbosity/-v [0-3],--basic,--default,
+                        # --full,--quiet,--silent
+$Z_MIN_SIZE             # set with --z-min-size 
+$Z_MIN_TIME             # set with --z-min-time 
+
+----------------------------------------
+VERBOSITY LEVELS
+----------------------------------------
+
+Make output more or less verbose. Default is 1.
+
+Also can be set with config item:
+
+VERBOSITY=[0-3]
+
+-v/--verbosity [0-3]
+
+0: -v 0, --quiet,--silent
+1: -v 1, legacy: --basic,--default
+2: -v 2
+3: -v 3, legacy: --full
+
+========================================
+TEST HASH - %test
+----------------------------------------
+
+These are all set in OptionsHandler::get(). They are used to validate 
+combinations of options in set_switches() and verify_selections().
+
+%test = (
+autotag           # set in --multiartist,--prefill/-E,--prefill-tag,--start,-C,
+                  # -M,-S
+autotag-file      # set in --autotag-file
+checksum          # set in --duplicates,--ffps,--z-min-size/time,-D,-K,-V,-Z
+checksum-generate # set in --ffps,-D,-K
+destination       # set in --destination
+dither            # set in --dither
+## These switches all relate to info type processing events 
+info              # set in --info-file,--info-rating,--taglist/-L,
+                  # --taglist-file,-X
+info-file         # set in --info/prefill-file
+info-rating       # set in --info-rating
+prefill           # set in --multiartist,--prefill/-E,--prefill-tag,--start
+prefill-tag       # set in --prefill-tag
+remove-padding    # set in --remove-padding/-P
+source            # set in --source/-s
+## These switches are only used in syncing actions
+sync              # set in -a,--clean,--codec,--copy,--dither,--exclude,
+                  # --exclude-append,--ffmpeg,--fork,--output/-o,-q/--quality
+tag               # set in --remove-padding/-P,--resample,--resample-override,
+                  # -A,-I,-R,-T
+taglist-file      # set in --taglist-file
+update            # set in --no-ssl,-U
+z-min             # set in --z-min-size/z-min-time
+);
+
+================================================================================
+CONFIG VALUES
+--------------------------------------------------------------------------------
+
+See man page or https://smxi.org/docs/inxi-man.htm for complete explanations.
+
+Make sure you understand the values before using these.
+
+Accepted boolean values: [enable|on|true|yes] or [disable|off|false|no]. 
+
+========================================
+USER CONFIG
+----------------------------------------
+
+----------------------------------------
+CONFIG FILE PATHS
+----------------------------------------
+
+Checked in this order:
+
+Default configuration files:
+/etc/acxi.conf 
+/etc/acxi.conf.d/acxi.conf
+
+Override config files (only one used, in this order):
+$XDG_CONFIG_HOME/acxi.conf
+$HOME/.config/acxi.conf 
+$HOME/.acxi.conf 
+
+----------------------------------------
+REQUIRED APPLICATION PATHS
+----------------------------------------
+
+COMMAND_FFMPEG        # Sample: COMMAND_FFMPEG=/usr/bin/ffmpeg (default path)
+COMMAND_FFPROBE       # Sample: COMMAND_FFPROBE=/usr/bin/ffprobe (default path)
+COMMAND_FLAC          # Sample: COMMAND_FLAC=/usr/bin/flac (default path)
+COMMAND_LAME          # Sample: COMMAND_LAME=/usr/bin/lame (default path)
+COMMAND_METAFLAC      # Sample: COMMAND_METAFLAC=/usr/bin/metaflac
+COMMAND_OGG           # Sample: COMMAND_OGG=/usr/bin/oggenc (default path)
+COMMAND_OPUS          # Sample: COMMAND_OPUS=/usr/bin/opusenc (default path)
+
+----------------------------------------
+SOURCE/DESTINATION/CONFIGURATION DIRECTORIES
+----------------------------------------
+
+NOTE: DESTINATION_DIRECTORY cannot be the same as SOURCE_DIRECTORY.
+
+CLEAN                 # Sample: CLEAN=true
+DESTINATION_DIRECTORY # Sample: DESTINATION_DIRECTORY=/home/fred/music/ogg
+SOURCE_DIRECTORY      # Sample: SOURCE_DIRECTORY=/home/fred/music
+
+----------------------------------------
+EXCLUDE LISTS/FILES
+----------------------------------------
+
+DOT          # Sample: DOT=true
+EXCLUDE      # Sample (if list): EXCLUDE=artwork^^Daisy Queen^^Bon Jovi
+EXCLUDE_BASE # Sample: EXCLUDE_BASE=massive-exclude-list
+
+----------------------------------------
+INPUT/OUTPUT
+----------------------------------------
+
+CODEC_AAC    # Sample (default value): CODEC_AAC=libfdk_aac
+COPY_TYPES   # Sample: COPY_TYPES=doc,docx,bmp,jpg,jpeg
+DITHER       # Sample (default value): DITHER=shibata
+INPUT_TYPE   # Sample: INPUT_TYPE=flac
+OUTPUT_TYPE  # Sample: OUTPUT_TYPE=mp3
+QUALITY_AAC  # Sample: QUALITY_AAC=320 Supported values: 10 to 500. 
+QUALITY_FLAC # Sample: QUALITY_FLAC=5 Supported values: 0-8. 
+QUALITY_MP3  # Sample: QUALITY_MP3=2 Supported values: 0-9.999. 
+QUALITY_OGG  # Sample: QUALITY_OGG=8.25 Supported values: -1 to 10. 
+QUALITY_OPUS # Sample: QUALITY_OPUS=256 Supported values: 6-256.
+
+----------------------------------------
+ANALYZE
+----------------------------------------
+
+Z_MIN_SIZE # Sample: Z_MIN_SIZE=900
+Z_MIN_TIME # Sample: Z_MIN_TIME=8
+
+----------------------------------------
+AUTO-TAGGING
+----------------------------------------
+
+AUTOTAG_FILE # Sample: AUTOTAG_FILE=autotags.tag
+INFO_FILE    # Sample (default value): INFO_FILE=info.txt
+INFO_RATING  # Sample (default value): INFO_RATING=4. 
+PREFILL_TAG  # Sample: PREFILL_TAG=GENRE%:Heavy Metal^^IMAGE%:cover.jpg
+TAGLIST_FILE # Sample: TAGLIST_FILE=taglists.tag
+
+----------------------------------------
+CHECKSUMS
+--------------------------------------------------------------------------------
+
+FFP_FILE # Sample: FPP_FILE=fingerprint (do not use extension)
+MD5_FILE # Sample: MD5_FILE=checksum (do not use extension)
+
+----------------------------------------
+VERBOSITY LEVELS
+----------------------------------------
+
+VERBOSITY # Sample: VERBOSITY=3
+
+----------------------------------------
+ADVANCED
+----------------------------------------
+
+DONT_USE_NLINK  # Sample: DONT_USE_NLINK=0
+FORK            # Sample: FORK=4
+
+----------------------------------------
+SELF UPDATER
+----------------------------------------
+
+COMMAND_CURL   # Sample: COMMAND_CURL=/usr/local/bin
+MAN_DIRECTORY  # Sample: MAN_DIRECTORY=/usr/share/man/man1
+SELF_DIRECTORY # Sample: SELF_DIRECTORY=/usr/bin
