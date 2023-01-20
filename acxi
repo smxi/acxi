@@ -2518,11 +2518,13 @@ my ($file_tags,$key_checks,$tag_file);
 sub process {
 	say $line_large;
 	my $type = '';
-	$type = 'info ' . $INFO_FILE if $run{'taglist-info'};
+	if ($run{'taglist-info'}){
+		$type = ($run{'taglist-write'}) ? $INFO_FILE : 'info';
+	}
 	if ($run{'taglist-full'} || $run{'taglist-condensed'}){
 		$tag_file = ($run{'taglist-autotag'}) ? $AUTOTAG_FILE: $TAGLIST_FILE;
 		$type .= '/' if $type;
-		$type .= 'tag ' . $tag_file;
+		$type .= ($run{'taglist-write'}) ? $tag_file : 'tag';
 	}
 	my $checks = ($run{'taglist-skip'}) ? 'Skipping' : 'Starting';
 	say "$checks $type file checks in: " . main::sourcer("$SOURCE_DIRECTORY");
