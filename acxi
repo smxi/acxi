@@ -5495,8 +5495,8 @@ sub set_switches {
 	else {
 		$run{'sync'} = 1;
 		if (!$chk{'output'}){
-			my $msg = "Default output type has changed to opus. Please set output\n";
-			$msg .= "type with config item OUTPUT_TYPE or with -o to avoid bad results.";
+			my $msg = "Default output type has changed to opus. Please set output type\n";
+			$msg .= "with config item OUTPUT_TYPE or -o to avoid unexpected results.";
 			main::error_handler('required-setting',$msg,1);
 		}
 	}
