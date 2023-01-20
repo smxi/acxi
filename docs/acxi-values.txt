@@ -2,8 +2,8 @@
 ACXI VALUES
 ================================================================================
 FILE:    acxi-values.txt
-VERSION: 1.1
-DATE:    2023-01-19
+VERSION: 1.2
+DATE:    2023-01-20
 
 ----------------------------------------
 Docs:
@@ -127,9 +127,10 @@ CHK HASH - %chk
 
 Global checks, use %chk to avoid conflict with existing %check/%checks.
 
+Not currently used, add if needed.
+
 %chk = (
-'output'  # check output set via config OUTPUT_TYPE or -o, default changed to 
-          # opus from ogg 3.6.00.
+
 );
 
 ========================================
@@ -164,10 +165,11 @@ checksum           # --duplicates,--ffps,-K,-V,-Z
 checksum-delete    # -D, sets checksum
 checksum-ffps      # --ffps, sets checksum, no-md5
 checksum-verify    # -V
-clean              # --clean, set to 0 if not sync action in set_switches()
-clean-sync         # --clean sync, sets clean
-config             # --config
-dot                # --dot sets 1, true; --no-dot sets 0, false
+clean              # --clean, set to 0 if not sync action in set_switches();
+                   # UserConfigs CLEAN also sets.
+clean-sync         # --clean sync, sets clean; UserConfigs also sets
+dot                # --dot sets 1, true; --no-dot sets 0, false; UserConfigs 
+                   # DOT also sets.
 duplicates         # --duplicates, sets checksum,no-md5
 ffmpeg             # --ffmpeg
 image-embed        # -I, sets tagger, $image_embed if image name included
@@ -216,6 +218,8 @@ RUN VARIABLES
 ----------------------------------------
 
 The following are set with various options, not all of which have run values.
+
+Most of these are also set in UserConfigs
 
 $AUTOTAG_FILE           # set with --autotag-file
 $b_check_dest           # set in set_switches(), 0 if not sync, and not -G

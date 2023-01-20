@@ -17,6 +17,9 @@ tags that are same in id3v2.3 and id3v2.4 and have FLAC equivalents. Also used
 this as an excuse to also review and add some Vorbis tags that make sense for 
 acxi to include in auto.tag and tagging/prefill features.
 
+Also went through many features, documentation, etc, fixed logic errors, 
+inconsistent logic/docs errors, and added more public documention.
+
 --------------------------------------------------------------------------------
 SPECIAL THANKS:
 
@@ -54,12 +57,12 @@ and they can be specified using subscripts like “SUBTITLE[TRACK 3]” or
 works in the same file and not for cases where a single work has multiple 
 titles."
 
-3. With certain Vorbis tags when output to Perl, that contain cp-1252 windows 
-characters, Perl simply crashes, or appears to be crashing, when those get 
-output to screen. This happens currently only with -L [acfi], and basically,
-the crash happens when the data is being printed out. You can still find which
-track it was to manually correct the tags with acxi, but as far as I know, there
-is no way to trap this error and handle it more elegantly since it either just
+3. TAGLIST: With certain Vorbis tags when output to Perl, that contain cp-1252 
+windows characters, Perl simply crashes, or appears to be crashing, when those 
+get output to screen. This happens currently only with -L [acfi], and basically, 
+the crash happens when the data is being printed out. You can still find which 
+track it was to manually correct the tags with acxi, but as far as I know, there 
+is no way to trap this error and handle it more elegantly since it either just 
 hangs, or crashes, depending on whether print to screen or Dumper print to 
 screen. Dumper just crashes when it hits that string.
 
@@ -76,8 +79,8 @@ right directory in terms of the path/filename metaflac received.
 2. OPTIONS: --nlink would never have worked because it was missing the 'n' 
 ('link').
 
-3. Bug with date fix, was always showing true for test for dd-mm-yyyy type, 
-which could lead to failure to then update those dates.
+3. INFOFIX: Bug with date fix, was always showing true for test for dd-mm-yyyy 
+type, which could lead to failure to then update those dates.
 
 --------------------------------------------------------------------------------
 FIXES:
@@ -109,12 +112,13 @@ no space.
 3. TAGLIST/SYNC: Added --no-utf8-convert to main::get_flac_tags(), this is for 
 all types, mp3, replaygain, and full tag lists.
 
-4. Added $line_small when no info.txt file found for --infofix, forgot that.
+4. OUTPUT: Added $line_small when no info.txt file found for --infofix, forgot 
+that.
 
-5. Made $line_small more consistent across -Z, -X, and -L to separate directory
-processing items.
+5. OUTPUT: Made $line_small more consistent across -Z, -X, and -L to separate 
+directory processing items.
 
-6. Was missing a date variant: dd-month-yyyy
+6. INFOFIX: Was missing a date variant: dd-month-yyyy
 
 7. SYNC/AUTOTAG/TAGLIST: Flac tag reader wasn't escaping file name, which led to 
 name with $ failing. Also, the mp3 tag string generator was passing the file 
@@ -153,14 +157,14 @@ CONDUCTOR: Conductor, Conducted by.
 MIXER: Mixed by, Mixer, Mastered by, Masterer.
 REMIXER: Remixer, remixed by, remasterer, remastered by.
 
-3. Added WORK, SUBTITLE, TITLESORT tags to list of supported tags for tagging, 
-but not to auto.tag because those are made for very specific purposes and are 
-unlikely to be used correctly. See Known Issues 2. Also added a number of track 
-file specific tags like REPLAYGAIN*, ACOUSTID*, etc, to the track tags list for 
--Lc, -La, and -A. This means that track specific tags that should never be 
-carried over to next file are now protected much better. While hard to get a 
-complete list of tags that must only occur per file, never common between files, 
-very good progress was made to tighten this down.
+3. AUTOTAG/TAGLIST: Added WORK, SUBTITLE, TITLESORT tags to list of supported 
+tags for tagging, but not to auto.tag because those are made for very specific 
+purposes and are unlikely to be used correctly. See Known Issues 2. Also added a 
+number of track file specific tags like REPLAYGAIN*, ACOUSTID*, etc, to the 
+track tags list for -Lc, -La, and -A. This means that track specific tags that 
+should never be carried over to next file are now protected much better. While 
+hard to get a complete list of tags that must only occur per file, never common 
+between files, very good progress was made to tighten this down.
 
 4. TAGLIST: New features: --taglist/-L. Depending on switches, can generate full 
 report of all tags per FLAC file in directory, a condensed version of those 
@@ -195,8 +199,8 @@ files contain, minus some corrected tags, like having 'ALBUM ARTIST' and
 ALBUMARTIST tags in the same file, or 'TRACKTOTAL' and 'TOTALTRACKS'. This was 
 seen in musicbrainz picard tagging at times. 
 
-5. Added $self_patch to allow for checking development patch versions, like 
-pinxi uses. Helpful to make sure you have the right version. Also added to
+5. VERSION: Added $self_patch to allow for checking development patch versions, 
+like pinxi uses. Helpful to make sure you have the right version. Also added to 
 --help (and date). This can be helpful during active development.
 
 acxi --version
@@ -213,9 +217,9 @@ of auto.tag file name. This was an oversight, but never had cause for it until
 testing -La exposed the utility of being able to change auto.tag name to 
 something else.
 
-9. Added new print line type: $line_result. This is used to separate result 
-blocks from processing blocks, before was using $line_small for both types. this 
-is used in -X, -L, and -C/-S/-M --dry.
+9. OUTPUT: Added new print line type: $line_result. This is used to separate 
+result blocks from processing blocks, before was using $line_small for both 
+types. this is used in -X, -L, --config, and -C/-S/-M --dry.
 
 10. AUTOTAG/AUTOTAG-CREATE: Added --unique, which allows setting one time list 
 of tags to use only 1x in the file following that tag in the auto.tag file. This 
@@ -244,26 +248,32 @@ configuration values. Shows first to last found, last overrides previous.
 --------------------------------------------------------------------------------
 CHANGES:
 
-1. Configuration item TAG_FILE has been changed to AUTOTAG_FILE, but TAG_FILE 
-will keep working. This is because we needed non-ambiguous names with new 
-TAGLIST_FILE configuration item.
+1. CONFIGS: Configuration item TAG_FILE has been changed to AUTOTAG_FILE, but 
+TAG_FILE will keep working. This is because we needed non-ambiguous names with 
+new TAGLIST_FILE configuration item.
 
-2. Changed print line small:
+2. OUTPUT: Changed print line small:
+
 -----------------------------------------------------------------
+
 to print line result:
+
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-for blocks of results like for -X or -L. This makes it easier to tell the 
-results apart from the processing blocks.
 
-3. -C, -S, -M should not be allowed to run external to the directory that 
-contains the flac files, that's too risky, so disabled that. I think that was 
-an oversight.
+for blocks of results in --config, -L, -C/-M/-S --dry, -X. This makes it 
+easier to tell the results apart from the processing blocks.
 
-4. Removed --debug, replaced with specific --dbg x(,y) options globally.
+3. AUTOTAG-CREATE: -C, -S, -M should not be allowed to run external to the 
+directory that contains the flac files, that's too risky, so disabled that. I 
+think that was an oversight.
 
-5. Changed default output type to opus, ogg is deprecated. Added force output 
-set test for sync to avoid anyone who had been using default ogg suddenly doing 
-an opus sync. Added --config so people can easily check their configs.
+4. DEBUG: Removed --debug, replaced with specific --dbg x(,y) options globally. 
+See CODE 3a, 3b.
+
+5. SYNC: Changed default output type to '', ogg is deprecated, and acxi should 
+not promote it as default. I don't want to assume what people might have been 
+using before. Added $OUTPUT_TYPE set test for sync to force explicit set in 
+config file or with -o. Added --config so people can easily check their configs.
 
 --------------------------------------------------------------------------------
 DOCUMENTATION:
@@ -301,38 +311,43 @@ choices more clear.
 
 11. Fixed typo for config file path, had $HOME/.conf/ not .config/.
 
+12. Overall, made sure man, help, acxi-values.txt, and internal logic are the 
+same. Surprising number of oddities had crept in, cleaning those up as they get 
+discovered.
+
 --------------------------------------------------------------------------------
 CODE:
 
-1. Refactored flac2mp3_cmd() to make more flexible. Made it return hash ref, not
-hash.
+1a. TAG DATA: Refactored flac2mp3_cmd() to make more flexible. Made it return 
+hash ref, not hash.
+
+1b. TAG DATA: Extended main::get_flac_tags() to return 'all' tags in flac file, 
+for new package TagList. Changed old 'standard' to 'flac-mp3', since that was 
+used only to get flac to mp3 tags. Totally rewrote get_flac_tags as well, to be 
+more robust and dynamic.
 
 2. Switched to qw(...) in some tag lists that are being updated frequently.
 
-3. Added --dbg [x-xx] for granular debugging. This will need some documentation.
+3a. DEBUG: Added --dbg [x-xx] for granular debugging. Added dbg switch docs in 
+docs/acxi-values.txt. 
 
-4. Major refactor of options handler, which had gotten messy and hard to 
-follow/read/use. Also got rid of the hack I used to turn off features by setting 
-to 0 in each major option item. Now all that is handled in 
+3b. DEBUG: Changed all previous $b_debug to more granular $dbg[x] tests, and 
+added many commented out say debugging items now that they can be switched off 
+and on in a more granular fashion.
+
+4. OPTIONS: Major refactor of options handler, which had gotten messy and hard 
+to follow/read/use. Also got rid of the hack I used to turn off features by 
+setting to 0 in each major option item. Now all that is handled in 
 OptionsHandler::set_switches() and OptionsHandler::verify_selections(), and 
 options themselves only switch on $run and $test switches and assign values.
 
-5. Extended main::get_flac_tags() to return 'all' tags in flac file, for new 
-package TagList. Changed old 'standard' to 'flac-mp3', since that was used only 
-to get flac to mp3 tags. Totally rewrote get_flac_tags as well, to be more 
-robust and dynamic.
-
-6. Changed to explicit sync switched on only if no other actions conflict in 
-OptionsHandler::set_switches(). This was previously always set to 1, true, on 
+5. SYNC: Changed to explicit sync switched on only if no other actions conflict 
+in OptionsHandler::set_switches(). This was previously always set to 1, true, on 
 top of acxi by default, now it's only set to true if no conflicting options are 
 used.
 
-7. Changed all previous $b_debug to more granular $debug[x] tests, and added 
-many commented out say debugging items now that they can be switched off and on
-in a more granular fashion.
-
-8. Redid $run{'image-embed'} and $run{'image-remove'} logic, and made more 
-predictable and understandable, which is how the failure had crept in.
+8. IMAGE: Redid $run{'image-embed'} and $run{'image-remove'} logic, and made 
+more predictable and understandable, which is how the failure had crept in.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Fri, 30 Dec 2022 12:57:40 -0800

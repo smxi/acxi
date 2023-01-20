@@ -80,8 +80,8 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='27';
-my $self_date='2023-01-19';
+my $self_patch='28';
+my $self_date='2023-01-20';
 
 ## GLOBALS ##
 ## Booleans
@@ -103,7 +103,7 @@ my ($padding,$recurse,$start) = ('',-1,1);
 my (@excludes,@excludes_stripped,@extension_list,@found_list,@source_glob,@tags);
 
 ## Execution/Debug Switches
-my (%chk,@dbg,%run);
+my (@dbg,%run);
 
 ## CONSTANTS ##
 my $path_separator = ($b_win) ? '\\' : '/';
@@ -198,9 +198,10 @@ my $EXCLUDE = '';
 # Options: -i/--input type ; -o/--output type
 # The following are NOT case sensitive,ie flac/FLAC, txt/TXT will be 
 # found. INPUT_TYPE and OUTPUT_TYPE will be forced to lower case 
-# internally. Output change from ogg to opus 3.6.00. Xiph.org recommends opus.
+# internally. Output change from ogg to '' 3.6.00. Xiph.org recommends opus.
 my $INPUT_TYPE = 'flac';
-my $OUTPUT_TYPE = 'opus';
+# opus, ogg, mp3, m4a, etc
+my $OUTPUT_TYPE = '';
 
 # Option: -q/--quality number
 # for flac: n can be 0-8. 0 produces largest file, is fastest, anything over 4
@@ -4572,6 +4573,7 @@ sub show_options {
 	UserConfigs::set(); 
 	# but this should override the config data so follows
 	set_basic_data();
+	$OUTPUT_TYPE = '(UNSET)' if !$OUTPUT_TYPE;
 	my $output = "$self_name v: $self_version-$self_patch ($self_date)\n";
 	$output .= "While long option names are provided, it's usually easier to use short forms.\n";
 	$output .= "Sample Usage: $self_name\n";
@@ -4595,9 +4597,9 @@ sub show_options {
 	$output .= "--no-dot          Override user configuration setting for DOT (--dot) [default].\n";
 	$output .= "--no-nlink        Set \$File::Find::dont_use_nlink = 1 [default].\n";
 	$output .= "                  Expert use only.\n";
-	$output .= "--output, -o      Output type: {aac, flac. m4a, mp3, ogg, opus. aac/m4a/mp3}\n";
-	$output .= "                  require input type flac. To preserve flac tags for aac, use\n";
-	$output .= "                  m4a. Current value: $OUTPUT_TYPE\n";
+	$output .= "--output, -o      Output types: {aac|flac|m4a|mp3|ogg|opus}. All types except flac\n";
+	$output .= "                  require input type flac. To preserve flac tags for aac, use m4a.\n";
+	$output .= "                  Current value: $OUTPUT_TYPE\n";
 	$output .= "--recurse {0-xx}  Set directory recursion levels. Default infinite. Useful\n";
 	$output .= "                  for having syncing or checksum tools ignore sub directories.\n";
 	$output .= "--source, -s      Path to the top-most directory containing your source files.\n";
@@ -4796,7 +4798,7 @@ sub show_options {
 	$output .= "                  (extension): acxi -d ~/music/cdinfo --aggregate jpg\n";
 	$output .= "                  (several): acxi -d ~/music/cdinfo --aggregate png,jpg,info.txt\n";
 	$output .= "--config, --configuration\n";
-	$output .= "                  Show current active configuration values by file, then exit.\n";
+	$output .= "                  Show active configuration values, by file, then exit.\n";
 	$output .= "--help, -h        This help menu.\n";
 	if ($ALLOW_UPDATES){
 		$output .= "--no-ssl          Disable SSL for update. Useful if legacy server and -U3.\n";
@@ -4944,6 +4946,7 @@ sub set_display_data {
 {
 package UserConfigs;
 sub set {
+	my ($b_show) = @_;
 	my (@config_files,$file);
 	# set list of supported config files
 	@config_files = (
@@ -4965,7 +4968,7 @@ sub set {
 	foreach $file (@config_files){
 		next unless -r $file && open (my $fh,'<',$file);
 		my $b_configs;
-		say "$line_small\nConfiguration file: $file" if $run{'config'};
+		say "$line_small\n  Configuration file: $file" if $b_show;
 		while (<$fh>){
 			chomp;                  # no newline
 			s/#.*//;                # no comments
@@ -4975,7 +4978,7 @@ sub set {
 			next unless length;     # anything left?
 			my ($var, $value) = split(/\s*=\s*/, $_, 2);
 			if (defined $var && defined $value){
-				if (!$run{'config'}){
+				if (!$b_show){
 					assign_value($var, $value);
 				}
 				else {
@@ -4985,17 +4988,17 @@ sub set {
 				}
 			}
 		}
-		if ($run{'config'}){
-			say "No configuration items found in file." if !$b_configs;
+		if ($b_show && !$b_configs){
+			say "  No configuration items found in file.";
 		}
 	}
 }
 sub show {
 	say 'Showing current active/set configurations, by file. Last overrides previous.';
-	set();
+	set(1);
 	say $line_small;
 	say "All done! Everything look good? If not, fix it.";
-	exit;
+	exit 0;
 }
 sub assign_value {
 	my ($var,$value) = @_;
@@ -5019,37 +5022,37 @@ sub assign_value {
 		$COPY_TYPES = $value;}
 	elsif ($var eq 'DESTINATION_DIRECTORY' || $var eq 'DIR_PREFIX_DEST'){
 		$DESTINATION_DIRECTORY = $value;}
-	elsif ($var eq 'EXCLUDE'){$EXCLUDE = $value}
-	elsif ($var eq 'EXCLUDE_BASE'){$EXCLUDE_BASE = $value}
-	elsif ($var eq 'DITHER'){$DITHER = $value}
-	elsif ($var eq 'DONT_USE_NLINK'){$DONT_USE_NLINK = $value}
+	elsif ($var eq 'EXCLUDE'){$EXCLUDE = $value;}
+	elsif ($var eq 'EXCLUDE_BASE'){$EXCLUDE_BASE = $value;}
+	elsif ($var eq 'DITHER'){$DITHER = $value;}
+	elsif ($var eq 'DONT_USE_NLINK'){$DONT_USE_NLINK = $value;}
 	elsif ($var eq 'DOT'){
 		$value = get_boolean($value);
 		$run{'dot'} = $value if $value =~ /^[10]$/;}
-	elsif ($var eq 'FORK'){$FORK = $value}
-	elsif ($var eq 'FFP_FILE'){$FFP_FILE = $value}
-	elsif ($var eq 'INFO_FILE'){$INFO_FILE = $value}
-	elsif ($var eq 'INFO_RATING'){$INFO_RATING = $value}
+	elsif ($var eq 'FORK'){$FORK = $value;}
+	elsif ($var eq 'FFP_FILE'){$FFP_FILE = $value;}
+	elsif ($var eq 'INFO_FILE'){$INFO_FILE = $value;}
+	elsif ($var eq 'INFO_RATING'){$INFO_RATING = $value;}
 	elsif ($var eq 'INPUT_TYPE'){$INPUT_TYPE = $value;}
-	elsif ($var eq 'MAN_DIRECTORY'){$MAN_DIRECTORY = $value}
-	elsif ($var eq 'MD5_FILE'){$MD5_FILE = $value}
-	elsif ($var eq 'OUTPUT_TYPE'){$OUTPUT_TYPE = $value;$chk{'output'} = 1;}
+	elsif ($var eq 'MAN_DIRECTORY'){$MAN_DIRECTORY = $value;}
+	elsif ($var eq 'MD5_FILE'){$MD5_FILE = $value;}
+	elsif ($var eq 'OUTPUT_TYPE'){$OUTPUT_TYPE = $value;}
 	elsif ($var eq 'PREFILL_TAG'){$PREFILL_TAG = $value;}
 	# legacy configs, sets both
-	elsif ($var eq 'QUALITY'){$QUALITY_OGG = $value;$QUALITY_MP3 = $value}
-	elsif ($var eq 'QUALITY_AAC'){$QUALITY_AAC = $value}
-	elsif ($var eq 'QUALITY_FLAC'){$QUALITY_FLAC = $value}
-	elsif ($var eq 'QUALITY_MP3'){$QUALITY_MP3 = $value}
+	elsif ($var eq 'QUALITY'){$QUALITY_OGG = $value;$QUALITY_MP3 = $value;}
+	elsif ($var eq 'QUALITY_AAC'){$QUALITY_AAC = $value;}
+	elsif ($var eq 'QUALITY_FLAC'){$QUALITY_FLAC = $value;}
+	elsif ($var eq 'QUALITY_MP3'){$QUALITY_MP3 = $value;}
 	elsif ($var eq 'QUALITY_OGG'){$QUALITY_OGG = $value;}
 	elsif ($var eq 'QUALITY_OPUS'){$QUALITY_OPUS = $value;}
-	elsif ($var eq 'SELF_DIRECTORY'){$SELF_DIRECTORY = $value}
+	elsif ($var eq 'SELF_DIRECTORY'){$SELF_DIRECTORY = $value;}
 	elsif ($var eq 'SOURCE_DIRECTORY' || $var eq 'DIR_PREFIX_SOURCE'){
 		$SOURCE_DIRECTORY = $value;}
-	elsif ($var eq 'TAGLIST_FILE'){$TAGLIST_FILE = $value}
+	elsif ($var eq 'TAGLIST_FILE'){$TAGLIST_FILE = $value;}
 	# LOG_LEVEL is legacy name, leave in always.
 	elsif ($var eq 'VERBOSITY' || $var eq 'LOG_LEVEL'){$VERBOSITY = $value;}
-	elsif ($var eq 'Z_MIN_TIME'){$Z_MIN_TIME = $value}
-	elsif ($var eq 'Z_MIN_SIZE'){$Z_MIN_SIZE = $value}
+	elsif ($var eq 'Z_MIN_TIME'){$Z_MIN_TIME = $value;}
+	elsif ($var eq 'Z_MIN_SIZE'){$Z_MIN_SIZE = $value;}
 }
 sub get_boolean {
 	my ($value) = @_;
@@ -5149,8 +5152,7 @@ sub get{
 		main::error_handler('missing-arg',"$opt requires codec.",1) if !$arg;
 		$codec = $arg;
 		$test{'sync'} = 1;},
-	'config|configuration' => sub {
-		$run{'config'} = 1;
+	'config|configs|configuration|configurations' => sub {
 		UserConfigs::show();},
 	# accepts null value so users can not copy anything
 	'c|copy:s' => sub { 
@@ -5314,7 +5316,6 @@ sub get{
 		my ($opt,$arg) = @_;
 		main::error_handler('missing-arg',"$opt requires type.",1) if !$arg;
 		$OUTPUT_TYPE = $arg;
-		$chk{'output'} = 1;
 		$test{'output'} = 1;
 		$test{'sync'} = 1;},
 	'E|prefill' => sub { 
@@ -5494,8 +5495,8 @@ sub set_switches {
 	}
 	else {
 		$run{'sync'} = 1;
-		if (!$chk{'output'}){
-			my $msg = "Default output type has changed to opus. Please set output type\n";
+		if (!$OUTPUT_TYPE){
+			my $msg = "Default output type is no longer set. Please set output type\n";
 			$msg .= "with config item OUTPUT_TYPE or -o to avoid unexpected results.";
 			main::error_handler('required-setting',$msg,1);
 		}

@@ -1,4 +1,4 @@
-.TH ACXI 1 "2023\-01\-19" acxi "acxi manual"
+.TH ACXI 1 "2023\-01\-20" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -221,7 +221,7 @@ See \fB\-\-source\-glob\fR.
 .B \-\-input\fR, \fB\-i {aif|flac|raw|shn|wav}\fR
 Input type. Supported types: flac, wav, raw, shn. 
 
-\fBaif/raw/shn\fR \- only support flac output. 
+\fBaif\fR/\fBraw\fR/\fBshn\fR/\fBwav\fR \- only support flac output. 
 
 \fBshn\fR \- requires the shorten codec, which you usually have to build 
 yourself unless you can find a package for it. Use \fB\-v 3\fR to test the 
@@ -266,12 +266,12 @@ ogg, opus, m4a, mp3
 
 \fBaac\fR \- only supports flac input type, To preserve flac tags, use m4a.
 
-\fBflac\fR \- only supports aiff, flac, shn, or raw input types.
+\fBflac\fR \- only supports aiff, flac, shn, wav, or raw input types.
 
 \fBm4a\fR \- only supports flac input type, Container around aac data. Use if 
 you want to preserve flac tags in your aac audio file.
 
-\fBmp3\fR \- only supports flac input type
+\fBmp3\fR/\fBogg\fR/\fBopus\fR \- only support flac input type.
 
 .TP
 .B \-\-recurse {number}\fR
@@ -1384,7 +1384,7 @@ Sample 4 (collects multiple values):
 
 .TP
 .B \-\-config\fR, \fB\-\-configuration\fR
-Show current active configuration values, by file, and exits.
+Show active configuration values, by file, and exit.
 
 .TP
 .B \-\-help\fR, \fB\-h\fR
