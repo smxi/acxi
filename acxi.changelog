@@ -150,11 +150,12 @@ Note that because id3v2.x either doesn't have comparable DATE, LOCATION, OPUS,
 PERFORMER, PRODUCER, VENUE tags, or v2.3 name is different from v2.4, those tags 
 are not supported.
 
-2. AUTOTAG/PREFILL: To auto.tag generator, added CONDUCTOR, MIXER, REMIXER, and 
-variants for prefill, like:
+2. AUTOTAG/PREFILL: To auto.tag generator, added CONDUCTOR, MIXER, PUBLISHER, 
+REMIXER, and variants for prefill, like:
 
 CONDUCTOR: Conductor, Conducted by.
 MIXER: Mixed by, Mixer, Mastered by, Masterer.
+PUBLISHER: Publisher, Label
 REMIXER: Remixer, remixed by, remasterer, remastered by.
 
 3. AUTOTAG/TAGLIST: Added WORK, SUBTITLE, TITLESORT tags to list of supported 

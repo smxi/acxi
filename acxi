@@ -1032,9 +1032,9 @@ sub prefill_data {
 	my $fields = join('|',qw(Album Album[\s_-]?Artist Album[\s_-]?Sort Artiste?s? 
 	Artist\s*\/\s*Band Band CDDB CDDB[\s_-]?ID City Club 
 	Composer Composed[\s_-]?by Conducted[\s_-]?by Conductor Country Cover Date 
-	Ensemble Etree Etree[\s_-]?ID Event Festival Genre 
-	Image Lieu Location Media Mastered[\s_-]?by Masterer Mixed[\s_-]?by Mixer 
-	Opus Orquestr?a Producer 
+	Ensemble Etree Etree[\s_-]?ID Event Festival Genre Image 
+	Label Lieu Location Media Mastered[\s_-]?by Masterer Mixed[\s_-]?by Mixer 
+	Opus Orquestr?a Producer Publisher
 	Recorded[\s_-]?by Remastered[\s_-]?by Remasterer Remixed[\s_-]?by Remixer 
 	SHNID Source[\s_-]?Media State Symphony Taper Taped[\s_-]?by Type
 	Venue Ville Year)
@@ -1137,6 +1137,9 @@ sub prefill_data {
 			}
 			elsif ($field_name =~ /^(Producer|Taper|(Record|Tap)ed[\s_-]?by)$/i){
 				$info->{'producer'} = $field_value;
+			}
+			elsif ($field_name =~ /^(Publisher|Label)$/i){
+				$info->{'publisher'} = $field_value;
 			}
 			elsif ($field_name =~ /^(Re(mix|master)(er|ed[\s_-]?by))$/i){
 				$info->{'remixer'} = $field_value;
@@ -1263,8 +1266,8 @@ sub populate_tag_file {
 	@collection = map {$_ .= '%:' if /^[A-Z]/; $_;} @collection;
 	# ALBUM, ALBUMARTIST, TYPE handled explicitly below
 	my @prefills = qw(ALBUMSORT ARTIST CDDB COMPOSER CONDUCTOR DATE ENSEMBLE 
-	ETREE GENRE IMAGE LOCATION MIXER OPUS PRODUCER REMIXER SHNID SOURCEMEDIA 
-	VENUE YEAR);
+	ETREE GENRE IMAGE LOCATION MIXER OPUS PRODUCER PUBLISHER REMIXER 
+	SHNID SOURCEMEDIA VENUE YEAR);
 	@prefills = map {$_ .= '%:'; $_;} @prefills;
 	if ($info && %$info && @collection){
 		my @working;
