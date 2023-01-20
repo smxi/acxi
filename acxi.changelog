@@ -238,6 +238,9 @@ of multi use of a tag situations, so you don't need to do anything there.
 
 11. IMAGES: Added --image-remove as synonym for -R, --remove-images
 
+12. OPTIONS: Added --config/--configuration, to show you current active 
+configuration values. Shows first to last found, last overrides previous.
+
 --------------------------------------------------------------------------------
 CHANGES:
 
@@ -258,7 +261,9 @@ an oversight.
 
 4. Removed --debug, replaced with specific --dbg x(,y) options globally.
 
-5. Actually fix 
+5. Changed default output type to opus, ogg is deprecated. Added force output 
+set test for sync to avoid anyone who had been using default ogg suddenly doing 
+an opus sync. Added --config so people can easily check their configs.
 
 --------------------------------------------------------------------------------
 DOCUMENTATION:

@@ -56,6 +56,7 @@ Analyze/Checksums: [\fB\-\-analyze\fR, \fB\-Z\fR]
 [\fB\-\-z\-min\-size\fR {0\-xxx}] [\fB\-\-z\-min\-time\fR {0\-xxx}]
 .IP * 2
 Miscellaneous: [\fB\-\-aggregate\fR, \fB\-G\fR [file name|extension]]
+[\fB\-\-config\fR, \fB\-\-configuration\fR]
 [\fB\-\-help\fR, \fB\-h\fR] [\fB\-\-no\-ssl\fR] 
 [\fB\-\-update\fR, \fB\-U\fR [3]] [\fB\-\-version\fR]
 .IP * 2
@@ -1380,6 +1381,10 @@ Sample 4 (collects multiple values):
 .EX
 \fBacxi \-\-aggregate jpg,info.txt,png \-s my\-music -d music\-data\fR
 .EE
+
+.TP
+.B \-\-config\fR, \fB\-\-configuration\fR
+Show current active configuration values, by file, and exits.
 
 .TP
 .B \-\-help\fR, \fB\-h\fR
