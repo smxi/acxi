@@ -185,7 +185,7 @@ resample           # --resample, array ref of resample data
 resample-override  # --resample-override, boolean true
 source-glob        # --source-glob/--glob/-g, globbing string 
 sync               # set in set_switches(), sync only if nothing else conflicts
-tagger             # -A
+tagger             # -A,-I,-T
 tag-update         # --tag/-T, sets tagger, @tags as well
 taglist            # --taglist/-L. -L options can be combined
 taglist-autotag    # -La
