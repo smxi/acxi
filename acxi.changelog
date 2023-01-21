@@ -135,6 +135,14 @@ id, but that is wrong.
 now corrected so -I accepts no value with -RI, -I remove, -I image, or -RI image 
 as originally intended.
 
+10. SYNC: sync was not showing cmd message for --dry, but also was poor code, 
+repeated, switched to use --dbg 5 command debugger or in --dry mode, to show 
+command with --dbg 5, or the simple tool command with --dry. Previously didn't
+show anything, just 'Would have run:'. That was an oversight, must have messed
+that test mode up a long time ago. But now works much better because you can 
+either see simple mode, or full command debugging mode, which integrates that 
+to the new $dbg[5] command debugger globally.
+
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
@@ -349,6 +357,13 @@ used.
 
 8. IMAGE: Redid $run{'image-embed'} and $run{'image-remove'} logic, and made 
 more predictable and understandable, which is how the failure had crept in.
+
+9. VALIDATION: Validation had a legacy $b_error in every sub which is redundant 
+since $error_message can be tested t/f in all cases, removed all those.
+
+10. SYNCH: Refactored SyncCollection::convert_file(), that had a lot of 
+repetetive code, and also switched it to use $dbg[5] show $cmd debugger for both 
+active and --dry mode, or just the tool name/path in --dry mode. See FIX 10.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Fri, 30 Dec 2022 12:57:40 -0800

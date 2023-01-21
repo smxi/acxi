@@ -2,8 +2,8 @@
 ACXI VALUES
 ================================================================================
 FILE:    acxi-values.txt
-VERSION: 1.2
-DATE:    2023-01-20
+VERSION: 1.3
+DATE:    2023-01-21
 
 ----------------------------------------
 Docs:
@@ -79,11 +79,12 @@ good start.
     InfoFix::process(), basic paths;
     TagList::process_directories();
 5:  Commands: prints out commands in raw form that would run.
-    Note: SyncCollection prints most of these out with --dry.
     AutoTag::image_embedder(), metaflac command; 
     AutoTag::image_remover(), metaflac command; 
-    AutTag::process_tags(), metaflac commands, remove, tag;
-    AutTag::tag_updater(), remove/add metaflac, source directory;
+    AutoTag::process_tags(), metaflac commands, remove, tag;
+    AutoTag::tag_updater(), remove/add metaflac, source directory;
+    SyncCollection::convert_file(), file sync command string,
+      note: --dry alone prints only tool used, not full string;
 6:  Generated data. Often data generated with subs.
     Aggregate::aggregate(), @files, list of generated files;
     Analyze::process(), $source_info;
