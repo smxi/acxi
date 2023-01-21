@@ -80,7 +80,7 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='29';
+my $self_patch='30';
 my $self_date='2023-01-21';
 
 ## GLOBALS ##
@@ -3066,10 +3066,12 @@ sub check_multi {
 
 ## SyncCollection 
 {
-package SyncCollection; 
+package SyncCollection;
+my $test_mode = '';
 sub process {
 	my (@extension_files);
 	eval $print_line_heavy;
+	$test_mode = 'Test mode: ' if $b_test && $VERBOSITY > 0;
 	if ($VERBOSITY > 1){
 		say 'Syncing: ' . main::sourcer("$DESTINATION_DIRECTORY") . ' (destination) with:';
 		say '  ' . main::sourcer("$SOURCE_DIRECTORY") . ' (source)';
@@ -3135,10 +3137,10 @@ sub update_directories {
 			# stat failed so create the directory
 			eval $print_line_small;
 			if ($VERBOSITY > 1){
-				say "CREATING NEW DIRECTORY:\n $dest_dir";
+				say "${test_mode}CREATING NEW DIRECTORY:\n $dest_dir";
 			}
 			elsif ($VERBOSITY > 0){
-				print "\nCreating new directory: $dest_dir";
+				print "\n${test_mode}Creating new directory: $dest_dir";
 			}
 			$dest_dir =~ s/\`/\'/g; # get rid of weird characters
 			$result = mkdir("$dest_dir") if !$b_test;
@@ -3225,11 +3227,11 @@ sub copy_file {
 	}
 	eval $print_line_small;
 	if ($VERBOSITY > 1){
-		say "COPY: $src_print";
+		say "${test_mode}COPY: $src_print";
 		say " ==> $dest_print"; 
 	}
 	elsif ($VERBOSITY > 0){
-		print "\nCopying $src_print...";
+		print "\n${test_mode}Copying $src_print...";
 	}
 	if (!$b_test){
 		$result = File::Copy::copy($src_file, $dest_file) or 
@@ -3342,7 +3344,7 @@ sub convert_file {
 		if ($VERBOSITY > 0){
 			say '' if $VERBOSITY == 1;
 			$cmd = ($dbg[5]) ? "\n$cmd": $tool_string;
-			say "Would have run: $cmd";
+			say "${test_mode}Would have run: $cmd";
 		}
 	}
 	else {
