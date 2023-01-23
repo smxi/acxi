@@ -85,7 +85,7 @@ type, which could lead to failure to then update those dates.
 --------------------------------------------------------------------------------
 FIXES:
 
-1. SYNC: For mp3 tagging, was using DATE, didn't check for YEAR, but mp3 is very 
+1a. SYNC: For mp3 tagging, was using DATE, didn't check for YEAR, but mp3 is very 
 likely to fail if you put a date in that value. Now checks for YEAR first, and 
 falls back to using year (YYYY) extracted from DATE. 
 
@@ -105,37 +105,7 @@ I don't want to get into detecting idv2 subversion, this is a messy non-free
 codec and it shows by how poorly they did tagging version to version, as well as 
 how focused on corporate interests their efforts were. 
 
-2. PREFILL: Some of the prefill field names didn't fully match the listed 
-possible values. Also made all 2 word type field names support space, -, _, or 
-no space.
-
-3. TAGLIST/SYNC: Added --no-utf8-convert to main::get_flac_tags(), this is for 
-all types, mp3, replaygain, and full tag lists.
-
-4. OUTPUT: Added $line_small when no info.txt file found for --infofix, forgot 
-that.
-
-5. OUTPUT: Made $line_small more consistent across -Z, -X, and -L to separate 
-directory processing items.
-
-6. INFOFIX: Was missing a date variant: dd-month-yyyy
-
-7. SYNC/AUTOTAG/TAGLIST: Flac tag reader wasn't escaping file name, which led to 
-name with $ failing. Also, the mp3 tag string generator was passing the file 
-name in double quotes, which meant that the $ string was being treated as a 
-scalar and would have been empty as well. Or maybe caused perl to exit with 
-error since non declared variable was being attempted.
-
-8. AUTOTAG/PREFILL: Removed ISRC tag from main body of auto.tag, that is a per 
-track always file, it is a unique idenitifier (or idenfiers in rare cases, like 
-musicbrainz) per file. I had always thought it was a per recording, not track,
-id, but that is wrong.
-
-9. IMAGES: -RI to trigger --image-remove has not worked in a long time, that's 
-now corrected so -I accepts no value with -RI, -I remove, -I image, or -RI image 
-as originally intended.
-
-10a. SYNC: sync was not showing cmd message for --dry, but also was poor code, 
+1b. SYNC: sync was not showing cmd message for --dry, but also was poor code, 
 repeated, switched to use --dbg 5 command debugger or in --dry mode, to show 
 command with --dbg 5, or the simple tool command with --dry. Previously didn't
 show anything, just 'Would have run:'. That was an oversight, must have messed
@@ -143,42 +113,43 @@ that test mode up a long time ago. But now works much better because you can
 either see simple mode, or full command debugging mode, which integrates that 
 to the new $dbg[5] command debugger globally.
 
-10b. SYNC: Never showed that mkdir and copy file were running in test mode, now 
+1c. SYNC: Never showed that mkdir and copy file were running in test mode, now 
 shows Test mode: for all 3 syncing actions if verbosity > 0.
+
+2. PREFILL: Some of the prefill field names didn't fully match the listed 
+possible values. Also made all 2 word type field names support space, -, _, or 
+no space.
+
+3. TAGLIST/SYNC: Added --no-utf8-convert to main::get_flac_tags(), this is for 
+all types, mp3, replaygain, and full tag lists.
+
+4. INFOFIX: Was missing a date variant: dd-month-yyyy
+
+5. SYNC/AUTOTAG/TAGLIST: Flac tag reader wasn't escaping file name, which led to 
+name with $ failing. Also, the mp3 tag string generator was passing the file 
+name in double quotes, which meant that the $ string was being treated as a 
+scalar and would have been empty as well. Or maybe caused perl to exit with 
+error since non declared variable was being attempted.
+
+6. AUTOTAG/PREFILL: Removed ISRC tag from main body of auto.tag, that is a per 
+track always file, it is a unique idenitifier (or idenfiers in rare cases, like 
+musicbrainz) per file. I had always thought it was a per recording, not track,
+id, but that is wrong.
+
+7. IMAGES: -RI to trigger --image-remove has not worked in a long time, that's 
+now corrected so -I accepts no value with -RI, -I remove, -I image, or -RI image 
+as originally intended.
+
+8a. OUTPUT: Added $line_small when no info.txt file found for --infofix, forgot 
+that.
+
+8b. OUTPUT: Made $line_small more consistent across -Z, -X, and -L to separate 
+directory processing items.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
 
-1. SYNC: Significantly expanded MP3 tags. Mapped all acxi tags in auto.tag/--tag 
-that have native mp3 id3v2 tags. Now supported:
-
-ALBUM ALBUMARTIST ARTIST ARTISTSORT COMMENT COMPILATION COMPOSER CONDUCTOR 
-COPYRIGHT DATE DESCRIPTION DISKNUMBER DISCSUBTITLE DISKTOTAL GENRE ISRC LABEL 
-MEDIA MOOD MOVEMENTNAME ORGANIZATION PUBLISHER REMIXER SOURCEMEDIA SUBTITLE 
-TITLE TITLESORT TRACKNUMBER TRACKTOTAL YEAR
-		
-Note that because id3v2.x either doesn't have comparable DATE, LOCATION, OPUS, 
-PERFORMER, PRODUCER, VENUE tags, or v2.3 name is different from v2.4, those tags 
-are not supported.
-
-2. AUTOTAG/PREFILL: To auto.tag generator, added CONDUCTOR, MIXER, PUBLISHER, 
-REMIXER, and variants for prefill, like:
-
-CONDUCTOR: Conductor, Conducted by.
-MIXER: Mixed by, Mixer, Mastered by, Masterer.
-PUBLISHER: Publisher, Label
-REMIXER: Remixer, remixed by, remasterer, remastered by.
-
-3. AUTOTAG/TAGLIST: Added WORK, SUBTITLE, TITLESORT tags to list of supported 
-tags for tagging, but not to auto.tag because those are made for very specific 
-purposes and are unlikely to be used correctly. See Known Issues 2. Also added a 
-number of track file specific tags like REPLAYGAIN*, ACOUSTID*, etc, to the 
-track tags list for -Lc, -La, and -A. This means that track specific tags that 
-should never be carried over to next file are now protected much better. While 
-hard to get a complete list of tags that must only occur per file, never common 
-between files, very good progress was made to tighten this down.
-
-4. TAGLIST: New features: --taglist/-L. Depending on switches, can generate full 
+1. TAGLIST: New features: --taglist/-L. Depending on switches, can generate full 
 report of all tags per FLAC file in directory, a condensed version of those 
 tags, or data for creating an info.txt file. As with -X, w writes the data to 
 the file(s).
@@ -211,29 +182,11 @@ files contain, minus some corrected tags, like having 'ALBUM ARTIST' and
 ALBUMARTIST tags in the same file, or 'TRACKTOTAL' and 'TOTALTRACKS'. This was 
 seen in musicbrainz picard tagging at times. 
 
-5. VERSION: Added $self_patch to allow for checking development patch versions, 
-like pinxi uses. Helpful to make sure you have the right version. Also added to 
---help (and date). This can be helpful during active development.
-
-acxi --version
-acxi version: 3.5.06-14 (2023-01-10)
-
-6. OPTIONS: Added --glob as alternative to --source-glob/-g. 
-
-7. AUTOTAG: AutoTag::process_tags() now handles multiline tag values. Which 
+2. AUTOTAG: AutoTag::process_tags() now handles multiline tag values. Which 
 should be avoided because very few media players support those correctly. But 
 needed since --taglist a/c/f support multiline tag values.
 
-8. AUTOTAG/PREFILL/TAGLIST: Added --autotag-file/--atf/--af for one time changes 
-of auto.tag file name. This was an oversight, but never had cause for it until 
-testing -La exposed the utility of being able to change auto.tag name to 
-something else.
-
-9. OUTPUT: Added new print line type: $line_result. This is used to separate 
-result blocks from processing blocks, before was using $line_small for both 
-types. this is used in -X, -L, --config, and -C/-S/-M --dry.
-
-10. AUTOTAG/AUTOTAG-CREATE: Added --unique, which allows setting one time list 
+3. AUTOTAG/AUTOTAG-CREATE: Added --unique, which allows setting one time list 
 of tags to use only 1x in the file following that tag in the auto.tag file. This 
 can be used with -A, -S, -M. This will add that list of single use tags to an 
 existing auto.tag file with -A. Adds that set of tags to the per track tag list, 
@@ -252,15 +205,62 @@ per file.
 not replaced by a new one and the next file did not contain that tag in the case 
 of multi use of a tag situations, so you don't need to do anything there.
 
-11. IMAGES: Added --image-remove as synonym for -R, --remove-images
+4. AUTOTAG/PREFILL/TAGLIST: Added --autotag-file/--atf/--af for one time changes 
+of auto.tag file name. This was an oversight, but never had cause for it until 
+testing -La exposed the utility of being able to change auto.tag name to 
+something else.
 
-12. OPTIONS: Added --config/--configuration, to show you current active 
+5. AUTOTAG/PREFILL: To auto.tag generator, added CONDUCTOR, MIXER, PUBLISHER, 
+REMIXER, and variants for prefill, like:
+
+CONDUCTOR: Conductor, Conducted by.
+MIXER: Mixed by, Mixer, Mastered by, Masterer.
+PUBLISHER: Publisher, Label
+REMIXER: Remixer, remixed by, remasterer, remastered by.
+
+6. AUTOTAG/TAGLIST: Added WORK, SUBTITLE, TITLESORT tags to list of supported 
+tags for tagging, but not to auto.tag because those are made for very specific 
+purposes and are unlikely to be used correctly. See Known Issues 2. Also added a 
+number of track file specific tags like REPLAYGAIN*, ACOUSTID*, etc, to the 
+track tags list for -Lc, -La, and -A. This means that track specific tags that 
+should never be carried over to next file are now protected much better. While 
+hard to get a complete list of tags that must only occur per file, never common 
+between files, very good progress was made to tighten this down.
+
+7. IMAGES: Added --image-remove as synonym for -R, --remove-images
+
+8. SYNC: Significantly expanded MP3 tags. Mapped all acxi tags in auto.tag/--tag 
+that have native mp3 id3v2 tags. Now supported:
+
+ALBUM ALBUMARTIST ARTIST ARTISTSORT COMMENT COMPILATION COMPOSER CONDUCTOR 
+COPYRIGHT DATE DESCRIPTION DISKNUMBER DISCSUBTITLE DISKTOTAL GENRE ISRC LABEL 
+MEDIA MOOD MOVEMENTNAME ORGANIZATION PUBLISHER REMIXER SOURCEMEDIA SUBTITLE 
+TITLE TITLESORT TRACKNUMBER TRACKTOTAL YEAR
+		
+Note that because id3v2.x either doesn't have comparable DATE, LOCATION, OPUS, 
+PERFORMER, PRODUCER, VENUE tags, or v2.3 name is different from v2.4, those tags 
+are not supported.
+
+9. VERSION: Added $self_patch to allow for checking development patch versions, 
+like pinxi uses. Helpful to make sure you have the right version. Also added to 
+--help (and date). This can be helpful during active development.
+
+acxi --version
+acxi version: 3.5.06-14 (2023-01-10)
+
+10a. OPTIONS: Added --glob as alternative to --source-glob/-g. 
+
+10b. OPTIONS: Added --config/--configuration, to show you current active 
 configuration values. Shows first to last found, last overrides previous.
+
+11. OUTPUT: Added new print line type: $line_result. This is used to separate 
+result blocks from processing blocks, before was using $line_small for both 
+types. this is used in -X, -L, --config, and -C/-S/-M --dry. See CHANGES 2.
 
 --------------------------------------------------------------------------------
 CHANGES:
 
-1. CONFIGS: Configuration item TAG_FILE has been changed to AUTOTAG_FILE, but 
+1. CONFIG: Configuration item TAG_FILE has been changed to AUTOTAG_FILE, but 
 TAG_FILE will keep working. This is because we needed non-ambiguous names with 
 new TAGLIST_FILE configuration item.
 
@@ -290,25 +290,30 @@ config file or with -o. Added --config so people can easily check their configs.
 --------------------------------------------------------------------------------
 DOCUMENTATION:
 
-1. Man page, forgot to list AIFF as input type for FLAC output type.
+1a. MAN: Forgot to list AIFF as input type for FLAC output type.
 
-2. Man page, added MIXER and REMIXER to --prefill tags. Also cleaned up and made 
+1b. MAN: Added MIXER and REMIXER to --prefill tags. Also cleaned up and made 
 more consistent prefill tag listing.
 
-3. Sample auto.tag file, updated to add new tags and comments.
+1c. MAN: Updated man page debugger section for --dbg xx triggers.
 
-4. Updated man page debugger section for --dbg xx triggers.
+1d. MAN: Added more granular man docs for --dbg
 
-5. Updated README.txt, help, and man page for new --taglist, --taglist-file, 
---unique options.
+1e. MAN: Fixed typo for config file path, had $HOME/.conf/ not .config/.
 
-6. Updated man/help to add --glob.
+2. OPTIONS: Updated top part to have better examples with long and short forms.
 
-7. Updated help top part to have better examples with long and short forms.
+3a. MAN/OPTIONS: updateed for -R/-I cleanups and corrections, and to make actions/
+choices more clear.
 
-8. Added more granular man docs for --dbg
+3b. MAN/OPTIONS: Updated to add --glob.
 
-9. Created docs/acxi-values.txt to document internal acxi values. 
+4. MAN/OPTIONS/README.txt/: added for new --taglist, --taglist-file, --unique 
+options.
+
+5. AUTOTAG-FILE: Sample auto.tag file, updated to add new tags and comments.
+
+6a. DOCS: Created docs/acxi-values.txt to document internal acxi values. 
 
 * @dbg - the old --debug was too generic to be useful in real development.
 
@@ -318,14 +323,9 @@ more consistent prefill tag listing.
 
 * configuration items. Always see man for full explanations.
 
-10. Updated man, help for -R/-I cleanups and corrections, and to make actions/
-choices more clear.
-
-11. Fixed typo for config file path, had $HOME/.conf/ not .config/.
-
-12. Overall, made sure man, help, acxi-values.txt, and internal logic are the 
-same. Surprising number of oddities had crept in, cleaning those up as they get 
-discovered.
+6b. DOCS: Overall, made sure man, help, acxi-values.txt, and internal logic are 
+the same. Surprising number of oddities had crept in, cleaning those up as they 
+get discovered.
 
 --------------------------------------------------------------------------------
 CODE:
@@ -353,20 +353,20 @@ setting to 0 in each major option item. Now all that is handled in
 OptionsHandler::set_switches() and OptionsHandler::verify_selections(), and 
 options themselves only switch on $run and $test switches and assign values.
 
-5. SYNC: Changed to explicit sync switched on only if no other actions conflict 
+5a. SYNC: Changed to explicit sync switched on only if no other actions conflict 
 in OptionsHandler::set_switches(). This was previously always set to 1, true, on 
 top of acxi by default, now it's only set to true if no conflicting options are 
 used.
 
-8. IMAGE: Redid $run{'image-embed'} and $run{'image-remove'} logic, and made 
-more predictable and understandable, which is how the failure had crept in.
-
-9. VALIDATION: Validation had a legacy $b_error in every sub which is redundant 
-since $error_message can be tested t/f in all cases, removed all those.
-
-10. SYNC: Refactored SyncCollection::convert_file(), that had a lot of 
+5b. SYNC: Refactored SyncCollection::convert_file(), that had a lot of 
 repetetive code, and also switched it to use $dbg[5] show $cmd debugger for both 
 active and --dry mode, or just the tool name/path in --dry mode. See FIX 10.
+
+6. IMAGE: Redid $run{'image-embed'} and $run{'image-remove'} logic, and made 
+more predictable and understandable, which is how the failure had crept in.
+
+7. VALIDATION: Validation had a legacy $b_error in every sub which is redundant 
+since $error_message can be tested t/f in all cases, removed all those.
 
 --------------------------------------------------------------------------------
 -- Harald Hope - Fri, 30 Dec 2022 12:57:40 -0800
