@@ -79,9 +79,9 @@ $Data::Dumper::Sortkeys = 1;
 
 ## SELF INFO ##
 my $self_name='acxi';
-my $self_version='3.5.06';
-my $self_patch='31';
-my $self_date='2023-01-22';
+my $self_version='3.6.00';
+my $self_patch='00';
+my $self_date='2023-01-23';
 
 ## GLOBALS ##
 ## Booleans
