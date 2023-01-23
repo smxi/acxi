@@ -135,13 +135,16 @@ id, but that is wrong.
 now corrected so -I accepts no value with -RI, -I remove, -I image, or -RI image 
 as originally intended.
 
-10. SYNC: sync was not showing cmd message for --dry, but also was poor code, 
+10a. SYNC: sync was not showing cmd message for --dry, but also was poor code, 
 repeated, switched to use --dbg 5 command debugger or in --dry mode, to show 
 command with --dbg 5, or the simple tool command with --dry. Previously didn't
 show anything, just 'Would have run:'. That was an oversight, must have messed
 that test mode up a long time ago. But now works much better because you can 
 either see simple mode, or full command debugging mode, which integrates that 
 to the new $dbg[5] command debugger globally.
+
+10b. SYNC: Never showed that mkdir and copy file were running in test mode, now 
+shows Test mode: for all 3 syncing actions if verbosity > 0.
 
 --------------------------------------------------------------------------------
 ENHANCEMENTS:
@@ -261,7 +264,7 @@ CHANGES:
 TAG_FILE will keep working. This is because we needed non-ambiguous names with 
 new TAGLIST_FILE configuration item.
 
-2. OUTPUT: Changed print line small:
+2. OUTPUT: Changed print line small: 
 
 -----------------------------------------------------------------
 
@@ -344,7 +347,7 @@ docs/acxi-values.txt.
 added many commented out say debugging items now that they can be switched off 
 and on in a more granular fashion.
 
-4. OPTIONS: Major refactor of options handler, which had gotten messy and hard 
+4. OPTIONS: Major refactor of OptionsHandler, which had gotten messy and hard 
 to follow/read/use. Also got rid of the hack I used to turn off features by 
 setting to 0 in each major option item. Now all that is handled in 
 OptionsHandler::set_switches() and OptionsHandler::verify_selections(), and 
@@ -361,7 +364,7 @@ more predictable and understandable, which is how the failure had crept in.
 9. VALIDATION: Validation had a legacy $b_error in every sub which is redundant 
 since $error_message can be tested t/f in all cases, removed all those.
 
-10. SYNCH: Refactored SyncCollection::convert_file(), that had a lot of 
+10. SYNC: Refactored SyncCollection::convert_file(), that had a lot of 
 repetetive code, and also switched it to use $dbg[5] show $cmd debugger for both 
 active and --dry mode, or just the tool name/path in --dry mode. See FIX 10.
 

@@ -80,8 +80,8 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.5.06';
-my $self_patch='30';
-my $self_date='2023-01-21';
+my $self_patch='31';
+my $self_date='2023-01-22';
 
 ## GLOBALS ##
 ## Booleans
@@ -4895,7 +4895,7 @@ sub set_display_data {
 package UserConfigs;
 sub set {
 	my ($b_show) = @_;
-	my (@config_files,$file);
+	my ($b_files,@config_files,$file);
 	# set list of supported config files
 	@config_files = (
 	"/etc/$self_name.conf",
@@ -4916,6 +4916,7 @@ sub set {
 	foreach $file (@config_files){
 		next unless -r $file && open (my $fh,'<',$file);
 		my $b_configs;
+		$b_files = 1;
 		say "$line_small\n  Configuration file: $file" if $b_show;
 		while (<$fh>){
 			chomp;                  # no newline
@@ -4940,12 +4941,18 @@ sub set {
 			say "  No configuration items found in file.";
 		}
 	}
+	return $b_files if $b_show;
 }
 sub show {
 	say 'Showing current active/set configurations, by file. Last overrides previous.';
-	set(1);
+	my $b_files = set(1);
 	say $line_small;
-	say "All done! Everything look good? If not, fix it.";
+	if ($b_files){
+		print "All done! Everything look good? If not, fix it.\n";
+	}
+	else {
+		print "No configuration files found. Is that what you expected?\n";
+	}
 	exit 0;
 }
 sub assign_value {
