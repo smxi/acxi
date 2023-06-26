@@ -80,8 +80,8 @@ $Data::Dumper::Sortkeys = 1;
 ## SELF INFO ##
 my $self_name='acxi';
 my $self_version='3.6.00';
-my $self_patch='00';
-my $self_date='2023-01-23';
+my $self_patch='01';
+my $self_date='2023-06-26';
 
 ## GLOBALS ##
 ## Booleans
@@ -1021,7 +1021,7 @@ sub make_tag_file {
 }
 
 sub prefill_data {
-	my ($b_fields,$b_performer,$b_tracks_end,$b_tracks_start,
+	my ($b_fields,$b_performer,$b_performer_run,$b_tracks_end,$b_tracks_start,
 	$field_name,$field_value);
 	# no blank lines in band/location/date block, stop after first blank line.
 	my ($b_top_block,$info) = (1,{});
@@ -1182,7 +1182,7 @@ sub prefill_data {
 				$b_tracks_start = 1;
 			}
 			# Start building performers
-			elsif (($b_fields || $counter > 4) && 
+			elsif (!$b_performer_run && ($b_fields || $counter > 4) && 
 			$line =~ /^[\s*_=-]*(Band|(Band\s)?Line[\s_-]?up|(Band\s)?Members|Performers|Personnel)[^:]*:/i){
 				$b_performer = 1;
 				next;
@@ -1194,6 +1194,9 @@ sub prefill_data {
 				# first white space after performer list
 				else {
 					$b_performer = 0;
+					# in case performer line trigger happens later we don't want to add 
+					# those items to performer! 
+					$b_performer_run = 1;
 				}
 			}
 		}
@@ -2347,6 +2350,7 @@ sub cp1252_fix {
 		if ($data->[$i] =~ /[\x82\x84-\x88\x8B\x91-\x99\x9B\xA9\xAB\xB4\xBB]/){
 			say '   CF: line ' . ($i + 1);
 			# Map commonly used CP-1252 to ASCII characters
+			# ^M
 			$data->[$i] =~ s/\x82/,/g;
 			$data->[$i] =~ s/\x84/,,/g;
 			$data->[$i] =~ s/\x85/.../g;
