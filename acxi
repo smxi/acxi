@@ -4,7 +4,7 @@
 #########################################################################
 
 # Copyright (c) 2010-2023 - Harald Hope - smxi.org 
-# Home page: https://github.com/smxi/acxi
+# Home page: https://codeberg.org/smxi/acxi
 # Forum support: https://techpatterns.com/forums/about1491.html
 # Download url: https://smxi.org/acxi
 #
@@ -79,9 +79,9 @@ $Data::Dumper::Sortkeys = 1;
 
 ## SELF INFO ##
 my $self_name='acxi';
-my $self_version='3.6.00';
-my $self_patch='01';
-my $self_date='2023-06-26';
+my $self_version='3.6.01';
+my $self_patch='00';
+my $self_date='2023-09-16';
 
 ## GLOBALS ##
 ## Booleans
@@ -3797,7 +3797,6 @@ my $man_source = "$MAN_DIRECTORY$path_separator$self_name.1";
 sub update {
 	say $line_large;
 	say "Starting $self_name self updater.";
-	
 	validate();
 	grab();
 	say "Completed self updates.";
@@ -4755,7 +4754,7 @@ sub show_options {
 	if ($ALLOW_UPDATES){
 		$output .= "--no-ssl          Disable SSL for update. Useful if legacy server and -U3.\n";
 		$output .= "--update, -U      Update $self_name and man page. Set paths if not Linux.\n";
-		$output .= "                  -U 3 updates from smxi.org server directly, skips github.\n";
+		$output .= "                  -U 3 updates from smxi.org server directly, skips codeberg.\n";
 		$output .= "                  Current values: $self_name: $SELF_DIRECTORY\n";
 		$output .= "                  man $self_name.1: $MAN_DIRECTORY\n";
 	}

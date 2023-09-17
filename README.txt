@@ -1,11 +1,17 @@
 README for acxi - a command line audio processing tool.
 
+Please file issue reports or feature requests at:
+
+https://codeberg.org/smxi/acxi
+
+Github is just a mirror that I don't plan on checking very often.
+
 ================================================================================
 DOCUMENTATION RESOURCES
 --------------------------------------------------------------------------------
 
 acxi.changelog: 
-https://github.com/smxi/acxi/raw/stable/acxi.changelog
+https://codeberg.org/smxi/acxi/raw/stable/acxi.changelog
 For complete, up to date, current state of acxi development, features, and 
 fixes.
 
@@ -44,14 +50,14 @@ Then make executable:
 For man page:
  sudo wget -O /usr/local/share/man/man1/acxi.1 smxi.org/acxi.1
 
-If you prefer to use the full GitHub paths:
+If you prefer to use the full Codeberg paths:
 
 Program:
- sudo wget -O /usr/local/bin/acxi https://github.com/smxi/acxi/raw/stable/acxi
+ sudo wget -O /usr/local/bin/acxi https://codeberg.org/smxi/acxi/raw/stable/acxi
 
 Man page:
  sudo wget -O /usr/local/share/man/man1/acxi.1 \
- https://github.com/smxi/acxi/raw/stable/acxi.1
+ https://codeberg.org/smxi/acxi/raw/stable/acxi.1
  
 If you want to use the -U self-updater option, both acxi and the man page must 
 be present on your system, and paths to them set either by placing them in the 

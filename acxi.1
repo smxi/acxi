@@ -1,4 +1,4 @@
-.TH ACXI 1 "2023\-01\-23" acxi "acxi manual"
+.TH ACXI 1 "2023\-09\-16" acxi "acxi manual"
 .SH NAME
 acxi \- Command line audio conversion tool
 .SH SYNOPSIS
@@ -241,8 +241,8 @@ Tags transfer from AIF files that are tagged to FLAC files in my tests.
 Set \fB$File::Find::dont_use_nlink = 0\fR. Default is \fB1\fR. Only change this 
 if you have a reason to do so. Setting value to \fB0\fR may make \fBcifs\fR type 
 file system reads fail, on a \fBsamba\fR network share for example. If you 
-encounter issues with the default value, please post an issue on the acxi github 
-page.
+encounter issues with the default value, please post an issue on the acxi 
+codeberg.org page.
 
 See this PerlMonks thread for an explanation: 
 \fIhttps://www.perlmonks.org/?node_id=1180606\fR
@@ -543,7 +543,7 @@ Note that all existing tags are removed. Default is to preserve the existing
 \fBREPLAYGAIN\fR tags in the \fBauto.tag\fR file since the assumption is those 
 were generated for a reason.
 
-See github acxi page for a blank sample file, but make sure to use 
+See codeberg.org acxi page for a blank sample file, but make sure to use 
 \fB\-\-autotag\-create\fR, \fB\-\-autotag\-create\-single\fR, or 
 \fB\-\-autotag\-create\-multi [prefix]\fR because it's a LOT faster that way, 
 and you don't have to find the file. These file builders also preserve existing 
@@ -1397,8 +1397,9 @@ Disable SSL strict certificate checks for \fB\-U\fR.
 
 Sample: \fB\acxi -U3 \-\-no\-ssl\fR
 
-This can be useful because github doesn't usually allow connections without 
-strict SSL checks, but legacy systems often have expired SSL certificates. 
+This can be useful because codeberg.org doesn't usually allow connections 
+without strict SSL checks, but legacy systems often have expired SSL 
+certificates. 
 
 .TP
 .B \-\-update\fR, \fB\-U [3]\fR
@@ -1734,7 +1735,7 @@ Please report bugs using the following resources.
 .TP
 .B Issue Report
 File an issue report:
-.I https://github.com/smxi/acxi/issues
+.I https://codeberg.org/smxi/acxi/issues
 .TP
 .B Forums
 Post on acxi forums:
@@ -1748,7 +1749,7 @@ or
 \fRchannel:\fI #smxi\fR to post issues. Libera is probably best for acxi issues.
 
 .SH HOMEPAGE
-.I https://github.com/smxi/acxi
+.I https://codeberg.org/smxi/acxi
 
 .SH AUTHOR AND CONTRIBUTORS TO CODE
 .\" don't change this line until new acxi out for a while, used for -U test
